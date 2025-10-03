@@ -10,7 +10,7 @@
         "id": { "type": "string", "description": "Unique identifier for the property." },
         "title": { "type": "string", "description": "Title of the property listing." },
         "description": { "type": "string", "description": "Detailed description of the property." },
-        "propertyType": { "type": "string", "description": "Type of property (e.g., apartment, house, condo)." },
+        "propertyType": { "type": "string", "description": "Type of property (e.g., apartment, house, condo).", "enum": ["Apartment", "House", "Condo", "Townhouse", "Villa"] },
         "location": { "type": "string", "description": "Location of the property (e.g., address, neighborhood)." },
         "city": { "type": "string", "description": "City where the property is located." },
         "price": { "type": "number", "description": "Rental price of the property." },
