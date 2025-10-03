@@ -190,19 +190,25 @@ export function Header() {
                     ))}
                   </nav>
                   <div className="p-4 border-t flex flex-col gap-4">
-                     <Button variant="outline" className='border-primary text-primary' asChild>
-                       <Link href="/admin/properties/new">List your property</Link>
-                     </Button>
-                     {user && !user.isAnonymous ? (
-                       <Button onClick={handleLogout}>
-                         <LogOut className="mr-2 h-4 w-4" /> Logout
-                       </Button>
-                     ) : (
-                       <Button asChild>
-                        <Link href="/login">
-                          <User className="mr-2 h-4 w-4" /> Sign In
-                        </Link>
+                    <SheetClose asChild>
+                      <Button variant="outline" className='border-primary text-primary' asChild>
+                        <Link href="/admin/properties/new">List your property</Link>
                       </Button>
+                    </SheetClose>
+                    {user && !user.isAnonymous ? (
+                      <SheetClose asChild>
+                        <Button onClick={handleLogout}>
+                          <LogOut className="mr-2 h-4 w-4" /> Logout
+                        </Button>
+                      </SheetClose>
+                     ) : (
+                      <SheetClose asChild>
+                        <Button asChild>
+                          <Link href="/login">
+                            <User className="mr-2 h-4 w-4" /> Sign In
+                          </Link>
+                        </Button>
+                      </SheetClose>
                      )}
                   </div>
                 </div>
