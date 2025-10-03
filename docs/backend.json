@@ -1,0 +1,287 @@
+{
+  "entities": {
+    "Property": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Property",
+      "type": "object",
+      "description": "Represents a property listing for rent.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the property."
+        },
+        "title": {
+          "type": "string",
+          "description": "Title of the property listing."
+        },
+        "description": {
+          "type": "string",
+          "description": "Detailed description of the property."
+        },
+        "propertyType": {
+          "type": "string",
+          "description": "Type of property (e.g., apartment, house, condo)."
+        },
+        "location": {
+          "type": "string",
+          "description": "Location of the property (e.g., address, neighborhood)."
+        },
+        "price": {
+          "type": "number",
+          "description": "Rental price of the property."
+        },
+        "bedrooms": {
+          "type": "number",
+          "description": "Number of bedrooms in the property."
+        },
+        "bathrooms": {
+          "type": "number",
+          "description": "Number of bathrooms in the property."
+        },
+        "amenities": {
+          "type": "array",
+          "description": "List of amenities offered by the property.",
+          "items": {
+            "type": "string"
+          }
+        },
+        "images": {
+          "type": "array",
+          "description": "List of image URLs for the property.",
+          "items": {
+            "type": "string"
+          }
+        },
+        "landlordId": {
+          "type": "string",
+          "description": "Reference to Landlord. (Relationship: Landlord 1:N Property)"
+        },
+        "createdAt": {
+          "type": "string",
+          "description": "Date and time when the property was listed.",
+          "format": "date-time"
+        },
+        "updatedAt": {
+          "type": "string",
+          "description": "Date and time when the property was last updated.",
+          "format": "date-time"
+        },
+        "virtualTourUrl": {
+          "type": "string",
+          "description": "URL for the virtual tour of the property.",
+          "format": "uri"
+        }
+      },
+      "required": [
+        "id",
+        "title",
+        "description",
+        "propertyType",
+        "location",
+        "price",
+        "bedrooms",
+        "bathrooms",
+        "landlordId"
+      ]
+    },
+    "Landlord": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Landlord",
+      "type": "object",
+      "description": "Represents a landlord or property manager.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the landlord."
+        },
+        "name": {
+          "type": "string",
+          "description": "Name of the landlord or property manager."
+        },
+        "email": {
+          "type": "string",
+          "description": "Email address of the landlord.",
+          "format": "email"
+        },
+        "phone": {
+          "type": "string",
+          "description": "Phone number of the landlord."
+        },
+        "properties": {
+          "type": "array",
+          "description": "References to Properties. (Relationship: Landlord 1:N Property)",
+          "items": {
+            "type": "string"
+          }
+        }
+      },
+      "required": [
+        "id",
+        "name",
+        "email",
+        "phone"
+      ]
+    },
+    "User": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "User",
+      "type": "object",
+      "description": "Represents a user of the House Rent Kenya platform.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the user."
+        },
+        "firstName": {
+          "type": "string",
+          "description": "First name of the user."
+        },
+        "lastName": {
+          "type": "string",
+          "description": "Last name of the user."
+        },
+        "email": {
+          "type": "string",
+          "description": "Email address of the user.",
+          "format": "email"
+        },
+        "phone": {
+          "type": "string",
+          "description": "Phone number of the user."
+        },
+        "savedProperties": {
+          "type": "array",
+          "description": "References to Properties. (Relationship: User N:N Property through SavedProperty)",
+          "items": {
+            "type": "string"
+          }
+        },
+        "createdAt": {
+          "type": "string",
+          "description": "Date and time when the user created the account.",
+          "format": "date-time"
+        },
+        "updatedAt": {
+          "type": "string",
+          "description": "Date and time when the user last updated their profile.",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "id",
+        "firstName",
+        "lastName",
+        "email"
+      ]
+    },
+    "SavedProperty": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "SavedProperty",
+      "type": "object",
+      "description": "Represents the saved property relationship between User and Property (N:N).",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the saved property relationship."
+        },
+        "userId": {
+          "type": "string",
+          "description": "Reference to User. (Relationship: User N:N Property)"
+        },
+        "propertyId": {
+          "type": "string",
+          "description": "Reference to Property. (Relationship: User N:N Property)"
+        },
+        "savedAt": {
+          "type": "string",
+          "description": "Date and time when the property was saved by the user.",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "id",
+        "userId",
+        "propertyId"
+      ]
+    }
+  },
+  "auth": {
+    "providers": [
+      "password",
+      "anonymous"
+    ]
+  },
+  "firestore": {
+    "structure": [
+      {
+        "path": "/users/{userId}",
+        "definition": {
+          "entityName": "User",
+          "schema": {
+            "$ref": "#/backend/entities/User"
+          },
+          "description": "Stores user profile information. This is private data, owned by the user.",
+          "params": [
+            {
+              "name": "userId",
+              "description": "The unique identifier of the user."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/landlords/{landlordId}",
+        "definition": {
+          "entityName": "Landlord",
+          "schema": {
+            "$ref": "#/backend/entities/Landlord"
+          },
+          "description": "Stores landlord profile information.",
+          "params": [
+            {
+              "name": "landlordId",
+              "description": "The unique identifier of the landlord."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/landlords/{landlordId}/properties/{propertyId}",
+        "definition": {
+          "entityName": "Property",
+          "schema": {
+            "$ref": "#/backend/entities/Property"
+          },
+          "description": "Stores property listings owned by a specific landlord. Includes denormalized 'landlordId' for authorization independence.",
+          "params": [
+            {
+              "name": "landlordId",
+              "description": "The unique identifier of the landlord."
+            },
+            {
+              "name": "propertyId",
+              "description": "The unique identifier of the property."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/savedProperties/{savedPropertyId}",
+        "definition": {
+          "entityName": "SavedProperty",
+          "schema": {
+            "$ref": "#/backend/entities/SavedProperty"
+          },
+          "description": "Represents the saved property relationship between users and properties.  Includes 'userId' and 'propertyId' for authorization independence.",
+          "params": [
+            {
+              "name": "savedPropertyId",
+              "description": "The unique identifier for the saved property relationship."
+            }
+          ]
+        }
+      }
+    ],
+    "reasoning": "The Firestore structure is designed to mirror the entities and relationships defined in the provided schema, while also adhering to the principles of Authorization Independence, Clarity of Intent, DBAC (Database-Based Access Control), QAPs (Rules are not Filters), and Invariants.  The structure also takes into account the implicit requirement of the application to allow users to save properties, creating the need for a many-to-many relationship between Users and Properties.\n\n**Authorization Independence (CRITICAL):**\n*   `properties` subcollection within `/landlords/{landlordId}` includes the `landlordId`. This denormalization ensures that security rules for properties can be written without needing to perform `get()` operations to retrieve the landlord's ID.  The `savedProperties` collection also includes both `userId` and `propertyId` for similar reasons.  This is CRUCIAL to ensure that batches and transactions are possible and that rules are easily debuggable.\n\n**Structural Segregation (Homogeneous Security Posture):**\n*   Different collections are used for different entities (landlords, users, properties, savedProperties), ensuring each collection has a clear security posture.\n\n**Access Modeling (Standardization and Consistency):**\n*   **Path-Based Ownership:** Properties are owned by landlords, so they're nested under `/landlords/{landlordId}/properties/{propertyId}`. User data is stored under `/users/{userId}`.\n*   **N:N Relationship:** The `SavedProperty` entity facilitates the many-to-many relationship between Users and Properties. Each saved property document contains the `userId` and `propertyId`.\n\n**QAPs (Rules are not Filters):**\n*   The segregation of data into dedicated collections (e.g., `/users`, `/properties`, `/landlords`, `savedProperties`) allows for efficient and secure `list` operations. Rules can be applied to each collection without having to filter based on data within the documents.\n\n**Invariants:**\n*   The structure supports invariants such as ownership (via `landlordId` in properties and `userId` in savedProperties). Timestamps (`createdAt`, `updatedAt`, `savedAt`) can also be easily enforced via rules.\n\nTo support the 'ultra SEO structure' requirement and to maintain compatibility with `https://privatepropertykenya.com`, consider the following:\n\n*   **Property URLs:** Create a URL-friendly title (slug) field in the `Property` entity.  Use this slug in conjunction with the property ID to generate SEO-friendly URLs for property detail pages (e.g., `/properties/{propertyId}-{propertySlug}`). This URL structure should be enforced via the data structure (slug is required), and Firestore rules should also validate that the `propertyId` and `propertySlug` are valid.\n\nThe proposed structure facilitates simple, robust, and easily debuggable security rules, enabling the implementation of the core features of the \"House Rent Kenya\" application while maintaining data integrity and security."
+  }
+}
