@@ -4,7 +4,7 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import * as z from "zod";
-import { Loader2, Sparkles, Wand2, Image as ImageIcon } from "lucide-react";
+import { Loader2, Sparkles, Wand2, Image as ImageIcon, X } from "lucide-react";
 import React from "react";
 import { useRouter } from "next/navigation";
 import { serverTimestamp, collection, addDoc, doc, updateDoc } from "firebase/firestore";
@@ -171,6 +171,13 @@ export function PropertyForm({ property }: PropertyFormProps) {
       const newPreviews = newFiles.map(file => URL.createObjectURL(file));
       setImagePreviews(prev => [...prev, ...newPreviews]);
     }
+  };
+
+  const handleRemoveImage = (indexToRemove: number) => {
+    setImagePreviews(prev => prev.filter((_, index) => index !== indexToRemove));
+    setImageFiles(prev => prev.filter((_, index) => index !== indexToRemove));
+    // Clean up the object URL to avoid memory leaks
+    URL.revokeObjectURL(imagePreviews[indexToRemove]);
   };
 
   const handleGenerateDescription = async () => {
@@ -505,6 +512,16 @@ export function PropertyForm({ property }: PropertyFormProps) {
                         fill
                         className="rounded-md object-cover"
                       />
+                      <Button
+                        type="button"
+                        variant="destructive"
+                        size="icon"
+                        className="absolute top-1 right-1 h-6 w-6"
+                        onClick={() => handleRemoveImage(index)}
+                      >
+                        <X className="h-4 w-4" />
+                        <span className="sr-only">Remove image</span>
+                      </Button>
                     </div>
                   ))}
                   <div className="flex items-center justify-center w-full">
@@ -580,5 +597,3 @@ export function PropertyForm({ property }: PropertyFormProps) {
     </Form>
   );
 }
-
-    
