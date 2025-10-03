@@ -7,9 +7,10 @@ import { Sheet, SheetContent, SheetTrigger, SheetClose } from '@/components/ui/s
 import React from 'react';
 
 const navLinks = [
-  { href: '/search?type=rent', label: 'Rent' },
-  { href: '/search?type=buy', label: 'Buy' },
-  { href: '#', label: 'Agents' },
+  { href: '/search?type=rent', label: 'To Rent' },
+  { href: '/search?type=buy', label: 'For Sale' },
+  { href: '#', label: 'Developments' },
+  { href: '#', label: 'Find Agents' },
   { href: '#', label: 'Blog' },
 ];
 
