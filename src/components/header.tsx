@@ -17,10 +17,10 @@ import {
 const navLinks = [
   { href: '/search?type=rent', label: 'To Rent' },
   { href: '/search?type=buy', label: 'For Sale' },
-  { href: '#', label: 'Developments' },
+  { href: '/developments', label: 'Developments' },
   { href: '/advice', label: 'Property Advice' },
-  { href: '#', label: 'Find Agents' },
-  { href: '#', label: 'Blog' },
+  { href: '/agents', label: 'Find Agents' },
+  { href: '/blog', label: 'Blog' },
 ];
 
 export function Header() {
@@ -76,20 +76,13 @@ export function Header() {
                 <DropdownMenuItem asChild>
                   <Link href="/login">
                     <UserCircle className="mr-2 h-4 w-4" />
-                    <span>Private</span>
+                    <span>User</span>
                   </Link>
                 </DropdownMenuItem>
                 <DropdownMenuItem asChild>
                    <Link href="/login">
                     <Briefcase className="mr-2 h-4 w-4" />
                     <span>Agent</span>
-                  </Link>
-                </DropdownMenuItem>
-                 <DropdownMenuSeparator />
-                 <DropdownMenuItem asChild>
-                   <Link href="/admin/dashboard">
-                    <LayoutDashboard className="mr-2 h-4 w-4" />
-                    <span>Admin Panel</span>
                   </Link>
                 </DropdownMenuItem>
               </DropdownMenuContent>

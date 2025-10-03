@@ -16,7 +16,7 @@ export default function SignupPage() {
       <div className="flex items-center justify-center py-12">
         <Card className="mx-auto max-w-sm w-full">
           <CardHeader>
-            <CardTitle className="text-xl font-headline">Create a Private Account</CardTitle>
+            <CardTitle className="text-xl font-headline">Create a User Account</CardTitle>
             <CardDescription>
               Enter your information to find your next home.
             </CardDescription>
