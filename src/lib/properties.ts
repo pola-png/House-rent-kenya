@@ -72,7 +72,7 @@ export const properties: Property[] = [
     amenities: ['Gated Community', 'Swimming Pool', 'Private Garden', 'Clubhouse'],
     images: ['property_4_1'],
     agent: { name: 'John Smith', avatar: 'agent_2' },
-    featured: true,
+    featured: false,
     latitude: -1.285,
     longitude: 36.77,
     status: 'Rented',
