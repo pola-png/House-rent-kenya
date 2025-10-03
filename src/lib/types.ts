@@ -12,7 +12,6 @@ export interface Property {
   bathrooms: number;
   area: number; // in sqft
   type: 'Apartment' | 'House' | 'Condo' | 'Townhouse' | 'Villa';
-  propertyCategory: 'Residential' | 'Commercial';
   amenities: string[];
   images: string[];
   agent: {
@@ -22,7 +21,7 @@ export interface Property {
   featured: boolean;
   latitude: number;
   longitude: number;
-  status: 'For Rent' | 'Rented';
+  status: 'For Rent' | 'For Sale' | 'Short Let' | 'Land' | 'Rented';
   landlordId: string;
   createdAt: Timestamp;
   updatedAt: Timestamp;

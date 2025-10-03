@@ -36,7 +36,6 @@ import { useToast } from "@/hooks/use-toast";
 import { Progress } from "@/components/ui/progress";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useFirestore, useUser, addDocumentNonBlocking, setDocumentNonBlocking } from "@/firebase";
 
 const formSchema = z.object({
@@ -53,9 +52,8 @@ const formSchema = z.object({
   bathrooms: z.coerce.number().int().min(1),
   area: z.coerce.number().positive(),
   type: z.enum(["Apartment", "House", "Condo", "Townhouse", "Villa"]),
-  propertyCategory: z.enum(["Residential", "Commercial"]),
   amenities: z.string().min(3),
-  status: z.enum(["For Rent", "Rented"]),
+  status: z.enum(["For Rent", "For Sale", "Short Let", "Land", "Rented"]),
   keywords: z.string().optional(),
   featured: z.boolean().default(false),
   latitude: z.coerce.number().min(-90).max(90).default(-1.286389),
@@ -90,7 +88,6 @@ export function PropertyForm({ property }: PropertyFormProps) {
     : {
         status: "For Rent",
         type: "Apartment",
-        propertyCategory: "Residential",
         keywords: "",
         featured: false,
         city: "Nairobi",
@@ -308,33 +305,12 @@ export function PropertyForm({ property }: PropertyFormProps) {
                 <CardTitle>Property Features</CardTitle>
               </CardHeader>
               <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                 <FormField
-                  control={form.control}
-                  name="propertyCategory"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Category</FormLabel>
-                      <Select onValueChange={field.onChange} defaultValue={field.value}>
-                        <FormControl>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Select a category" />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          <SelectItem value="Residential">Residential</SelectItem>
-                          <SelectItem value="Commercial">Commercial</SelectItem>
-                        </SelectContent>
-                      </Select>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
                 <FormField
                   control={form.control}
                   name="price"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Price (Ksh/month)</FormLabel>
+                      <FormLabel>Price (Ksh)</FormLabel>
                       <FormControl>
                         <Input type="number" placeholder="150000" {...field} />
                       </FormControl>
@@ -506,6 +482,24 @@ export function PropertyForm({ property }: PropertyFormProps) {
                             </FormControl>
                             <Label htmlFor="r-for-rent" className="font-normal">For Rent</Label>
                           </FormItem>
+                           <FormItem className="flex items-center space-x-3 space-y-0">
+                            <FormControl>
+                              <RadioGroupItem value="For Sale" id="r-for-sale"/>
+                            </FormControl>
+                            <Label htmlFor="r-for-sale" className="font-normal">For Sale</Label>
+                          </FormItem>
+                           <FormItem className="flex items-center space-x-3 space-y-0">
+                            <FormControl>
+                              <RadioGroupItem value="Short Let" id="r-short-let"/>
+                            </FormControl>
+                            <Label htmlFor="r-short-let" className="font-normal">Short Let</Label>
+                          </FormItem>
+                           <FormItem className="flex items-center space-x-3 space-y-0">
+                            <FormControl>
+                              <RadioGroupItem value="Land" id="r-land"/>
+                            </FormControl>
+                            <Label htmlFor="r-land" className="font-normal">Land</Label>
+                          </FormItem>
                           <FormItem className="flex items-center space-x-3 space-y-0">
                             <FormControl>
                               <RadioGroupItem value="Rented" id="r-rented"/>
@@ -621,5 +615,3 @@ export function PropertyForm({ property }: PropertyFormProps) {
     </Form>
   );
 }
-
-    
