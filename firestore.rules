@@ -1,170 +1,103 @@
 /**
- * @file Firebase Security Rules for House Rent Kenya.
+ * @fileoverview Firestore Security Rules for House Rent Kenya.
  *
- * @description This ruleset enforces a user-ownership model for user profiles and a landlord-ownership model for properties.
- *  It uses denormalization to avoid costly `get()` calls and maintain authorization independence.
+ * Core Philosophy:
+ * This ruleset prioritizes a balance between open data access for properties and strict user-ownership for user profiles.
+ * Property listings are publicly readable, but only the owner (landlord) can modify them.
+ * User profiles are strictly private and only accessible to the owning user.
  *
- * @dataStructure
- * - /users/{userId}: Stores private user profile information, accessible only to the user.
- * - /landlords/{landlordId}: Stores landlord profile information, accessible only to the landlord.
- * - /landlords/{landlordId}/properties/{propertyId}: Stores property listings, accessible only to the landlord.
- * - /savedProperties/{savedPropertyId}: Represents the saved property relationship between users and properties, accessible only if the user owns it.
+ * Data Structure:
+ * - /users/{userId}: Stores private user profile information.
+ * - /properties/{propertyId}: Stores publicly readable property listings.
  *
- * @keySecurityDecisions
- * - Users can only access their own profile data.
- * - Landlords can only access their own profile data and their own property listings.
- * - Properties are owned by landlords and can only be created, updated, or deleted by the landlord.
- * - The `list` operation is enabled for all collections, but access to individual documents is controlled by ownership.
- * - The rules do NOT validate the full data shape but DO validate the relational integrity of the data,
- *   specifically the consistency of `userId` and `landlordId` fields across documents and paths.
- * - Denormalization is used to simplify and optimize security rules, avoiding `get()` calls.
+ * Key Security Decisions:
+ * - Property listings are publicly readable.
+ * - Only the landlord can create, update, or delete their property listings.
+ * - Users can only read and write their own profile data.
+ * - Listing user documents is disallowed as a general security practice.
+ *
+ * Denormalization for Authorization:
+ * The `properties` collection requires an `landlordId` field on each document. This field stores the UID of the user who owns the property.
+ * This denormalization enables efficient owner-only write rules without needing costly `get()` operations.
  */
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
     /**
-     * @description Controls access to user profile information. Only the user can read and write their own profile.
+     * @description Allows users to read and write their own profile data.
      * @path /users/{userId}
-     * @allow (create) - Authenticated user with matching UID creates their own profile.
-     *   request.auth.uid == 'user_abc' && request.resource.data.id == 'user_abc'
-     * @allow (get, list, update, delete) - Authenticated user with matching UID reads/writes their own profile.
-     *   request.auth.uid == 'user_abc' && resource.data.id == 'user_abc'
-     * @deny (create) - Authenticated user tries to create a profile for another user.
-     *   request.auth.uid == 'user_abc' && request.resource.data.id == 'user_def'
-     * @deny (get, list, update, delete) - Authenticated user tries to read/write another user's profile.
-     *   request.auth.uid == 'user_abc' && resource.data.id == 'user_def'
-     * @principle Enforces user-ownership for user profiles.
+     * @allow (get, create, update, delete) if the user is the owner of the profile (request.auth.uid == userId).
+     * @deny (get, create, update, delete) if the user is not the owner of the profile.
+     * @principle Enforces document ownership for all operations.
      */
     match /users/{userId} {
-      // Check if the user is signed in
+      // Check if the user is signed in.
       function isSignedIn() {
         return request.auth != null;
       }
 
-      // Check if the requested user id matches the authenticated user id
+      // Check if the requesting user is the owner of the document.
       function isOwner(userId) {
-        return request.auth.uid == userId;
+        return isSignedIn() && request.auth.uid == userId;
       }
 
-      // Check if the user is the existing owner of the document.
+      // Check if the requesting user is the existing owner of the document.
       function isExistingOwner(userId) {
         return isOwner(userId) && resource != null;
       }
 
+      // Allow the user to read their own profile.
       allow get: if isOwner(userId);
-      allow list: if isOwner(userId);
-      allow create: if isSignedIn() && isOwner(userId) && request.resource.data.id == userId;
-      allow update: if isExistingOwner(userId) && request.resource.data.id == resource.data.id;
+
+      // Prevent listing user documents.
+      allow list: if false;
+
+      // Allow the user to create their own profile if the UID matches.
+      allow create: if isOwner(userId) && request.resource.data.uid == userId;
+
+      // Allow the user to update their own profile if they are the owner and the UID is immutable.
+      allow update: if isExistingOwner(userId) && request.resource.data.uid == resource.data.uid;
+
+      // Allow the user to delete their own profile if they are the owner.
       allow delete: if isExistingOwner(userId);
     }
 
     /**
-     * @description Controls access to landlord profile information. Only the landlord can read and write their own profile.
-     * @path /landlords/{landlordId}
-     * @allow (create) - Authenticated landlord with matching UID creates their own profile.
-     *   request.auth.uid == 'landlord_abc' && request.resource.data.id == 'landlord_abc'
-     * @allow (get, list, update, delete) - Authenticated landlord with matching UID reads/writes their own profile.
-     *   request.auth.uid == 'landlord_abc' && resource.data.id == 'landlord_abc'
-     * @deny (create) - Authenticated user tries to create a profile for another landlord.
-     *   request.auth.uid == 'landlord_abc' && request.resource.data.id == 'landlord_def'
-     * @deny (get, list, update, delete) - Authenticated user tries to read/write another landlord's profile.
-     *   request.auth.uid == 'landlord_abc' && resource.data.id == 'landlord_def'
-     * @principle Enforces user-ownership for landlord profiles.
+     * @description Allows anyone to read property listings, but only the landlord can create, update, or delete them.
+     * @path /properties/{propertyId}
+     * @allow (get, list) to anyone.
+     * @allow (create) if the landlordId matches the user's UID.
+     * @allow (update, delete) if the user is the owner of the property (landlordId matches the user's UID).
+     * @deny (create, update, delete) if the user is not the owner of the property.
+     * @principle Enforces document ownership for writes.
      */
-    match /landlords/{landlordId} {
-      // Check if the user is signed in
+    match /properties/{propertyId} {
+      // Check if the user is signed in.
       function isSignedIn() {
         return request.auth != null;
       }
 
-      // Check if the requested landlord id matches the authenticated user id
+      // Check if the requesting user is the owner of the document.
       function isOwner(landlordId) {
-        return request.auth.uid == landlordId;
+        return isSignedIn() && request.auth.uid == landlordId;
       }
 
-      // Check if the user is the existing owner of the document.
       function isExistingOwner(landlordId) {
         return isOwner(landlordId) && resource != null;
       }
 
-      allow get: if isOwner(landlordId);
-      allow list: if isOwner(landlordId);
-      allow create: if isSignedIn() && isOwner(landlordId) && request.resource.data.id == landlordId;
-      allow update: if isExistingOwner(landlordId) && request.resource.data.id == resource.data.id;
-      allow delete: if isExistingOwner(landlordId);
+      // Allow anyone to read property listings.
+      allow get, list: if true;
 
-      /**
-       * @description Controls access to property listings owned by a specific landlord.
-       * @path /landlords/{landlordId}/properties/{propertyId}
-       * @allow (create) - Authenticated landlord with matching UID creates a property listing.
-       *   request.auth.uid == 'landlord_abc' && request.resource.data.landlordId == 'landlord_abc'
-       * @allow (get, list, update, delete) - Authenticated landlord with matching UID reads/writes their own property listing.
-       *   request.auth.uid == 'landlord_abc' && resource.data.landlordId == 'landlord_abc'
-       * @deny (create) - Authenticated user tries to create a property listing for another landlord.
-       *   request.auth.uid == 'landlord_abc' && request.resource.data.landlordId == 'landlord_def'
-       * @deny (get, list, update, delete) - Authenticated user tries to read/write another landlord's property listing.
-       *   request.auth.uid == 'landlord_abc' && resource.data.landlordId == 'landlord_def'
-       * @principle Enforces landlord-ownership for property listings.
-       */
-      match /properties/{propertyId} {
-        // Check if the user is signed in
-        function isSignedIn() {
-          return request.auth != null;
-        }
+      // Allow the landlord to create a property listing if the landlordId matches.
+      allow create: if isSignedIn() && request.resource.data.landlordId == request.auth.uid;
 
-        // Check if the requested landlord id matches the landlordId in the property data
-        function isOwner(landlordId) {
-          return request.auth.uid == landlordId;
-        }
+      // Allow the landlord to update a property listing if they are the owner.
+      allow update: if isExistingOwner(resource.data.landlordId);
 
-        // Check if the user is the existing owner of the document.
-        function isExistingOwner(landlordId) {
-          return isOwner(landlordId) && resource != null;
-        }
-
-        allow get: if true; // Public read
-        allow list: if true; // Public list
-        allow create: if isSignedIn() && isOwner(landlordId) && request.resource.data.landlordId == landlordId;
-        allow update: if isExistingOwner(landlordId) && resource.data.landlordId == landlordId;
-        allow delete: if isExistingOwner(landlordId);
-      }
-    }
-
-    /**
-     * @description Controls access to saved property relationships.  The user must own the saved property.
-     * @path /savedProperties/{savedPropertyId}
-     * @allow (create) - Authenticated user creates a saved property relationship with their userId.
-     *   request.auth.uid == 'user_abc' && request.resource.data.userId == 'user_abc'
-     * @allow (get, list, update, delete) - Authenticated user reads/writes a saved property relationship with their userId.
-     *   request.auth.uid == 'user_abc' && resource.data.userId == 'user_abc'
-     * @deny (create) - Authenticated user tries to create a saved property relationship for another user.
-     *   request.auth.uid == 'user_abc' && request.resource.data.userId == 'user_def'
-     * @deny (get, list, update, delete) - Authenticated user tries to read/write another user's saved property relationship.
-     *   request.auth.uid == 'user_abc' && resource.data.userId == 'user_def'
-     * @principle Enforces user-ownership for saved property relationships.
-     */
-    match /savedProperties/{savedPropertyId} {
-      // Check if the user is signed in
-      function isSignedIn() {
-        return request.auth != null;
-      }
-
-      // Check if the requested user id matches the userId in the saved property data
-      function isOwner(userId) {
-        return request.auth.uid == userId;
-      }
-
-      // Check if the user is the existing owner of the document.
-      function isExistingOwner(userId) {
-        return isOwner(userId) && resource != null;
-      }
-
-      allow get: if isSignedIn() && isOwner(resource.data.userId);
-      allow list: if isSignedIn() && isOwner(request.auth.uid);
-      allow create: if isSignedIn() && isOwner(request.resource.data.userId) && request.resource.data.userId == request.auth.uid;
-      allow update: if isExistingOwner(resource.data.userId) && resource.data.userId == request.auth.uid;
-      allow delete: if isExistingOwner(resource.data.userId) && resource.data.userId == request.auth.uid;
+      // Allow the landlord to delete a property listing if they are the owner.
+      allow delete: if isExistingOwner(resource.data.landlordId);
     }
   }
 }
