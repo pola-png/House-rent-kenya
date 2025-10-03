@@ -10,6 +10,7 @@ import { properties } from '@/lib/properties';
 import placeholderImages from '@/lib/placeholder-images.json';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 const popularSearches = [
   'Apartments for rent in Kilimani',
@@ -68,7 +69,7 @@ export default function Home() {
             <p className="text-lg md:text-xl max-w-2xl mx-auto mb-8 drop-shadow">
               Kenya's #1 property portal for rentals and sales.
             </p>
-            <Tabs defaultValue="rent" className="max-w-2xl mx-auto">
+            <Tabs defaultValue="rent" className="max-w-3xl mx-auto">
                 <TabsList className="grid w-full grid-cols-4 bg-black/50 backdrop-blur-sm border border-white/20">
                     <TabsTrigger value="rent" className="data-[state=active]:bg-white data-[state=active]:text-primary text-white">RENT</TabsTrigger>
                     <TabsTrigger value="buy" className="data-[state=active]:bg-white data-[state=active]:text-primary text-white">BUY</TabsTrigger>
@@ -76,21 +77,70 @@ export default function Home() {
                     <TabsTrigger value="land" className="data-[state=active]:bg-white data-[state=active]:text-primary text-white">LAND</TabsTrigger>
                 </TabsList>
                 <div className="bg-white/90 backdrop-blur-sm p-4 rounded-b-lg shadow-lg">
-                    <div className="flex flex-col md:flex-row gap-2">
-                        <div className="relative flex-grow">
-                            <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
-                            <Input
-                                type="text"
-                                placeholder="Enter location, e.g., Nairobi, Kilimani"
-                                className="w-full pl-10 text-foreground"
-                            />
-                        </div>
-                        <Button asChild size="lg" className="w-full md:w-auto">
-                            <Link href="/search">
-                                <Search className="mr-2 h-5 w-5" />
-                                Search
-                            </Link>
-                        </Button>
+                    <div className="flex flex-col gap-4">
+                      <div className="flex flex-col md:flex-row gap-2">
+                          <div className="relative flex-grow">
+                              <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+                              <Input
+                                  type="text"
+                                  placeholder="Enter location, e.g., Nairobi, Kilimani"
+                                  className="w-full pl-10 text-foreground h-12 text-base"
+                              />
+                          </div>
+                          <Button asChild size="lg" className="w-full md:w-auto h-12">
+                              <Link href="/search">
+                                  <Search className="mr-2 h-5 w-5" />
+                                  Search
+                              </Link>
+                          </Button>
+                      </div>
+                      <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+                        <Select>
+                          <SelectTrigger className="text-foreground">
+                            <SelectValue placeholder="Type" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="apartment">Apartment</SelectItem>
+                            <SelectItem value="house">House</SelectItem>
+                            <SelectItem value="townhouse">Townhouse</SelectItem>
+                            <SelectItem value="condo">Condo</SelectItem>
+                            <SelectItem value="villa">Villa</SelectItem>
+                          </SelectContent>
+                        </Select>
+                        <Select>
+                          <SelectTrigger className="text-foreground">
+                            <SelectValue placeholder="Min Beds" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="1">1</SelectItem>
+                            <SelectItem value="2">2</SelectItem>
+                            <SelectItem value="3">3</SelectItem>
+                            <SelectItem value="4">4+</SelectItem>
+                          </SelectContent>
+                        </Select>
+                         <Select>
+                          <SelectTrigger className="text-foreground">
+                            <SelectValue placeholder="Min Price" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="50000">Ksh 50,000</SelectItem>
+                            <SelectItem value="100000">Ksh 100,000</SelectItem>
+                            <SelectItem value="150000">Ksh 150,000</SelectItem>
+                            <SelectItem value="200000">Ksh 200,000</SelectItem>
+                          </SelectContent>
+                        </Select>
+                        <Select>
+                          <SelectTrigger className="text-foreground">
+                            <SelectValue placeholder="Max Price" />
+                          </SelectTrigger>
+                           <SelectContent>
+                            <SelectItem value="100000">Ksh 100,000</SelectItem>
+                            <SelectItem value="200000">Ksh 200,000</SelectItem>
+                            <SelectItem value="300000">Ksh 300,000</SelectItem>
+                            <SelectItem value="500000">Ksh 500,000+</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
                     </div>
                 </div>
             </Tabs>
