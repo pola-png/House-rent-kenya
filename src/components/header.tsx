@@ -24,28 +24,18 @@ const navLinks = [
 ];
 
 export function Header() {
-  const [isScrolled, setIsScrolled] = React.useState(false);
-
-  React.useEffect(() => {
-    const handleScroll = () => {
-      setIsScrolled(window.scrollY > 10);
-    };
-    window.addEventListener('scroll', handleScroll);
-    return () => window.removeEventListener('scroll', handleScroll);
-  }, []);
-
-  const linkClasses = `text-sm font-medium transition-colors hover:text-primary ${isScrolled ? 'text-foreground' : 'text-white'}`;
-  const buttonBorderClasses = isScrolled ? 'border-primary text-primary hover:bg-primary hover:text-primary-foreground' : 'border-white text-white hover:bg-white hover:text-primary';
+  const linkClasses = `text-sm font-medium transition-colors hover:text-primary text-foreground`;
+  const buttonBorderClasses = 'border-primary text-primary hover:bg-primary hover:text-primary-foreground';
 
   return (
-    <header className={`sticky top-0 z-50 transition-all duration-300 ${isScrolled ? 'bg-background/80 backdrop-blur-sm shadow-md' : 'bg-transparent'}`}>
+    <header className={`sticky top-0 z-50 transition-all duration-300 bg-background/80 backdrop-blur-sm shadow-md`}>
       <div className="container mx-auto px-4">
         <div className="flex h-20 items-center justify-between">
           <Link href="/" className="flex items-center gap-2">
-            <div className={`p-2 rounded-md transition-colors ${isScrolled ? 'bg-primary' : 'bg-white'}`}>
-                <Building className={`h-6 w-6 transition-colors ${isScrolled ? 'text-primary-foreground' : 'text-primary'}`} />
+            <div className={`p-2 rounded-md transition-colors bg-primary`}>
+                <Building className={`h-6 w-6 transition-colors text-primary-foreground`} />
             </div>
-            <span className={`text-xl font-bold font-headline transition-colors ${isScrolled ? 'text-foreground' : 'text-white'}`}>
+            <span className={`text-xl font-bold font-headline transition-colors text-foreground`}>
               House Rent Kenya
             </span>
           </Link>
@@ -66,7 +56,7 @@ export function Header() {
             <Button variant="outline" className={buttonBorderClasses}>List your property</Button>
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button className={`${isScrolled ? '' : 'bg-white text-primary hover:bg-gray-200'}`}>
+                <Button>
                   <User className="mr-2 h-4 w-4" /> Sign In <ChevronDown className="ml-2 h-4 w-4" />
                 </Button>
               </DropdownMenuTrigger>
@@ -92,7 +82,7 @@ export function Header() {
           <div className="md:hidden">
             <Sheet>
               <SheetTrigger asChild>
-                <Button variant="ghost" size="icon" className={`${isScrolled ? 'text-foreground' : 'text-white hover:bg-white/20'}`}>
+                <Button variant="ghost" size="icon" className={`text-foreground hover:bg-black/20`}>
                   <Menu className="h-6 w-6" />
                 </Button>
               </SheetTrigger>
