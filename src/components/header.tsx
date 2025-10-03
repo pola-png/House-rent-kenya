@@ -1,15 +1,24 @@
 "use client";
 
 import Link from 'next/link';
-import { Building, Menu, Search, User, X } from 'lucide-react';
+import { Building, Menu, User, X, ChevronDown, Briefcase, UserCircle, LayoutDashboard } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetTrigger, SheetClose } from '@/components/ui/sheet';
 import React from 'react';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 const navLinks = [
   { href: '/search?type=rent', label: 'To Rent' },
   { href: '/search?type=buy', label: 'For Sale' },
   { href: '#', label: 'Developments' },
+  { href: '/advice', label: 'Property Advice' },
   { href: '#', label: 'Find Agents' },
   { href: '#', label: 'Blog' },
 ];
@@ -24,6 +33,9 @@ export function Header() {
     window.addEventListener('scroll', handleScroll);
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
+
+  const linkClasses = `text-sm font-medium transition-colors hover:text-primary ${isScrolled ? 'text-foreground' : 'text-white'}`;
+  const buttonBorderClasses = isScrolled ? 'border-primary text-primary hover:bg-primary hover:text-primary-foreground' : 'border-white text-white hover:bg-white hover:text-primary';
 
   return (
     <header className={`sticky top-0 z-50 transition-all duration-300 ${isScrolled ? 'bg-background/80 backdrop-blur-sm shadow-md' : 'bg-transparent'}`}>
@@ -43,20 +55,45 @@ export function Header() {
               <Link
                 key={`${link.href}-${link.label}`}
                 href={link.href}
-                className={`text-sm font-medium transition-colors hover:text-primary ${isScrolled ? 'text-foreground' : 'text-white'}`}
+                className={linkClasses}
               >
                 {link.label}
               </Link>
             ))}
           </nav>
 
-          <div className="hidden md:flex items-center gap-4">
-            <Button variant="outline" className={`${isScrolled ? 'border-primary text-primary hover:bg-primary hover:text-primary-foreground' : 'border-white text-white hover:bg-white hover:text-primary'}`}>List your property</Button>
-            <Button asChild className={`${isScrolled ? '' : 'bg-white text-primary hover:bg-gray-200'}`}>
-              <Link href="/login">
-                <User className="mr-2 h-4 w-4" /> Sign In
-              </Link>
-            </Button>
+          <div className="hidden md:flex items-center gap-2">
+            <Button variant="outline" className={buttonBorderClasses}>List your property</Button>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button className={`${isScrolled ? '' : 'bg-white text-primary hover:bg-gray-200'}`}>
+                  <User className="mr-2 h-4 w-4" /> Sign In <ChevronDown className="ml-2 h-4 w-4" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuLabel>Choose account type</DropdownMenuLabel>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem asChild>
+                  <Link href="/login">
+                    <UserCircle className="mr-2 h-4 w-4" />
+                    <span>Private</span>
+                  </Link>
+                </DropdownMenuItem>
+                <DropdownMenuItem asChild>
+                   <Link href="/login">
+                    <Briefcase className="mr-2 h-4 w-4" />
+                    <span>Agent</span>
+                  </Link>
+                </DropdownMenuItem>
+                 <DropdownMenuSeparator />
+                 <DropdownMenuItem asChild>
+                   <Link href="/admin/dashboard">
+                    <LayoutDashboard className="mr-2 h-4 w-4" />
+                    <span>Admin Panel</span>
+                  </Link>
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
           </div>
 
           <div className="md:hidden">
