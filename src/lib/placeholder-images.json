@@ -1,3 +1,112 @@
 {
-  "placeholderImages": []
+  "placeholderImages": [
+    {
+      "id": "hero_main",
+      "description": "Main hero image for the homepage",
+      "imageUrl": "https://images.unsplash.com/photo-1664372623516-0b1540d6771e?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw1fHxtb2Rlcm4lMjBhcGFydG1lbnR8ZW58MHx8fHwxNzU5NDQ3ODY5fDA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "modern apartment"
+    },
+    {
+      "id": "property_1_1",
+      "description": "Image 1 for property 1",
+      "imageUrl": "https://images.unsplash.com/photo-1628744876497-eb30460be9f6?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw2fHxtb2Rlcm4lMjBsaXZpbmclMjByb29tfGVufDB8fHx8MTc1OTQ0MjI2N3ww&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "modern living room"
+    },
+    {
+      "id": "property_1_2",
+      "description": "Image 2 for property 1",
+      "imageUrl": "https://images.unsplash.com/photo-1758448755927-e5c5ae14790c?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw4fHxzbGVlayUyMGtpdGNoZW58ZW58MHx8fHwxNzU5MzkzMDQzfDA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "sleek kitchen"
+    },
+    {
+      "id": "property_1_3",
+      "description": "Image 3 for property 1",
+      "imageUrl": "https://images.unsplash.com/photo-1588796460666-590f1d712a2e?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwxMHx8Y296eSUyMGJlZHJvb218ZW58MHx8fHwxNzU5Mzk1Njc3fDA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "cozy bedroom"
+    },
+    {
+      "id": "property_2_1",
+      "description": "Image 1 for property 2",
+      "imageUrl": "https://images.unsplash.com/photo-1675529734325-f735f7a25121?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw0fHxzcGFjaW91cyUyMGhvdXNlJTIwZXh0ZXJpb3J8ZW58MHx8fHwxNzU5NDk5Mjc3fDA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "spacious house exterior"
+    },
+    {
+      "id": "property_2_2",
+      "description": "Image 2 for property 2",
+      "imageUrl": "https://images.unsplash.com/photo-1695550056778-de79c8cd909e?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwyfHxnYXJkZW4lMjBiYWNreWFyZHxlbnwwfHx8fDE3NTkzOTU2Nzd8MA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "garden backyard"
+    },
+    {
+      "id": "property_2_3",
+      "description": "Image 3 for property 2",
+      "imageUrl": "https://images.unsplash.com/photo-1704040686428-7534b262d0d8?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw4fHxmYW1pbHklMjByb29tfGVufDB8fHx8MTc1OTQzNDY1MXww&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "family room"
+    },
+    {
+      "id": "property_3_1",
+      "description": "Image 1 for property 3",
+      "imageUrl": "https://images.unsplash.com/photo-1754490792078-0f5a457b7600?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw5fHxjaXR5JTIwYXBhcnRtZW50JTIwYmFsY29ueXxlbnwwfHx8fDE3NTk0OTkyNzd8MA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "city apartment balcony"
+    },
+    {
+      "id": "property_4_1",
+      "description": "Image 1 for property 4",
+      "imageUrl": "https://images.unsplash.com/photo-1758936381804-586f7e4dbea1?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw1fHxzdWJ1cmJhbiUyMHRvd25ob3VzZXxlbnwwfHx8fDE3NTk0OTkyNzd8MA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "suburban townhouse"
+    },
+    {
+      "id": "property_5_1",
+      "description": "Image 1 for property 5",
+      "imageUrl": "https://images.unsplash.com/photo-1751998816246-c63d182770c0?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwxfHxsdXh1cnklMjBjb25kbyUyMGludGVyaW9yfGVufDB8fHx8MTc1OTQ5OTI3N3ww&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "luxury condo interior"
+    },
+    {
+      "id": "property_6_1",
+      "description": "Image 1 for property 6",
+      "imageUrl": "https://images.unsplash.com/photo-1533377437229-5ca96ecbcd78?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw0fHxyb29mdG9wJTIwcG9vbHxlbnwwfHx8fDE3NTk0Nzg2Mjl8MA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "rooftop pool"
+    },
+    {
+      "id": "agent_1",
+      "description": "Avatar for agent 1",
+      "imageUrl": "https://images.unsplash.com/photo-1581065178047-8ee15951ede6?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw2fHxwcm9mZXNzaW9uYWwlMjB3b21hbnxlbnwwfHx8fDE3NTk0NTUxNTJ8MA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "professional woman"
+    },
+    {
+      "id": "agent_2",
+      "description": "Avatar for agent 2",
+      "imageUrl": "https://images.unsplash.com/photo-1651242475142-32a37ac8cf88?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw0fHxmcmllbmRseSUyMG1hbnxlbnwwfHx8fDE3NTk0MjE3MTR8MA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "friendly man"
+    },
+    {
+      "id": "city_nairobi",
+      "description": "Image for Nairobi city",
+      "imageUrl": "https://images.unsplash.com/photo-1669127300649-940337f1487e?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwxfHxOYWlyb2JpJTIwc2t5bGluZXxlbnwwfHx8fDE3NTk0OTkyNzd8MA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "Nairobi skyline"
+    },
+    {
+      "id": "city_mombasa",
+      "description": "Image for Mombasa city",
+      "imageUrl": "https://images.unsplash.com/photo-1685380518106-308ed23847a4?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw5fHxNb21iYXNhJTIwYmVhY2h8ZW58MHx8fHwxNzU5NDk5Mjc3fDA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "Mombasa beach"
+    },
+    {
+      "id": "city_kisumu",
+      "description": "Image for Kisumu city",
+      "imageUrl": "https://images.unsplash.com/photo-1690715667558-aa97c374fef6?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwxfHxMYWtlJTIwVmljdG9yaWF8ZW58MHx8fHwxNzU5NDk5Mjc3fDA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "Lake Victoria"
+    },
+    {
+      "id": "city_nakuru",
+      "description": "Image for Nakuru city",
+      "imageUrl": "https://images.unsplash.com/photo-1704408093884-2ed4073012ef?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw3fHxOYWt1cnUlMjBmbGFtaW5nb3N8ZW58MHx8fHwxNzU5NDk5Mjc3fDA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "Nakuru flamingos"
+    },
+    {
+      "id": "auth_bg",
+      "description": "Background for login/signup pages",
+      "imageUrl": "https://images.unsplash.com/photo-1595944356863-e624f8234e1e?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw5fHxob3VzZSUyMGtleXN8ZW58MHx8fHwxNzU5NDAwMjcxfDA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "house keys"
+    }
+  ]
 }
