@@ -69,9 +69,11 @@ export default function Home() {
               Kenya's #1 property portal for rentals and sales.
             </p>
             <Tabs defaultValue="rent" className="max-w-2xl mx-auto">
-                <TabsList className="grid w-full grid-cols-2 bg-primary/20 backdrop-blur-sm border border-white/20">
+                <TabsList className="grid w-full grid-cols-4 bg-primary/20 backdrop-blur-sm border border-white/20">
                     <TabsTrigger value="rent" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground text-white">For Rent</TabsTrigger>
-                    <TabsTrigger value="sale" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground text-white">For Sale</TabsTrigger>
+                    <TabsTrigger value="buy" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground text-white">For Sale</TabsTrigger>
+                    <TabsTrigger value="short-let" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground text-white">Short Let</TabsTrigger>
+                    <TabsTrigger value="land" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground text-white">Land</TabsTrigger>
                 </TabsList>
                 <TabsContent value="rent">
                     <div className="bg-white/90 backdrop-blur-sm p-4 rounded-b-lg shadow-lg">
@@ -93,7 +95,7 @@ export default function Home() {
                         </div>
                     </div>
                 </TabsContent>
-                 <TabsContent value="sale">
+                 <TabsContent value="buy">
                     <div className="bg-white/90 backdrop-blur-sm p-4 rounded-b-lg shadow-lg">
                         <div className="flex flex-col md:flex-row gap-2">
                             <div className="relative flex-grow">
@@ -101,6 +103,46 @@ export default function Home() {
                                 <Input
                                     type="text"
                                     placeholder="Search for properties for sale"
+                                    className="w-full pl-10 text-foreground"
+                                />
+                            </div>
+                            <Button asChild size="lg" className="w-full md:w-auto">
+                                <Link href="/search">
+                                    <Search className="mr-2 h-5 w-5" />
+                                    Search
+                                </Link>
+                            </Button>
+                        </div>
+                    </div>
+                </TabsContent>
+                <TabsContent value="short-let">
+                    <div className="bg-white/90 backdrop-blur-sm p-4 rounded-b-lg shadow-lg">
+                        <div className="flex flex-col md:flex-row gap-2">
+                            <div className="relative flex-grow">
+                                <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+                                <Input
+                                    type="text"
+                                    placeholder="Search for short-term lets"
+                                    className="w-full pl-10 text-foreground"
+                                />
+                            </div>
+                            <Button asChild size="lg" className="w-full md:w-auto">
+                                <Link href="/search">
+                                    <Search className="mr-2 h-5 w-5" />
+                                    Search
+                                </Link>
+                            </Button>
+                        </div>
+                    </div>
+                </TabsContent>
+                <TabsContent value="land">
+                    <div className="bg-white/90 backdrop-blur-sm p-4 rounded-b-lg shadow-lg">
+                        <div className="flex flex-col md:flex-row gap-2">
+                            <div className="relative flex-grow">
+                                <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+                                <Input
+                                    type="text"
+                                    placeholder="Search for land for sale"
                                     className="w-full pl-10 text-foreground"
                                 />
                             </div>
