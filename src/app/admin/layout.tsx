@@ -1,3 +1,4 @@
+
 import Link from "next/link";
 import {
   Bell,
@@ -5,11 +6,18 @@ import {
   Home,
   LineChart,
   Package,
-  Package2,
+  PlusCircle,
+  Users,
   PanelLeft,
   Search,
-  ShoppingCart,
-  Users,
+  MessageSquare,
+  User,
+  Heart,
+  PhoneCall,
+  Star,
+  AreaChart,
+  Users2,
+  List
 } from "lucide-react";
 import {
   SidebarProvider,
@@ -51,7 +59,7 @@ export default function AdminLayout({
           <SidebarHeader className="p-4">
             <Link href="/admin/dashboard" className="flex items-center gap-2 font-semibold">
               <Building className="h-6 w-6 text-primary" />
-              <span className="font-headline text-lg">Admin Panel</span>
+              <span className="font-headline text-lg">Agent Panel</span>
             </Link>
           </SidebarHeader>
           <SidebarMenu className="flex-1 p-4">
@@ -64,26 +72,82 @@ export default function AdminLayout({
               </SidebarMenuButton>
             </SidebarMenuItem>
             <SidebarMenuItem>
-              <SidebarMenuButton asChild tooltip="Properties">
+              <SidebarMenuButton asChild tooltip="Post a Property">
+                <Link href="/admin/properties/new">
+                  <PlusCircle className="h-5 w-5" />
+                  <span>Post a Property</span>
+                </Link>
+              </SidebarMenuButton>
+            </SidebarMenuItem>
+            <SidebarMenuItem>
+              <SidebarMenuButton asChild tooltip="My Listings">
                 <Link href="/admin/properties">
+                  <List className="h-5 w-5" />
+                  <span>My Listings</span>
+                </Link>
+              </SidebarMenuButton>
+            </SidebarMenuItem>
+             <SidebarMenuItem>
+              <SidebarMenuButton asChild tooltip="Leads">
+                <Link href="#">
+                  <Star className="h-5 w-5" />
+                  <span>Leads</span>
+                </Link>
+              </SidebarMenuButton>
+            </SidebarMenuItem>
+             <SidebarMenuItem>
+              <SidebarMenuButton asChild tooltip="Property Requests">
+                <Link href="#">
+                  <Heart className="h-5 w-5" />
+                  <span>Property Requests</span>
+                </Link>
+              </SidebarMenuButton>
+            </SidebarMenuItem>
+            <SidebarMenuItem>
+              <SidebarMenuButton asChild tooltip="Callback Requests">
+                <Link href="#">
+                  <PhoneCall className="h-5 w-5" />
+                  <span>Callback Requests</span>
+                </Link>
+              </SidebarMenuButton>
+            </SidebarMenuItem>
+             <SidebarMenuItem>
+              <SidebarMenuButton asChild tooltip="Subscription">
+                <Link href="#">
                   <Package className="h-5 w-5" />
-                  <span>Properties</span>
+                  <span>Subscription</span>
+                </Link>
+              </SidebarMenuButton>
+            </SidebarMenuItem>
+             <SidebarMenuItem>
+              <SidebarMenuButton asChild tooltip="Performance">
+                <Link href="#">
+                  <AreaChart className="h-5 w-5" />
+                  <span>Performance</span>
+                </Link>
+              </SidebarMenuButton>
+            </SidebarMenuItem>
+             <SidebarMenuItem>
+              <SidebarMenuButton asChild tooltip="Profile">
+                <Link href="#">
+                  <User className="h-5 w-5" />
+                  <span>Profile</span>
+                </Link>
+              </SidebarMenuButton>
+            </SidebarMenuItem>
+             <SidebarMenuItem>
+              <SidebarMenuButton asChild tooltip="My Team">
+                <Link href="#">
+                  <Users2 className="h-5 w-5" />
+                  <span>My Team</span>
                 </Link>
               </SidebarMenuButton>
             </SidebarMenuItem>
             <SidebarMenuItem>
-              <SidebarMenuButton asChild tooltip="Users">
+              <SidebarMenuButton asChild tooltip="Messages">
                 <Link href="#">
-                  <Users className="h-5 w-5" />
-                  <span>Users</span>
-                </Link>
-              </SidebarMenuButton>
-            </SidebarMenuItem>
-            <SidebarMenuItem>
-              <SidebarMenuButton asChild tooltip="Analytics">
-                <Link href="#">
-                  <LineChart className="h-5 w-5" />
-                  <span>Analytics</span>
+                  <MessageSquare className="h-5 w-5" />
+                  <span>Messages</span>
                 </Link>
               </SidebarMenuButton>
             </SidebarMenuItem>
