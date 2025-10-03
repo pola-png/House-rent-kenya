@@ -16,7 +16,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import placeholderImages from '@/lib/placeholder-images.json';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
-import { useAuth } from '@/firebase';
+import { useAuth, useUser } from '@/firebase';
 import { useToast } from '@/hooks/use-toast';
 import { Loader2 } from 'lucide-react';
 
@@ -28,9 +28,9 @@ const formSchema = z.object({
 export default function LoginPage() {
   const bgImage = placeholderImages.placeholderImages.find(img => img.id === 'auth_bg');
   const auth = useAuth();
+  const { user, isUserLoading } = useUser();
   const router = useRouter();
   const { toast } = useToast();
-  const [isLoading, setIsLoading] = React.useState(false);
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -40,47 +40,39 @@ export default function LoginPage() {
     },
   });
 
-  async function onSubmit(values: z.infer<typeof formSchema>) {
-    setIsLoading(true);
-    try {
-      await signInWithEmailAndPassword(auth, values.email, values.password);
+  React.useEffect(() => {
+    if (user && !isUserLoading) {
       toast({
         title: 'Logged In!',
         description: 'You have successfully signed in.',
       });
       router.push('/');
-    } catch (error: any) {
-      console.error(error);
-      toast({
-        variant: 'destructive',
-        title: 'Uh oh! Something went wrong.',
-        description: error.message || 'There was a problem with your login.',
-      });
-    } finally {
-        setIsLoading(false);
     }
+  }, [user, isUserLoading, router, toast]);
+
+  function onSubmit(values: z.infer<typeof formSchema>) {
+    signInWithEmailAndPassword(auth, values.email, values.password)
+      .catch((error: any) => {
+        console.error(error);
+        toast({
+          variant: 'destructive',
+          title: 'Uh oh! Something went wrong.',
+          description: error.message || 'There was a problem with your login.',
+        });
+      });
   }
 
-  const handleGoogleSignIn = async () => {
-    setIsLoading(true);
+  const handleGoogleSignIn = () => {
     const provider = new GoogleAuthProvider();
-    try {
-      await signInWithPopup(auth, provider);
-      toast({
-        title: 'Logged In!',
-        description: 'You have successfully signed in with Google.',
+    signInWithPopup(auth, provider)
+      .catch((error: any) => {
+        console.error(error);
+        toast({
+          variant: 'destructive',
+          title: 'Uh oh! Something went wrong.',
+          description: error.message || 'There was a problem with Google Sign-In.',
+        });
       });
-      router.push('/');
-    } catch (error: any) {
-      console.error(error);
-      toast({
-        variant: 'destructive',
-        title: 'Uh oh! Something went wrong.',
-        description: error.message || 'There was a problem with Google Sign-In.',
-      });
-    } finally {
-        setIsLoading(false);
-    }
   };
 
   return (
@@ -101,7 +93,7 @@ export default function LoginPage() {
                     <FormItem className="grid gap-2">
                       <FormLabel>Email</FormLabel>
                       <FormControl>
-                        <Input type="email" placeholder="m@example.com" {...field} disabled={isLoading} />
+                        <Input type="email" placeholder="m@example.com" {...field} disabled={isUserLoading} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -119,14 +111,14 @@ export default function LoginPage() {
                         </Link>
                       </div>
                       <FormControl>
-                        <Input id="password" type="password" {...field} disabled={isLoading} />
+                        <Input id="password" type="password" {...field} disabled={isUserLoading} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
                   )}
                 />
-                <Button type="submit" className="w-full" disabled={isLoading}>
-                  {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                <Button type="submit" className="w-full" disabled={isUserLoading}>
+                  {isUserLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                   <LogIn className="mr-2 h-4 w-4" />
                   Login
                 </Button>
@@ -140,8 +132,8 @@ export default function LoginPage() {
                 <span className="bg-background px-2 text-muted-foreground">Or continue with</span>
               </div>
             </div>
-            <Button variant="outline" className="w-full" onClick={handleGoogleSignIn} disabled={isLoading}>
-              {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+            <Button variant="outline" className="w-full" onClick={handleGoogleSignIn} disabled={isUserLoading}>
+              {isUserLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
               Login with Google
             </Button>
             <div className="mt-4 text-center text-sm">

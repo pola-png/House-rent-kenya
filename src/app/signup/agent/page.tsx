@@ -16,7 +16,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import placeholderImages from '@/lib/placeholder-images.json';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
-import { useAuth } from '@/firebase';
+import { useAuth, useUser } from '@/firebase';
 import { useToast } from '@/hooks/use-toast';
 
 const formSchema = z.object({
@@ -30,9 +30,9 @@ const formSchema = z.object({
 export default function AgentSignupPage() {
   const bgImage = placeholderImages.placeholderImages.find(img => img.id === 'auth_bg');
   const auth = useAuth();
+  const { user, isUserLoading } = useUser();
   const router = useRouter();
   const { toast } = useToast();
-  const [isLoading, setIsLoading] = React.useState(false);
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -44,50 +44,41 @@ export default function AgentSignupPage() {
       password: '',
     },
   });
-
-  async function onSubmit(values: z.infer<typeof formSchema>) {
-    setIsLoading(true);
-    try {
-      await createUserWithEmailAndPassword(auth, values.email, values.password);
+  
+  React.useEffect(() => {
+    if (user && !isUserLoading) {
        // In a real app, you'd also save the user's role (agent) and other details to Firestore
       toast({
         title: 'Account Created!',
         description: 'Your agent account has been successfully created.',
       });
       router.push('/');
-    } catch (error: any) {
-      console.error(error);
-      toast({
-        variant: 'destructive',
-        title: 'Uh oh! Something went wrong.',
-        description: error.message || 'There was a problem with your signup.',
-      });
-    } finally {
-      setIsLoading(false);
     }
+  }, [user, isUserLoading, router, toast]);
+
+  function onSubmit(values: z.infer<typeof formSchema>) {
+    createUserWithEmailAndPassword(auth, values.email, values.password)
+      .catch((error: any) => {
+        console.error(error);
+        toast({
+          variant: 'destructive',
+          title: 'Uh oh! Something went wrong.',
+          description: error.message || 'There was a problem with your signup.',
+        });
+    });
   }
 
-  const handleGoogleSignUp = async () => {
-    setIsLoading(true);
+  const handleGoogleSignUp = () => {
     const provider = new GoogleAuthProvider();
-    try {
-      await signInWithPopup(auth, provider);
-      // In a real app, you'd check if this is a new user and save their role (agent)
-      toast({
-        title: 'Account Created!',
-        description: 'You have successfully signed up with Google.',
+    signInWithPopup(auth, provider)
+      .catch((error: any) => {
+        console.error(error);
+        toast({
+          variant: 'destructive',
+          title: 'Uh oh! Something went wrong.',
+          description: error.message || 'There was a problem with Google Sign-Up.',
+        });
       });
-      router.push('/');
-    } catch (error: any) {
-      console.error(error);
-      toast({
-        variant: 'destructive',
-        title: 'Uh oh! Something went wrong.',
-        description: error.message || 'There was a problem with Google Sign-Up.',
-      });
-    } finally {
-        setIsLoading(false);
-    }
   };
 
   return (
@@ -108,7 +99,7 @@ export default function AgentSignupPage() {
                     <FormItem className="grid gap-2">
                       <FormLabel>Agency Name</FormLabel>
                       <FormControl>
-                        <Input placeholder="Awesome Properties Ltd." {...field} disabled={isLoading}/>
+                        <Input placeholder="Awesome Properties Ltd." {...field} disabled={isUserLoading}/>
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -122,7 +113,7 @@ export default function AgentSignupPage() {
                       <FormItem className="grid gap-2">
                         <FormLabel>First name</FormLabel>
                         <FormControl>
-                          <Input placeholder="Jane" {...field} disabled={isLoading}/>
+                          <Input placeholder="Jane" {...field} disabled={isUserLoading}/>
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -135,7 +126,7 @@ export default function AgentSignupPage() {
                       <FormItem className="grid gap-2">
                         <FormLabel>Last name</FormLabel>
                         <FormControl>
-                          <Input placeholder="Doe" {...field} disabled={isLoading}/>
+                          <Input placeholder="Doe" {...field} disabled={isUserLoading}/>
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -149,7 +140,7 @@ export default function AgentSignupPage() {
                     <FormItem className="grid gap-2">
                       <FormLabel>Email</FormLabel>
                       <FormControl>
-                        <Input type="email" placeholder="jane@awesomeproperties.co.ke" {...field} disabled={isLoading}/>
+                        <Input type="email" placeholder="jane@awesomeproperties.co.ke" {...field} disabled={isUserLoading}/>
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -162,14 +153,14 @@ export default function AgentSignupPage() {
                     <FormItem className="grid gap-2">
                       <FormLabel>Password</FormLabel>
                       <FormControl>
-                        <Input type="password" {...field} disabled={isLoading}/>
+                        <Input type="password" {...field} disabled={isUserLoading}/>
                       </FormControl>
                       <FormMessage />
                     </FormItem>
                   )}
                 />
-                <Button type="submit" className="w-full" disabled={isLoading}>
-                  {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                <Button type="submit" className="w-full" disabled={isUserLoading}>
+                  {isUserLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                   <UserPlus className="mr-2 h-4 w-4" />
                   Create Agent Account
                 </Button>
@@ -183,8 +174,8 @@ export default function AgentSignupPage() {
                 <span className="bg-background px-2 text-muted-foreground">Or continue with</span>
               </div>
             </div>
-            <Button variant="outline" className="w-full" onClick={handleGoogleSignUp} disabled={isLoading}>
-              {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+            <Button variant="outline" className="w-full" onClick={handleGoogleSignUp} disabled={isUserLoading}>
+              {isUserLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
               Sign up with Google
             </Button>
             <div className="mt-4 text-center text-sm">
