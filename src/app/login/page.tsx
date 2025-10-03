@@ -2,12 +2,12 @@
 
 import Link from 'next/link';
 import Image from 'next/image';
-import { Building, LogIn } from 'lucide-react';
+import { Building, LogIn, Loader2 } from 'lucide-react';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
 import * as z from 'zod';
 import { useRouter } from 'next/navigation';
-import { GoogleAuthProvider, signInWithEmailAndPassword, signInWithPopup } from 'firebase/auth';
+import { GoogleAuthProvider, signInWithPopup } from 'firebase/auth';
 import React from 'react';
 
 import { Button } from '@/components/ui/button';
@@ -16,9 +16,8 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import placeholderImages from '@/lib/placeholder-images.json';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
-import { useAuth, useUser } from '@/firebase';
+import { useAuth, useUser, initiateEmailSignIn } from '@/firebase';
 import { useToast } from '@/hooks/use-toast';
-import { Loader2 } from 'lucide-react';
 
 const formSchema = z.object({
   email: z.string().email({ message: 'Please enter a valid email.' }),
@@ -41,25 +40,17 @@ export default function LoginPage() {
   });
 
   React.useEffect(() => {
-    if (user && !isUserLoading) {
+    if (user && !user.isAnonymous) {
       toast({
         title: 'Logged In!',
         description: 'You have successfully signed in.',
       });
       router.push('/');
     }
-  }, [user, isUserLoading, router, toast]);
+  }, [user, router, toast]);
 
   function onSubmit(values: z.infer<typeof formSchema>) {
-    signInWithEmailAndPassword(auth, values.email, values.password)
-      .catch((error: any) => {
-        console.error(error);
-        toast({
-          variant: 'destructive',
-          title: 'Uh oh! Something went wrong.',
-          description: error.message || 'There was a problem with your login.',
-        });
-      });
+    initiateEmailSignIn(auth, values.email, values.password);
   }
 
   const handleGoogleSignIn = () => {
@@ -74,6 +65,8 @@ export default function LoginPage() {
         });
       });
   };
+
+  const { isSubmitting } = form.formState;
 
   return (
     <div className="w-full lg:grid lg:min-h-[calc(100vh-5rem)] lg:grid-cols-2 xl:min-h-[calc(100vh-5rem)]">
@@ -93,7 +86,7 @@ export default function LoginPage() {
                     <FormItem className="grid gap-2">
                       <FormLabel>Email</FormLabel>
                       <FormControl>
-                        <Input type="email" placeholder="m@example.com" {...field} disabled={isUserLoading} />
+                        <Input type="email" placeholder="m@example.com" {...field} disabled={isSubmitting || isUserLoading} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -106,19 +99,19 @@ export default function LoginPage() {
                     <FormItem className="grid gap-2">
                       <div className="flex items-center">
                         <Label htmlFor="password">Password</Label>
-                        <Link href="#" className="ml-auto inline-block text-sm underline">
+                        <Link href="/forgot-password" className="ml-auto inline-block text-sm underline">
                           Forgot your password?
                         </Link>
                       </div>
                       <FormControl>
-                        <Input id="password" type="password" {...field} disabled={isUserLoading} />
+                        <Input id="password" type="password" {...field} disabled={isSubmitting || isUserLoading} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
                   )}
                 />
-                <Button type="submit" className="w-full" disabled={isUserLoading}>
-                  {isUserLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                <Button type="submit" className="w-full" disabled={isSubmitting || isUserLoading}>
+                  {(isSubmitting || isUserLoading) && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                   <LogIn className="mr-2 h-4 w-4" />
                   Login
                 </Button>
@@ -132,8 +125,8 @@ export default function LoginPage() {
                 <span className="bg-background px-2 text-muted-foreground">Or continue with</span>
               </div>
             </div>
-            <Button variant="outline" className="w-full" onClick={handleGoogleSignIn} disabled={isUserLoading}>
-              {isUserLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+            <Button variant="outline" className="w-full" onClick={handleGoogleSignIn} disabled={isSubmitting || isUserLoading}>
+              {(isSubmitting || isUserLoading) && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
               Login with Google
             </Button>
             <div className="mt-4 text-center text-sm">
