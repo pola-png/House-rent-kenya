@@ -3,7 +3,7 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import * as z from "zod";
-import { Loader2, Sparkles, Wand2 } from "lucide-react";
+import { Loader2, Sparkles, Wand2, Image as ImageIcon } from "lucide-react";
 import React from "react";
 
 import { Button } from "@/components/ui/button";
@@ -37,6 +37,7 @@ import { generatePropertyDescription } from "@/ai/flows/generate-property-descri
 import { optimizeListingSEO } from "@/ai/flows/optimize-listing-seo";
 import { useToast } from "@/hooks/use-toast";
 import { Progress } from "@/components/ui/progress";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 
 const formSchema = z.object({
   title: z.string().min(10, {
@@ -54,6 +55,7 @@ const formSchema = z.object({
   type: z.enum(["Apartment", "House", "Condo", "Townhouse", "Villa"]),
   amenities: z.string().min(3),
   status: z.enum(["For Rent", "Rented"]),
+  keywords: z.string().optional(),
 });
 
 type PropertyFormValues = z.infer<typeof formSchema>;
@@ -72,10 +74,12 @@ export function PropertyForm({ property }: PropertyFormProps) {
     ? {
         ...property,
         amenities: property.amenities.join(", "),
+        keywords: "",
       }
     : {
         status: "For Rent",
         type: "Apartment",
+        keywords: "",
       };
 
   const form = useForm<PropertyFormValues>({
@@ -134,7 +138,7 @@ export function PropertyForm({ property }: PropertyFormProps) {
         const result = await optimizeListingSEO({
             listingTitle: currentValues.title,
             listingDescription: currentValues.description,
-            listingKeywords: '',
+            listingKeywords: currentValues.keywords || '',
             propertyType: currentValues.type,
             propertyLocation: currentValues.location,
             numberOfBedrooms: currentValues.bedrooms,
@@ -143,6 +147,7 @@ export function PropertyForm({ property }: PropertyFormProps) {
         });
         form.setValue("title", result.optimizedTitle, { shouldValidate: true });
         form.setValue("description", result.optimizedDescription, { shouldValidate: true });
+        form.setValue("keywords", result.optimizedKeywords, { shouldValidate: true });
         setSeoScore(result.seoScore);
         toast({
           title: "SEO Optimized",
@@ -164,13 +169,13 @@ export function PropertyForm({ property }: PropertyFormProps) {
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-start">
           <div className="lg:col-span-2 space-y-8">
             <Card>
               <CardHeader>
                 <CardTitle>Property Details</CardTitle>
                 <CardDescription>
-                  Enter the main details of the property.
+                  Enter the main details of the property. Use the AI generator for a compelling description.
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
@@ -241,20 +246,44 @@ export function PropertyForm({ property }: PropertyFormProps) {
                     render={({ field }) => (
                         <FormItem>
                         <FormLabel>Property Type</FormLabel>
-                        <Select onValueChange={field.onChange} defaultValue={field.value}>
-                            <FormControl>
-                            <SelectTrigger>
-                                <SelectValue placeholder="Select a property type" />
-                            </SelectTrigger>
-                            </FormControl>
-                            <SelectContent>
-                            <SelectItem value="Apartment">Apartment</SelectItem>
-                            <SelectItem value="House">House</SelectItem>
-                            <SelectItem value="Condo">Condo</SelectItem>
-                            <SelectItem value="Townhouse">Townhouse</SelectItem>
-                            <SelectItem value="Villa">Villa</SelectItem>
-                            </SelectContent>
-                        </Select>
+                          <FormControl>
+                            <RadioGroup
+                              onValueChange={field.onChange}
+                              defaultValue={field.value}
+                              className="flex flex-wrap gap-2 pt-2"
+                            >
+                              <FormItem className="flex items-center space-x-2 space-y-0">
+                                <FormControl>
+                                  <RadioGroupItem value="Apartment" id="r-apartment" />
+                                </FormControl>
+                                <Label htmlFor="r-apartment" className="font-normal">Apartment</Label>
+                              </FormItem>
+                              <FormItem className="flex items-center space-x-2 space-y-0">
+                                <FormControl>
+                                  <RadioGroupItem value="House" id="r-house" />
+                                </FormControl>
+                                <Label htmlFor="r-house" className="font-normal">House</Label>
+                              </FormItem>
+                              <FormItem className="flex items-center space-x-2 space-y-0">
+                                <FormControl>
+                                  <RadioGroupItem value="Condo" id="r-condo" />
+                                </FormControl>
+                                <Label htmlFor="r-condo" className="font-normal">Condo</Label>
+                              </FormItem>
+                               <FormItem className="flex items-center space-x-2 space-y-0">
+                                <FormControl>
+                                  <RadioGroupItem value="Townhouse" id="r-townhouse" />
+                                </FormControl>
+                                <Label htmlFor="r-townhouse" className="font-normal">Townhouse</Label>
+                              </FormItem>
+                               <FormItem className="flex items-center space-x-2 space-y-0">
+                                <FormControl>
+                                  <RadioGroupItem value="Villa" id="r-villa" />
+                                </FormControl>
+                                <Label htmlFor="r-villa" className="font-normal">Villa</Label>
+                              </FormItem>
+                            </RadioGroup>
+                          </FormControl>
                         <FormMessage />
                         </FormItem>
                     )}
@@ -329,7 +358,7 @@ export function PropertyForm({ property }: PropertyFormProps) {
                         <FormItem>
                         <FormLabel>Neighborhood/Area</FormLabel>
                         <FormControl>
-                            <Input placeholder="Kilimani, Nairobi" {...field} />
+                            <Input placeholder="Kilimani" {...field} />
                         </FormControl>
                         <FormMessage />
                         </FormItem>
@@ -363,30 +392,70 @@ export function PropertyForm({ property }: PropertyFormProps) {
                   name="status"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Status</FormLabel>
-                      <Select onValueChange={field.onChange} defaultValue={field.value}>
-                        <FormControl>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Select a status" />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          <SelectItem value="For Rent">For Rent</SelectItem>
-                          <SelectItem value="Rented">Rented</SelectItem>
-                        </SelectContent>
-                      </Select>
+                      <FormControl>
+                        <RadioGroup
+                          onValueChange={field.onChange}
+                          defaultValue={field.value}
+                          className="flex flex-col space-y-1"
+                        >
+                          <FormItem className="flex items-center space-x-3 space-y-0">
+                            <FormControl>
+                              <RadioGroupItem value="For Rent" id="r-for-rent"/>
+                            </FormControl>
+                            <Label htmlFor="r-for-rent" className="font-normal">For Rent</Label>
+                          </FormItem>
+                          <FormItem className="flex items-center space-x-3 space-y-0">
+                            <FormControl>
+                              <RadioGroupItem value="Rented" id="r-rented"/>
+                            </FormControl>
+                            <Label htmlFor="r-rented" className="font-normal">Rented</Label>
+                          </FormItem>
+                        </RadioGroup>
+                      </FormControl>
                       <FormMessage />
                     </FormItem>
                   )}
                 />
               </CardContent>
             </Card>
+
+             <Card>
+                <CardHeader>
+                    <CardTitle>Property Images</CardTitle>
+                    <CardDescription>Upload high-quality images of your property.</CardDescription>
+                </CardHeader>
+                <CardContent>
+                    <div className="flex items-center justify-center w-full">
+                        <label htmlFor="dropzone-file" className="flex flex-col items-center justify-center w-full h-32 border-2 border-dashed rounded-lg cursor-pointer bg-muted hover:bg-muted/50">
+                            <div className="flex flex-col items-center justify-center pt-5 pb-6">
+                                <ImageIcon className="w-8 h-8 mb-4 text-muted-foreground" />
+                                <p className="mb-2 text-sm text-muted-foreground"><span className="font-semibold">Click to upload</span> or drag and drop</p>
+                            </div>
+                            <input id="dropzone-file" type="file" className="hidden" multiple />
+                        </label>
+                    </div> 
+                </CardContent>
+            </Card>
+
             <Card>
                 <CardHeader>
                     <CardTitle>SEO Optimization</CardTitle>
                     <CardDescription>Improve your listing's visibility on search engines.</CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-4">
+                    <FormField
+                      control={form.control}
+                      name="keywords"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Keywords</FormLabel>
+                          <FormControl>
+                            <Input placeholder="e.g., apartment for rent, Kilimani" {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
                     {seoScore !== null && (
                         <div>
                             <div className="flex justify-between items-center mb-1">
@@ -411,7 +480,7 @@ export function PropertyForm({ property }: PropertyFormProps) {
 
         <Button type="submit" size="lg" disabled={form.formState.isSubmitting}>
             {form.formState.isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-            {property ? "Save Changes" : "Create Property"}
+            {property ? "Save Changes" : "Post My Property"}
         </Button>
       </form>
     </Form>
