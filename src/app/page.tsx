@@ -1,16 +1,22 @@
+"use client";
+
 import Image from 'next/image';
 import Link from 'next/link';
 import { ArrowRight, Building, Home as HomeIcon, MapPin, Search, Star, TrendingUp, Handshake, Verified } from 'lucide-react';
+import { collection } from 'firebase/firestore';
+import React from 'react';
 
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent } from '@/components/ui/card';
 import { PropertyCard } from '@/components/property-card';
-import { properties } from '@/lib/properties';
 import placeholderImages from '@/lib/placeholder-images.json';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { useCollection, useFirestore, useMemoFirebase } from '@/firebase';
+import type { Property } from '@/lib/types';
+import { Skeleton } from '@/components/ui/skeleton';
 
 const popularSearches = [
   'Apartments for rent in Kilimani',
@@ -43,8 +49,20 @@ const features = [
 ];
 
 export default function Home() {
-  const featuredProperties = properties.filter(p => p.featured).slice(0, 6);
   const heroImage = placeholderImages.placeholderImages.find(img => img.id === 'hero_main');
+  const firestore = useFirestore();
+
+  const propertiesQuery = useMemoFirebase(() => {
+    if (!firestore) return null;
+    return collection(firestore, 'properties');
+  }, [firestore]);
+  
+  const { data: properties, isLoading } = useCollection<Property>(propertiesQuery);
+  
+  const featuredProperties = React.useMemo(() => {
+    return properties?.filter(p => p.featured).slice(0, 6) || [];
+  }, [properties]);
+
 
   return (
     <div className="flex flex-col min-h-screen">
@@ -152,11 +170,24 @@ export default function Home() {
           <div className="container mx-auto px-4">
             <h2 className="text-3xl md:text-4xl font-headline font-bold text-center mb-2">Featured Properties</h2>
             <p className="text-center text-muted-foreground mb-10 max-w-2xl mx-auto">Handpicked listings from our team, featuring the best of what's available for rent right now.</p>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-              {featuredProperties.map((property) => (
-                <PropertyCard key={property.id} property={property} />
-              ))}
-            </div>
+            {isLoading ? (
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                    {[...Array(3)].map((_, i) => (
+                        <div key={i} className="space-y-4">
+                            <Skeleton className="h-56 w-full" />
+                            <Skeleton className="h-6 w-3/4" />
+                            <Skeleton className="h-4 w-1/2" />
+                            <Skeleton className="h-4 w-1/4" />
+                        </div>
+                    ))}
+                </div>
+            ) : (
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                {featuredProperties.map((property) => (
+                    <PropertyCard key={property.id} property={property} />
+                ))}
+                </div>
+            )}
             <div className="text-center mt-12">
               <Button asChild variant="outline" size="lg">
                 <Link href="/search">

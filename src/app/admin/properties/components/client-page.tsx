@@ -81,7 +81,7 @@ const columns: ColumnDef<Property>[] = [
     header: () => <div className="text-right">Price</div>,
     cell: ({ row }) => {
       const amount = parseFloat(row.getValue("price"));
-      const formatted = new Intl.NumberFormat("en-US", {
+      const formatted = new Intl.NumberFormat("en-KE", {
         style: "currency",
         currency: "Ksh",
       }).format(amount);
@@ -114,7 +114,7 @@ const columns: ColumnDef<Property>[] = [
             </DropdownMenuItem>
             <DropdownMenuSeparator />
             <DropdownMenuItem asChild><Link href={`/admin/properties/edit/${property.id}`}>Edit</Link></DropdownMenuItem>
-            <DropdownMenuItem>View details</DropdownMenuItem>
+            <DropdownMenuItem asChild><Link href={`/property/${property.id}`}>View details</Link></DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
       );

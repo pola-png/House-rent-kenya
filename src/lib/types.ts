@@ -1,3 +1,5 @@
+import { Timestamp } from "firebase/firestore";
+
 export interface Property {
   id: string;
   title: string;
@@ -19,4 +21,21 @@ export interface Property {
   latitude: number;
   longitude: number;
   status: 'For Rent' | 'Rented';
+  landlordId: string;
+  createdAt: Timestamp;
+  updatedAt: Timestamp;
+  keywords?: string;
+}
+
+export interface UserProfile {
+    id: string;
+    uid: string;
+    firstName: string;
+    lastName: string;
+    displayName: string;
+    email: string;
+    role: 'user' | 'agent';
+    agencyName?: string;
+    createdAt: Timestamp;
+    photoURL?: string;
 }

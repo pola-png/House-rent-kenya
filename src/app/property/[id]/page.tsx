@@ -1,7 +1,10 @@
+"use client";
+
 import Image from 'next/image';
-import { notFound } from 'next/navigation';
-import { Bed, Bath, Maximize, MapPin, CheckCircle, Mail, Phone, User } from 'lucide-react';
-import { properties } from '@/lib/properties';
+import { notFound, useParams } from 'next/navigation';
+import { Bed, Bath, Maximize, MapPin, CheckCircle, Mail, Phone, User, Terminal } from 'lucide-react';
+import { doc } from 'firebase/firestore';
+
 import placeholderImages from '@/lib/placeholder-images.json';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -11,14 +14,63 @@ import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Map } from '@/components/map';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { Terminal } from 'lucide-react';
+import { useDoc, useFirestore, useMemoFirebase } from '@/firebase';
+import type { Property } from '@/lib/types';
+import { Skeleton } from '@/components/ui/skeleton';
 
-export default function PropertyPage({ params }: { params: { id: string } }) {
-  const property = properties.find((p) => p.id === params.id);
+export default function PropertyPage() {
+  const params = useParams();
+  const id = params.id as string;
+  const firestore = useFirestore();
+  
+  const propertyRef = useMemoFirebase(() => {
+    if (!firestore || !id) return null;
+    return doc(firestore, 'properties', id);
+  }, [firestore, id]);
 
-  if (!property) {
+  const { data: property, isLoading, error } = useDoc<Property>(propertyRef);
+
+  if (isLoading) {
+    return (
+      <div className="bg-background">
+        <div className="container mx-auto px-4 py-12">
+          <Skeleton className="h-12 w-3/4 mb-4" />
+          <Skeleton className="h-6 w-1/4 mb-8" />
+          <Skeleton className="h-[500px] w-full mb-8 rounded-lg" />
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-12">
+            <div className="lg:col-span-2 space-y-8">
+              <Skeleton className="h-96 w-full" />
+              <Skeleton className="h-64 w-full" />
+            </div>
+            <div className="lg:col-span-1">
+              <Skeleton className="h-72 w-full" />
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (!property && !isLoading) {
     notFound();
   }
+  
+  if (error) {
+      console.error(error);
+      return (
+        <div className="container mx-auto px-4 py-12">
+             <Alert variant="destructive">
+                <Terminal className="h-4 w-4" />
+                <AlertTitle>Error Loading Property</AlertTitle>
+                <AlertDescription>
+                    There was an issue fetching the property details. Please try again later.
+                </AlertDescription>
+            </Alert>
+        </div>
+      )
+  }
+  
+  if (!property) return null; // Should be handled by notFound, but for type safety
 
   const agentImage = placeholderImages.placeholderImages.find(img => img.id === property.agent.avatar);
 
@@ -42,7 +94,7 @@ export default function PropertyPage({ params }: { params: { id: string } }) {
               return (
                 <CarouselItem key={index}>
                   <div className="relative h-[300px] md:h-[500px] w-full overflow-hidden rounded-lg">
-                    {image && (
+                    {image ? (
                       <Image
                         src={image.imageUrl}
                         alt={`${property.title} - image ${index + 1}`}
@@ -51,6 +103,8 @@ export default function PropertyPage({ params }: { params: { id: string } }) {
                         data-ai-hint={image.imageHint}
                         priority={index === 0}
                       />
+                    ) : (
+                        <div className="w-full h-full bg-muted flex items-center justify-center">No Image</div>
                     )}
                   </div>
                 </CarouselItem>

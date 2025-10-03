@@ -1,5 +1,8 @@
+"use client";
+
 import { PlusCircle } from "lucide-react";
 import Link from 'next/link';
+import { collection } from "firebase/firestore";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -12,16 +15,25 @@ import {
 import {
   Tabs,
   TabsContent,
-  TabsList,
-  TabsTrigger,
 } from "@/components/ui/tabs";
-import { properties } from "@/lib/properties";
+import { useCollection, useFirestore, useMemoFirebase } from "@/firebase";
 import { PropertiesClient } from "./components/client-page";
+import type { Property } from "@/lib/types";
+import { Skeleton } from "@/components/ui/skeleton";
 
 export default function AdminPropertiesPage() {
+  const firestore = useFirestore();
+  const propertiesRef = useMemoFirebase(() => {
+      if (!firestore) return null;
+      return collection(firestore, 'properties');
+  }, [firestore]);
+  
+  const { data: properties, isLoading } = useCollection<Property>(propertiesRef);
+
   return (
     <Tabs defaultValue="all">
       <div className="flex items-center">
+        <h1 className="text-2xl font-bold font-headline">Properties</h1>
         <div className="ml-auto flex items-center gap-2">
           <Button size="sm" variant="outline" asChild>
             <Link href="#">
@@ -39,13 +51,22 @@ export default function AdminPropertiesPage() {
       <TabsContent value="all">
         <Card>
           <CardHeader>
-            <CardTitle>Properties</CardTitle>
+            <CardTitle>Manage Properties</CardTitle>
             <CardDescription>
-              Manage your properties and view their sales performance.
+              View, edit, and manage all property listings.
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <PropertiesClient data={properties} />
+            {isLoading ? (
+                <div className="space-y-4">
+                    <Skeleton className="h-10 w-full" />
+                    <Skeleton className="h-20 w-full" />
+                    <Skeleton className="h-20 w-full" />
+                    <Skeleton className="h-20 w-full" />
+                </div>
+            ) : (
+                <PropertiesClient data={properties || []} />
+            )}
           </CardContent>
         </Card>
       </TabsContent>

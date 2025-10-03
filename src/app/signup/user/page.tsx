@@ -7,15 +7,16 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
 import * as z from 'zod';
 import { useRouter } from 'next/navigation';
-import { GoogleAuthProvider, createUserWithEmailAndPassword, signInWithPopup } from 'firebase/auth';
+import { GoogleAuthProvider, createUserWithEmailAndPassword, signInWithPopup, updateProfile } from 'firebase/auth';
 import React from 'react';
+import { doc, setDoc, serverTimestamp } from 'firebase/firestore';
 
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import placeholderImages from '@/lib/placeholder-images.json';
-import { useAuth, useUser } from '@/firebase';
+import { useAuth, useUser, useFirestore, setDocumentNonBlocking } from '@/firebase';
 import { useToast } from '@/hooks/use-toast';
 
 const formSchema = z.object({
@@ -28,6 +29,7 @@ const formSchema = z.object({
 export default function SignupPage() {
   const bgImage = placeholderImages.placeholderImages.find(img => img.id === 'auth_bg');
   const auth = useAuth();
+  const firestore = useFirestore();
   const { user, isUserLoading } = useUser();
   const router = useRouter();
   const { toast } = useToast();
@@ -44,38 +46,78 @@ export default function SignupPage() {
 
   React.useEffect(() => {
     if (user && !isUserLoading) {
+      router.push('/');
+    }
+  }, [user, isUserLoading, router]);
+
+  async function onSubmit(values: z.infer<typeof formSchema>) {
+    try {
+      const userCredential = await createUserWithEmailAndPassword(auth, values.email, values.password);
+      const firebaseUser = userCredential.user;
+      
+      const displayName = `${values.firstName} ${values.lastName}`;
+      await updateProfile(firebaseUser, { displayName });
+
+      const userDocRef = doc(firestore, "users", firebaseUser.uid);
+      setDocumentNonBlocking(userDocRef, {
+        uid: firebaseUser.uid,
+        firstName: values.firstName,
+        lastName: values.lastName,
+        displayName: displayName,
+        email: values.email,
+        role: 'user',
+        createdAt: serverTimestamp(),
+      }, { merge: true });
+
       toast({
           title: 'Account Created!',
           description: 'You have successfully signed up.',
       });
-      router.push('/');
-    }
-  }, [user, isUserLoading, router, toast]);
 
-  function onSubmit(values: z.infer<typeof formSchema>) {
-    createUserWithEmailAndPassword(auth, values.email, values.password)
-      .catch((error: any) => {
-          console.error(error);
-          toast({
-              variant: 'destructive',
-              title: 'Uh oh! Something went wrong.',
-              description: error.message || 'There was a problem with your signup.',
-          });
+    } catch(error: any) {
+      console.error(error);
+      toast({
+          variant: 'destructive',
+          title: 'Uh oh! Something went wrong.',
+          description: error.message || 'There was a problem with your signup.',
       });
+    }
   }
 
-  const handleGoogleSignUp = () => {
+  const handleGoogleSignUp = async () => {
     const provider = new GoogleAuthProvider();
-    signInWithPopup(auth, provider)
-      .catch((error: any) => {
+    try {
+        const result = await signInWithPopup(auth, provider);
+        const firebaseUser = result.user;
+        const nameParts = firebaseUser.displayName?.split(' ') || ['User', ''];
+        
+        const userDocRef = doc(firestore, "users", firebaseUser.uid);
+        setDocumentNonBlocking(userDocRef, {
+            uid: firebaseUser.uid,
+            firstName: nameParts[0],
+            lastName: nameParts.slice(1).join(' '),
+            displayName: firebaseUser.displayName,
+            email: firebaseUser.email,
+            role: 'user',
+            createdAt: serverTimestamp(),
+        }, { merge: true });
+        
+        toast({
+            title: 'Account Created!',
+            description: 'You have successfully signed up with Google.',
+        });
+
+    } catch (error: any) {
         console.error(error);
         toast({
           variant: 'destructive',
           title: 'Uh oh! Something went wrong.',
           description: error.message || 'There was a problem with Google Sign-Up.',
         });
-      });
+    }
   };
+
+  const { isSubmitting } = form.formState;
 
   return (
     <div className="w-full lg:grid lg:min-h-[calc(100vh-5rem)] lg:grid-cols-2 xl:min-h-[calc(100vh-5rem)]">
@@ -96,7 +138,7 @@ export default function SignupPage() {
                       <FormItem className="grid gap-2">
                         <FormLabel>First name</FormLabel>
                         <FormControl>
-                          <Input placeholder="Max" {...field} disabled={isUserLoading}/>
+                          <Input placeholder="Max" {...field} disabled={isSubmitting || isUserLoading}/>
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -109,7 +151,7 @@ export default function SignupPage() {
                       <FormItem className="grid gap-2">
                         <FormLabel>Last name</FormLabel>
                         <FormControl>
-                          <Input placeholder="Robinson" {...field} disabled={isUserLoading}/>
+                          <Input placeholder="Robinson" {...field} disabled={isSubmitting || isUserLoading}/>
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -123,7 +165,7 @@ export default function SignupPage() {
                     <FormItem className="grid gap-2">
                       <FormLabel>Email</FormLabel>
                       <FormControl>
-                        <Input type="email" placeholder="m@example.com" {...field} disabled={isUserLoading}/>
+                        <Input type="email" placeholder="m@example.com" {...field} disabled={isSubmitting || isUserLoading}/>
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -136,14 +178,14 @@ export default function SignupPage() {
                     <FormItem className="grid gap-2">
                       <FormLabel>Password</FormLabel>
                       <FormControl>
-                        <Input type="password" {...field} disabled={isUserLoading}/>
+                        <Input type="password" {...field} disabled={isSubmitting || isUserLoading}/>
                       </FormControl>
                       <FormMessage />
                     </FormItem>
                   )}
                 />
-                <Button type="submit" className="w-full" disabled={isUserLoading}>
-                    {isUserLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                <Button type="submit" className="w-full" disabled={isSubmitting || isUserLoading}>
+                    {(isSubmitting || isUserLoading) && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                   <UserPlus className="mr-2 h-4 w-4" />
                   Create an account
                 </Button>
@@ -157,8 +199,8 @@ export default function SignupPage() {
                 <span className="bg-background px-2 text-muted-foreground">Or continue with</span>
               </div>
             </div>
-            <Button variant="outline" className="w-full" onClick={handleGoogleSignUp} disabled={isUserLoading}>
-              {isUserLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+            <Button variant="outline" className="w-full" onClick={handleGoogleSignUp} disabled={isSubmitting || isUserLoading}>
+              {(isSubmitting || isUserLoading) && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
               Sign up with Google
             </Button>
             <div className="mt-4 text-center text-sm">

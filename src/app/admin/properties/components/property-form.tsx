@@ -5,6 +5,8 @@ import { useForm } from "react-hook-form";
 import * as z from "zod";
 import { Loader2, Sparkles, Wand2, Image as ImageIcon } from "lucide-react";
 import React from "react";
+import { useRouter } from "next/navigation";
+import { serverTimestamp, collection, addDoc, doc, updateDoc } from "firebase/firestore";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -25,19 +27,14 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import type { Property } from "@/lib/types";
 import { generatePropertyDescription } from "@/ai/flows/generate-property-description";
 import { optimizeListingSEO } from "@/ai/flows/optimize-listing-seo";
 import { useToast } from "@/hooks/use-toast";
 import { Progress } from "@/components/ui/progress";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { Label } from "@/components/ui/label";
+import { useFirestore, useUser, addDocumentNonBlocking } from "@/firebase";
 
 const formSchema = z.object({
   title: z.string().min(10, {
@@ -56,6 +53,9 @@ const formSchema = z.object({
   amenities: z.string().min(3),
   status: z.enum(["For Rent", "Rented"]),
   keywords: z.string().optional(),
+  featured: z.boolean().default(false),
+  latitude: z.coerce.number().min(-90).max(90).default(-1.286389),
+  longitude: z.coerce.number().min(-180).max(180).default(36.817223),
 });
 
 type PropertyFormValues = z.infer<typeof formSchema>;
@@ -66,6 +66,9 @@ interface PropertyFormProps {
 
 export function PropertyForm({ property }: PropertyFormProps) {
   const { toast } = useToast();
+  const router = useRouter();
+  const firestore = useFirestore();
+  const { user } = useUser();
   const [isGeneratingDesc, setIsGeneratingDesc] = React.useState(false);
   const [isOptimizingSeo, setIsOptimizingSeo] = React.useState(false);
   const [seoScore, setSeoScore] = React.useState<number | null>(property ? 75 : null);
@@ -74,12 +77,13 @@ export function PropertyForm({ property }: PropertyFormProps) {
     ? {
         ...property,
         amenities: property.amenities.join(", "),
-        keywords: "",
+        keywords: "", // Or join property.keywords if it exists
       }
     : {
         status: "For Rent",
         type: "Apartment",
         keywords: "",
+        featured: false,
       };
 
   const form = useForm<PropertyFormValues>({
@@ -89,17 +93,65 @@ export function PropertyForm({ property }: PropertyFormProps) {
   });
 
   async function onSubmit(data: PropertyFormValues) {
+    if (!user) {
+      toast({
+        variant: "destructive",
+        title: "Authentication Error",
+        description: "You must be logged in to post a property.",
+      });
+      return;
+    }
+    
     toast({
         title: "Submitting...",
-        description: "Property data is being saved.",
+        description: "Your property is being saved.",
     });
-    console.log(data);
-    // Here you would typically call an API to save the data
-    await new Promise(resolve => setTimeout(resolve, 1000));
-    toast({
-        title: "Success!",
-        description: "Property has been saved successfully.",
-    });
+
+    try {
+        const propertyData = {
+          ...data,
+          amenities: data.amenities.split(',').map(a => a.trim()),
+          price: Number(data.price),
+          bedrooms: Number(data.bedrooms),
+          bathrooms: Number(data.bathrooms),
+          area: Number(data.area),
+          landlordId: user.uid,
+          agent: {
+              name: user.displayName || 'Unnamed Agent',
+              avatar: user.photoURL || 'agent_1',
+          },
+          images: ['property_1_1', 'property_1_2', 'property_1_3'], // Placeholder images
+          updatedAt: serverTimestamp(),
+          createdAt: property ? property.createdAt : serverTimestamp(),
+        };
+
+        if (property) {
+            const propertyRef = doc(firestore, "properties", property.id);
+            await updateDoc(propertyRef, propertyData);
+            toast({
+                title: "Success!",
+                description: "Property has been updated successfully.",
+            });
+            router.push(`/admin/properties`);
+        } else {
+            const collectionRef = collection(firestore, 'properties');
+            await addDoc(collectionRef, propertyData);
+            toast({
+                title: "Success!",
+                description: "Property has been created successfully.",
+            });
+            router.push('/admin/properties');
+        }
+        router.refresh();
+
+    } catch (e: any) {
+        console.error("Error saving property: ", e);
+        toast({
+            variant: "destructive",
+            title: "Uh oh! Something went wrong.",
+            description: e.message || "Could not save property.",
+        });
+    }
   }
 
   const handleGenerateDescription = async () => {
