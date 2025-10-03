@@ -36,6 +36,7 @@ import { useToast } from "@/hooks/use-toast";
 import { Progress } from "@/components/ui/progress";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useFirestore, useUser, addDocumentNonBlocking, setDocumentNonBlocking } from "@/firebase";
 
 const formSchema = z.object({
@@ -52,6 +53,7 @@ const formSchema = z.object({
   bathrooms: z.coerce.number().int().min(1),
   area: z.coerce.number().positive(),
   type: z.enum(["Apartment", "House", "Condo", "Townhouse", "Villa"]),
+  propertyCategory: z.enum(["Residential", "Commercial"]),
   amenities: z.string().min(3),
   status: z.enum(["For Rent", "Rented"]),
   keywords: z.string().optional(),
@@ -88,6 +90,7 @@ export function PropertyForm({ property }: PropertyFormProps) {
     : {
         status: "For Rent",
         type: "Apartment",
+        propertyCategory: "Residential",
         keywords: "",
         featured: false,
         city: "Nairobi",
@@ -305,6 +308,27 @@ export function PropertyForm({ property }: PropertyFormProps) {
                 <CardTitle>Property Features</CardTitle>
               </CardHeader>
               <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                 <FormField
+                  control={form.control}
+                  name="propertyCategory"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Category</FormLabel>
+                      <Select onValueChange={field.onChange} defaultValue={field.value}>
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Select a category" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          <SelectItem value="Residential">Residential</SelectItem>
+                          <SelectItem value="Commercial">Commercial</SelectItem>
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
                 <FormField
                   control={form.control}
                   name="price"

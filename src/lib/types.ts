@@ -12,6 +12,7 @@ export interface Property {
   bathrooms: number;
   area: number; // in sqft
   type: 'Apartment' | 'House' | 'Condo' | 'Townhouse' | 'Villa';
+  propertyCategory: 'Residential' | 'Commercial';
   amenities: string[];
   images: string[];
   agent: {
