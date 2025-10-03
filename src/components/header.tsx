@@ -1,10 +1,13 @@
 "use client";
 
 import Link from 'next/link';
-import { Building, Menu, User, X, ChevronDown, Briefcase, UserCircle, LayoutDashboard } from 'lucide-react';
+import { Building, Menu, User, X, ChevronDown, Briefcase, UserCircle, LogOut } from 'lucide-react';
+import React from 'react';
+import { signOut } from 'firebase/auth';
+import Image from 'next/image';
+
 import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetTrigger, SheetClose } from '@/components/ui/sheet';
-import React from 'react';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -13,6 +16,9 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { useUser, useAuth } from '@/firebase';
+import { Avatar, AvatarFallback, AvatarImage } from './ui/avatar';
+import { useToast } from '@/hooks/use-toast';
 
 const navLinks = [
   { href: '/search?type=rent', label: 'To Rent' },
@@ -24,18 +30,39 @@ const navLinks = [
 ];
 
 export function Header() {
-  const linkClasses = `text-sm font-medium transition-colors hover:text-primary text-foreground`;
+  const { user, isUserLoading } = useUser();
+  const auth = useAuth();
+  const { toast } = useToast();
+  
+  const linkClasses = `text-sm font-medium transition-colors hover:text-primary text-black`;
   const buttonBorderClasses = 'border-primary text-primary hover:bg-primary hover:text-primary-foreground';
 
+  const handleLogout = async () => {
+    try {
+      await signOut(auth);
+      toast({
+        title: 'Logged Out',
+        description: 'You have been successfully logged out.',
+      });
+    } catch (error) {
+      console.error(error);
+      toast({
+        variant: 'destructive',
+        title: 'Logout Failed',
+        description: 'There was an error logging you out.',
+      });
+    }
+  };
+
   return (
-    <header className={`sticky top-0 z-50 transition-all duration-300 bg-background/80 backdrop-blur-sm shadow-md`}>
+    <header className={`sticky top-0 z-50 transition-all duration-300 bg-background shadow-md`}>
       <div className="container mx-auto px-4">
         <div className="flex h-20 items-center justify-between">
           <Link href="/" className="flex items-center gap-2">
             <div className={`p-2 rounded-md transition-colors bg-primary`}>
                 <Building className={`h-6 w-6 transition-colors text-primary-foreground`} />
             </div>
-            <span className={`text-xl font-bold font-headline transition-colors text-foreground`}>
+            <span className={`text-xl font-bold font-headline transition-colors text-black`}>
               House Rent Kenya
             </span>
           </Link>
@@ -54,35 +81,68 @@ export function Header() {
 
           <div className="hidden md:flex items-center gap-2">
             <Button variant="outline" className={buttonBorderClasses}>List your property</Button>
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button>
-                  <User className="mr-2 h-4 w-4" /> Sign In <ChevronDown className="ml-2 h-4 w-4" />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end">
-                <DropdownMenuLabel>Choose account type</DropdownMenuLabel>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem asChild>
-                  <Link href="/login">
-                    <UserCircle className="mr-2 h-4 w-4" />
-                    <span>User</span>
-                  </Link>
-                </DropdownMenuItem>
-                <DropdownMenuItem asChild>
+            {isUserLoading ? (
+              <Button disabled>
+                <User className="mr-2 h-4 w-4" /> Loading...
+              </Button>
+            ) : user ? (
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="ghost" className="relative h-10 w-10 rounded-full">
+                    <Avatar>
+                      <AvatarImage src={user.photoURL ?? undefined} alt={user.displayName ?? 'User'} />
+                      <AvatarFallback>
+                        {user.displayName ? user.displayName.charAt(0).toUpperCase() : <User />}
+                      </AvatarFallback>
+                    </Avatar>
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                  <DropdownMenuLabel>My Account</DropdownMenuLabel>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem asChild>
+                    <Link href="/admin/dashboard">Dashboard</Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem>Profile</DropdownMenuItem>
+                  <DropdownMenuItem>Settings</DropdownMenuItem>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem onClick={handleLogout}>
+                    <LogOut className="mr-2 h-4 w-4" />
+                    Logout
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            ) : (
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button>
+                    <User className="mr-2 h-4 w-4" /> Sign In <ChevronDown className="ml-2 h-4 w-4" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                  <DropdownMenuLabel>Choose account type</DropdownMenuLabel>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem asChild>
+                    <Link href="/login">
+                      <UserCircle className="mr-2 h-4 w-4" />
+                      <span>User</span>
+                    </Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem asChild>
                    <Link href="/login">
                     <Briefcase className="mr-2 h-4 w-4" />
                     <span>Agent</span>
                   </Link>
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            )}
           </div>
 
           <div className="md:hidden">
             <Sheet>
               <SheetTrigger asChild>
-                <Button variant="ghost" size="icon" className={`text-foreground hover:bg-black/20`}>
+                <Button variant="ghost" size="icon" className={`text-black hover:bg-black/20`}>
                   <Menu className="h-6 w-6" />
                 </Button>
               </SheetTrigger>
@@ -115,11 +175,17 @@ export function Header() {
                   </nav>
                   <div className="p-4 border-t flex flex-col gap-4">
                      <Button variant="outline" className='border-primary text-primary'>List your property</Button>
-                     <Button asChild>
-                      <Link href="/login">
-                        <User className="mr-2 h-4 w-4" /> Sign In
-                      </Link>
-                    </Button>
+                     {user ? (
+                       <Button onClick={handleLogout}>
+                         <LogOut className="mr-2 h-4 w-4" /> Logout
+                       </Button>
+                     ) : (
+                       <Button asChild>
+                        <Link href="/login">
+                          <User className="mr-2 h-4 w-4" /> Sign In
+                        </Link>
+                      </Button>
+                     )}
                   </div>
                 </div>
               </SheetContent>
