@@ -1,69 +1,64 @@
 import Link from 'next/link';
 import Image from 'next/image';
-import { Building, UserPlus } from 'lucide-react';
-
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
+import { Building, User, Briefcase, ArrowRight } from 'lucide-react';
 import placeholderImages from '@/lib/placeholder-images.json';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
 
-export default function SignupPage() {
+export default function SignupOptionsPage() {
     const bgImage = placeholderImages.placeholderImages.find(img => img.id === 'auth_bg');
 
   return (
     <div className="w-full lg:grid lg:min-h-[calc(100vh-5rem)] lg:grid-cols-2 xl:min-h-[calc(100vh-5rem)]">
       <div className="flex items-center justify-center py-12">
-        <Card className="mx-auto max-w-sm w-full">
-          <CardHeader>
-            <CardTitle className="text-xl font-headline">Sign Up</CardTitle>
+        <Card className="mx-auto max-w-md w-full">
+          <CardHeader className="text-center">
+            <CardTitle className="text-2xl font-headline">Join Our Community</CardTitle>
             <CardDescription>
-              Enter your information to create an account
+              First, tell us who you are. Choose the option that best describes you.
             </CardDescription>
           </CardHeader>
-          <CardContent>
-            <div className="grid gap-4">
-              <div className="grid grid-cols-2 gap-4">
-                <div className="grid gap-2">
-                  <Label htmlFor="first-name">First name</Label>
-                  <Input id="first-name" placeholder="Max" required />
-                </div>
-                <div className="grid gap-2">
-                  <Label htmlFor="last-name">Last name</Label>
-                  <Input id="last-name" placeholder="Robinson" required />
-                </div>
-              </div>
-              <div className="grid gap-2">
-                <Label htmlFor="email">Email</Label>
-                <Input
-                  id="email"
-                  type="email"
-                  placeholder="m@example.com"
-                  required
-                />
-              </div>
-              <div className="grid gap-2">
-                <Label htmlFor="password">Password</Label>
-                <Input id="password" type="password" />
-              </div>
-              <Button type="submit" className="w-full">
-                <UserPlus className="mr-2 h-4 w-4"/>
-                Create an account
-              </Button>
-              <Button variant="outline" className="w-full">
-                Sign up with Google
-              </Button>
-            </div>
-            <div className="mt-4 text-center text-sm">
+          <CardContent className="space-y-6">
+            <Link href="/signup/user" className="block">
+                <Card className="hover:bg-muted hover:border-primary transition-all">
+                    <CardHeader className="flex flex-row items-center gap-4 space-y-0">
+                        <div className="p-3 rounded-md bg-primary/10 text-primary">
+                            <User className="h-8 w-8" />
+                        </div>
+                        <div>
+                            <h3 className="font-bold text-lg">I want to find a property</h3>
+                            <p className="text-sm text-muted-foreground">Sign up to save properties, searches, and get alerts.</p>
+                        </div>
+                         <ArrowRight className="h-5 w-5 ml-auto text-muted-foreground" />
+                    </CardHeader>
+                </Card>
+            </Link>
+
+            <Link href="/signup/agent" className="block">
+                <Card className="hover:bg-muted hover:border-primary transition-all">
+                    <CardHeader className="flex flex-row items-center gap-4 space-y-0">
+                        <div className="p-3 rounded-md bg-primary/10 text-primary">
+                            <Briefcase className="h-8 w-8" />
+                        </div>
+                         <div>
+                            <h3 className="font-bold text-lg">I am an estate agent</h3>
+                            <p className="text-sm text-muted-foreground">Sign up to list properties and connect with clients.</p>
+                        </div>
+                         <ArrowRight className="h-5 w-5 ml-auto text-muted-foreground" />
+                    </CardHeader>
+                </Card>
+            </Link>
+
+             <div className="mt-6 text-center text-sm">
               Already have an account?{' '}
-              <Link href="/login" className="underline">
-                Sign in
+              <Link href="/login" className="underline font-semibold">
+                Sign in here
               </Link>
             </div>
           </CardContent>
         </Card>
       </div>
-      <div className="hidden bg-muted lg:block relative">
+       <div className="hidden bg-muted lg:block relative">
       {bgImage && (
             <Image
                 src={bgImage.imageUrl}
@@ -83,8 +78,8 @@ export default function SignupPage() {
                 </Link>
             </div>
             <div className="max-w-md">
-                <h2 className="text-4xl font-bold font-headline">Join The Community</h2>
-                <p className="mt-4 text-lg">Create an account to list properties, save your favorites, and get personalized alerts.</p>
+                <h2 className="text-4xl font-bold font-headline">The Right Move for Your Property Journey</h2>
+                <p className="mt-4 text-lg">Whether you're finding a home or listing one, we provide the tools you need for success.</p>
             </div>
         </div>
       </div>
