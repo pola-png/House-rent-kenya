@@ -2,12 +2,13 @@
 
 import Link from 'next/link';
 import Image from 'next/image';
-import { Building, UserPlus } from 'lucide-react';
+import { Building, UserPlus, Loader2 } from 'lucide-react';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
 import * as z from 'zod';
 import { useRouter } from 'next/navigation';
-import { GoogleAuthProvider, signInWithPopup } from 'firebase/auth';
+import { GoogleAuthProvider, createUserWithEmailAndPassword, signInWithPopup } from 'firebase/auth';
+import React from 'react';
 
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -16,7 +17,6 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '
 import placeholderImages from '@/lib/placeholder-images.json';
 import { useAuth } from '@/firebase';
 import { useToast } from '@/hooks/use-toast';
-import { initiateEmailSignUp } from '@/firebase/non-blocking-login';
 
 const formSchema = z.object({
   firstName: z.string().min(1, { message: 'First name is required.' }),
@@ -30,6 +30,7 @@ export default function SignupPage() {
   const auth = useAuth();
   const router = useRouter();
   const { toast } = useToast();
+  const [isLoading, setIsLoading] = React.useState(false);
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -41,16 +42,29 @@ export default function SignupPage() {
     },
   });
 
-  function onSubmit(values: z.infer<typeof formSchema>) {
-    initiateEmailSignUp(auth, values.email, values.password);
-    toast({
-      title: 'Creating Account...',
-      description: 'Please wait while we set up your account.',
-    });
-    router.push('/');
+  async function onSubmit(values: z.infer<typeof formSchema>) {
+    setIsLoading(true);
+    try {
+        await createUserWithEmailAndPassword(auth, values.email, values.password);
+        toast({
+            title: 'Account Created!',
+            description: 'You have successfully signed up.',
+        });
+        router.push('/');
+    } catch (error: any) {
+        console.error(error);
+        toast({
+            variant: 'destructive',
+            title: 'Uh oh! Something went wrong.',
+            description: error.message || 'There was a problem with your signup.',
+        });
+    } finally {
+        setIsLoading(false);
+    }
   }
 
   const handleGoogleSignUp = async () => {
+    setIsLoading(true);
     const provider = new GoogleAuthProvider();
     try {
       await signInWithPopup(auth, provider);
@@ -59,13 +73,15 @@ export default function SignupPage() {
         description: 'You have successfully signed up with Google.',
       });
       router.push('/');
-    } catch (error) {
+    } catch (error: any) {
       console.error(error);
       toast({
         variant: 'destructive',
         title: 'Uh oh! Something went wrong.',
-        description: 'There was a problem with Google Sign-Up.',
+        description: error.message || 'There was a problem with Google Sign-Up.',
       });
+    } finally {
+        setIsLoading(false);
     }
   };
 
@@ -88,7 +104,7 @@ export default function SignupPage() {
                       <FormItem className="grid gap-2">
                         <FormLabel>First name</FormLabel>
                         <FormControl>
-                          <Input placeholder="Max" {...field} />
+                          <Input placeholder="Max" {...field} disabled={isLoading}/>
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -101,7 +117,7 @@ export default function SignupPage() {
                       <FormItem className="grid gap-2">
                         <FormLabel>Last name</FormLabel>
                         <FormControl>
-                          <Input placeholder="Robinson" {...field} />
+                          <Input placeholder="Robinson" {...field} disabled={isLoading}/>
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -115,7 +131,7 @@ export default function SignupPage() {
                     <FormItem className="grid gap-2">
                       <FormLabel>Email</FormLabel>
                       <FormControl>
-                        <Input type="email" placeholder="m@example.com" {...field} />
+                        <Input type="email" placeholder="m@example.com" {...field} disabled={isLoading}/>
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -128,13 +144,14 @@ export default function SignupPage() {
                     <FormItem className="grid gap-2">
                       <FormLabel>Password</FormLabel>
                       <FormControl>
-                        <Input type="password" {...field} />
+                        <Input type="password" {...field} disabled={isLoading}/>
                       </FormControl>
                       <FormMessage />
                     </FormItem>
                   )}
                 />
-                <Button type="submit" className="w-full">
+                <Button type="submit" className="w-full" disabled={isLoading}>
+                    {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                   <UserPlus className="mr-2 h-4 w-4" />
                   Create an account
                 </Button>
@@ -148,7 +165,8 @@ export default function SignupPage() {
                 <span className="bg-background px-2 text-muted-foreground">Or continue with</span>
               </div>
             </div>
-            <Button variant="outline" className="w-full" onClick={handleGoogleSignUp}>
+            <Button variant="outline" className="w-full" onClick={handleGoogleSignUp} disabled={isLoading}>
+              {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
               Sign up with Google
             </Button>
             <div className="mt-4 text-center text-sm">

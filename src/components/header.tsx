@@ -5,6 +5,7 @@ import { Building, Menu, User, X, ChevronDown, Briefcase, UserCircle, LogOut } f
 import React from 'react';
 import { signOut } from 'firebase/auth';
 import Image from 'next/image';
+import { useRouter } from 'next/navigation';
 
 import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetTrigger, SheetClose } from '@/components/ui/sheet';
@@ -19,6 +20,7 @@ import {
 import { useUser, useAuth } from '@/firebase';
 import { Avatar, AvatarFallback, AvatarImage } from './ui/avatar';
 import { useToast } from '@/hooks/use-toast';
+import { Skeleton } from './ui/skeleton';
 
 const navLinks = [
   { href: '/search?type=rent', label: 'To Rent' },
@@ -33,6 +35,7 @@ export function Header() {
   const { user, isUserLoading } = useUser();
   const auth = useAuth();
   const { toast } = useToast();
+  const router = useRouter();
   
   const linkClasses = `text-sm font-medium transition-colors hover:text-primary text-black`;
   const buttonBorderClasses = 'border-primary text-primary hover:bg-primary hover:text-primary-foreground';
@@ -44,14 +47,76 @@ export function Header() {
         title: 'Logged Out',
         description: 'You have been successfully logged out.',
       });
-    } catch (error) {
+      router.push('/');
+    } catch (error: any) {
       console.error(error);
       toast({
         variant: 'destructive',
         title: 'Logout Failed',
-        description: 'There was an error logging you out.',
+        description: error.message || 'There was an error logging you out.',
       });
     }
+  };
+
+  const renderUserAuth = () => {
+    if (isUserLoading) {
+      return <Skeleton className="h-10 w-24" />;
+    }
+    if (user) {
+      return (
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button variant="ghost" className="relative h-10 w-10 rounded-full">
+              <Avatar>
+                <AvatarImage src={user.photoURL ?? undefined} alt={user.displayName ?? 'User'} />
+                <AvatarFallback>
+                  {user.displayName ? user.displayName.charAt(0).toUpperCase() : <User />}
+                </AvatarFallback>
+              </Avatar>
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end">
+            <DropdownMenuLabel>My Account</DropdownMenuLabel>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem asChild>
+              <Link href="/admin/dashboard">Dashboard</Link>
+            </DropdownMenuItem>
+            <DropdownMenuItem>Profile</DropdownMenuItem>
+            <DropdownMenuItem>Settings</DropdownMenuItem>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem onClick={handleLogout}>
+              <LogOut className="mr-2 h-4 w-4" />
+              Logout
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
+      );
+    }
+    return (
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <Button>
+            <User className="mr-2 h-4 w-4" /> Sign In <ChevronDown className="ml-2 h-4 w-4" />
+          </Button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="end">
+          <DropdownMenuLabel>Choose account type</DropdownMenuLabel>
+          <DropdownMenuSeparator />
+          <DropdownMenuItem asChild>
+            <Link href="/login">
+              <UserCircle className="mr-2 h-4 w-4" />
+              <span>User</span>
+            </Link>
+          </DropdownMenuItem>
+          <DropdownMenuItem asChild>
+           <Link href="/signup/agent">
+            <Briefcase className="mr-2 h-4 w-4" />
+            <span>Agent</span>
+          </Link>
+          </DropdownMenuItem>
+        </DropdownMenuContent>
+      </DropdownMenu>
+    );
   };
 
   return (
@@ -81,62 +146,7 @@ export function Header() {
 
           <div className="hidden md:flex items-center gap-2">
             <Button variant="outline" className={buttonBorderClasses}>List your property</Button>
-            {isUserLoading ? (
-              <Button disabled>
-                <User className="mr-2 h-4 w-4" /> Loading...
-              </Button>
-            ) : user ? (
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" className="relative h-10 w-10 rounded-full">
-                    <Avatar>
-                      <AvatarImage src={user.photoURL ?? undefined} alt={user.displayName ?? 'User'} />
-                      <AvatarFallback>
-                        {user.displayName ? user.displayName.charAt(0).toUpperCase() : <User />}
-                      </AvatarFallback>
-                    </Avatar>
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end">
-                  <DropdownMenuLabel>My Account</DropdownMenuLabel>
-                  <DropdownMenuSeparator />
-                  <DropdownMenuItem asChild>
-                    <Link href="/admin/dashboard">Dashboard</Link>
-                  </DropdownMenuItem>
-                  <DropdownMenuItem>Profile</DropdownMenuItem>
-                  <DropdownMenuItem>Settings</DropdownMenuItem>
-                  <DropdownMenuSeparator />
-                  <DropdownMenuItem onClick={handleLogout}>
-                    <LogOut className="mr-2 h-4 w-4" />
-                    Logout
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
-            ) : (
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button>
-                    <User className="mr-2 h-4 w-4" /> Sign In <ChevronDown className="ml-2 h-4 w-4" />
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end">
-                  <DropdownMenuLabel>Choose account type</DropdownMenuLabel>
-                  <DropdownMenuSeparator />
-                  <DropdownMenuItem asChild>
-                    <Link href="/login">
-                      <UserCircle className="mr-2 h-4 w-4" />
-                      <span>User</span>
-                    </Link>
-                  </DropdownMenuItem>
-                  <DropdownMenuItem asChild>
-                   <Link href="/login">
-                    <Briefcase className="mr-2 h-4 w-4" />
-                    <span>Agent</span>
-                  </Link>
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
-            )}
+            {renderUserAuth()}
           </div>
 
           <div className="md:hidden">
