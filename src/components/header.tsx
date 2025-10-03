@@ -21,6 +21,7 @@ import { useUser, useAuth } from '@/firebase';
 import { Avatar, AvatarFallback, AvatarImage } from './ui/avatar';
 import { useToast } from '@/hooks/use-toast';
 import { Skeleton } from './ui/skeleton';
+import { initiateAnonymousSignIn } from '@/firebase/non-blocking-login';
 
 const navLinks = [
   { href: '/search?type=rent', label: 'To Rent' },
@@ -43,6 +44,8 @@ export function Header() {
   const handleLogout = async () => {
     try {
       await signOut(auth);
+      // Re-sign in anonymously after logout to ensure consistent auth state
+      initiateAnonymousSignIn(auth);
       toast({
         title: 'Logged Out',
         description: 'You have been successfully logged out.',
@@ -62,7 +65,7 @@ export function Header() {
     if (isUserLoading) {
       return <Skeleton className="h-10 w-24" />;
     }
-    if (user) {
+    if (user && !user.isAnonymous) {
       return (
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
@@ -145,7 +148,9 @@ export function Header() {
           </nav>
 
           <div className="hidden md:flex items-center gap-2">
-            <Button variant="outline" className={buttonBorderClasses}>List your property</Button>
+            <Button variant="outline" className={buttonBorderClasses} asChild>
+              <Link href="/admin/properties/new">List your property</Link>
+            </Button>
             {renderUserAuth()}
           </div>
 
@@ -184,8 +189,10 @@ export function Header() {
                     ))}
                   </nav>
                   <div className="p-4 border-t flex flex-col gap-4">
-                     <Button variant="outline" className='border-primary text-primary'>List your property</Button>
-                     {user ? (
+                     <Button variant="outline" className='border-primary text-primary' asChild>
+                       <Link href="/admin/properties/new">List your property</Link>
+                     </Button>
+                     {user && !user.isAnonymous ? (
                        <Button onClick={handleLogout}>
                          <LogOut className="mr-2 h-4 w-4" /> Logout
                        </Button>
