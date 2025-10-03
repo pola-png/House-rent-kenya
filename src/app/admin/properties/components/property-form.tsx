@@ -1,3 +1,4 @@
+
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -7,6 +8,7 @@ import { Loader2, Sparkles, Wand2, Image as ImageIcon } from "lucide-react";
 import React from "react";
 import { useRouter } from "next/navigation";
 import { serverTimestamp, collection, addDoc, doc, updateDoc } from "firebase/firestore";
+import Image from "next/image";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -34,7 +36,8 @@ import { useToast } from "@/hooks/use-toast";
 import { Progress } from "@/components/ui/progress";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
-import { useFirestore, useUser, addDocumentNonBlocking } from "@/firebase";
+import { useFirestore, useUser } from "@/firebase";
+import { addDocumentNonBlocking, setDocumentNonBlocking } from "@/firebase/non-blocking-updates";
 
 const formSchema = z.object({
   title: z.string().min(10, {
@@ -72,6 +75,10 @@ export function PropertyForm({ property }: PropertyFormProps) {
   const [isGeneratingDesc, setIsGeneratingDesc] = React.useState(false);
   const [isOptimizingSeo, setIsOptimizingSeo] = React.useState(false);
   const [seoScore, setSeoScore] = React.useState<number | null>(property ? 75 : null);
+  const [imagePreviews, setImagePreviews] = React.useState<string[]>([]);
+  const [imageFiles, setImageFiles] = React.useState<File[]>([]);
+  const fileInputRef = React.useRef<HTMLInputElement>(null);
+
 
   const defaultValues: Partial<PropertyFormValues> = property
     ? {
@@ -127,7 +134,7 @@ export function PropertyForm({ property }: PropertyFormProps) {
 
         if (property) {
             const propertyRef = doc(firestore, "properties", property.id);
-            await updateDoc(propertyRef, propertyData);
+            setDocumentNonBlocking(propertyRef, propertyData, { merge: true });
             toast({
                 title: "Success!",
                 description: "Property has been updated successfully.",
@@ -135,7 +142,7 @@ export function PropertyForm({ property }: PropertyFormProps) {
             router.push(`/admin/properties`);
         } else {
             const collectionRef = collection(firestore, 'properties');
-            await addDoc(collectionRef, propertyData);
+            addDocumentNonBlocking(collectionRef, propertyData);
             toast({
                 title: "Success!",
                 description: "Property has been created successfully.",
@@ -153,6 +160,18 @@ export function PropertyForm({ property }: PropertyFormProps) {
         });
     }
   }
+
+  const handleImageChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const files = event.target.files;
+    if (files) {
+      const newFiles = Array.from(files);
+      const newImageFiles = [...imageFiles, ...newFiles];
+      setImageFiles(newImageFiles);
+
+      const newPreviews = newFiles.map(file => URL.createObjectURL(file));
+      setImagePreviews(prev => [...prev, ...newPreviews]);
+    }
+  };
 
   const handleGenerateDescription = async () => {
     setIsGeneratingDesc(true);
@@ -471,22 +490,45 @@ export function PropertyForm({ property }: PropertyFormProps) {
               </CardContent>
             </Card>
 
-             <Card>
-                <CardHeader>
-                    <CardTitle>Property Images</CardTitle>
-                    <CardDescription>Upload high-quality images of your property.</CardDescription>
-                </CardHeader>
-                <CardContent>
-                    <div className="flex items-center justify-center w-full">
-                        <label htmlFor="dropzone-file" className="flex flex-col items-center justify-center w-full h-32 border-2 border-dashed rounded-lg cursor-pointer bg-muted hover:bg-muted/50">
-                            <div className="flex flex-col items-center justify-center pt-5 pb-6">
-                                <ImageIcon className="w-8 h-8 mb-4 text-muted-foreground" />
-                                <p className="mb-2 text-sm text-muted-foreground"><span className="font-semibold">Click to upload</span> or drag and drop</p>
-                            </div>
-                            <input id="dropzone-file" type="file" className="hidden" multiple />
-                        </label>
-                    </div> 
-                </CardContent>
+            <Card>
+              <CardHeader>
+                <CardTitle>Property Images</CardTitle>
+                <CardDescription>Upload high-quality images of your property.</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="grid grid-cols-3 gap-2">
+                  {imagePreviews.map((src, index) => (
+                    <div key={index} className="relative aspect-square">
+                      <Image
+                        src={src}
+                        alt={`Preview ${index + 1}`}
+                        fill
+                        className="rounded-md object-cover"
+                      />
+                    </div>
+                  ))}
+                  <div className="flex items-center justify-center w-full">
+                    <label
+                      htmlFor="dropzone-file"
+                      className="flex flex-col items-center justify-center w-full aspect-square border-2 border-dashed rounded-lg cursor-pointer bg-muted hover:bg-muted/50"
+                    >
+                      <div className="flex flex-col items-center justify-center text-center">
+                        <ImageIcon className="w-8 h-8 mb-2 text-muted-foreground" />
+                        <p className="text-xs text-muted-foreground">Add more</p>
+                      </div>
+                      <input
+                        id="dropzone-file"
+                        ref={fileInputRef}
+                        type="file"
+                        className="hidden"
+                        multiple
+                        onChange={handleImageChange}
+                        accept="image/png, image/jpeg, image/gif"
+                      />
+                    </label>
+                  </div>
+                </div>
+              </CardContent>
             </Card>
 
             <Card>
@@ -538,3 +580,5 @@ export function PropertyForm({ property }: PropertyFormProps) {
     </Form>
   );
 }
+
+    
