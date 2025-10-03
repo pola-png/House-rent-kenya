@@ -89,7 +89,7 @@ export default function AdminLayout({
             </SidebarMenuItem>
              <SidebarMenuItem>
               <SidebarMenuButton asChild tooltip="Leads">
-                <Link href="#">
+                <Link href="/admin/leads">
                   <Star className="h-5 w-5" />
                   <span>Leads</span>
                 </Link>
@@ -97,7 +97,7 @@ export default function AdminLayout({
             </SidebarMenuItem>
              <SidebarMenuItem>
               <SidebarMenuButton asChild tooltip="Property Requests">
-                <Link href="#">
+                <Link href="/admin/property-requests">
                   <Heart className="h-5 w-5" />
                   <span>Property Requests</span>
                 </Link>
@@ -105,7 +105,7 @@ export default function AdminLayout({
             </SidebarMenuItem>
             <SidebarMenuItem>
               <SidebarMenuButton asChild tooltip="Callback Requests">
-                <Link href="#">
+                <Link href="/admin/callback-requests">
                   <PhoneCall className="h-5 w-5" />
                   <span>Callback Requests</span>
                 </Link>
@@ -113,7 +113,7 @@ export default function AdminLayout({
             </SidebarMenuItem>
              <SidebarMenuItem>
               <SidebarMenuButton asChild tooltip="Subscription">
-                <Link href="#">
+                <Link href="/admin/subscription">
                   <Package className="h-5 w-5" />
                   <span>Subscription</span>
                 </Link>
@@ -121,7 +121,7 @@ export default function AdminLayout({
             </SidebarMenuItem>
              <SidebarMenuItem>
               <SidebarMenuButton asChild tooltip="Performance">
-                <Link href="#">
+                <Link href="/admin/performance">
                   <AreaChart className="h-5 w-5" />
                   <span>Performance</span>
                 </Link>
@@ -129,7 +129,7 @@ export default function AdminLayout({
             </SidebarMenuItem>
              <SidebarMenuItem>
               <SidebarMenuButton asChild tooltip="Profile">
-                <Link href="#">
+                <Link href="/admin/profile">
                   <User className="h-5 w-5" />
                   <span>Profile</span>
                 </Link>
@@ -137,7 +137,7 @@ export default function AdminLayout({
             </SidebarMenuItem>
              <SidebarMenuItem>
               <SidebarMenuButton asChild tooltip="My Team">
-                <Link href="#">
+                <Link href="/admin/my-team">
                   <Users2 className="h-5 w-5" />
                   <span>My Team</span>
                 </Link>
@@ -145,7 +145,7 @@ export default function AdminLayout({
             </SidebarMenuItem>
             <SidebarMenuItem>
               <SidebarMenuButton asChild tooltip="Messages">
-                <Link href="#">
+                <Link href="/admin/messages">
                   <MessageSquare className="h-5 w-5" />
                   <span>Messages</span>
                 </Link>
