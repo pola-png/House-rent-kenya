@@ -40,7 +40,7 @@ export function Header() {
           <nav className="hidden md:flex items-center gap-6">
             {navLinks.map((link) => (
               <Link
-                key={link.href}
+                key={`${link.href}-${link.label}`}
                 href={link.href}
                 className={`text-sm font-medium transition-colors hover:text-primary ${isScrolled ? 'text-foreground' : 'text-white'}`}
               >
@@ -82,7 +82,7 @@ export function Header() {
                   </div>
                   <nav className="flex-1 flex flex-col gap-4 p-4">
                     {navLinks.map((link) => (
-                      <SheetClose asChild key={link.href}>
+                      <SheetClose asChild key={`${link.href}-${link.label}`}>
                         <Link
                           href={link.href}
                           className="text-lg font-medium transition-colors hover:text-primary"
