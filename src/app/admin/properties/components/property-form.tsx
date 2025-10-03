@@ -7,7 +7,7 @@ import * as z from "zod";
 import { Loader2, Sparkles, Wand2, Image as ImageIcon, X } from "lucide-react";
 import React from "react";
 import { useRouter } from "next/navigation";
-import { serverTimestamp, collection, addDoc, doc, updateDoc } from "firebase/firestore";
+import { serverTimestamp, collection, doc } from "firebase/firestore";
 import Image from "next/image";
 
 import { Button } from "@/components/ui/button";
@@ -36,8 +36,7 @@ import { useToast } from "@/hooks/use-toast";
 import { Progress } from "@/components/ui/progress";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
-import { useFirestore, useUser } from "@/firebase";
-import { addDocumentNonBlocking, setDocumentNonBlocking } from "@/firebase/non-blocking-updates";
+import { useFirestore, useUser, addDocumentNonBlocking, setDocumentNonBlocking } from "@/firebase";
 
 const formSchema = z.object({
   title: z.string().min(10, {
@@ -84,13 +83,14 @@ export function PropertyForm({ property }: PropertyFormProps) {
     ? {
         ...property,
         amenities: property.amenities.join(", "),
-        keywords: "", // Or join property.keywords if it exists
+        keywords: property.keywords || "",
       }
     : {
         status: "For Rent",
         type: "Apartment",
         keywords: "",
         featured: false,
+        city: "Nairobi",
       };
 
   const form = useForm<PropertyFormValues>({
@@ -218,7 +218,7 @@ export function PropertyForm({ property }: PropertyFormProps) {
             listingDescription: currentValues.description,
             listingKeywords: currentValues.keywords || '',
             propertyType: currentValues.type,
-            propertyLocation: currentValues.location,
+            propertyLocation: `${currentValues.location}, ${currentValues.city}`,
             numberOfBedrooms: currentValues.bedrooms,
             numberOfBathrooms: currentValues.bathrooms,
             amenities: currentValues.amenities,
@@ -597,3 +597,5 @@ export function PropertyForm({ property }: PropertyFormProps) {
     </Form>
   );
 }
+
+    

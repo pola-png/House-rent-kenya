@@ -1,3 +1,4 @@
+
 import { Timestamp } from "firebase/firestore";
 
 export interface Property {
@@ -39,3 +40,5 @@ export interface UserProfile {
     createdAt: Timestamp;
     photoURL?: string;
 }
+
+    

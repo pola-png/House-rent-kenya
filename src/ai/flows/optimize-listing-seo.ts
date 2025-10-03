@@ -1,3 +1,4 @@
+
 'use server';
 
 /**
@@ -16,7 +17,7 @@ const OptimizeListingSEOInputSchema = z.object({
   listingDescription: z.string().describe('The current description of the property listing.'),
   listingKeywords: z.string().describe('The current keywords associated with the property listing.'),
   propertyType: z.string().describe('The type of property (e.g., apartment, house, condo).'),
-  propertyLocation: z.string().describe('The location of the property.'),
+  propertyLocation: z.string().describe('The location of the property (e.g. "Kilimani, Nairobi").'),
   numberOfBedrooms: z.number().describe('The number of bedrooms in the property.'),
   numberOfBathrooms: z.number().describe('The number of bathrooms in the property.'),
   amenities: z.string().describe('A comma-separated list of amenities offered by the property.'),
@@ -71,3 +72,5 @@ const optimizeListingSEOFlow = ai.defineFlow(
     return output!;
   }
 );
+
+    
