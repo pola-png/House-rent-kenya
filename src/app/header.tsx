@@ -1,3 +1,4 @@
+
 "use client";
 
 import Link from 'next/link';
@@ -95,31 +96,34 @@ export function Header() {
         </DropdownMenu>
       );
     }
-    return (
-      <DropdownMenu>
-        <DropdownMenuTrigger asChild>
-          <Button>
-            <User className="mr-2 h-4 w-4" /> Sign In <ChevronDown className="ml-2 h-4 w-4" />
-          </Button>
-        </DropdownMenuTrigger>
-        <DropdownMenuContent align="end">
-          <DropdownMenuLabel>Choose account type</DropdownMenuLabel>
-          <DropdownMenuSeparator />
-          <DropdownMenuItem asChild>
-            <Link href="/login">
-              <UserCircle className="mr-2 h-4 w-4" />
-              <span>User</span>
-            </Link>
-          </DropdownMenuItem>
-          <DropdownMenuItem asChild>
-           <Link href="/signup/agent">
-            <Briefcase className="mr-2 h-4 w-4" />
-            <span>Agent</span>
-          </Link>
-          </DropdownMenuItem>
-        </DropdownMenuContent>
-      </DropdownMenu>
-    );
+    if (user && user.isAnonymous) {
+        return (
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button>
+                <User className="mr-2 h-4 w-4" /> Sign In <ChevronDown className="ml-2 h-4 w-4" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuLabel>Choose account type</DropdownMenuLabel>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem asChild>
+                <Link href="/login">
+                  <UserCircle className="mr-2 h-4 w-4" />
+                  <span>User</span>
+                </Link>
+              </DropdownMenuItem>
+              <DropdownMenuItem asChild>
+               <Link href="/signup/agent">
+                <Briefcase className="mr-2 h-4 w-4" />
+                <span>Agent</span>
+              </Link>
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        );
+    }
+    return null;
   };
 
   return (
