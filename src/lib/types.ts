@@ -66,3 +66,21 @@ export interface Message {
     senderId: string;
     timestamp: Timestamp;
 }
+
+export interface Development {
+  id: string;
+  title: string;
+  location: string;
+  priceRange: string;
+  description: string;
+  imageId: string;
+  status: string;
+}
+
+export interface Article {
+  id: string;
+  title: string;
+  excerpt: string;
+  imageId: string;
+  category: string;
+}

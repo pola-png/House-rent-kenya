@@ -88,6 +88,32 @@
         "timestamp": { "type": "string", "format": "date-time" }
       },
       "required": ["text", "senderId", "timestamp"]
+    },
+    "Development": {
+      "title": "Development",
+      "type": "object",
+      "description": "Represents a new property development.",
+      "properties": {
+        "title": { "type": "string" },
+        "location": { "type": "string" },
+        "priceRange": { "type": "string" },
+        "description": { "type": "string" },
+        "imageId": { "type": "string" },
+        "status": { "type": "string" }
+      },
+      "required": ["title", "location", "priceRange", "description", "imageId", "status"]
+    },
+    "Article": {
+      "title": "Article",
+      "type": "object",
+      "description": "Represents a property advice article.",
+      "properties": {
+        "title": { "type": "string" },
+        "excerpt": { "type": "string" },
+        "imageId": { "type": "string" },
+        "category": { "type": "string" }
+      },
+      "required": ["title", "excerpt", "imageId", "category"]
     }
   },
   "auth": {
@@ -141,6 +167,24 @@
             { "name": "ticketId", "description": "The ID of the support ticket." },
             { "name": "messageId", "description": "The unique ID for the message." }
           ]
+        }
+      },
+      {
+        "path": "/developments/{developmentId}",
+        "definition": {
+          "entityName": "Development",
+          "schema": { "$ref": "#/backend/entities/Development" },
+          "description": "Stores new property developments.",
+          "params": [{ "name": "developmentId", "description": "The unique identifier for the development." }]
+        }
+      },
+      {
+        "path": "/articles/{articleId}",
+        "definition": {
+          "entityName": "Article",
+          "schema": { "$ref": "#/backend/entities/Article" },
+          "description": "Stores property advice articles.",
+          "params": [{ "name": "articleId", "description": "The unique identifier for the article." }]
         }
       }
     ]

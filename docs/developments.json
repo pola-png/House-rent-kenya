@@ -1,0 +1,57 @@
+
+[
+  {
+    "id": "1",
+    "title": "Riverside Square",
+    "location": "Riverside, Nairobi",
+    "priceRange": "From Ksh 12M",
+    "description": "Experience luxury living with stunning river views. A mix of 1, 2, and 3-bedroom apartments with world-class amenities.",
+    "imageId": "hero_main",
+    "status": "Selling Fast"
+  },
+  {
+    "id": "2",
+    "title": "Diani Beach Villas",
+    "location": "Diani, Kwale",
+    "priceRange": "From Ksh 25M",
+    "description": "Exclusive beachfront villas offering a serene and luxurious coastal lifestyle. Private pools and direct beach access.",
+    "imageId": "city_mombasa",
+    "status": "New Release"
+  },
+  {
+    "id": "3",
+    "title": "Kilimani Heights",
+    "location": "Kilimani, Nairobi",
+    "priceRange": "From Ksh 8.5M",
+    "description": "Modern apartments in the heart of Kilimani. Perfect for urban professionals seeking convenience and style.",
+    "imageId": "property_3_1",
+    "status": "Under Construction"
+  },
+  {
+    "id": "4",
+    "title": "The Lavington Grand",
+    "location": "Lavington, Nairobi",
+    "priceRange": "From Ksh 18M",
+    "description": "Elegant townhouses with spacious gardens, ideal for families. Located in a secure and prestigious neighborhood.",
+    "imageId": "property_2_1",
+    "status": "Selling Fast"
+  },
+  {
+    "id": "5",
+    "title": "Nakuru Golf Estate",
+    "location": "Nakuru",
+    "priceRange": "From Ksh 15M",
+    "description": "A premier gated community centered around a lush golf course. Offering a tranquil and secure environment for your family.",
+    "imageId": "city_nakuru",
+    "status": "New Release"
+  },
+  {
+    "id": "6",
+    "title": "Runda Paradise",
+    "location": "Runda, Nairobi",
+    "priceRange": "From Ksh 45M",
+    "description": "Luxurious ambassadorial homes in one of Nairobi's most exclusive suburbs. Unmatched elegance and privacy.",
+    "imageId": "property_4_1",
+    "status": "Limited Units"
+  }
+]
