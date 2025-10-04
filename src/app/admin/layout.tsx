@@ -18,7 +18,8 @@ import {
   AreaChart,
   Users2,
   List,
-  Settings
+  Settings,
+  LifeBuoy
 } from "lucide-react";
 import {
   SidebarProvider,
@@ -189,7 +190,9 @@ export default function AdminLayout({
               <DropdownMenuItem asChild>
                 <Link href="/admin/settings">Settings</Link>
               </DropdownMenuItem>
-              <DropdownMenuItem>Support</DropdownMenuItem>
+              <DropdownMenuItem asChild>
+                <Link href="/admin/support">Support</Link>
+              </DropdownMenuItem>
               <DropdownMenuSeparator />
               <DropdownMenuItem>Logout</DropdownMenuItem>
             </DropdownMenuContent>
