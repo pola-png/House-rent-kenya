@@ -1,3 +1,4 @@
+
 "use client";
 import { collection, query, where } from "firebase/firestore";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -65,11 +66,15 @@ export default function AgentsPage() {
                         <span>{agent.agencyName || 'No Agency Info'}</span>
                    </div>
                   <div className="space-y-2">
-                     <Button className="w-full">
-                        <Phone className="h-4 w-4 mr-2" /> Call Agent
+                     <Button asChild className="w-full">
+                        <a href={`tel:${agent.phoneNumber}`}>
+                          <Phone className="h-4 w-4 mr-2" /> Call Agent
+                        </a>
                     </Button>
-                    <Button variant="outline" className="w-full">
-                        <Mail className="h-4 w-4 mr-2" /> Email Agent
+                    <Button variant="outline" className="w-full" asChild>
+                        <a href={`mailto:${agent.email}`}>
+                          <Mail className="h-4 w-4 mr-2" /> Email Agent
+                        </a>
                     </Button>
                   </div>
                 </CardContent>

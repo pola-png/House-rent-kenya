@@ -48,6 +48,22 @@
         "createdAt": { "type": "string", "format": "date-time" }
       },
       "required": ["uid", "firstName", "lastName", "displayName", "email", "role"]
+    },
+    "CallbackRequest": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "CallbackRequest",
+      "type": "object",
+      "description": "Represents a user's request for a callback from an agent.",
+      "properties": {
+        "propertyId": { "type": "string", "description": "ID of the property of interest." },
+        "propertyTitle": { "type": "string", "description": "Title of the property of interest." },
+        "userName": { "type": "string", "description": "Name of the user requesting the callback." },
+        "userPhone": { "type": "string", "description": "Phone number of the user." },
+        "agentId": { "type": "string", "description": "UID of the agent who should make the callback." },
+        "status": { "type": "string", "enum": ["pending", "contacted"], "description": "Status of the callback request." },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["propertyId", "propertyTitle", "userName", "userPhone", "agentId", "status", "createdAt"]
     }
   },
   "auth": {
@@ -71,6 +87,15 @@
           "schema": { "$ref": "#/backend/entities/Property" },
           "description": "Stores all property listings.",
           "params": [{ "name": "propertyId", "description": "The unique identifier of the property." }]
+        }
+      },
+      {
+        "path": "/callback-requests/{callbackId}",
+        "definition": {
+            "entityName": "CallbackRequest",
+            "schema": { "$ref": "#/backend/entities/CallbackRequest" },
+            "description": "Stores callback requests from potential clients.",
+            "params": [{ "name": "callbackId", "description": "The unique identifier of the callback request." }]
         }
       }
     ]

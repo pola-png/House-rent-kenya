@@ -39,4 +39,15 @@ export interface UserProfile {
     phoneNumber?: string;
 }
 
+export interface CallbackRequest {
+    id: string;
+    propertyId: string;
+    propertyTitle: string;
+    userName: string;
+    userPhone: string;
+    agentId: string;
+    status: 'pending' | 'contacted';
+    createdAt: Timestamp;
+}
+
     

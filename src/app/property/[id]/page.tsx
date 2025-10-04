@@ -3,8 +3,9 @@
 
 import Image from 'next/image';
 import { notFound, useParams } from 'next/navigation';
-import { Bed, Bath, Maximize, MapPin, CheckCircle, Mail, Phone, User, Terminal, MessageSquare } from 'lucide-react';
-import { doc } from 'firebase/firestore';
+import { Bed, Bath, Maximize, MapPin, CheckCircle, Mail, Phone, User, Terminal, MessageSquare, Calendar, Loader2 } from 'lucide-react';
+import { doc, serverTimestamp, collection, addDoc } from 'firebase/firestore';
+import React from 'react';
 
 import placeholderImages from '@/lib/placeholder-images.json';
 import { Badge } from '@/components/ui/badge';
@@ -15,14 +16,21 @@ import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Map } from '@/components/map';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { useDoc, useFirestore, useMemoFirebase } from '@/firebase';
+import { useDoc, useFirestore, useMemoFirebase, addDocumentNonBlocking } from '@/firebase';
 import type { Property } from '@/lib/types';
 import { Skeleton } from '@/components/ui/skeleton';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { useToast } from '@/hooks/use-toast';
 
 export default function PropertyPage() {
   const params = useParams();
   const id = params.id as string;
   const firestore = useFirestore();
+  const { toast } = useToast();
+  const [isSubmitting, setIsSubmitting] = React.useState(false);
+  const [dialogOpen, setDialogOpen] = React.useState(false);
   
   const propertyRef = useMemoFirebase(() => {
     if (!firestore || !id) return null;
@@ -30,6 +38,56 @@ export default function PropertyPage() {
   }, [firestore, id]);
 
   const { data: property, isLoading, error } = useDoc<Property>(propertyRef);
+  
+  const handleRequestSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    if (!property) return;
+
+    const formData = new FormData(event.currentTarget);
+    const userName = formData.get('name') as string;
+    const userPhone = formData.get('phone') as string;
+
+    if (!userName || !userPhone) {
+      toast({
+        variant: "destructive",
+        title: "Missing Information",
+        description: "Please enter your name and phone number.",
+      });
+      return;
+    }
+    
+    setIsSubmitting(true);
+
+    try {
+        const callbackRequest = {
+            propertyId: property.id,
+            propertyTitle: property.title,
+            userName,
+            userPhone,
+            agentId: property.agent.uid,
+            status: 'pending' as const,
+            createdAt: serverTimestamp(),
+        };
+        const collectionRef = collection(firestore, 'callback-requests');
+        addDocumentNonBlocking(collectionRef, callbackRequest);
+        
+        toast({
+            title: "Request Sent!",
+            description: "The agent will contact you shortly to arrange a tour.",
+        });
+        setDialogOpen(false);
+    } catch (e: any) {
+        console.error("Error submitting request: ", e);
+        toast({
+            variant: "destructive",
+            title: "Uh oh! Something went wrong.",
+            description: e.message || "Could not submit your request.",
+        });
+    } finally {
+        setIsSubmitting(false);
+    }
+  };
+
 
   if (isLoading) {
     return (
@@ -74,6 +132,7 @@ export default function PropertyPage() {
   if (!property) return null; // Should be handled by notFound, but for type safety
 
   const agentImage = placeholderImages.placeholderImages.find(img => img.id === 'agent_1');
+  const agentPhoneNumber = property.agent.phoneNumber || '0728270000';
 
   return (
     <div className="bg-background">
@@ -203,19 +262,52 @@ export default function PropertyPage() {
                   </div>
                 </div>
                 <div className="space-y-2">
-                    <Button variant="outline" className="w-full justify-start">
-                        <Phone className="h-4 w-4 mr-2" /> {property.agent.phoneNumber || '0728270000'}
+                    <Button asChild variant="outline" className="w-full justify-start">
+                        <a href={`tel:${agentPhoneNumber}`}>
+                            <Phone className="h-4 w-4 mr-2" /> {agentPhoneNumber}
+                        </a>
                     </Button>
-                     <Button variant="outline" className="w-full justify-start">
-                        <svg className="h-4 w-4 mr-2" viewBox="0 0 24 24" fill="currentColor"><path d="M16.75 13.96c.25.13.41.39.41.67v2.24c0 .67-.58 1.2-1.25 1.13-2.11-.22-4.08-.94-5.83-2.01-1.93-1.18-3.48-2.82-4.69-4.82-1.07-1.76-1.7-3.66-1.87-5.7-.07-.66.47-1.23 1.14-1.23h2.24c.28 0 .54.16.67.41.34.66.75 1.34 1.22 2.05.17.25.17.58 0 .84l-1.13 1.27c.92 1.93 2.57 3.58 4.5 4.5l1.27-1.13c.26-.26.59-.26.85,0 .71.47 1.39.88 2.05 1.22zM20 15.5c-1.25 0-2.45-.2-3.57-.57-.35-.11-.74-.03-1.01.24l-2.2 2.2c-2.83-1.44-5.15-3.75-6.59-6.59l2.2-2.2c.28-.28.36-.67.25-1.02-.37-1.12-.57-2.32-.57-3.57C8.5.94 7.56 0 6.5 0H3C1.9 0 1 .9 1 2c0 9.39 7.61 17 17 17 .9 0 1.5-.5 2-1v-3.5c1.1-.01 2-1.01 2-2.01V15.5z"/></svg>
-                        254728000000
+                     <Button asChild variant="outline" className="w-full justify-start">
+                         <a href={`https://wa.me/${agentPhoneNumber.replace('+', '')}`}>
+                            <svg className="h-4 w-4 mr-2" viewBox="0 0 24 24" fill="currentColor"><path d="M16.75 13.96c.25.13.41.39.41.67v2.24c0 .67-.58 1.2-1.25 1.13-2.11-.22-4.08-.94-5.83-2.01-1.93-1.18-3.48-2.82-4.69-4.82-1.07-1.76-1.7-3.66-1.87-5.7-.07-.66.47-1.23 1.14-1.23h2.24c.28 0 .54.16.67.41.34.66.75 1.34 1.22 2.05.17.25.17.58 0 .84l-1.13 1.27c.92 1.93 2.57 3.58 4.5 4.5l1.27-1.13c.26-.26.59-.26.85,0 .71.47 1.39.88 2.05 1.22zM20 15.5c-1.25 0-2.45-.2-3.57-.57-.35-.11-.74-.03-1.01.24l-2.2 2.2c-2.83-1.44-5.15-3.75-6.59-6.59l2.2-2.2c.28-.28.36-.67.25-1.02-.37-1.12-.57-2.32-.57-3.57C8.5.94 7.56 0 6.5 0H3C1.9 0 1 .9 1 2c0 9.39 7.61 17 17 17 .9 0 1.5-.5 2-1v-3.5c1.1-.01 2-1.01 2-2.01V15.5z"/></svg>
+                            WhatsApp
+                        </a>
                     </Button>
                     <Button variant="secondary" className="w-full">
                         <MessageSquare className="h-4 w-4 mr-2" /> Message Agent
                     </Button>
                 </div>
                  <div className="border-t pt-4">
-                    <Button size="lg" className="w-full">Enquire Now</Button>
+                    <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+                      <DialogTrigger asChild>
+                        <Button size="lg" className="w-full">
+                           <Calendar className="mr-2 h-4 w-4" />
+                           Request a Tour
+                        </Button>
+                      </DialogTrigger>
+                      <DialogContent>
+                        <DialogHeader>
+                          <DialogTitle>Request a Property Tour</DialogTitle>
+                          <DialogDescription>
+                            Submit your details and the agent will contact you to schedule a viewing for "{property.title}".
+                          </DialogDescription>
+                        </DialogHeader>
+                        <form onSubmit={handleRequestSubmit} className="grid gap-4 py-4">
+                            <div className="grid gap-2">
+                                <Label htmlFor="name">Your Name</Label>
+                                <Input id="name" name="name" placeholder="John Doe" required />
+                            </div>
+                            <div className="grid gap-2">
+                                <Label htmlFor="phone">Phone Number</Label>
+                                <Input id="phone" name="phone" placeholder="0712 345 678" required />
+                            </div>
+                            <Button type="submit" disabled={isSubmitting}>
+                               {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                               Submit Request
+                            </Button>
+                        </form>
+                      </DialogContent>
+                    </Dialog>
                  </div>
               </CardContent>
             </Card>
