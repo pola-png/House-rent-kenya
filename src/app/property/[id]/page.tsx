@@ -132,7 +132,7 @@ export default function PropertyPage() {
   if (!property) return null; // Should be handled by notFound, but for type safety
 
   const agentImage = placeholderImages.placeholderImages.find(img => img.id === 'agent_1');
-  const agentPhoneNumber = property.agent.phoneNumber || '0728270000';
+  const agentPhoneNumber = property.agent.phoneNumber || '+254704202939';
 
   return (
     <div className="bg-background">
@@ -299,7 +299,7 @@ export default function PropertyPage() {
                             </div>
                             <div className="grid gap-2">
                                 <Label htmlFor="phone">Phone Number</Label>
-                                <Input id="phone" name="phone" placeholder="0712 345 678" required />
+                                <Input id="phone" name="phone" placeholder="+254704202939" required />
                             </div>
                             <Button type="submit" disabled={isSubmitting}>
                                {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}

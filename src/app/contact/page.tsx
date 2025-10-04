@@ -68,8 +68,8 @@ export default function ContactPage() {
                         </div>
                         <div>
                             <h3 className="font-semibold text-lg">Email Us</h3>
-                            <p className="text-muted-foreground">For general inquiries: <a href="mailto:info@houserent.co.ke" className="text-primary hover:underline">info@houserent.co.ke</a></p>
-                             <p className="text-muted-foreground">For support: <a href="mailto:support@houserent.co.ke" className="text-primary hover:underline">support@houserent.co.ke</a></p>
+                            <p className="text-muted-foreground">For general inquiries: <a href="mailto:propertynyumba254@gmail.com" className="text-primary hover:underline">propertynyumba254@gmail.com</a></p>
+                             <p className="text-muted-foreground">For support: <a href="mailto:propertynyumba254@gmail.com" className="text-primary hover:underline">propertynyumba254@gmail.com</a></p>
                         </div>
                     </div>
                      <div className="flex items-start gap-4">
@@ -79,7 +79,7 @@ export default function ContactPage() {
                         <div>
                             <h3 className="font-semibold text-lg">Call Us</h3>
                             <p className="text-muted-foreground">Mon - Fri, 9am - 5pm</p>
-                            <p className="text-muted-foreground">+254 700 123 456</p>
+                            <p className="text-muted-foreground">+254704202939</p>
                         </div>
                     </div>
                 </div>
