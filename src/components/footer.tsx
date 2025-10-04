@@ -5,22 +5,22 @@ import { Input } from './ui/input';
 
 const footerLinks = {
   company: [
-    { label: 'About Us', href: '#' },
-    { label: 'Contact Us', href: '#' },
-    { label: 'Careers', href: '#' },
-    { label: 'Blog', href: '#' },
+    { label: 'About Us', href: '/about' },
+    { label: 'Contact Us', href: '/contact' },
+    { label: 'Careers', href: '/careers' },
+    { label: 'Blog', href: '/blog' },
   ],
   explore: [
     { label: 'Rent', href: '/search?type=rent' },
     { label: 'Buy', href: '/search?type=buy' },
-    { label: 'Agents', href: '#' },
+    { label: 'Agents', href: '/agents' },
     { label: 'Neighborhoods', href: '#' },
   ],
   support: [
-    { label: 'Help Center', href: '#' },
-    { label: 'Terms of Service', href: '#' },
-    { label: 'Privacy Policy', href: '#' },
-    { label: 'Sitemap', href: '#' },
+    { label: 'Help Center', href: '/contact' },
+    { label: 'Terms of Service', href: '/terms' },
+    { label: 'Privacy Policy', href: '/privacy' },
+    { label: 'Sitemap', href: '/sitemap' },
   ],
 };
 
