@@ -3,7 +3,7 @@
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
-import { Check, Package, Star, Zap, Loader2 } from "lucide-react";
+import { Check, Package, Star, Zap, Loader2, Upload } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -71,20 +71,37 @@ const plans = [
 
 export default function SubscriptionPage() {
     const { toast } = useToast();
-    const [isConfirming, setIsConfirming] = React.useState(false);
+    const [isSubmitting, setIsSubmitting] = React.useState(false);
+    const [screenshotFile, setScreenshotFile] = React.useState<File | null>(null);
 
-    const handleConfirmPayment = () => {
-        setIsConfirming(true);
-        // Simulate API call to verify payment
-        setTimeout(() => {
-            setIsConfirming(false);
+    const handleScreenshotChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+        const file = event.target.files?.[0];
+        if (file) {
+            setScreenshotFile(file);
+        }
+    };
+
+    const handleSendForApproval = () => {
+        if (!screenshotFile) {
             toast({
-                title: "Payment Received!",
-                description: "Your payment is being verified. Your plan will be upgraded shortly.",
+                variant: "destructive",
+                title: "No Screenshot",
+                description: "Please upload a screenshot of your payment to proceed.",
+            });
+            return;
+        }
+
+        setIsSubmitting(true);
+        // Simulate API call to send screenshot
+        setTimeout(() => {
+            setIsSubmitting(false);
+            setScreenshotFile(null); // Reset file input
+            toast({
+                title: "Request Sent!",
+                description: "An admin has been notified. Your subscription will be upgraded upon approval.",
             });
             // Here you would close the dialog, which can be handled by controlling the `open` state of the Dialog.
-            // For now, we'll just show the toast.
-        }, 3000);
+        }, 2000);
     }
 
   return (
@@ -125,44 +142,39 @@ export default function SubscriptionPage() {
                             {plan.cta}
                         </Button>
                     ) : (
-                        <Dialog>
+                        <Dialog onOpenChange={() => setScreenshotFile(null)}>
                             <DialogTrigger asChild>
                                 <Button className="w-full">{plan.cta}</Button>
                             </DialogTrigger>
                             <DialogContent className="sm:max-w-[425px]">
                                 <DialogHeader>
-                                <DialogTitle>Complete Payment via M-Pesa</DialogTitle>
+                                <DialogTitle>Complete Payment for {plan.name} Plan</DialogTitle>
                                 <DialogDescription>
-                                    Follow the instructions below to upgrade to the <span className="font-bold text-primary">{plan.name}</span> plan.
+                                    Follow the instructions below to upgrade your subscription.
                                 </DialogDescription>
                                 </DialogHeader>
                                 <div className="grid gap-4 py-4">
-                                    <p className="text-sm text-center bg-muted p-4 rounded-md">
-                                        Go to M-Pesa on your phone and select Lipa na M-Pesa.
-                                    </p>
-                                    <div className="space-y-2">
-                                        <Label>Business Number:</Label>
-                                        <Input readOnly value="123456" />
+                                     <div className="text-sm text-center bg-muted p-4 rounded-md">
+                                        <p className="font-semibold mb-2">1. Complete Payment via M-Pesa</p>
+                                        <p>Send Money to: <span className="font-bold">+254704202939</span></p>
+                                        <p>Name: <span className="font-bold">Edwin</span></p>
+                                        <p>Amount: <span className="font-bold">{plan.price}</span></p>
                                     </div>
+
                                     <div className="space-y-2">
-                                        <Label>Account Number:</Label>
-                                        <Input readOnly value="AGENT123" />
-                                    </div>
-                                    <div className="space-y-2">
-                                        <Label>Amount:</Label>
-                                        <Input readOnly value={plan.price} />
-                                    </div>
-                                    <Separator />
-                                     <div className="space-y-2">
-                                        <Label htmlFor="mpesa-code">M-Pesa Confirmation Code</Label>
-                                        <Input id="mpesa-code" placeholder="e.g., RG83..."/>
-                                        <p className="text-xs text-muted-foreground">Enter the code you receive from M-Pesa after payment.</p>
+                                        <Label htmlFor="screenshot-upload">2. Upload Payment Screenshot</Label>
+                                        <Input id="screenshot-upload" type="file" accept="image/png, image/jpeg" onChange={handleScreenshotChange} />
+                                        {screenshotFile && <p className="text-xs text-muted-foreground">File: {screenshotFile.name}</p>}
                                     </div>
                                 </div>
                                 <DialogFooter>
-                                <Button type="button" onClick={handleConfirmPayment} disabled={isConfirming}>
-                                    {isConfirming && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                                    Confirm Payment
+                                <Button type="button" onClick={handleSendForApproval} disabled={isSubmitting || !screenshotFile}>
+                                    {isSubmitting ? (
+                                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                    ) : (
+                                        <Upload className="mr-2 h-4 w-4" />
+                                    )}
+                                    Send for Approval
                                 </Button>
                                 </DialogFooter>
                             </DialogContent>
