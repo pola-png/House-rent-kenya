@@ -7,16 +7,16 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
 import * as z from 'zod';
 import { useRouter } from 'next/navigation';
-import { GoogleAuthProvider, createUserWithEmailAndPassword, signInWithPopup, updateProfile } from 'firebase/auth';
+import { GoogleAuthProvider, signInWithPopup, updateProfile } from 'firebase/auth';
 import React from 'react';
-import { doc, setDoc, serverTimestamp } from 'firebase/firestore';
+import { doc, serverTimestamp } from 'firebase/firestore';
 
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import placeholderImages from '@/lib/placeholder-images.json';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
-import { useAuth, useUser, useFirestore, setDocumentNonBlocking } from '@/firebase';
+import { useAuth, useUser, useFirestore, setDocumentNonBlocking, initiateEmailSignUp } from '@/firebase';
 import { useToast } from '@/hooks/use-toast';
 
 const formSchema = z.object({
@@ -47,44 +47,47 @@ export default function AgentSignupPage() {
   });
   
   React.useEffect(() => {
-    if (user && !isUserLoading) {
+    if (user && !user.isAnonymous) {
       router.push('/');
     }
   }, [user, isUserLoading, router]);
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
-    try {
-      const userCredential = await createUserWithEmailAndPassword(auth, values.email, values.password);
-      const firebaseUser = userCredential.user;
-      
-      const displayName = `${values.firstName} ${values.lastName}`;
-      await updateProfile(firebaseUser, { displayName });
+    initiateEmailSignUp(auth, values.email, values.password);
 
-      const userDocRef = doc(firestore, "users", firebaseUser.uid);
-      setDocumentNonBlocking(userDocRef, {
-        uid: firebaseUser.uid,
-        firstName: values.firstName,
-        lastName: values.lastName,
-        displayName: displayName,
-        email: values.email,
-        role: 'agent',
-        agencyName: values.agencyName,
-        createdAt: serverTimestamp(),
-      }, { merge: true });
+    const unsubscribe = auth.onAuthStateChanged(async (firebaseUser) => {
+        if (firebaseUser) {
+            unsubscribe();
+            try {
+                const displayName = `${values.firstName} ${values.lastName}`;
+                await updateProfile(firebaseUser, { displayName });
 
-      toast({
-        title: 'Account Created!',
-        description: 'Your agent account has been successfully created.',
-      });
+                const userDocRef = doc(firestore, "users", firebaseUser.uid);
+                setDocumentNonBlocking(userDocRef, {
+                    uid: firebaseUser.uid,
+                    firstName: values.firstName,
+                    lastName: values.lastName,
+                    displayName: displayName,
+                    email: values.email,
+                    role: 'agent',
+                    agencyName: values.agencyName,
+                    createdAt: serverTimestamp(),
+                }, { merge: true });
 
-    } catch (error: any) {
-      console.error(error);
-      toast({
-        variant: 'destructive',
-        title: 'Uh oh! Something went wrong.',
-        description: error.message || 'There was a problem with your signup.',
-      });
-    }
+                toast({
+                    title: 'Account Created!',
+                    description: 'Your agent account has been successfully created.',
+                });
+            } catch (error: any) {
+                 console.error(error);
+                toast({
+                    variant: 'destructive',
+                    title: 'Uh oh! Something went wrong.',
+                    description: error.message || 'There was a problem with your signup.',
+                });
+            }
+        }
+    });
   }
 
   const handleGoogleSignUp = async () => {
