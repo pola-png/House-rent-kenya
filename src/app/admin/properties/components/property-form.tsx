@@ -4,7 +4,7 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import * as z from "zod";
-import { Loader2, Sparkles, Wand2, Image as ImageIcon, X, Star, ChevronDown, ChevronUp } from "lucide-react";
+import { Loader2, Sparkles, Wand2, Image as ImageIcon, X, Star, ChevronDown, ChevronUp, Upload } from "lucide-react";
 import React from "react";
 import { useRouter } from "next/navigation";
 import { serverTimestamp, collection, doc, getDoc } from "firebase/firestore";
@@ -84,6 +84,7 @@ export function PropertyForm({ property }: PropertyFormProps) {
   const [isPromotionOpen, setIsPromotionOpen] = React.useState(false);
   const [promotionWeeks, setPromotionWeeks] = React.useState(1);
   const weeklyRate = 5;
+  const [screenshotFile, setScreenshotFile] = React.useState<File | null>(null);
 
 
   const defaultValues: Partial<PropertyFormValues> = property
@@ -190,6 +191,29 @@ export function PropertyForm({ property }: PropertyFormProps) {
     // Clean up the object URL to avoid memory leaks
     URL.revokeObjectURL(imagePreviews[indexToRemove]);
   };
+  
+  const handleScreenshotChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file) {
+      setScreenshotFile(file);
+    }
+  };
+  
+  const handleSendForApproval = () => {
+    if (!screenshotFile) {
+        toast({
+            variant: "destructive",
+            title: "No Screenshot",
+            description: "Please upload a screenshot of your payment to proceed.",
+        });
+        return;
+    }
+    // Placeholder for chat creation logic
+    toast({
+        title: "Screenshot Sent!",
+        description: "An admin has been notified. Your chat will appear in the 'Messages' tab upon approval.",
+    });
+  }
 
   const handleGenerateDescription = async () => {
     setIsGeneratingDesc(true);
@@ -575,18 +599,20 @@ export function PropertyForm({ property }: PropertyFormProps) {
                     </div>
                     
                     <div className="text-sm text-center bg-muted p-4 rounded-md">
-                      <p className="font-semibold mb-2">Complete Payment via M-Pesa</p>
+                      <p className="font-semibold mb-2">1. Complete Payment via M-Pesa</p>
                       <p>Send Money to: <span className="font-bold">+254704202939</span></p>
                       <p>Name: <span className="font-bold">Edwin</span></p>
                       <p>Amount: <span className="font-bold">${(promotionWeeks * weeklyRate).toLocaleString()}</span></p>
                     </div>
 
                      <div className="space-y-2">
-                        <Label htmlFor="mpesa-code">M-Pesa Confirmation Code</Label>
-                        <Input id="mpesa-code" placeholder="e.g., RG83..."/>
+                        <Label htmlFor="screenshot-upload">2. Upload Payment Screenshot</Label>
+                        <Input id="screenshot-upload" type="file" accept="image/png, image/jpeg" onChange={handleScreenshotChange} />
+                        {screenshotFile && <p className="text-xs text-muted-foreground">File: {screenshotFile.name}</p>}
                     </div>
-                    <Button type="button" className="w-full">
-                       Confirm and Activate Promotion
+                    <Button type="button" className="w-full" onClick={handleSendForApproval}>
+                       <Upload className="mr-2 h-4 w-4" />
+                       Send Screenshot to Admin for Approval
                     </Button>
                   </CollapsibleContent>
                 </Collapsible>
