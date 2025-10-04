@@ -1,3 +1,4 @@
+
 "use client";
 
 import { collection } from "firebase/firestore";
@@ -36,13 +37,13 @@ export default function SearchPage({
 
         <main className="lg:col-span-3">
           <h1 className="text-3xl font-headline font-bold mb-2">Properties for Rent</h1>
-          <p className="text-muted-foreground mb-6">
+          <div className="text-muted-foreground mb-6">
             {isLoading ? (
                 <Skeleton className="h-5 w-32" />
             ) : (
                 `Showing ${filteredProperties.length} results`
             )}
-          </p>
+          </div>
 
           <Card className="mb-8 h-[400px] overflow-hidden">
              {process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY ? (
@@ -84,7 +85,9 @@ export default function SearchPage({
             <div className="mt-12">
                 <Pagination>
                 <PaginationContent>
-                    <PaginationPrevious href="#" />
+                    <PaginationItem>
+                        <PaginationPrevious href="#" />
+                    </PaginationItem>
                     <PaginationItem>
                     <PaginationLink href="#">1</PaginationLink>
                     </PaginationItem>
@@ -99,7 +102,9 @@ export default function SearchPage({
                     <PaginationItem>
                     <PaginationEllipsis />
                     </PaginationItem>
-                    <PaginationNext href="#" />
+                    <PaginationItem>
+                        <PaginationNext href="#" />
+                    </PaginationItem>
                 </PaginationContent>
                 </Pagination>
             </div>
