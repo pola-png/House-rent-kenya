@@ -14,8 +14,8 @@ export function initializeFirebase() {
   if (process.env.NODE_ENV === 'development' && !isInitialized) {
     // In development, connect to local emulators
     // Note: You must have the Firebase emulators running for this to work
-    connectAuthEmulator(auth, 'http://127.0.0.1:9099', { disableWarnings: true });
-    connectFirestoreEmulator(firestore, '127.0.0.1', 8080);
+    connectAuthEmulator(auth, 'http://localhost:9099', { disableWarnings: true });
+    connectFirestoreEmulator(firestore, 'localhost', 8080);
   }
 
   return { firebaseApp, auth, firestore };
