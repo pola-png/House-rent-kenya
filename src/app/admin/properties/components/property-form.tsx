@@ -576,8 +576,8 @@ export function PropertyForm({ property }: PropertyFormProps) {
                     
                     <div className="text-sm text-center bg-muted p-4 rounded-md">
                       <p className="font-semibold mb-2">Complete Payment via M-Pesa</p>
-                      <p>Paybill: <span className="font-bold">123456</span></p>
-                      <p>Account: <span className="font-bold">AGENT123</span></p>
+                      <p>Send Money to: <span className="font-bold">+254704202939</span></p>
+                      <p>Name: <span className="font-bold">Edwin</span></p>
                       <p>Amount: <span className="font-bold">${(promotionWeeks * weeklyRate).toLocaleString()}</span></p>
                     </div>
 
@@ -694,6 +694,3 @@ export function PropertyForm({ property }: PropertyFormProps) {
     </Form>
   );
 }
-
-    
-    
