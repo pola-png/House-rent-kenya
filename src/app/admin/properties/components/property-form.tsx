@@ -4,11 +4,12 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import * as z from "zod";
-import { Loader2, Sparkles, Wand2, Image as ImageIcon, X } from "lucide-react";
+import { Loader2, Sparkles, Wand2, Image as ImageIcon, X, Star } from "lucide-react";
 import React from "react";
 import { useRouter } from "next/navigation";
 import { serverTimestamp, collection, doc, getDoc } from "firebase/firestore";
 import Image from "next/image";
+import Link from "next/link";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -468,7 +469,7 @@ export function PropertyForm({ property }: PropertyFormProps) {
             <Card>
               <CardHeader>
                 <CardTitle>Listing Settings</CardTitle>
-                <CardDescription>Configure visibility and promotion for this listing.</CardDescription>
+                <CardDescription>Configure visibility for this listing.</CardDescription>
               </CardHeader>
               <CardContent className="space-y-6">
                 <FormField
@@ -519,6 +520,15 @@ export function PropertyForm({ property }: PropertyFormProps) {
                     </FormItem>
                   )}
                 />
+              </CardContent>
+            </Card>
+
+             <Card>
+              <CardHeader>
+                <CardTitle>Promotion</CardTitle>
+                <CardDescription>Boost your property's visibility.</CardDescription>
+              </CardHeader>
+              <CardContent>
                  <FormField
                   control={form.control}
                   name="featured"
@@ -526,23 +536,31 @@ export function PropertyForm({ property }: PropertyFormProps) {
                     <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
                       <div className="space-y-0.5">
                         <FormLabel className="text-base">
-                          Feature this Property
+                          Feature as "Pro"
                         </FormLabel>
                         <FormDescription>
-                          Promote this property on the homepage and in search results.
+                          Promote this property on the homepage and at the top of search results.
                         </FormDescription>
                       </div>
                       <FormControl>
                         <Switch
                           checked={field.value}
                           onCheckedChange={field.onChange}
+                          aria-readonly
                         />
                       </FormControl>
                     </FormItem>
                   )}
                 />
+                <p className="text-sm text-muted-foreground mt-4">
+                    To feature your properties, you must be on a Pro or VIP plan. 
+                    <Button variant="link" asChild className="p-1">
+                        <Link href="/admin/subscription">Upgrade your plan</Link>
+                    </Button>
+                </p>
               </CardContent>
             </Card>
+
 
             <Card>
               <CardHeader>
@@ -644,5 +662,3 @@ export function PropertyForm({ property }: PropertyFormProps) {
     </Form>
   );
 }
-
-    

@@ -1,7 +1,7 @@
 
 import Image from 'next/image';
 import Link from 'next/link';
-import { MapPin, Bed, Bath, Car, Maximize, CheckCircle } from 'lucide-react';
+import { MapPin, Bed, Bath, Car, Maximize, Star } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import type { Property } from '@/lib/types';
@@ -41,8 +41,8 @@ export function PropertyCard({ property }: PropertyCardProps) {
            )}
            {property.featured && (
             <Badge variant="default" className="absolute bottom-3 left-3 bg-accent text-accent-foreground flex items-center gap-1">
-                <CheckCircle className="w-3 h-3"/>
-                Featured
+                <Star className="w-3 h-3"/>
+                Pro
             </Badge>
            )}
         </div>
@@ -88,5 +88,3 @@ export function PropertyCard({ property }: PropertyCardProps) {
     </Card>
   );
 }
-
-    
