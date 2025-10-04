@@ -82,7 +82,8 @@ export function PropertyForm({ property }: PropertyFormProps) {
   const [imageFiles, setImageFiles] = React.useState<File[]>([]);
   const fileInputRef = React.useRef<HTMLInputElement>(null);
   const [isPromotionOpen, setIsPromotionOpen] = React.useState(false);
-  const [promotionTier, setPromotionTier] = React.useState("week");
+  const [promotionWeeks, setPromotionWeeks] = React.useState(1);
+  const weeklyRate = 5;
 
 
   const defaultValues: Partial<PropertyFormValues> = property
@@ -556,34 +557,28 @@ export function PropertyForm({ property }: PropertyFormProps) {
                   <CollapsibleContent className="space-y-6 pt-6">
                     <Separator />
                     <p className="font-semibold">Choose your promotion plan:</p>
-                    <RadioGroup value={promotionTier} onValueChange={setPromotionTier} className="grid grid-cols-2 gap-4">
-                      <div>
-                        <RadioGroupItem value="week" id="week" className="peer sr-only" />
-                        <Label
-                          htmlFor="week"
-                          className="flex flex-col items-center justify-between rounded-md border-2 border-muted bg-popover p-4 hover:bg-accent hover:text-accent-foreground peer-data-[state=checked]:border-primary [&:has([data-state=checked])]:border-primary"
-                        >
-                          <span className="font-bold">1 Week</span>
-                          <span className="text-sm">Ksh 1,000</span>
-                        </Label>
+                    <div className="flex items-center gap-4">
+                      <div className="grid gap-2 flex-1">
+                        <Label htmlFor="promotion-weeks">Number of Weeks</Label>
+                        <Input 
+                          id="promotion-weeks" 
+                          type="number" 
+                          min="1" 
+                          value={promotionWeeks} 
+                          onChange={(e) => setPromotionWeeks(Math.max(1, parseInt(e.target.value) || 1))}
+                        />
                       </div>
-                      <div>
-                        <RadioGroupItem value="month" id="month" className="peer sr-only" />
-                        <Label
-                          htmlFor="month"
-                          className="flex flex-col items-center justify-between rounded-md border-2 border-muted bg-popover p-4 hover:bg-accent hover:text-accent-foreground peer-data-[state=checked]:border-primary [&:has([data-state=checked])]:border-primary"
-                        >
-                           <span className="font-bold">1 Month</span>
-                          <span className="text-sm">Ksh 3,500</span>
-                        </Label>
+                      <div className="text-right">
+                          <p className="text-sm text-muted-foreground">Price</p>
+                          <p className="font-bold text-lg">${(promotionWeeks * weeklyRate).toLocaleString()}</p>
                       </div>
-                    </RadioGroup>
+                    </div>
                     
                     <div className="text-sm text-center bg-muted p-4 rounded-md">
                       <p className="font-semibold mb-2">Complete Payment via M-Pesa</p>
                       <p>Paybill: <span className="font-bold">123456</span></p>
                       <p>Account: <span className="font-bold">AGENT123</span></p>
-                      <p>Amount: <span className="font-bold">Ksh {promotionTier === 'week' ? '1,000' : '3,500'}</span></p>
+                      <p>Amount: <span className="font-bold">${(promotionWeeks * weeklyRate).toLocaleString()}</span></p>
                     </div>
 
                      <div className="space-y-2">
@@ -700,4 +695,5 @@ export function PropertyForm({ property }: PropertyFormProps) {
   );
 }
 
+    
     
