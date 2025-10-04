@@ -14,12 +14,17 @@ export function initializeFirebase() {
   
   // In development, connect to local emulators
   // Note: You must have the Firebase emulators running for this to work
-  if (!isInitialized) {
-      connectAuthEmulator(auth, 'http://localhost:9099', { disableWarnings: true });
-      connectFirestoreEmulator(firestore, 'localhost', 8080);
-      initiateAnonymousSignIn(auth);
+  if (process.env.NODE_ENV === 'development') {
+    // This block will now run on every initialization in development,
+    // ensuring a stable connection to the emulators during hot reloads.
+    connectAuthEmulator(auth, 'http://localhost:9099', { disableWarnings: true });
+    connectFirestoreEmulator(firestore, 'localhost', 8080);
   }
 
+  if (!isInitialized) {
+      // This should only run once when the app is first loaded.
+      initiateAnonymousSignIn(auth);
+  }
 
   return { firebaseApp, auth, firestore };
 }
