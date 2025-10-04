@@ -2,7 +2,7 @@
 
 import { firebaseConfig } from '@/firebase/config';
 import { initializeApp, getApps, getApp, FirebaseApp } from 'firebase/app';
-import { getAuth, connectAuthEmulator } from 'firebase/auth';
+import { getAuth, connectAuthEmulator, signInAnonymously } from 'firebase/auth';
 import { getFirestore, connectFirestoreEmulator } from 'firebase/firestore'
 
 // IMPORTANT: DO NOT MODIFY THIS FUNCTION
@@ -11,12 +11,14 @@ export function initializeFirebase() {
   const firebaseApp = isInitialized ? getApp() : initializeApp(firebaseConfig);
   const { auth, firestore } = getSdks(firebaseApp);
   
-  if (process.env.NODE_ENV === 'development' && !isInitialized) {
-    // In development, connect to local emulators
-    // Note: You must have the Firebase emulators running for this to work
-    connectAuthEmulator(auth, 'http://localhost:9099', { disableWarnings: true });
-    connectFirestoreEmulator(firestore, 'localhost', 8080);
+  // In development, connect to local emulators
+  // Note: You must have the Firebase emulators running for this to work
+  if (!isInitialized) {
+      connectAuthEmulator(auth, 'http://localhost:9099', { disableWarnings: true });
+      connectFirestoreEmulator(firestore, 'localhost', 8080);
+      signInAnonymously(auth);
   }
+
 
   return { firebaseApp, auth, firestore };
 }
