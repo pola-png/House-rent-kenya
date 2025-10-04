@@ -64,6 +64,30 @@
         "createdAt": { "type": "string", "format": "date-time" }
       },
       "required": ["propertyId", "propertyTitle", "userName", "userPhone", "agentId", "status", "createdAt"]
+    },
+    "SupportTicket": {
+      "title": "SupportTicket",
+      "type": "object",
+      "description": "Represents a support ticket submitted by a user.",
+      "properties": {
+        "userId": { "type": "string" },
+        "subject": { "type": "string" },
+        "status": { "type": "string", "enum": ["open", "closed"] },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["userId", "subject", "status", "createdAt"]
+    },
+    "Message": {
+      "title": "Message",
+      "type": "object",
+      "description": "Represents a single message within a support ticket.",
+      "properties": {
+        "text": { "type": "string" },
+        "senderId": { "type": "string" },
+        "timestamp": { "type": "string", "format": "date-time" }
+      },
+      "required": ["text", "senderId", "timestamp"]
     }
   },
   "auth": {
@@ -96,6 +120,27 @@
             "schema": { "$ref": "#/backend/entities/CallbackRequest" },
             "description": "Stores callback requests from potential clients.",
             "params": [{ "name": "callbackId", "description": "The unique identifier of the callback request." }]
+        }
+      },
+      {
+        "path": "/support-tickets/{ticketId}",
+        "definition": {
+          "entityName": "SupportTicket",
+          "schema": { "$ref": "#/backend/entities/SupportTicket" },
+          "description": "Stores support tickets.",
+          "params": [{ "name": "ticketId", "description": "The unique identifier for the support ticket." }]
+        }
+      },
+      {
+        "path": "/support-tickets/{ticketId}/messages/{messageId}",
+        "definition": {
+          "entityName": "Message",
+          "schema": { "$ref": "#/backend/entities/Message" },
+          "description": "Stores messages within a support ticket.",
+          "params": [
+            { "name": "ticketId", "description": "The ID of the support ticket." },
+            { "name": "messageId", "description": "The unique ID for the message." }
+          ]
         }
       }
     ]

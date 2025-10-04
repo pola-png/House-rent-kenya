@@ -50,4 +50,19 @@ export interface CallbackRequest {
     createdAt: Timestamp;
 }
 
-    
+export interface SupportTicket {
+    id: string;
+    userId: string;
+    subject: string;
+    status: 'open' | 'closed';
+    createdAt: Timestamp;
+    updatedAt: Timestamp;
+    lastMessage?: string;
+}
+
+export interface Message {
+    id: string;
+    text: string;
+    senderId: string;
+    timestamp: Timestamp;
+}

@@ -19,8 +19,16 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from '@/components/ui/accordion';
-import { LifeBuoy, Send } from 'lucide-react';
+import { LifeBuoy, Send, Loader2 } from 'lucide-react';
 import { Separator } from '@/components/ui/separator';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import * as z from 'zod';
+import { Form, FormControl, FormField, FormItem, FormMessage } from '@/components/ui/form';
+import { useToast } from '@/hooks/use-toast';
+import { useUser, useFirestore, addDocumentNonBlocking } from '@/firebase';
+import { collection, serverTimestamp, addDoc } from 'firebase/firestore';
+import { useRouter } from 'next/navigation';
 
 const faqs = [
   {
@@ -45,7 +53,75 @@ const faqs = [
   },
 ];
 
+const supportFormSchema = z.object({
+  subject: z.string().min(5, 'Subject must be at least 5 characters.'),
+  message: z.string().min(10, 'Message must be at least 10 characters.'),
+});
+
 export default function SupportPage() {
+  const { toast } = useToast();
+  const { user } = useUser();
+  const firestore = useFirestore();
+  const router = useRouter();
+
+  const form = useForm<z.infer<typeof supportFormSchema>>({
+    resolver: zodResolver(supportFormSchema),
+    defaultValues: {
+      subject: '',
+      message: '',
+    },
+  });
+
+  const { isSubmitting } = form.formState;
+
+  const onSubmit = async (values: z.infer<typeof supportFormSchema>) => {
+    if (!user) {
+      toast({
+        variant: 'destructive',
+        title: 'Not Authenticated',
+        description: 'You must be logged in to send a message.',
+      });
+      return;
+    }
+
+    try {
+      // Create the support ticket
+      const ticketRef = await addDoc(collection(firestore, 'support-tickets'), {
+        userId: user.uid,
+        subject: values.subject,
+        status: 'open',
+        createdAt: serverTimestamp(),
+        updatedAt: serverTimestamp(),
+        lastMessage: values.message,
+      });
+
+      // Add the initial message to the messages sub-collection
+      const messagesRef = collection(firestore, 'support-tickets', ticketRef.id, 'messages');
+      await addDoc(messagesRef, {
+        text: values.message,
+        senderId: user.uid,
+        timestamp: serverTimestamp(),
+      });
+      
+      toast({
+        title: 'Message Sent!',
+        description: 'Our support team will get back to you shortly. You can view your ticket in the Messages tab.',
+      });
+
+      form.reset();
+      router.push(`/admin/messages?ticket=${ticketRef.id}`);
+
+    } catch (error: any) {
+      console.error('Error creating support ticket:', error);
+      toast({
+        variant: 'destructive',
+        title: 'Error',
+        description: 'Could not send your message. Please try again.',
+      });
+    }
+  };
+
+
   return (
     <div className="space-y-8">
       <div>
@@ -79,28 +155,51 @@ export default function SupportPage() {
 
         <div className="lg:col-span-1">
           <Card>
-            <CardHeader>
-              <CardTitle>Contact Support</CardTitle>
-              <CardDescription>
-                Can't find an answer? Fill out the form below to send us a message.
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="subject">Subject</Label>
-                <Input id="subject" placeholder="e.g., Issue with a listing" />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="message">Your Message</Label>
-                <Textarea id="message" placeholder="Please describe your issue in detail..." className="min-h-[150px]" />
-              </div>
-            </CardContent>
-            <CardFooter>
-              <Button className="w-full">
-                <Send className="mr-2 h-4 w-4" />
-                Send Message
-              </Button>
-            </CardFooter>
+            <Form {...form}>
+              <form onSubmit={form.handleSubmit(onSubmit)}>
+                <CardHeader>
+                  <CardTitle>Contact Support</CardTitle>
+                  <CardDescription>
+                    Can't find an answer? Fill out the form below to send us a message.
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <FormField
+                    control={form.control}
+                    name="subject"
+                    render={({ field }) => (
+                      <FormItem>
+                        <Label>Subject</Label>
+                        <FormControl>
+                          <Input placeholder="e.g., Issue with a listing" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="message"
+                    render={({ field }) => (
+                      <FormItem>
+                        <Label>Your Message</Label>
+                        <FormControl>
+                          <Textarea placeholder="Please describe your issue in detail..." className="min-h-[150px]" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </CardContent>
+                <CardFooter>
+                  <Button type="submit" className="w-full" disabled={isSubmitting}>
+                     {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                    <Send className="mr-2 h-4 w-4" />
+                    Send Message
+                  </Button>
+                </CardFooter>
+              </form>
+            </Form>
           </Card>
         </div>
       </div>
