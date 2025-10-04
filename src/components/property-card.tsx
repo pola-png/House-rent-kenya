@@ -1,7 +1,7 @@
 
 import Image from 'next/image';
 import Link from 'next/link';
-import { MapPin, Bed, Bath, Car, Maximize } from 'lucide-react';
+import { MapPin, Bed, Bath, Car, Maximize, CheckCircle } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import type { Property } from '@/lib/types';
@@ -39,7 +39,12 @@ export function PropertyCard({ property }: PropertyCardProps) {
            {property.status === 'Rented' && (
               <Badge variant="destructive" className="absolute top-3 right-3">Rented</Badge>
            )}
-           {property.featured && <Badge className="absolute bottom-3 left-3">Featured</Badge>}
+           {property.featured && (
+            <Badge variant="default" className="absolute bottom-3 left-3 bg-accent text-accent-foreground flex items-center gap-1">
+                <CheckCircle className="w-3 h-3"/>
+                Featured
+            </Badge>
+           )}
         </div>
         <CardContent className="p-4 space-y-3 flex-grow flex flex-col">
           <div className="flex-grow">
@@ -83,3 +88,5 @@ export function PropertyCard({ property }: PropertyCardProps) {
     </Card>
   );
 }
+
+    

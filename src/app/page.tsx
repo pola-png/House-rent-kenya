@@ -1,9 +1,10 @@
+
 "use client";
 
 import Image from 'next/image';
 import Link from 'next/link';
 import { ArrowRight, Building, Home as HomeIcon, MapPin, Search, Star, TrendingUp, Handshake, Verified } from 'lucide-react';
-import { collection } from 'firebase/firestore';
+import { collection, query, where, limit } from 'firebase/firestore';
 import React from 'react';
 
 import { Button } from '@/components/ui/button';
@@ -52,16 +53,12 @@ export default function Home() {
   const heroImage = placeholderImages.placeholderImages.find(img => img.id === 'hero_main');
   const firestore = useFirestore();
 
-  const propertiesQuery = useMemoFirebase(() => {
+  const featuredPropertiesQuery = useMemoFirebase(() => {
     if (!firestore) return null;
-    return collection(firestore, 'properties');
+    return query(collection(firestore, 'properties'), where('featured', '==', true), limit(6));
   }, [firestore]);
   
-  const { data: properties, isLoading } = useCollection<Property>(propertiesQuery);
-  
-  const featuredProperties = React.useMemo(() => {
-    return properties?.filter(p => p.featured).slice(0, 6) || [];
-  }, [properties]);
+  const { data: featuredProperties, isLoading } = useCollection<Property>(featuredPropertiesQuery);
 
 
   return (
@@ -183,7 +180,7 @@ export default function Home() {
                 </div>
             ) : (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-                {featuredProperties.map((property) => (
+                {featuredProperties && featuredProperties.map((property) => (
                     <PropertyCard key={property.id} property={property} />
                 ))}
                 </div>
@@ -262,3 +259,5 @@ export default function Home() {
     </div>
   );
 }
+
+    

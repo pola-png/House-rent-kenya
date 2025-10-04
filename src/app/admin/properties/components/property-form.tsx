@@ -36,6 +36,7 @@ import { useToast } from "@/hooks/use-toast";
 import { Progress } from "@/components/ui/progress";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
+import { Switch } from "@/components/ui/switch";
 import { useFirestore, useUser, addDocumentNonBlocking, setDocumentNonBlocking } from "@/firebase";
 
 const formSchema = z.object({
@@ -466,19 +467,21 @@ export function PropertyForm({ property }: PropertyFormProps) {
           <div className="space-y-8">
             <Card>
               <CardHeader>
-                <CardTitle>Listing Status</CardTitle>
+                <CardTitle>Listing Settings</CardTitle>
+                <CardDescription>Configure visibility and promotion for this listing.</CardDescription>
               </CardHeader>
-              <CardContent>
+              <CardContent className="space-y-6">
                 <FormField
                   control={form.control}
                   name="status"
                   render={({ field }) => (
                     <FormItem>
+                       <FormLabel>Listing Status</FormLabel>
                       <FormControl>
                         <RadioGroup
                           onValueChange={field.onChange}
                           defaultValue={field.value}
-                          className="flex flex-col space-y-1"
+                          className="flex flex-col space-y-2 pt-2"
                         >
                           <FormItem className="flex items-center space-x-3 space-y-0">
                             <FormControl>
@@ -513,6 +516,28 @@ export function PropertyForm({ property }: PropertyFormProps) {
                         </RadioGroup>
                       </FormControl>
                       <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                 <FormField
+                  control={form.control}
+                  name="featured"
+                  render={({ field }) => (
+                    <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
+                      <div className="space-y-0.5">
+                        <FormLabel className="text-base">
+                          Feature this Property
+                        </FormLabel>
+                        <FormDescription>
+                          Promote this property on the homepage and in search results.
+                        </FormDescription>
+                      </div>
+                      <FormControl>
+                        <Switch
+                          checked={field.value}
+                          onCheckedChange={field.onChange}
+                        />
+                      </FormControl>
                     </FormItem>
                   )}
                 />
@@ -619,3 +644,5 @@ export function PropertyForm({ property }: PropertyFormProps) {
     </Form>
   );
 }
+
+    
