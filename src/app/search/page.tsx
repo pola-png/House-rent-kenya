@@ -84,9 +84,7 @@ export default function SearchPage({
             <div className="mt-12">
                 <Pagination>
                 <PaginationContent>
-                    <PaginationItem>
                     <PaginationPrevious href="#" />
-                    </PaginationItem>
                     <PaginationItem>
                     <PaginationLink href="#">1</PaginationLink>
                     </PaginationItem>
@@ -101,9 +99,7 @@ export default function SearchPage({
                     <PaginationItem>
                     <PaginationEllipsis />
                     </PaginationItem>
-                    <PaginationItem>
                     <PaginationNext href="#" />
-                    </PaginationItem>
                 </PaginationContent>
                 </Pagination>
             </div>
