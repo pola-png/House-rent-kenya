@@ -2,7 +2,7 @@
 
 import { PlusCircle } from "lucide-react";
 import Link from 'next/link';
-import { collection } from "firebase/firestore";
+import { collection, query, where } from "firebase/firestore";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -16,17 +16,18 @@ import {
   Tabs,
   TabsContent,
 } from "@/components/ui/tabs";
-import { useCollection, useFirestore, useMemoFirebase } from "@/firebase";
+import { useCollection, useFirestore, useMemoFirebase, useUser } from "@/firebase";
 import { PropertiesClient } from "./components/client-page";
 import type { Property } from "@/lib/types";
 import { Skeleton } from "@/components/ui/skeleton";
 
 export default function AdminPropertiesPage() {
   const firestore = useFirestore();
+  const { user } = useUser();
   const propertiesRef = useMemoFirebase(() => {
-      if (!firestore) return null;
-      return collection(firestore, 'properties');
-  }, [firestore]);
+      if (!firestore || !user) return null;
+      return query(collection(firestore, 'properties'), where('landlordId', '==', user.uid));
+  }, [firestore, user]);
   
   const { data: properties, isLoading } = useCollection<Property>(propertiesRef);
 
