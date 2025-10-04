@@ -1,8 +1,9 @@
+
 "use client";
 
 import Image from 'next/image';
 import { notFound, useParams } from 'next/navigation';
-import { Bed, Bath, Maximize, MapPin, CheckCircle, Mail, Phone, User, Terminal } from 'lucide-react';
+import { Bed, Bath, Maximize, MapPin, CheckCircle, Mail, Phone, User, Terminal, MessageSquare } from 'lucide-react';
 import { doc } from 'firebase/firestore';
 
 import placeholderImages from '@/lib/placeholder-images.json';
@@ -43,7 +44,7 @@ export default function PropertyPage() {
               <Skeleton className="h-64 w-full" />
             </div>
             <div className="lg:col-span-1">
-              <Skeleton className="h-72 w-full" />
+              <Skeleton className="h-80 w-full" />
             </div>
           </div>
         </div>
@@ -72,7 +73,7 @@ export default function PropertyPage() {
   
   if (!property) return null; // Should be handled by notFound, but for type safety
 
-  const agentImage = placeholderImages.placeholderImages.find(img => img.id === property.agent.avatar);
+  const agentImage = placeholderImages.placeholderImages.find(img => img.id === 'agent_1');
 
   return (
     <div className="bg-background">
@@ -187,27 +188,35 @@ export default function PropertyPage() {
           <div className="lg:col-span-1">
             <Card className="sticky top-24">
               <CardHeader>
-                <CardTitle className="font-headline">Contact Agent</CardTitle>
+                  <p className="text-sm text-muted-foreground">Marketed By</p>
+                  <CardTitle className="font-headline -mt-1">{property.agent.agencyName || 'Independent Agent'}</CardTitle>
               </CardHeader>
-              <CardContent className="space-y-6">
-                <div className="flex items-center gap-4">
-                  <Avatar className="h-20 w-20">
-                    {agentImage && <AvatarImage src={agentImage.imageUrl} alt={property.agent.name} data-ai-hint={agentImage.imageHint} />}
+              <CardContent className="space-y-4">
+                <div className="flex items-center gap-4 border-t pt-4">
+                  <Avatar className="h-16 w-16">
+                    {agentImage && <AvatarImage src={agentImage.imageUrl} alt={property.agent.displayName} data-ai-hint={agentImage.imageHint} />}
                     <AvatarFallback><User /></AvatarFallback>
                   </Avatar>
                   <div>
-                    <h4 className="font-bold text-lg">{property.agent.name}</h4>
+                    <h4 className="font-bold text-lg">{property.agent.displayName}</h4>
                     <p className="text-sm text-muted-foreground">Real Estate Agent</p>
                   </div>
                 </div>
-                <div className="space-y-3">
-                    <Button className="w-full">
-                        <Phone className="h-4 w-4 mr-2" /> Call Agent
+                <div className="space-y-2">
+                    <Button variant="outline" className="w-full justify-start">
+                        <Phone className="h-4 w-4 mr-2" /> {property.agent.phoneNumber || '0728270000'}
                     </Button>
-                    <Button variant="outline" className="w-full">
-                        <Mail className="h-4 w-4 mr-2" /> Email Agent
+                     <Button variant="outline" className="w-full justify-start">
+                        <svg className="h-4 w-4 mr-2" viewBox="0 0 24 24" fill="currentColor"><path d="M16.75 13.96c.25.13.41.39.41.67v2.24c0 .67-.58 1.2-1.25 1.13-2.11-.22-4.08-.94-5.83-2.01-1.93-1.18-3.48-2.82-4.69-4.82-1.07-1.76-1.7-3.66-1.87-5.7-.07-.66.47-1.23 1.14-1.23h2.24c.28 0 .54.16.67.41.34.66.75 1.34 1.22 2.05.17.25.17.58 0 .84l-1.13 1.27c.92 1.93 2.57 3.58 4.5 4.5l1.27-1.13c.26-.26.59-.26.85,0 .71.47 1.39.88 2.05 1.22zM20 15.5c-1.25 0-2.45-.2-3.57-.57-.35-.11-.74-.03-1.01.24l-2.2 2.2c-2.83-1.44-5.15-3.75-6.59-6.59l2.2-2.2c.28-.28.36-.67.25-1.02-.37-1.12-.57-2.32-.57-3.57C8.5.94 7.56 0 6.5 0H3C1.9 0 1 .9 1 2c0 9.39 7.61 17 17 17 .9 0 1.5-.5 2-1v-3.5c1.1-.01 2-1.01 2-2.01V15.5z"/></svg>
+                        254728000000
+                    </Button>
+                    <Button variant="secondary" className="w-full">
+                        <MessageSquare className="h-4 w-4 mr-2" /> Message Agent
                     </Button>
                 </div>
+                 <div className="border-t pt-4">
+                    <Button size="lg" className="w-full">Enquire Now</Button>
+                 </div>
               </CardContent>
             </Card>
           </div>

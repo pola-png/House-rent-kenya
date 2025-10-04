@@ -14,10 +14,7 @@ export interface Property {
   type: 'Apartment' | 'House' | 'Condo' | 'Townhouse' | 'Villa';
   amenities: string[];
   images: string[];
-  agent: {
-    name: string;
-    avatar: string;
-  };
+  agent: UserProfile;
   featured: boolean;
   latitude: number;
   longitude: number;
@@ -39,6 +36,7 @@ export interface UserProfile {
     agencyName?: string;
     createdAt: Timestamp;
     photoURL?: string;
+    phoneNumber?: string;
 }
 
     

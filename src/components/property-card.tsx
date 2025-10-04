@@ -1,3 +1,4 @@
+
 import Image from 'next/image';
 import Link from 'next/link';
 import { MapPin, Bed, Bath, Car, Maximize } from 'lucide-react';
@@ -14,7 +15,7 @@ type PropertyCardProps = {
 export function PropertyCard({ property }: PropertyCardProps) {
   const mainImageId = property.images[0];
   const image = placeholderImages.placeholderImages.find(img => img.id === mainImageId);
-  const agentImage = placeholderImages.placeholderImages.find(img => img.id === property.agent.avatar);
+  const agentImage = placeholderImages.placeholderImages.find(img => img.id === 'agent_1');
 
 
   return (
@@ -69,11 +70,11 @@ export function PropertyCard({ property }: PropertyCardProps) {
              <div className="flex items-center gap-2">
                 {agentImage && (
                     <Avatar className="h-8 w-8">
-                        <AvatarImage src={agentImage.imageUrl} alt={property.agent.name} />
-                        <AvatarFallback>{property.agent.name.charAt(0)}</AvatarFallback>
+                        <AvatarImage src={agentImage.imageUrl} alt={property.agent.displayName} />
+                        <AvatarFallback>{property.agent.displayName.charAt(0)}</AvatarFallback>
                     </Avatar>
                 )}
-                <span className="text-xs text-muted-foreground">{property.agent.name}</span>
+                <span className="text-xs text-muted-foreground">{property.agent.displayName}</span>
              </div>
              {/* Agency Logo can go here */}
           </div>

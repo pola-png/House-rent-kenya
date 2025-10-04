@@ -7,7 +7,7 @@ import * as z from "zod";
 import { Loader2, Sparkles, Wand2, Image as ImageIcon, X } from "lucide-react";
 import React from "react";
 import { useRouter } from "next/navigation";
-import { serverTimestamp, collection, doc } from "firebase/firestore";
+import { serverTimestamp, collection, doc, getDoc } from "firebase/firestore";
 import Image from "next/image";
 
 import { Button } from "@/components/ui/button";
@@ -29,7 +29,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import type { Property } from "@/lib/types";
+import type { Property, UserProfile } from "@/lib/types";
 import { generatePropertyDescription } from "@/ai/flows/generate-property-description";
 import { optimizeListingSEO } from "@/ai/flows/optimize-listing-seo";
 import { useToast } from "@/hooks/use-toast";
@@ -115,6 +115,13 @@ export function PropertyForm({ property }: PropertyFormProps) {
     });
 
     try {
+        const userDocRef = doc(firestore, "users", user.uid);
+        const userDoc = await getDoc(userDocRef);
+        if (!userDoc.exists()) {
+            throw new Error("Agent profile not found.");
+        }
+        const agentProfile = userDoc.data() as UserProfile;
+
         const propertyData = {
           ...data,
           amenities: data.amenities.split(',').map(a => a.trim()),
@@ -123,10 +130,7 @@ export function PropertyForm({ property }: PropertyFormProps) {
           bathrooms: Number(data.bathrooms),
           area: Number(data.area),
           landlordId: user.uid,
-          agent: {
-              name: user.displayName || 'Unnamed Agent',
-              avatar: user.photoURL || 'agent_1',
-          },
+          agent: agentProfile,
           images: ['property_1_1', 'property_1_2', 'property_1_3'], // Placeholder images
           updatedAt: serverTimestamp(),
           createdAt: property ? property.createdAt : serverTimestamp(),
