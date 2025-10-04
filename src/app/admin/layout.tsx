@@ -17,7 +17,8 @@ import {
   Star,
   AreaChart,
   Users2,
-  List
+  List,
+  Settings
 } from "lucide-react";
 import {
   SidebarProvider,
@@ -153,7 +154,12 @@ export default function AdminLayout({
             </SidebarMenuItem>
           </SidebarMenu>
           <SidebarFooter className="p-4 border-t">
-             <Button variant="ghost" className="w-full justify-start">Settings</Button>
+             <Button variant="ghost" className="w-full justify-start" asChild>
+                <Link href="/admin/settings">
+                    <Settings className="h-5 w-5 mr-2" />
+                    <span>Settings</span>
+                </Link>
+             </Button>
           </SidebarFooter>
         </SidebarContent>
       </Sidebar>
@@ -180,7 +186,9 @@ export default function AdminLayout({
             <DropdownMenuContent align="end">
               <DropdownMenuLabel>My Account</DropdownMenuLabel>
               <DropdownMenuSeparator />
-              <DropdownMenuItem>Settings</DropdownMenuItem>
+              <DropdownMenuItem asChild>
+                <Link href="/admin/settings">Settings</Link>
+              </DropdownMenuItem>
               <DropdownMenuItem>Support</DropdownMenuItem>
               <DropdownMenuSeparator />
               <DropdownMenuItem>Logout</DropdownMenuItem>
