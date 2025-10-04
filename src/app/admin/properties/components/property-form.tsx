@@ -4,7 +4,7 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import * as z from "zod";
-import { Loader2, Sparkles, Wand2, Image as ImageIcon, X, Star } from "lucide-react";
+import { Loader2, Sparkles, Wand2, Image as ImageIcon, X, Star, ChevronDown, ChevronUp } from "lucide-react";
 import React from "react";
 import { useRouter } from "next/navigation";
 import { serverTimestamp, collection, doc, getDoc } from "firebase/firestore";
@@ -39,6 +39,8 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { useFirestore, useUser, addDocumentNonBlocking, setDocumentNonBlocking } from "@/firebase";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+import { Separator } from "@/components/ui/separator";
 
 const formSchema = z.object({
   title: z.string().min(10, {
@@ -79,6 +81,8 @@ export function PropertyForm({ property }: PropertyFormProps) {
   const [imagePreviews, setImagePreviews] = React.useState<string[]>([]);
   const [imageFiles, setImageFiles] = React.useState<File[]>([]);
   const fileInputRef = React.useRef<HTMLInputElement>(null);
+  const [isPromotionOpen, setIsPromotionOpen] = React.useState(false);
+  const [promotionTier, setPromotionTier] = React.useState("week");
 
 
   const defaultValues: Partial<PropertyFormValues> = property
@@ -523,41 +527,74 @@ export function PropertyForm({ property }: PropertyFormProps) {
               </CardContent>
             </Card>
 
-             <Card>
+            <Card>
               <CardHeader>
                 <CardTitle>Promotion</CardTitle>
                 <CardDescription>Boost your property's visibility.</CardDescription>
               </CardHeader>
               <CardContent>
-                 <FormField
-                  control={form.control}
-                  name="featured"
-                  render={({ field }) => (
-                    <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
-                      <div className="space-y-0.5">
-                        <FormLabel className="text-base">
-                          Feature as "Pro"
-                        </FormLabel>
-                        <FormDescription>
-                          Promote this property on the homepage and at the top of search results.
-                        </FormDescription>
+                <Collapsible open={isPromotionOpen} onOpenChange={setIsPromotionOpen}>
+                  <FormField
+                    control={form.control}
+                    name="featured"
+                    render={({ field }) => (
+                      <CollapsibleTrigger asChild>
+                        <div className="flex flex-row items-center justify-between rounded-lg border p-4 cursor-pointer">
+                          <div className="space-y-0.5">
+                            <FormLabel className="text-base">Feature as "Pro"</FormLabel>
+                            <FormDescription>
+                              Promote this property on the homepage and at the top of search results.
+                            </FormDescription>
+                          </div>
+                          <FormControl>
+                            <Switch checked={field.value} onCheckedChange={field.onChange} aria-readonly />
+                          </FormControl>
+                        </div>
+                      </CollapsibleTrigger>
+                    )}
+                  />
+                  <CollapsibleContent className="space-y-6 pt-6">
+                    <Separator />
+                    <p className="font-semibold">Choose your promotion plan:</p>
+                    <RadioGroup value={promotionTier} onValueChange={setPromotionTier} className="grid grid-cols-2 gap-4">
+                      <div>
+                        <RadioGroupItem value="week" id="week" className="peer sr-only" />
+                        <Label
+                          htmlFor="week"
+                          className="flex flex-col items-center justify-between rounded-md border-2 border-muted bg-popover p-4 hover:bg-accent hover:text-accent-foreground peer-data-[state=checked]:border-primary [&:has([data-state=checked])]:border-primary"
+                        >
+                          <span className="font-bold">1 Week</span>
+                          <span className="text-sm">Ksh 1,000</span>
+                        </Label>
                       </div>
-                      <FormControl>
-                        <Switch
-                          checked={field.value}
-                          onCheckedChange={field.onChange}
-                          aria-readonly
-                        />
-                      </FormControl>
-                    </FormItem>
-                  )}
-                />
-                <p className="text-sm text-muted-foreground mt-4">
-                    To feature your properties, you must be on a Pro or VIP plan. 
-                    <Button variant="link" asChild className="p-1">
-                        <Link href="/admin/subscription">Upgrade your plan</Link>
+                      <div>
+                        <RadioGroupItem value="month" id="month" className="peer sr-only" />
+                        <Label
+                          htmlFor="month"
+                          className="flex flex-col items-center justify-between rounded-md border-2 border-muted bg-popover p-4 hover:bg-accent hover:text-accent-foreground peer-data-[state=checked]:border-primary [&:has([data-state=checked])]:border-primary"
+                        >
+                           <span className="font-bold">1 Month</span>
+                          <span className="text-sm">Ksh 3,500</span>
+                        </Label>
+                      </div>
+                    </RadioGroup>
+                    
+                    <div className="text-sm text-center bg-muted p-4 rounded-md">
+                      <p className="font-semibold mb-2">Complete Payment via M-Pesa</p>
+                      <p>Paybill: <span className="font-bold">123456</span></p>
+                      <p>Account: <span className="font-bold">AGENT123</span></p>
+                      <p>Amount: <span className="font-bold">Ksh {promotionTier === 'week' ? '1,000' : '3,500'}</span></p>
+                    </div>
+
+                     <div className="space-y-2">
+                        <Label htmlFor="mpesa-code">M-Pesa Confirmation Code</Label>
+                        <Input id="mpesa-code" placeholder="e.g., RG83..."/>
+                    </div>
+                    <Button type="button" className="w-full">
+                       Confirm and Activate Promotion
                     </Button>
-                </p>
+                  </CollapsibleContent>
+                </Collapsible>
               </CardContent>
             </Card>
 
@@ -662,3 +699,5 @@ export function PropertyForm({ property }: PropertyFormProps) {
     </Form>
   );
 }
+
+    
