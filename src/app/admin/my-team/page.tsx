@@ -1,6 +1,6 @@
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Users2 } from "lucide-react";
+import { Users2, Construction } from "lucide-react";
 
 export default function MyTeamPage() {
   return (
@@ -15,7 +15,11 @@ export default function MyTeamPage() {
         </CardDescription>
       </CardHeader>
       <CardContent>
-        <p className="text-muted-foreground">Team management functionality will be implemented here.</p>
+         <div className="text-center py-12 text-muted-foreground">
+            <Construction className="h-12 w-12 mx-auto mb-4" />
+            <p className="font-semibold">This feature is under construction.</p>
+            <p className="text-sm">Functionality for managing agents within your agency is coming soon.</p>
+          </div>
       </CardContent>
     </Card>
   );

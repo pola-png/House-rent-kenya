@@ -1,23 +1,23 @@
 
 'use client';
 
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { ArrowRight, Newspaper } from "lucide-react";
-import Image from "next/image";
-import Link from "next/link";
-import placeholderImages from "@/lib/placeholder-images.json";
-import { Button } from "@/components/ui/button";
-import { useCollection, useFirestore, useMemoFirebase } from "@/firebase";
-import { collection } from "firebase/firestore";
-import type { Article } from "@/lib/types";
-import { Skeleton } from "@/components/ui/skeleton";
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { ArrowRight, Newspaper } from 'lucide-react';
+import Image from 'next/image';
+import Link from 'next/link';
+import placeholderImages from '@/lib/placeholder-images.json';
+import { Button } from '@/components/ui/button';
+import { useCollection, useFirestore, useMemoFirebase } from '@/firebase';
+import { collection } from 'firebase/firestore';
+import type { Article } from '@/lib/types';
+import { Skeleton } from '@/components/ui/skeleton';
 
 export default function BlogPage() {
   const firestore = useFirestore();
   // We can re-use the 'articles' collection for the blog
   const articlesQuery = useMemoFirebase(() => {
     if (!firestore) return null;
-    return collection(firestore, "articles");
+    return collection(firestore, 'articles');
   }, [firestore]);
 
   const { data: blogPosts, isLoading } = useCollection<Article>(articlesQuery);
@@ -50,7 +50,7 @@ export default function BlogPage() {
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-            {blogPosts?.map((post) => {
+            {blogPosts?.map(post => {
               const image = placeholderImages.placeholderImages.find(img => img.id === post.imageId);
               return (
                 <Card key={post.id} className="flex flex-col overflow-hidden group">

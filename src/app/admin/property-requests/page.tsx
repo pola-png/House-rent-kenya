@@ -1,6 +1,6 @@
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Heart } from "lucide-react";
+import { Heart, Construction } from "lucide-react";
 
 export default function PropertyRequestsPage() {
   return (
@@ -15,7 +15,11 @@ export default function PropertyRequestsPage() {
         </CardDescription>
       </CardHeader>
       <CardContent>
-        <p className="text-muted-foreground">Property request tracking will be implemented here.</p>
+        <div className="text-center py-12 text-muted-foreground">
+            <Construction className="h-12 w-12 mx-auto mb-4" />
+            <p className="font-semibold">This feature is under construction.</p>
+            <p className="text-sm">A system for managing client property requests is coming soon.</p>
+          </div>
       </CardContent>
     </Card>
   );
