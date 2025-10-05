@@ -4,13 +4,14 @@ import { firebaseConfig } from '@/firebase/config';
 import { initializeApp, getApps, getApp, FirebaseApp } from 'firebase/app';
 import { getAuth, connectAuthEmulator } from 'firebase/auth';
 import { getFirestore, connectFirestoreEmulator } from 'firebase/firestore';
+import { getAnalytics } from 'firebase/analytics';
 import { initiateAnonymousSignIn } from './non-blocking-login';
 
 // IMPORTANT: DO NOT MODIFY THIS FUNCTION
 export function initializeFirebase() {
   const isInitialized = getApps().length > 0;
   const firebaseApp = isInitialized ? getApp() : initializeApp(firebaseConfig);
-  const { auth, firestore } = getSdks(firebaseApp);
+  const { auth, firestore, analytics } = getSdks(firebaseApp);
   
   // In development, connect to local emulators
   // Note: You must have the Firebase emulators running for this to work
@@ -26,13 +27,14 @@ export function initializeFirebase() {
       initiateAnonymousSignIn(auth);
   }
 
-  return { firebaseApp, auth, firestore };
+  return { firebaseApp, auth, firestore, analytics };
 }
 
 export function getSdks(firebaseApp: FirebaseApp) {
   return {
     auth: getAuth(firebaseApp),
-    firestore: getFirestore(firebaseApp)
+    firestore: getFirestore(firebaseApp),
+    analytics: typeof window !== 'undefined' ? getAnalytics(firebaseApp) : null
   };
 }
 

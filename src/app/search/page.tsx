@@ -1,7 +1,7 @@
 
 "use client";
 
-import { collection } from "firebase/firestore";
+import { collection, query, where, orderBy, QueryConstraint } from "firebase/firestore";
 import { PropertyCard } from "@/components/property-card";
 import { SearchFilters } from "@/components/search-filters";
 import { Pagination, PaginationContent, PaginationEllipsis, PaginationItem, PaginationLink, PaginationNext, PaginationPrevious } from "@/components/ui/pagination";
@@ -12,18 +12,62 @@ import { Terminal } from "lucide-react";
 import { useCollection, useFirestore, useMemoFirebase } from "@/firebase";
 import type { Property } from "@/lib/types";
 import { Skeleton } from "@/components/ui/skeleton";
+import { useSearchParams } from "next/navigation";
 
-export default function SearchPage({
-  searchParams,
-}: {
-  searchParams: { [key: string]: string | string[] | undefined };
-}) {
+export default function SearchPage() {
   const firestore = useFirestore();
+  const searchParams = useSearchParams();
+
   const propertiesQuery = useMemoFirebase(() => {
     if (!firestore) return null;
-    // In a real app, you would build a query based on searchParams
-    return collection(firestore, 'properties');
-  }, [firestore]);
+    
+    const constraints: QueryConstraint[] = [];
+
+    // Basic Keyword Search (on title) - Firestore doesn't support full-text search natively
+    const keyword = searchParams.get('q');
+    // Note: A real full-text search requires a third-party service like Algolia.
+    // This is a very basic prefix-based search simulation.
+    if (keyword) {
+        constraints.push(where('title', '>=', keyword));
+        constraints.push(where('title', '<=', keyword + '\uf8ff'));
+    }
+
+    const propertyType = searchParams.get('type');
+    if (propertyType) {
+        constraints.push(where('type', '==', propertyType));
+    }
+    
+    const minPrice = searchParams.get('min_price');
+    if (minPrice) {
+        constraints.push(where('price', '>=', parseInt(minPrice, 10)));
+    }
+    
+    const maxPrice = searchParams.get('max_price');
+    if (maxPrice) {
+        constraints.push(where('price', '<=', parseInt(maxPrice, 10)));
+    }
+
+    const beds = searchParams.get('beds');
+    if (beds) {
+        constraints.push(where('bedrooms', '==', parseInt(beds, 10)));
+    }
+
+    const baths = searchParams.get('baths');
+    if (baths) {
+        constraints.push(where('bathrooms', '==', parseInt(baths, 10)));
+    }
+
+    const amenities = searchParams.getAll('amenities');
+    if (amenities.length > 0) {
+        // Firestore 'array-contains-any' is limited to 10 items in the array.
+        // For more complex filtering, a different data model or search service would be better.
+        amenities.slice(0, 10).forEach(amenity => {
+            constraints.push(where('amenities', 'array-contains', amenity));
+        })
+    }
+    
+    return query(collection(firestore, 'properties'), ...constraints, orderBy('createdAt', 'desc'));
+  }, [firestore, searchParams]);
 
   const { data: properties, isLoading } = useCollection<Property>(propertiesQuery);
   const filteredProperties = properties || [];

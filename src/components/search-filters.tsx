@@ -1,6 +1,8 @@
+
 "use client";
 
-import { useState } from 'react';
+import { useState, useCallback, useEffect } from 'react';
+import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -8,28 +10,102 @@ import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import { Slider } from "@/components/ui/slider";
-import { Search, SlidersHorizontal } from "lucide-react";
+import { Search, SlidersHorizontal, X } from "lucide-react";
+import { useDebounce } from "@/hooks/use-debounce"; 
 
 const propertyTypes = ["Apartment", "House", "Townhouse", "Condo", "Villa"];
-const amenities = [
+const amenitiesList = [
   "Swimming Pool", "Gym", "Garden", "Parking", "Pet Friendly", "Furnished"
 ];
 
 export function SearchFilters() {
-  const [priceRange, setPriceRange] = useState([50000, 500000]);
+  const router = useRouter();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
+
+  // State for immediate input, debounced for URL update
+  const [keyword, setKeyword] = useState(searchParams.get('q') || '');
+  const debouncedKeyword = useDebounce(keyword, 500);
+
+  const [priceRange, setPriceRange] = useState(() => {
+    const min = searchParams.get('min_price');
+    const max = searchParams.get('max_price');
+    return [min ? parseInt(min, 10) : 0, max ? parseInt(max, 10) : 1000000];
+  });
+  const debouncedPriceRange = useDebounce(priceRange, 500);
+
+  // Read initial values from URL for controlled components
+  const selectedTypes = searchParams.getAll('type');
+  const selectedBeds = searchParams.get('beds');
+  const selectedBaths = searchParams.get('baths');
+  const selectedAmenities = searchParams.getAll('amenities');
+  
+  const createQueryString = useCallback((paramsToUpdate: Record<string, string | string[] | null>) => {
+    const params = new URLSearchParams(searchParams.toString());
+    Object.entries(paramsToUpdate).forEach(([key, value]) => {
+      if (value === null || (Array.isArray(value) && value.length === 0)) {
+        params.delete(key);
+      } else if (Array.isArray(value)) {
+        params.delete(key); // Clear existing values for this key
+        value.forEach(v => params.append(key, v));
+      } else {
+        params.set(key, value);
+      }
+    });
+    return params.toString();
+  }, [searchParams]);
+
+  useEffect(() => {
+    router.push(pathname + '?' + createQueryString({ q: debouncedKeyword || null }), { scroll: false });
+  }, [debouncedKeyword, pathname, router, createQueryString]);
+
+  useEffect(() => {
+    router.push(pathname + '?' + createQueryString({ min_price: debouncedPriceRange[0] > 0 ? String(debouncedPriceRange[0]) : null, max_price: debouncedPriceRange[1] < 1000000 ? String(debouncedPriceRange[1]) : null }), { scroll: false });
+  }, [debouncedPriceRange, pathname, router, createQueryString]);
+
+  const handleCheckboxChange = (key: string, value: string, checked: boolean) => {
+    const currentValues = searchParams.getAll(key);
+    let newValues: string[];
+    if (checked) {
+      newValues = [...currentValues, value];
+    } else {
+      newValues = currentValues.filter(v => v !== value);
+    }
+    router.push(pathname + '?' + createQueryString({ [key]: newValues }), { scroll: false });
+  };
+  
+  const handleRadioChange = (key: string, value: string | null) => {
+    router.push(pathname + '?' + createQueryString({ [key]: value }), { scroll: false });
+  };
+
+  const clearFilters = () => {
+    router.push(pathname, { scroll: false });
+  };
+
 
   return (
     <Card className="sticky top-24">
       <CardHeader>
-        <CardTitle className="flex items-center gap-2 font-headline">
-          <SlidersHorizontal className="h-5 w-5" />
-          Filter Properties
+        <CardTitle className="flex items-center justify-between font-headline">
+          <div className="flex items-center gap-2">
+            <SlidersHorizontal className="h-5 w-5" />
+            <span>Filter Properties</span>
+          </div>
+          <Button variant="ghost" size="sm" onClick={clearFilters}>
+              <X className="mr-2 h-4 w-4"/>
+              Clear
+          </Button>
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-6">
         <div className="relative">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
-            <Input placeholder="Keyword..." className="pl-10" />
+            <Input 
+              placeholder="Keyword..." 
+              className="pl-10" 
+              value={keyword}
+              onChange={(e) => setKeyword(e.target.value)}
+            />
         </div>
         
         <Accordion type="multiple" defaultValue={['type', 'price']} className="w-full">
@@ -38,7 +114,11 @@ export function SearchFilters() {
             <AccordionContent className="space-y-2 pt-2">
               {propertyTypes.map((type) => (
                 <div key={type} className="flex items-center space-x-2">
-                  <Checkbox id={`type-${type}`} />
+                  <Checkbox 
+                    id={`type-${type}`}
+                    checked={selectedTypes.includes(type)}
+                    onCheckedChange={(checked) => handleCheckboxChange('type', type, !!checked)}
+                  />
                   <Label htmlFor={`type-${type}`} className="font-normal">{type}</Label>
                 </div>
               ))}
@@ -53,10 +133,11 @@ export function SearchFilters() {
                 <span>Ksh {priceRange[1].toLocaleString()}</span>
               </div>
               <Slider
-                defaultValue={priceRange}
+                value={priceRange}
                 max={1000000}
+                min={0}
                 step={10000}
-                onValueChange={(value) => setPriceRange(value)}
+                onValueChange={setPriceRange}
               />
             </AccordionContent>
           </AccordionItem>
@@ -66,9 +147,15 @@ export function SearchFilters() {
             <AccordionContent className="pt-2">
               <div className="flex flex-wrap gap-2">
                 {[1, 2, 3, 4, 5].map((num) => (
-                  <Button key={num} variant="outline" size="sm">{num} {num > 1 ? 'Beds' : 'Bed'}</Button>
+                  <Button 
+                    key={num} 
+                    variant={selectedBeds === String(num) ? 'default' : 'outline'}
+                    size="sm"
+                    onClick={() => handleRadioChange('beds', selectedBeds === String(num) ? null : String(num))}
+                    >
+                      {num}{num > 0 ? '+' : ''} Bed{num !== 1 ? 's' : ''}
+                    </Button>
                 ))}
-                 <Button variant="outline" size="sm">5+ Beds</Button>
               </div>
             </AccordionContent>
           </AccordionItem>
@@ -77,10 +164,16 @@ export function SearchFilters() {
             <AccordionTrigger className="font-bold">Bathrooms</AccordionTrigger>
             <AccordionContent className="pt-2">
               <div className="flex flex-wrap gap-2">
-                {[1, 2, 3, 4, 5].map((num) => (
-                  <Button key={num} variant="outline" size="sm">{num} {num > 1 ? 'Baths' : 'Bath'}</Button>
+                 {[1, 2, 3, 4, 5].map((num) => (
+                  <Button 
+                    key={num} 
+                    variant={selectedBaths === String(num) ? 'default' : 'outline'}
+                    size="sm"
+                    onClick={() => handleRadioChange('baths', selectedBaths === String(num) ? null : String(num))}
+                    >
+                      {num}{num > 0 ? '+' : ''} Bath{num !== 1 ? 's' : ''}
+                    </Button>
                 ))}
-                 <Button variant="outline" size="sm">5+ Baths</Button>
               </div>
             </AccordionContent>
           </AccordionItem>
@@ -88,20 +181,19 @@ export function SearchFilters() {
           <AccordionItem value="amenities">
             <AccordionTrigger className="font-bold">Amenities</AccordionTrigger>
             <AccordionContent className="space-y-2 pt-2">
-              {amenities.map((amenity) => (
+              {amenitiesList.map((amenity) => (
                 <div key={amenity} className="flex items-center space-x-2">
-                  <Checkbox id={`amenity-${amenity}`} />
+                  <Checkbox 
+                    id={`amenity-${amenity}`}
+                    checked={selectedAmenities.includes(amenity)}
+                    onCheckedChange={(checked) => handleCheckboxChange('amenities', amenity, !!checked)}
+                  />
                   <Label htmlFor={`amenity-${amenity}`} className="font-normal">{amenity}</Label>
                 </div>
               ))}
             </AccordionContent>
           </AccordionItem>
         </Accordion>
-
-        <div className="flex flex-col gap-2">
-          <Button size="lg">Apply Filters</Button>
-          <Button variant="ghost">Clear Filters</Button>
-        </div>
       </CardContent>
     </Card>
   );
