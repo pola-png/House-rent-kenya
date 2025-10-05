@@ -94,11 +94,19 @@ export function PropertyForm({ property }: PropertyFormProps) {
         keywords: property.keywords || "",
       }
     : {
+        title: "",
+        description: "",
+        price: 0,
+        location: "",
+        city: "Nairobi",
+        bedrooms: 1,
+        bathrooms: 1,
+        area: 0,
+        amenities: "",
         status: "For Rent",
         type: "Apartment",
         keywords: "",
         featured: false,
-        city: "Nairobi",
       };
 
   const form = useForm<PropertyFormValues>({
@@ -222,8 +230,8 @@ export function PropertyForm({ property }: PropertyFormProps) {
       const result = await generatePropertyDescription({
         propertyType: currentValues.type,
         location: currentValues.location,
-        bedrooms: currentValues.bedrooms,
-        bathrooms: currentValues.bathrooms,
+        bedrooms: Number(currentValues.bedrooms) || 0,
+        bathrooms: Number(currentValues.bathrooms) || 0,
         amenities: currentValues.amenities,
         additionalFeatures: currentValues.title,
       });
@@ -254,8 +262,8 @@ export function PropertyForm({ property }: PropertyFormProps) {
             listingKeywords: currentValues.keywords || '',
             propertyType: currentValues.type,
             propertyLocation: `${currentValues.location}, ${currentValues.city}`,
-            numberOfBedrooms: currentValues.bedrooms,
-            numberOfBathrooms: currentValues.bathrooms,
+            numberOfBedrooms: Number(currentValues.bedrooms) || 0,
+            numberOfBathrooms: Number(currentValues.bathrooms) || 0,
             amenities: currentValues.amenities,
         });
         form.setValue("title", result.optimizedTitle, { shouldValidate: true });
@@ -720,3 +728,5 @@ export function PropertyForm({ property }: PropertyFormProps) {
     </Form>
   );
 }
+
+    
