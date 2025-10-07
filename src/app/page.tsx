@@ -4,7 +4,6 @@
 import Image from 'next/image';
 import Link from 'next/link';
 import { ArrowRight, Building, Home as HomeIcon, MapPin, Search, Star, TrendingUp, Handshake, Verified } from 'lucide-react';
-import { collection, query, where, limit } from 'firebase/firestore';
 import React from 'react';
 
 import { Button } from '@/components/ui/button';
@@ -15,8 +14,7 @@ import placeholderImages from '@/lib/placeholder-images.json';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { useCollection, useFirestore, useMemoFirebase } from '@/firebase';
-import type { Property } from '@/lib/types';
+import { useProperties } from '@/supabase';
 import { Skeleton } from '@/components/ui/skeleton';
 
 const popularSearches = [
@@ -51,14 +49,7 @@ const features = [
 
 export default function Home() {
   const heroImage = placeholderImages.placeholderImages.find(img => img.id === 'hero_main');
-  const firestore = useFirestore();
-
-  const featuredPropertiesQuery = useMemoFirebase(() => {
-    if (!firestore) return null;
-    return query(collection(firestore, 'properties'), where('featured', '==', true), limit(6));
-  }, [firestore]);
-  
-  const { data: featuredProperties, isLoading } = useCollection<Property>(featuredPropertiesQuery);
+  const { properties: featuredProperties, loading: isLoading } = useProperties({ featured: true, limit: 6 });
 
 
   return (
