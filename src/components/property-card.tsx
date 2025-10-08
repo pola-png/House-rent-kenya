@@ -35,7 +35,7 @@ export function PropertyCard({ property }: PropertyCardProps) {
               No Image
             </div>
           )}
-          <Badge className="absolute top-3 left-3">{property.type}</Badge>
+          <Badge className="absolute top-3 left-3">{property.propertyType}</Badge>
            {property.status === 'Rented' && (
               <Badge variant="destructive" className="absolute top-3 right-3">Rented</Badge>
            )}
@@ -73,7 +73,7 @@ export function PropertyCard({ property }: PropertyCardProps) {
           </div>
           <div className="border-t pt-3 flex justify-between items-center">
              <div className="flex items-center gap-2">
-                {agentImage && (
+                {agentImage && property.agent.displayName && (
                     <Avatar className="h-8 w-8">
                         <AvatarImage src={agentImage.imageUrl} alt={property.agent.displayName} />
                         <AvatarFallback>{property.agent.displayName.charAt(0)}</AvatarFallback>

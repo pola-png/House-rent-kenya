@@ -55,7 +55,7 @@ const formSchema = z.object({
   bedrooms: z.coerce.number().int().min(1),
   bathrooms: z.coerce.number().int().min(1),
   area: z.coerce.number().positive(),
-  type: z.enum(["Apartment", "House", "Condo", "Townhouse", "Villa"]),
+  propertyType: z.enum(["Apartment", "House", "Condo", "Townhouse", "Villa"]),
   amenities: z.string().min(3),
   status: z.enum(["For Rent", "For Sale", "Short Let", "Land", "Rented"]),
   keywords: z.string().optional(),
@@ -104,7 +104,7 @@ export function PropertyForm({ property }: PropertyFormProps) {
         area: 0,
         amenities: "",
         status: "For Rent",
-        type: "Apartment",
+        propertyType: "Apartment",
         keywords: "",
         featured: false,
       };
@@ -136,7 +136,9 @@ export function PropertyForm({ property }: PropertyFormProps) {
         if (!userDoc.exists()) {
             throw new Error("Agent profile not found.");
         }
-        const agentProfile = userDoc.data() as UserProfile;
+        // We only need a subset of the user profile for the 'agent' field.
+        const { displayName, uid, email, photoURL, agencyName } = userDoc.data() as UserProfile;
+        const agentData = { displayName, uid, email, photoURL, agencyName };
 
         const propertyData = {
           ...data,
@@ -146,7 +148,7 @@ export function PropertyForm({ property }: PropertyFormProps) {
           bathrooms: Number(data.bathrooms),
           area: Number(data.area),
           landlordId: user.uid,
-          agent: agentProfile,
+          agent: agentData, // Use the subset of data
           images: ['property_1_1', 'property_1_2', 'property_1_3'], // Placeholder images
           updatedAt: serverTimestamp(),
           createdAt: property ? property.createdAt : serverTimestamp(),
@@ -228,7 +230,7 @@ export function PropertyForm({ property }: PropertyFormProps) {
     try {
       const currentValues = form.getValues();
       const result = await generatePropertyDescription({
-        propertyType: currentValues.type,
+        propertyType: currentValues.propertyType,
         location: currentValues.location,
         bedrooms: Number(currentValues.bedrooms) || 0,
         bathrooms: Number(currentValues.bathrooms) || 0,
@@ -260,7 +262,7 @@ export function PropertyForm({ property }: PropertyFormProps) {
             listingTitle: currentValues.title,
             listingDescription: currentValues.description,
             listingKeywords: currentValues.keywords || '',
-            propertyType: currentValues.type,
+            propertyType: currentValues.propertyType,
             propertyLocation: `${currentValues.location}, ${currentValues.city}`,
             numberOfBedrooms: Number(currentValues.bedrooms) || 0,
             numberOfBathrooms: Number(currentValues.bathrooms) || 0,
@@ -363,7 +365,7 @@ export function PropertyForm({ property }: PropertyFormProps) {
                 />
                  <FormField
                     control={form.control}
-                    name="type"
+                    name="propertyType"
                     render={({ field }) => (
                         <FormItem>
                         <FormLabel>Property Type</FormLabel>
@@ -728,5 +730,3 @@ export function PropertyForm({ property }: PropertyFormProps) {
     </Form>
   );
 }
-
-    

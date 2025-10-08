@@ -1,32 +1,85 @@
+
+import type { Timestamp } from "firebase/firestore";
+
 export interface Property {
   id: string;
   title: string;
   description: string;
   price: number;
-  type: 'rent' | 'buy';
-  property_type: 'apartment' | 'house' | 'condo' | 'studio';
+  propertyType: "Apartment" | "House" | "Condo" | "Townhouse" | "Villa";
   bedrooms: number;
   bathrooms: number;
   area: number;
   location: string;
-  latitude?: number;
-  longitude?: number;
+  city: string;
+  latitude: number;
+  longitude: number;
   images: string[];
   amenities: string[];
-  agent_id?: string;
-  status: 'active' | 'inactive' | 'sold' | 'rented';
-  created_at: string;
-  updated_at: string;
+  agent: UserProfile;
+  landlordId: string;
+  status: "For Rent" | "For Sale" | "Short Let" | "Land" | "Rented";
+  createdAt: Timestamp;
+  updatedAt: Timestamp;
   featured?: boolean;
+  keywords?: string;
 }
 
-export interface User {
-  id: string;
+export interface UserProfile {
+  uid: string;
+  firstName: string;
+  lastName: string;
+  displayName: string;
   email: string;
-  full_name?: string;
-  role: 'user' | 'agent' | 'admin';
-  phone?: string;
-  avatar_url?: string;
-  created_at: string;
-  updated_at: string;
+  phoneNumber?: string;
+  role: "user" | "agent";
+  agencyName?: string;
+  createdAt: Timestamp;
+  photoURL?: string;
+}
+
+export interface CallbackRequest {
+    id: string;
+    propertyId: string;
+    propertyTitle: string;
+    userName: string;
+    userPhone: string;
+    agentId: string;
+    status: "pending" | "contacted";
+    createdAt: Timestamp;
+}
+
+export interface SupportTicket {
+    id: string;
+    userId: string;
+    subject: string;
+    status: "open" | "closed";
+    createdAt: Timestamp;
+    updatedAt: Timestamp;
+    lastMessage?: string;
+}
+
+export interface Message {
+    id: string;
+    text: string;
+    senderId: string;
+    timestamp: Timestamp;
+}
+
+export interface Development {
+    id: string;
+    title: string;
+    location: string;
+    priceRange: string;
+    description: string;
+    imageId: string;
+    status: string;
+}
+
+export interface Article {
+    id: string;
+    title: string;
+    excerpt: string;
+    imageId: string;
+    category: string;
 }
