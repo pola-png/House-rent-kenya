@@ -1,7 +1,7 @@
 
 import { MetadataRoute } from 'next';
 import { firestoreAdmin } from '@/firebase/admin-config';
-import type { Property, Article, Development } from '@/lib/types';
+import type { Property } from '@/lib/types';
 import type { Timestamp } from 'firebase-admin/firestore';
 
 const BASE_URL = process.env.NEXT_PUBLIC_BASE_URL || 'https://houserent.co.ke';
@@ -25,11 +25,9 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   ];
 
   try {
-    // Fetch dynamic routes
     const propertiesSnapshot = await firestoreAdmin.collection('properties').get();
     const propertyRoutes = propertiesSnapshot.docs.map(doc => {
       const data = doc.data() as Property;
-      // Convert Admin SDK Timestamp to JS Date
       const lastModified = (data.updatedAt as unknown as Timestamp)?.toDate() || new Date();
       return {
         url: `${BASE_URL}/property/${doc.id}`,
@@ -43,7 +41,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     const articleRoutes = articlesSnapshot.docs.map(doc => {
       return {
         url: `${BASE_URL}/advice/${doc.id}`,
-        lastModified: new Date(), // Articles don't have a timestamp, use current date
+        lastModified: new Date(),
         changeFrequency: 'monthly' as 'monthly',
         priority: 0.6,
       };
@@ -53,7 +51,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     const developmentRoutes = developmentsSnapshot.docs.map(doc => {
       return {
         url: `${BASE_URL}/developments/${doc.id}`,
-        lastModified: new Date(), // Developments don't have a timestamp
+        lastModified: new Date(),
         changeFrequency: 'monthly' as 'monthly',
         priority: 0.7,
       };
@@ -62,7 +60,6 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     return [...staticRoutes, ...propertyRoutes, ...articleRoutes, ...developmentRoutes];
   } catch (error) {
     console.error("Error generating sitemap:", error);
-    // In case of error, return only static routes to avoid breaking the build
     return staticRoutes;
   }
 }
