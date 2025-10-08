@@ -8,23 +8,39 @@ import { Map } from "@/components/map";
 import { Card } from "@/components/ui/card";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Terminal } from "lucide-react";
-import { useProperties } from "@/supabase";
+import { useCollection, useFirestore, useMemoFirebase } from "@/firebase";
+import { collection, query, where } from "firebase/firestore";
+import type { Property } from "@/lib/types";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useSearchParams } from "next/navigation";
+import { useMemo } from "react";
 
 export default function SearchPage() {
   const searchParams = useSearchParams();
-  
-  const filters = {
-    q: searchParams.get('q'),
-    type: searchParams.get('type'),
-    minPrice: searchParams.get('min_price') ? parseInt(searchParams.get('min_price')!, 10) : undefined,
-    maxPrice: searchParams.get('max_price') ? parseInt(searchParams.get('max_price')!, 10) : undefined,
-    bedrooms: searchParams.get('beds') ? parseInt(searchParams.get('beds')!, 10) : undefined,
-    bathrooms: searchParams.get('baths') ? parseInt(searchParams.get('baths')!, 10) : undefined,
-  };
+  const firestore = useFirestore();
 
-  const { properties, loading: isLoading } = useProperties(filters);
+  const propertiesQuery = useMemoFirebase(() => {
+    if (!firestore) return null;
+    
+    const constraints = [];
+    const q = searchParams.get('q');
+    const type = searchParams.get('type');
+    const minPrice = searchParams.get('min_price');
+    const maxPrice = searchParams.get('max_price');
+    const beds = searchParams.get('beds');
+    
+    // Note: Firestore doesn't support full-text search or OR queries on different fields out of the box.
+    // The 'q' parameter is used for a simple location match here.
+    if (q) constraints.push(where('location', '>=', q), where('location', '<=', q + '\uf8ff'));
+    if (type) constraints.push(where('type', '==', type));
+    if (minPrice) constraints.push(where('price', '>=', parseInt(minPrice, 10)));
+    if (maxPrice) constraints.push(where('price', '<=', parseInt(maxPrice, 10)));
+    if (beds) constraints.push(where('bedrooms', '>=', parseInt(beds, 10)));
+    
+    return query(collection(firestore, 'properties'), ...constraints);
+  }, [firestore, searchParams]);
+
+  const { data: properties, isLoading } = useCollection<Property>(propertiesQuery);
   const filteredProperties = properties || [];
 
   return (

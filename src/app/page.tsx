@@ -14,8 +14,11 @@ import placeholderImages from '@/lib/placeholder-images.json';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { useProperties } from '@/supabase';
+import { useCollection, useFirestore, useMemoFirebase } from '@/firebase';
+import type { Property } from '@/lib/types';
 import { Skeleton } from '@/components/ui/skeleton';
+import { collection, query, where, limit } from 'firebase/firestore';
+
 
 const popularSearches = [
   'Apartments for rent in Kilimani',
@@ -49,7 +52,18 @@ const features = [
 
 export default function Home() {
   const heroImage = placeholderImages.placeholderImages.find(img => img.id === 'hero_main');
-  const { properties: featuredProperties, loading: isLoading } = useProperties({ featured: true, limit: 6 });
+  const firestore = useFirestore();
+
+  const featuredQuery = useMemoFirebase(() => {
+    if (!firestore) return null;
+    return query(
+        collection(firestore, 'properties'), 
+        where('featured', '==', true), 
+        limit(6)
+    );
+  }, [firestore]);
+
+  const { data: featuredProperties, isLoading } = useCollection<Property>(featuredQuery);
 
 
   return (
@@ -250,5 +264,3 @@ export default function Home() {
     </div>
   );
 }
-
-    

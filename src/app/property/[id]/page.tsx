@@ -1,7 +1,8 @@
+
+'use client';
 import Image from 'next/image';
-import { notFound } from 'next/navigation';
+import { notFound, useParams } from 'next/navigation';
 import { Bed, Bath, Maximize, MapPin, CheckCircle, Phone, User } from 'lucide-react';
-import { getProperty } from '@/supabase';
 import placeholderImages from '@/lib/placeholder-images.json';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -9,33 +10,41 @@ import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious
 import { Separator } from '@/components/ui/separator';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import type { Metadata } from 'next';
+import { useDoc, useFirestore, useMemoFirebase } from '@/firebase';
+import { doc } from 'firebase/firestore';
+import type { Property } from '@/lib/types';
+import { Skeleton } from '@/components/ui/skeleton';
 
-export async function generateStaticParams() {
-  return [];
-}
+export default function PropertyPage() {
+  const params = useParams();
+  const id = params.id as string;
+  const firestore = useFirestore();
 
-export async function generateMetadata({ params }: { params: { id: string } }): Promise<Metadata> {
-  const { data: property } = await getProperty(params.id);
+  const propertyRef = useMemoFirebase(() => {
+    if (!firestore || !id) return null;
+    return doc(firestore, 'properties', id);
+  }, [firestore, id]);
 
-  if (!property) {
-    return {
-      title: 'Property Not Found',
-      description: 'The property you are looking for does not exist.',
-    };
+  const { data: property, isLoading } = useDoc<Property>(propertyRef);
+
+  if (isLoading) {
+    return (
+      <div className="container mx-auto px-4 py-12">
+        <Skeleton className="h-10 w-3/4 mb-4" />
+        <Skeleton className="h-6 w-1/2 mb-8" />
+        <Skeleton className="h-[500px] w-full mb-8" />
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-12">
+            <div className="lg:col-span-2 space-y-6">
+                <Skeleton className="h-48 w-full" />
+                <Skeleton className="h-64 w-full" />
+            </div>
+            <div className="lg:col-span-1">
+                 <Skeleton className="h-64 w-full" />
+            </div>
+        </div>
+      </div>
+    );
   }
-
-  const title = `${property.title} in ${property.location}`;
-  const description = property.description.substring(0, 160);
-
-  return {
-    title,
-    description,
-  };
-}
-
-export default async function PropertyPage({ params }: { params: { id: string } }) {
-  const { data: property, error } = await getProperty(params.id);
 
   if (!property) {
     notFound();
@@ -161,7 +170,7 @@ export default async function PropertyPage({ params }: { params: { id: string } 
               <Card className="sticky top-24">
                 <CardHeader>
                     <p className="text-sm text-muted-foreground">Marketed By</p>
-                    <CardTitle className="font-headline -mt-1">House Rent Kenya</CardTitle>
+                    <CardTitle className="font-headline -mt-1">{property.agent.agencyName || "House Rent Kenya"}</CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4">
                   <div className="flex items-center gap-4 border-t pt-4">
@@ -170,7 +179,7 @@ export default async function PropertyPage({ params }: { params: { id: string } 
                       <AvatarFallback><User /></AvatarFallback>
                     </Avatar>
                     <div>
-                      <h4 className="font-bold text-lg">Property Agent</h4>
+                      <h4 className="font-bold text-lg">{property.agent.displayName || 'Property Agent'}</h4>
                       <p className="text-sm text-muted-foreground">Real Estate Agent</p>
                     </div>
                   </div>
