@@ -30,8 +30,6 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import type { Property, UserProfile } from "@/lib/types";
-import { generatePropertyDescription } from "@/ai/flows/generate-property-description";
-import { optimizeListingSEO } from "@/ai/flows/optimize-listing-seo";
 import { useToast } from "@/hooks/use-toast";
 import { Progress } from "@/components/ui/progress";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
@@ -202,70 +200,6 @@ export function PropertyForm({ property }: PropertyFormProps) {
     router.push('/admin/messages');
   }
 
-  const handleGenerateDescription = async () => {
-    setIsGeneratingDesc(true);
-    try {
-      const currentValues = form.getValues();
-      const result = await generatePropertyDescription({
-        propertyType: currentValues.propertyType,
-        location: currentValues.location,
-        bedrooms: Number(currentValues.bedrooms) || 0,
-        bathrooms: Number(currentValues.bathrooms) || 0,
-        amenities: currentValues.amenities,
-        additionalFeatures: currentValues.title,
-      });
-      form.setValue("description", result.description, { shouldValidate: true });
-      toast({
-        title: "Description Generated",
-        description: "The AI-powered description has been filled in.",
-      });
-    } catch (error) {
-      console.error("Failed to generate description:", error);
-      toast({
-        variant: "destructive",
-        title: "Error",
-        description: "Failed to generate AI description.",
-      });
-    } finally {
-      setIsGeneratingDesc(false);
-    }
-  };
-
-  const handleSeoOptimize = async () => {
-      setIsOptimizingSeo(true);
-      try {
-        const currentValues = form.getValues();
-        const result = await optimizeListingSEO({
-            listingTitle: currentValues.title,
-            listingDescription: currentValues.description,
-            listingKeywords: currentValues.keywords || '',
-            propertyType: currentValues.propertyType,
-            propertyLocation: `${currentValues.location}, ${currentValues.city}`,
-            numberOfBedrooms: Number(currentValues.bedrooms) || 0,
-            numberOfBathrooms: Number(currentValues.bathrooms) || 0,
-            amenities: currentValues.amenities,
-        });
-        form.setValue("title", result.optimizedTitle, { shouldValidate: true });
-        form.setValue("description", result.optimizedDescription, { shouldValidate: true });
-        form.setValue("keywords", result.optimizedKeywords, { shouldValidate: true });
-        setSeoScore(result.seoScore);
-        toast({
-          title: "SEO Optimized",
-          description: `Listing optimized! New SEO score: ${result.seoScore}/100`,
-        });
-
-      } catch (error) {
-        console.error("Failed to optimize SEO:", error);
-         toast({
-            variant: "destructive",
-            title: "Error",
-            description: "Failed to optimize SEO.",
-        });
-      } finally {
-        setIsOptimizingSeo(false);
-      }
-  };
-
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
@@ -275,7 +209,7 @@ export function PropertyForm({ property }: PropertyFormProps) {
               <CardHeader>
                 <CardTitle>Property Details</CardTitle>
                 <CardDescription>
-                  Enter the main details of the property. Use the AI generator for a compelling description.
+                  Enter the main details of the property.
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
@@ -299,14 +233,6 @@ export function PropertyForm({ property }: PropertyFormProps) {
                     <FormItem>
                       <FormLabel className="flex items-center justify-between">
                         <span>Description</span>
-                         <Button type="button" variant="ghost" size="sm" onClick={handleGenerateDescription} disabled={isGeneratingDesc}>
-                            {isGeneratingDesc ? (
-                                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                            ) : (
-                                <Wand2 className="mr-2 h-4 w-4" />
-                            )}
-                            Generate with AI
-                        </Button>
                       </FormLabel>
                       <FormControl>
                         <Textarea
@@ -660,7 +586,7 @@ export function PropertyForm({ property }: PropertyFormProps) {
 
             <Card>
                 <CardHeader>
-                    <CardTitle>SEO Optimization</CardTitle>
+                    <CardTitle>SEO</CardTitle>
                     <CardDescription>Improve your listing's visibility on search engines.</CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-4">
@@ -677,23 +603,6 @@ export function PropertyForm({ property }: PropertyFormProps) {
                         </FormItem>
                       )}
                     />
-                    {seoScore !== null && (
-                        <div>
-                            <div className="flex justify-between items-center mb-1">
-                                <FormLabel>SEO Score</FormLabel>
-                                <span className="text-lg font-bold text-primary">{seoScore}/100</span>
-                            </div>
-                            <Progress value={seoScore} />
-                        </div>
-                    )}
-                    <Button type="button" className="w-full" onClick={handleSeoOptimize} disabled={isOptimizingSeo}>
-                       {isOptimizingSeo ? (
-                            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                        ) : (
-                            <Sparkles className="mr-2 h-4 w-4" />
-                        )}
-                        Optimize with AI
-                    </Button>
                 </CardContent>
             </Card>
           </div>
@@ -707,3 +616,5 @@ export function PropertyForm({ property }: PropertyFormProps) {
     </Form>
   );
 }
+
+    
