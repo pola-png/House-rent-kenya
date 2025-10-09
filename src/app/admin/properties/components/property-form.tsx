@@ -351,7 +351,7 @@ export function PropertyForm({ property }: PropertyFormProps) {
                   control={form.control}
                   name="amenities"
                   render={({ field }) => (
-                    <FormItem>
+                    <FormItem className="md:col-span-2">
                       <FormLabel>Amenities</FormLabel>
                       <FormControl>
                         <Input placeholder="Pool, Gym, Parking..." {...field} />

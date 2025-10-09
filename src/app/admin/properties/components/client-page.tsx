@@ -129,7 +129,11 @@ interface PropertiesClientProps {
 export function PropertiesClient({ data }: PropertiesClientProps) {
   const [sorting, setSorting] = React.useState<SortingState>([]);
   const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>([]);
-  const [columnVisibility, setColumnVisibility] = React.useState<VisibilityState>({});
+  const [columnVisibility, setColumnVisibility] = React.useState<VisibilityState>({
+    status: false,
+    price: false,
+    location: false,
+  });
   const [rowSelection, setRowSelection] = React.useState({});
 
   const table = useReactTable({
@@ -153,7 +157,7 @@ export function PropertiesClient({ data }: PropertiesClientProps) {
 
   return (
     <div className="w-full">
-      <div className="flex items-center py-4">
+      <div className="flex flex-col md:flex-row items-center gap-4 py-4">
         <Input
           placeholder="Filter properties..."
           value={(table.getColumn("title")?.getFilterValue() as string) ?? ""}

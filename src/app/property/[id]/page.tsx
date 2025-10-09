@@ -185,7 +185,7 @@ export default function PropertyPage() {
                     <CardTitle className="font-headline -mt-1">{property.agent.agencyName || "House Rent Kenya"}</CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4">
-                  <div className="flex items-center gap-4 border-t pt-4">
+                  <div className="flex flex-col sm:flex-row items-center gap-4 border-t pt-4">
                     <Avatar className="h-16 w-16">
                       {agentImage && <AvatarImage src={agentImage.imageUrl} alt="Agent" data-ai-hint={agentImage.imageHint} />}
                       <AvatarFallback><User /></AvatarFallback>

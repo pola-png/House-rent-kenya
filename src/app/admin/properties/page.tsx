@@ -1,6 +1,6 @@
 "use client";
 
-import { PlusCircle } from "lucide-react";
+import { PlusCircle, FileUp } from "lucide-react";
 import Link from 'next/link';
 import {
   Card,
@@ -40,13 +40,7 @@ export default function AdminPropertiesPage() {
             updatedAt: new Date(p.updatedAt),
             // Ensure agent is not undefined
             agent: agent ? {
-                uid: agent.uid,
-                firstName: agent.firstName,
-                lastName: agent.lastName,
-                displayName: agent.displayName,
-                email: agent.email,
-                role: 'agent',
-                agencyName: agent.agencyName,
+                ...agent,
                 createdAt: new Date(agent.createdAt)
             } : { // Provide a default fallback agent object
                 uid: 'default-agent',
@@ -66,15 +60,16 @@ export default function AdminPropertiesPage() {
 
   return (
     <Tabs defaultValue="all">
-      <div className="flex items-center">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center sm:justify-between gap-4">
         <h1 className="text-2xl font-bold font-headline">Properties</h1>
-        <div className="ml-auto flex items-center gap-2">
-          <Button size="sm" variant="outline" asChild>
+        <div className="w-full sm:w-auto flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
+          <Button size="sm" variant="outline" asChild className="w-full sm:w-auto">
             <Link href="#">
+              <FileUp className="h-4 w-4 mr-2" />
               Export
             </Link>
           </Button>
-          <Button size="sm" asChild>
+          <Button size="sm" asChild className="w-full sm:w-auto">
             <Link href="/admin/properties/new">
               <PlusCircle className="h-4 w-4 mr-2" />
               Add Property
@@ -82,7 +77,7 @@ export default function AdminPropertiesPage() {
           </Button>
         </div>
       </div>
-      <TabsContent value="all">
+      <TabsContent value="all" className="mt-4">
         <Card>
           <CardHeader>
             <CardTitle>Manage Properties</CardTitle>
