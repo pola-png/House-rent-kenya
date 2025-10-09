@@ -14,8 +14,8 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { useState, useEffect } from 'react';
 
 // Mock Data
-import propertiesData from '@/docs/properties.json';
-import usersData from '@/docs/users.json';
+import propertiesData from '@/lib/docs/properties.json';
+import usersData from '@/lib/docs/users.json';
 
 export default function PropertyPage() {
   const params = useParams();

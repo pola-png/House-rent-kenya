@@ -1,7 +1,7 @@
 import { MetadataRoute } from 'next';
-import propertiesData from '@/docs/properties.json';
-import articlesData from '@/docs/articles.json';
-import developmentsData from '@/docs/developments.json';
+import propertiesData from '@/lib/docs/properties.json';
+import articlesData from '@/lib/docs/articles.json';
+import developmentsData from '@/lib/docs/developments.json';
 
 const BASE_URL = process.env.NEXT_PUBLIC_BASE_URL || 'https://houserent.co.ke';
 

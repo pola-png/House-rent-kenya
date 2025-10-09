@@ -15,8 +15,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import type { Property } from '@/lib/types';
 import { Skeleton } from '@/components/ui/skeleton';
 // Mock Data
-import propertiesData from '@/docs/properties.json';
-import usersData from '@/docs/users.json';
+import propertiesData from '@/lib/docs/properties.json';
+import usersData from '@/lib/docs/users.json';
 
 
 const popularSearches = [

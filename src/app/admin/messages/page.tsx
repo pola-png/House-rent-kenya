@@ -15,8 +15,8 @@ import { Send, MessageSquare, Loader2, User as UserIcon } from "lucide-react";
 import placeholderImages from "@/lib/placeholder-images.json";
 
 // Mock data imports
-import mockTicketsData from "@/docs/support-tickets.json";
-import mockMessagesData from "@/docs/messages.json";
+import mockTicketsData from "@/lib/docs/support-tickets.json";
+import mockMessagesData from "@/lib/docs/messages.json";
 
 export default function MessagesPage() {
   const searchParams = useSearchParams();

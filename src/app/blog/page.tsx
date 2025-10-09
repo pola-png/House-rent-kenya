@@ -10,7 +10,7 @@ import type { Article } from '@/lib/types';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useState, useEffect } from 'react';
 // Mock data
-import articlesData from "@/docs/articles.json";
+import articlesData from "@/lib/docs/articles.json";
 
 export default function BlogPage() {
   const [blogPosts, setBlogPosts] = useState<Article[]>([]);

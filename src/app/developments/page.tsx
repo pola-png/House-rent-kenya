@@ -11,7 +11,7 @@ import type { Development } from "@/lib/types";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useState, useEffect } from "react";
 // Mock data
-import developmentsData from "@/docs/developments.json";
+import developmentsData from "@/lib/docs/developments.json";
 
 export default function DevelopmentsPage() {
   const [developments, setDevelopments] = useState<Development[]>([]);

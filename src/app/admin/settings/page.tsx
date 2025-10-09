@@ -24,7 +24,7 @@ import type { UserProfile } from '@/lib/types';
 import { useState, useEffect } from 'react';
 
 // Mock data
-import usersData from "@/docs/users.json";
+import usersData from "@/lib/docs/users.json";
 const agentUser = usersData.find(u => u.role === 'agent');
 
 const profileFormSchema = z.object({

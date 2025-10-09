@@ -7,7 +7,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Button } from '@/components/ui/button';
 import { useState, useEffect } from 'react';
 // Mock data
-import usersData from "@/docs/users.json";
+import usersData from "@/lib/docs/users.json";
 
 export default function AgentsPage() {
   const [agents, setAgents] = useState<UserProfile[]>([]);
