@@ -1,0 +1,122 @@
+'use client';
+
+import { useState, useEffect, createContext, useContext, ReactNode } from 'react';
+import { supabase } from '@/lib/supabase';
+import type { UserProfile } from '@/lib/types';
+import { User } from '@supabase/supabase-js';
+
+interface AuthContextType {
+  user: UserProfile | null;
+  loading: boolean;
+  login: (email: string, pass: string) => Promise<boolean>;
+  signup: (email: string, pass: string, additionalData: Record<string, any>) => Promise<boolean>;
+  logout: () => Promise<void>;
+  loginWithGoogle: () => Promise<void>;
+}
+
+const AuthContext = createContext<AuthContextType | undefined>(undefined);
+
+export const AuthProvider = ({ children }: { children: ReactNode }) => {
+  const [user, setUser] = useState<UserProfile | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    // Get initial session
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (session?.user) {
+        setUser(mapSupabaseUser(session.user));
+      }
+      setLoading(false);
+    });
+
+    // Listen for auth changes
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      if (session?.user) {
+        setUser(mapSupabaseUser(session.user));
+      } else {
+        setUser(null);
+      }
+    });
+
+    return () => subscription.unsubscribe();
+  }, []);
+
+  const mapSupabaseUser = (supabaseUser: User): UserProfile => {
+    const metadata = supabaseUser.user_metadata;
+    return {
+      uid: supabaseUser.id,
+      email: supabaseUser.email!,
+      firstName: metadata?.firstName || metadata?.first_name || '',
+      lastName: metadata?.lastName || metadata?.last_name || '',
+      displayName: metadata?.displayName || metadata?.full_name || supabaseUser.email?.split('@')[0] || '',
+      role: metadata?.role || 'user',
+      phoneNumber: metadata?.phoneNumber || supabaseUser.phone,
+      agencyName: metadata?.agencyName,
+      photoURL: metadata?.photoURL || supabaseUser.user_metadata?.avatar_url,
+      createdAt: new Date(supabaseUser.created_at)
+    };
+  };
+
+  const login = async (email: string, password: string): Promise<boolean> => {
+    try {
+      const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+      if (error) throw error;
+      return !!data.user;
+    } catch (error) {
+      console.error('Login error:', error);
+      return false;
+    }
+  };
+
+  const loginWithGoogle = async () => {
+    try {
+      const { error } = await supabase.auth.signInWithOAuth({
+        provider: 'google',
+        options: {
+          redirectTo: `${window.location.origin}/admin/dashboard`
+        }
+      });
+      if (error) throw error;
+    } catch (error) {
+      console.error('Google login error:', error);
+    }
+  };
+
+  const signup = async (email: string, password: string, additionalData: Record<string, any>): Promise<boolean> => {
+    try {
+      const { data, error } = await supabase.auth.signUp({
+        email,
+        password,
+        options: {
+          data: additionalData
+        }
+      });
+      if (error) throw error;
+      return !!data.user;
+    } catch (error) {
+      console.error('Signup error:', error);
+      return false;
+    }
+  };
+
+  const logout = async () => {
+    try {
+      await supabase.auth.signOut();
+      setUser(null);
+    } catch (error) {
+      console.error('Logout error:', error);
+    }
+  };
+
+  const value = { user, loading, login, signup, logout, loginWithGoogle };
+
+  return <AuthContext.Provider value={value}>{!loading && children}</AuthContext.Provider>;
+};
+
+export const useAuth = (): AuthContextType => {
+  const context = useContext(AuthContext);
+  if (context === undefined) {
+    throw new Error('useAuth must be used within an AuthProvider');
+  }
+  return context;
+};

@@ -20,7 +20,7 @@ import { Avatar, AvatarFallback, AvatarImage } from './ui/avatar';
 import { useToast } from '@/hooks/use-toast';
 import { Skeleton } from './ui/skeleton';
 import { Separator } from './ui/separator';
-import { useAuth } from '@/hooks/use-auth';
+import { useAuth } from '@/hooks/use-auth-supabase';
 
 const navLinks = [
   { href: '/search?type=rent', label: 'To Rent' },
