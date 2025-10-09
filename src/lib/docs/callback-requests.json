@@ -1,0 +1,32 @@
+[
+  {
+    "id": "cb1",
+    "propertyId": "prop1",
+    "propertyTitle": "Stunning 3-Bedroom in Kilimani",
+    "userName": "Alice Mwangi",
+    "userPhone": "+254722000111",
+    "agentId": "agent1",
+    "status": "pending",
+    "createdAt": "2024-07-29T11:00:00Z"
+  },
+  {
+    "id": "cb2",
+    "propertyId": "prop2",
+    "propertyTitle": "Luxurious 5-Bedroom Villa in Karen",
+    "userName": "Brian Omondi",
+    "userPhone": "+254711222333",
+    "agentId": "agent2",
+    "status": "pending",
+    "createdAt": "2024-07-28T14:00:00Z"
+  },
+  {
+    "id": "cb3",
+    "propertyId": "prop3",
+    "propertyTitle": "Modern 2-Bed with City Views",
+    "userName": "Catherine Wanjiru",
+    "userPhone": "+254733444555",
+    "agentId": "agent1",
+    "status": "contacted",
+    "createdAt": "2024-07-27T18:00:00Z"
+  }
+]

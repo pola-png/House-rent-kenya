@@ -2,7 +2,7 @@
 
 import { useState, useEffect, createContext, useContext, ReactNode } from 'react';
 import type { UserProfile } from '@/lib/types';
-import users from '@/docs/users.json';
+import users from '@/lib/docs/users.json';
 
 interface AuthContextType {
   user: UserProfile | null;
