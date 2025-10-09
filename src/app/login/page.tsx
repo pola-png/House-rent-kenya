@@ -1,3 +1,4 @@
+
 'use client';
 
 import Link from 'next/link';
@@ -7,7 +8,6 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
 import * as z from 'zod';
 import { useRouter } from 'next/navigation';
-import { GoogleAuthProvider, signInWithPopup } from 'firebase/auth';
 import React from 'react';
 
 import { Button } from '@/components/ui/button';
@@ -16,8 +16,8 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import placeholderImages from '@/lib/placeholder-images.json';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
-import { useAuth, useUser, initiateEmailSignIn } from '@/firebase';
 import { useToast } from '@/hooks/use-toast';
+import { useAuth } from '@/hooks/use-auth';
 
 const formSchema = z.object({
   email: z.string().email({ message: 'Please enter a valid email.' }),
@@ -26,10 +26,9 @@ const formSchema = z.object({
 
 export default function LoginPage() {
   const bgImage = placeholderImages.placeholderImages.find(img => img.id === 'auth_bg');
-  const auth = useAuth();
-  const { user, isUserLoading } = useUser();
   const router = useRouter();
   const { toast } = useToast();
+  const { login, loginWithGoogle } = useAuth();
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -39,32 +38,32 @@ export default function LoginPage() {
     },
   });
 
-  React.useEffect(() => {
-    if (user && !user.isAnonymous) {
+  function onSubmit(values: z.infer<typeof formSchema>) {
+    const success = login(values.email, values.password);
+    if (success) {
       toast({
         title: 'Logged In!',
         description: 'You have successfully signed in.',
       });
-      router.push('/');
+      router.push('/admin/dashboard');
+    } else {
+      toast({
+        variant: 'destructive',
+        title: 'Login Failed',
+        description: 'Invalid email or password.',
+      });
     }
-  }, [user, router, toast]);
-
-  function onSubmit(values: z.infer<typeof formSchema>) {
-    initiateEmailSignIn(auth, values.email, values.password);
+  }
+  
+  const handleGoogleSignIn = () => {
+    loginWithGoogle();
+    toast({
+        title: 'Logged In!',
+        description: 'You have successfully signed in with Google.',
+    });
+    router.push('/admin/dashboard');
   }
 
-  const handleGoogleSignIn = () => {
-    const provider = new GoogleAuthProvider();
-    signInWithPopup(auth, provider)
-      .catch((error: any) => {
-        console.error(error);
-        toast({
-          variant: 'destructive',
-          title: 'Uh oh! Something went wrong.',
-          description: error.message || 'There was a problem with Google Sign-In.',
-        });
-      });
-  };
 
   const { isSubmitting } = form.formState;
 
@@ -86,7 +85,7 @@ export default function LoginPage() {
                     <FormItem className="grid gap-2">
                       <FormLabel>Email</FormLabel>
                       <FormControl>
-                        <Input type="email" placeholder="m@example.com" {...field} disabled={isSubmitting || isUserLoading} />
+                        <Input type="email" placeholder="m@example.com" {...field} disabled={isSubmitting} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -104,14 +103,14 @@ export default function LoginPage() {
                         </Link>
                       </div>
                       <FormControl>
-                        <Input id="password" type="password" {...field} disabled={isSubmitting || isUserLoading} />
+                        <Input id="password" type="password" {...field} disabled={isSubmitting} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
                   )}
                 />
-                <Button type="submit" className="w-full" disabled={isSubmitting || isUserLoading}>
-                  {(isSubmitting || isUserLoading) && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                <Button type="submit" className="w-full" disabled={isSubmitting}>
+                  {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                   <LogIn className="mr-2 h-4 w-4" />
                   Login
                 </Button>
@@ -125,8 +124,8 @@ export default function LoginPage() {
                 <span className="bg-background px-2 text-muted-foreground">Or continue with</span>
               </div>
             </div>
-            <Button variant="outline" className="w-full" onClick={handleGoogleSignIn} disabled={isSubmitting || isUserLoading}>
-              {(isSubmitting || isUserLoading) && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+            <Button variant="outline" className="w-full" onClick={handleGoogleSignIn} disabled={isSubmitting}>
+              {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
               Login with Google
             </Button>
             <div className="mt-4 text-center text-sm">

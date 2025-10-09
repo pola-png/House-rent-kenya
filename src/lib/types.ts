@@ -1,6 +1,4 @@
 
-import type { Timestamp } from "firebase/firestore";
-
 export interface Property {
   id: string;
   title: string;
@@ -19,8 +17,8 @@ export interface Property {
   agent: UserProfile;
   landlordId: string;
   status: "For Rent" | "For Sale" | "Short Let" | "Land" | "Rented";
-  createdAt: Timestamp;
-  updatedAt: Timestamp;
+  createdAt: Date;
+  updatedAt: Date;
   featured?: boolean;
   keywords?: string;
 }
@@ -34,7 +32,7 @@ export interface UserProfile {
   phoneNumber?: string;
   role: "user" | "agent";
   agencyName?: string;
-  createdAt: Timestamp;
+  createdAt: Date;
   photoURL?: string;
 }
 
@@ -46,7 +44,7 @@ export interface CallbackRequest {
     userPhone: string;
     agentId: string;
     status: "pending" | "contacted";
-    createdAt: Timestamp;
+    createdAt: Date;
 }
 
 export interface SupportTicket {
@@ -54,16 +52,17 @@ export interface SupportTicket {
     userId: string;
     subject: string;
     status: "open" | "closed";
-    createdAt: Timestamp;
-    updatedAt: Timestamp;
+    createdAt: Date;
+    updatedAt: Date;
     lastMessage?: string;
 }
 
 export interface Message {
     id: string;
+    ticketId?: string; // Add ticketId for easier filtering
     text: string;
     senderId: string;
-    timestamp: Timestamp;
+    timestamp: Date;
 }
 
 export interface Development {

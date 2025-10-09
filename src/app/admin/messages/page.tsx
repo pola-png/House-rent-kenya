@@ -6,9 +6,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { useCollection, useFirestore, useUser, useMemoFirebase, addDocumentNonBlocking } from "@/firebase";
-import { collection, query, where, orderBy, serverTimestamp, doc } from "firebase/firestore";
-import type { SupportTicket, Message, UserProfile } from "@/lib/types";
+import type { SupportTicket, Message } from "@/lib/types";
 import { Skeleton } from "@/components/ui/skeleton";
 import React from "react";
 import { useSearchParams } from 'next/navigation'
@@ -17,62 +15,82 @@ import { cn } from "@/lib/utils";
 import { Send, MessageSquare, Loader2, User as UserIcon } from "lucide-react";
 import placeholderImages from "@/lib/placeholder-images.json";
 
+// Mock data imports
+import mockTicketsData from '@/docs/support-tickets.json';
+import mockMessagesData from '@/docs/messages.json';
+
 export default function MessagesPage() {
-  const firestore = useFirestore();
-  const { user } = useUser();
   const searchParams = useSearchParams();
   const initialTicketId = searchParams.get('ticket');
   
-  const [selectedTicketId, setSelectedTicketId] = React.useState<string | null>(initialTicketId);
+  const [selectedTicketId, setSelectedTicketId] = React.useState<string | null>(null);
   const [newMessage, setNewMessage] = React.useState("");
+  const [isSending, setIsSending] = React.useState(false);
 
-  const ticketsQuery = useMemoFirebase(() => {
-    if (!firestore || !user) return null;
-    return query(collection(firestore, "support-tickets"), where("userId", "==", user.uid), orderBy("updatedAt", "desc"));
-  }, [firestore, user]);
+  const [tickets, setTickets] = React.useState<SupportTicket[]>([]);
+  const [messages, setMessages] = React.useState<Message[]>([]);
+  const [isLoadingTickets, setIsLoadingTickets] = React.useState(true);
+  const [isLoadingMessages, setIsLoadingMessages] = React.useState(false);
 
-  const { data: tickets, isLoading: isLoadingTickets } = useCollection<SupportTicket>(ticketsQuery);
-  
+  React.useEffect(() => {
+    // Simulate fetching tickets
+    const typedTickets: SupportTicket[] = mockTicketsData.map(t => ({...t, id: String(t.id), createdAt: new Date(t.createdAt), updatedAt: new Date(t.updatedAt) }));
+    setTickets(typedTickets.sort((a,b) => b.updatedAt.getTime() - a.updatedAt.getTime()));
+    setIsLoadingTickets(false);
+  }, []);
+
   React.useEffect(() => {
     if (initialTicketId) {
         setSelectedTicketId(initialTicketId);
     } else if (tickets && tickets.length > 0 && !selectedTicketId) {
-        setSelectedTicketId(tickets[0].id);
+        setSelectedTicketId(String(tickets[0].id));
     }
   }, [tickets, initialTicketId, selectedTicketId]);
-
-  const messagesQuery = useMemoFirebase(() => {
-    if (!firestore || !selectedTicketId) return null;
-    return query(collection(firestore, `support-tickets/${selectedTicketId}/messages`), orderBy("timestamp", "asc"));
-  }, [firestore, selectedTicketId]);
   
-  const { data: messages, isLoading: isLoadingMessages } = useCollection<Message>(messagesQuery);
-  
-  const [isSending, setIsSending] = React.useState(false);
-  const handleSendMessage = async () => {
-    if (!newMessage.trim() || !user || !selectedTicketId) return;
-
-    setIsSending(true);
-    const messageData = {
-      text: newMessage,
-      senderId: user.uid,
-      timestamp: serverTimestamp(),
-    };
-    const messagesRef = collection(firestore, `support-tickets/${selectedTicketId}/messages`);
-    const ticketRef = doc(firestore, 'support-tickets', selectedTicketId);
-
-    try {
-        await addDocumentNonBlocking(messagesRef, messageData);
-        addDocumentNonBlocking(ticketRef, { updatedAt: serverTimestamp(), lastMessage: newMessage }, { merge: true });
-        setNewMessage("");
-    } catch(e) {
-        console.error("Error sending message", e);
-    } finally {
-        setIsSending(false);
+  React.useEffect(() => {
+    if (selectedTicketId) {
+        setIsLoadingMessages(true);
+        // Simulate fetching messages for the selected ticket
+        const typedMessages: Message[] = mockMessagesData
+            .filter(m => String(m.ticketId) === selectedTicketId)
+            .map(m => ({...m, id: String(m.id), timestamp: new Date(m.timestamp) }))
+            .sort((a, b) => a.timestamp.getTime() - b.timestamp.getTime());
+        setMessages(typedMessages);
+        setIsLoadingMessages(false);
+    } else {
+        setMessages([]);
     }
+  }, [selectedTicketId]);
+  
+  const handleSendMessage = async () => {
+    if (!newMessage.trim() || !selectedTicketId) return;
+    setIsSending(true);
+
+    const messageData: Message = {
+      id: String(Date.now()),
+      text: newMessage,
+      senderId: 'agent1', // Mock current user as an agent
+      timestamp: new Date(),
+    };
+    
+    // Simulate sending message
+    setTimeout(() => {
+      setMessages(prev => [...prev, messageData]);
+      
+      // Update ticket's last message and timestamp
+      setTickets(prev => prev.map(ticket => 
+        ticket.id === selectedTicketId 
+          ? { ...ticket, lastMessage: newMessage, updatedAt: new Date() } 
+          : ticket
+      ).sort((a,b) => b.updatedAt.getTime() - a.updatedAt.getTime()));
+      
+      setNewMessage("");
+      setIsSending(false);
+    }, 500);
   };
 
   const adminAvatar = placeholderImages.placeholderImages.find(img => img.id === 'agent_1');
+  const userAvatar = placeholderImages.placeholderImages.find(img => img.id === 'agent_2'); // Use another as a generic user
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-4 gap-4 h-[calc(100vh-10rem)]">
@@ -92,10 +110,10 @@ export default function MessagesPage() {
                     {tickets.map(ticket => (
                         <button
                         key={ticket.id}
-                        onClick={() => setSelectedTicketId(ticket.id)}
+                        onClick={() => setSelectedTicketId(String(ticket.id))}
                         className={cn(
                             "w-full text-left p-3 rounded-lg transition-colors",
-                             selectedTicketId === ticket.id ? "bg-muted" : "hover:bg-muted/50"
+                             selectedTicketId === String(ticket.id) ? "bg-muted" : "hover:bg-muted/50"
                         )}
                         >
                         <div className="flex justify-between items-start">
@@ -104,7 +122,7 @@ export default function MessagesPage() {
                         </div>
                         <p className="text-sm text-muted-foreground truncate">{ticket.lastMessage}</p>
                         <p className="text-xs text-muted-foreground mt-1">
-                            {ticket.updatedAt ? formatDistanceToNow(ticket.updatedAt.toDate(), { addSuffix: true }) : ''}
+                            {ticket.updatedAt ? formatDistanceToNow(ticket.updatedAt, { addSuffix: true }) : ''}
                         </p>
                         </button>
                     ))}
@@ -136,24 +154,24 @@ export default function MessagesPage() {
                         ) : messages && messages.length > 0 ? (
                             <div className="space-y-4">
                             {messages.map(message => {
-                                const isUser = message.senderId === user?.uid;
+                                const isUserAgent = message.senderId === 'agent1';
                                 return (
-                                <div key={message.id} className={cn("flex items-end gap-2", isUser ? "justify-end" : "justify-start")}>
-                                    {!isUser && (
+                                <div key={message.id} className={cn("flex items-end gap-2", isUserAgent ? "justify-end" : "justify-start")}>
+                                    {!isUserAgent && (
                                          <Avatar className="h-8 w-8">
-                                            <AvatarImage src={adminAvatar?.imageUrl} />
-                                            <AvatarFallback>S</AvatarFallback>
+                                            <AvatarImage src={userAvatar?.imageUrl} />
+                                            <AvatarFallback>U</AvatarFallback>
                                         </Avatar>
                                     )}
-                                    <div className={cn("max-w-xs md:max-w-md lg:max-w-lg rounded-lg px-4 py-2", isUser ? "bg-primary text-primary-foreground" : "bg-muted")}>
+                                    <div className={cn("max-w-xs md:max-w-md lg:max-w-lg rounded-lg px-4 py-2", isUserAgent ? "bg-primary text-primary-foreground" : "bg-muted")}>
                                         <p className="text-sm">{message.text}</p>
-                                        <p className={cn("text-xs mt-1", isUser ? "text-primary-foreground/70" : "text-muted-foreground")}>
-                                             {message.timestamp ? formatDistanceToNow(message.timestamp.toDate(), { addSuffix: true }) : 'sending...'}
+                                        <p className={cn("text-xs mt-1", isUserAgent ? "text-primary-foreground/70" : "text-muted-foreground")}>
+                                             {message.timestamp ? formatDistanceToNow(message.timestamp, { addSuffix: true }) : 'sending...'}
                                         </p>
                                     </div>
-                                     {isUser && (
+                                     {isUserAgent && (
                                          <Avatar className="h-8 w-8">
-                                            {user?.photoURL && <AvatarImage src={user.photoURL} />}
+                                            <AvatarImage src={adminAvatar?.imageUrl} />
                                             <AvatarFallback><UserIcon className="h-4 w-4"/></AvatarFallback>
                                         </Avatar>
                                     )}
@@ -163,7 +181,7 @@ export default function MessagesPage() {
                             </div>
                         ) : (
                              <div className="p-4 text-center text-muted-foreground h-full flex flex-col justify-center">
-                                <p>No messages in this ticket yet.</p>
+                                <p>No messages in this ticket yet. Start the conversation!</p>
                              </div>
                         )}
                     </ScrollArea>

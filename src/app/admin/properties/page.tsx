@@ -1,10 +1,8 @@
+
 "use client";
 
 import { PlusCircle } from "lucide-react";
 import Link from 'next/link';
-import { collection, query, where } from "firebase/firestore";
-
-import { Button } from "@/components/ui/button";
 import {
   Card,
   CardContent,
@@ -16,20 +14,56 @@ import {
   Tabs,
   TabsContent,
 } from "@/components/ui/tabs";
-import { useCollection, useFirestore, useMemoFirebase, useUser } from "@/firebase";
 import { PropertiesClient } from "./components/client-page";
 import type { Property } from "@/lib/types";
 import { Skeleton } from "@/components/ui/skeleton";
+import { useState, useEffect } from 'react';
+import { Button } from '@/components/ui/button';
+
+// Mock Data
+import propertiesData from '@/docs/properties.json';
+import usersData from '@/docs/users.json';
+
 
 export default function AdminPropertiesPage() {
-  const firestore = useFirestore();
-  const { user } = useUser();
-  const propertiesRef = useMemoFirebase(() => {
-      if (!firestore || !user) return null;
-      return query(collection(firestore, 'properties'), where('landlordId', '==', user.uid));
-  }, [firestore, user]);
-  
-  const { data: properties, isLoading } = useCollection<Property>(propertiesRef);
+  const [properties, setProperties] = useState<Property[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    // Simulate data fetching and joining
+    const agentMap = new Map(usersData.map(user => [user.uid, user]));
+    
+    const typedProperties: Property[] = propertiesData.map(p => {
+        const agent = agentMap.get(p.landlordId) || usersData.find(u => u.role === 'agent'); // Fallback to first agent
+        return {
+            ...p,
+            createdAt: new Date(p.createdAt),
+            updatedAt: new Date(p.updatedAt),
+            // Ensure agent is not undefined
+            agent: agent ? {
+                uid: agent.uid,
+                firstName: agent.firstName,
+                lastName: agent.lastName,
+                displayName: agent.displayName,
+                email: agent.email,
+                role: 'agent',
+                agencyName: agent.agencyName,
+                createdAt: new Date(agent.createdAt)
+            } : { // Provide a default fallback agent object
+                uid: 'default-agent',
+                firstName: 'Default',
+                lastName: 'Agent',
+                displayName: 'Default Agent',
+                email: 'agent@default.com',
+                role: 'agent',
+                agencyName: 'Default Agency',
+                createdAt: new Date()
+            }
+        };
+    });
+    setProperties(typedProperties);
+    setIsLoading(false);
+  }, []);
 
   return (
     <Tabs defaultValue="all">

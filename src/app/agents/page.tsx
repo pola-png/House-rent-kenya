@@ -1,22 +1,25 @@
 
 'use client';
-import { collection, query, where } from 'firebase/firestore';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Building, Mail, Phone, User, Users } from 'lucide-react';
-import { useCollection, useFirestore, useMemoFirebase } from '@/firebase';
 import type { UserProfile } from '@/lib/types';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Button } from '@/components/ui/button';
+import { useState, useEffect } from 'react';
+// Mock data
+import usersData from '@/docs/users.json';
 
 export default function AgentsPage() {
-  const firestore = useFirestore();
-  const agentsQuery = useMemoFirebase(() => {
-    if (!firestore) return null;
-    return query(collection(firestore, 'users'), where('role', '==', 'agent'));
-  }, [firestore]);
+  const [agents, setAgents] = useState<UserProfile[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
 
-  const { data: agents, isLoading } = useCollection<UserProfile>(agentsQuery);
+  useEffect(() => {
+    // Simulate fetching agents from mock data
+    const agentUsers = usersData.filter(user => user.role === 'agent').map(a => ({...a, uid: String(a.uid), createdAt: new Date(a.createdAt)}));
+    setAgents(agentUsers);
+    setIsLoading(false);
+  }, []);
 
   return (
     <div className="bg-background">
@@ -53,7 +56,7 @@ export default function AgentsPage() {
             {agents?.map(agent => {
               const agentPhoneNumber = agent.phoneNumber || '+254704202939';
               return (
-              <Card key={agent.id} className="flex flex-col">
+              <Card key={agent.uid} className="flex flex-col">
                 <CardHeader className="items-center text-center">
                   <Avatar className="h-24 w-24 mb-4">
                     {agent.photoURL && <AvatarImage src={agent.photoURL} alt={agent.displayName} />}

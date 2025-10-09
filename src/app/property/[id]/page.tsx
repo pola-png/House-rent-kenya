@@ -10,22 +10,35 @@ import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious
 import { Separator } from '@/components/ui/separator';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { useDoc, useFirestore, useMemoFirebase } from '@/firebase';
-import { doc } from 'firebase/firestore';
-import type { Property } from '@/lib/types';
+import type { Property, UserProfile } from '@/lib/types';
 import { Skeleton } from '@/components/ui/skeleton';
+import { useState, useEffect } from 'react';
+
+// Mock Data
+import propertiesData from '@/docs/properties.json';
+import usersData from '@/docs/users.json';
 
 export default function PropertyPage() {
   const params = useParams();
   const id = params.id as string;
-  const firestore = useFirestore();
+  const [property, setProperty] = useState<Property | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
 
-  const propertyRef = useMemoFirebase(() => {
-    if (!firestore || !id) return null;
-    return doc(firestore, 'properties', id);
-  }, [firestore, id]);
-
-  const { data: property, isLoading } = useDoc<Property>(propertyRef);
+  useEffect(() => {
+    // Simulate fetching and joining data
+    const foundProperty = propertiesData.find(p => p.id === id);
+    if (foundProperty) {
+        const agent = usersData.find(u => u.uid === foundProperty.landlordId) as UserProfile;
+        const typedProperty: Property = {
+            ...foundProperty,
+            createdAt: new Date(foundProperty.createdAt),
+            updatedAt: new Date(foundProperty.updatedAt),
+            agent: agent || usersData.find(u => u.role === 'agent')! // Fallback agent
+        }
+      setProperty(typedProperty);
+    }
+    setIsLoading(false);
+  }, [id]);
 
   if (isLoading) {
     return (
@@ -51,7 +64,7 @@ export default function PropertyPage() {
   }
 
   const agentImage = placeholderImages.placeholderImages.find(img => img.id === 'agent_1');
-  const agentPhoneNumber = '+254704202939';
+  const agentPhoneNumber = property.agent?.phoneNumber || '+254704202939';
   
   const jsonLd = {
       "@context": "https://schema.org",
@@ -84,7 +97,7 @@ export default function PropertyPage() {
             <h1 className="text-3xl md:text-4xl font-bold font-headline mb-2">{property.title}</h1>
             <div className="flex items-center text-muted-foreground">
               <MapPin className="h-5 w-5 mr-2" />
-              <span>{property.location}</span>
+              <span>{property.location}, {property.city}</span>
             </div>
           </div>
 
@@ -122,7 +135,7 @@ export default function PropertyPage() {
                 <CardHeader>
                   <div className="flex flex-col md:flex-row justify-between md:items-center gap-4">
                     <div>
-                      <Badge>{property.type}</Badge>
+                      <Badge>{property.propertyType}</Badge>
                       <CardTitle className="text-2xl mt-2">Property Overview</CardTitle>
                     </div>
                     <div className="text-3xl font-bold text-primary">

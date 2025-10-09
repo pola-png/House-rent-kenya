@@ -7,19 +7,21 @@ import Image from "next/image";
 import Link from "next/link";
 import placeholderImages from "@/lib/placeholder-images.json";
 import { Button } from "@/components/ui/button";
-import { useCollection, useFirestore, useMemoFirebase } from "@/firebase";
-import { collection } from "firebase/firestore";
 import type { Article } from "@/lib/types";
 import { Skeleton } from "@/components/ui/skeleton";
+import { useState, useEffect } from "react";
+// Mock data
+import articlesData from "@/docs/articles.json";
 
 export default function AdvicePage() {
-  const firestore = useFirestore();
-  const articlesQuery = useMemoFirebase(() => {
-    if (!firestore) return null;
-    return collection(firestore, "articles");
-  }, [firestore]);
+  const [adviceArticles, setAdviceArticles] = useState<Article[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
 
-  const { data: adviceArticles, isLoading } = useCollection<Article>(articlesQuery);
+  useEffect(() => {
+    // Simulate fetching data
+    setAdviceArticles(articlesData);
+    setIsLoading(false);
+  }, []);
 
   return (
     <div className="bg-background">

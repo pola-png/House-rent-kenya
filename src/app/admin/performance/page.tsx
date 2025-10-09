@@ -18,39 +18,37 @@ import {
   Bar,
   CartesianGrid,
   Line,
-  LineChart,
+  LineChart as RechartsLineChart,
+  BarChart as RechartsBarChart,
   XAxis,
   YAxis,
   Tooltip,
   Legend,
   ResponsiveContainer,
 } from 'recharts';
-import { useCollection, useFirestore, useUser, useMemoFirebase } from '@/firebase';
-import { collection, query, where, Timestamp } from 'firebase/firestore';
 import type { Property, CallbackRequest } from '@/lib/types';
 import { subDays, format, eachDayOfInterval } from 'date-fns';
 import { Skeleton } from '@/components/ui/skeleton';
-import { useMemo } from 'react';
+import { useMemo, useState, useEffect } from 'react';
+
+// Mock data imports
+import allProperties from '@/docs/properties.json';
+import allLeads from '@/docs/callback-requests.json';
 
 export default function PerformancePage() {
-  const firestore = useFirestore();
-  const { user } = useUser();
+  const [properties, setProperties] = useState<Property[]>([]);
+  const [leads, setLeads] = useState<CallbackRequest[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
 
-  const propertiesQuery = useMemoFirebase(() => {
-    if (!firestore || !user) return null;
-    return query(collection(firestore, 'properties'), where('landlordId', '==', user.uid));
-  }, [firestore, user]);
+  useEffect(() => {
+    // Simulate fetching data
+    const typedProperties: Property[] = allProperties.map(p => ({ ...p, createdAt: new Date(p.createdAt), updatedAt: new Date(p.updatedAt) }));
+    const typedLeads: CallbackRequest[] = allLeads.map(l => ({ ...l, id: String(l.id), createdAt: new Date(l.createdAt) }));
 
-  const leadsQuery = useMemoFirebase(() => {
-    if (!firestore || !user) return null;
-    return query(
-      collection(firestore, 'callback-requests'),
-      where('agentId', '==', user.uid)
-    );
-  }, [firestore, user]);
-
-  const { data: properties, isLoading: isLoadingProperties } = useCollection<Property>(propertiesQuery);
-  const { data: leads, isLoading: isLoadingLeads } = useCollection<CallbackRequest>(leadsQuery);
+    setProperties(typedProperties);
+    setLeads(typedLeads);
+    setIsLoading(false);
+  }, []);
 
   const stats = useMemo(() => {
     if (!properties) return null;
@@ -86,7 +84,7 @@ export default function PerformancePage() {
     
     leads.forEach(lead => {
         if (lead.createdAt) {
-            const leadDate = lead.createdAt.toDate();
+            const leadDate = lead.createdAt;
             if (leadDate >= thirtyDaysAgo) {
                 const formattedDate = format(leadDate, 'MMM d');
                 const dayData = leadsPerDay.find(d => d.name === formattedDate);
@@ -100,7 +98,6 @@ export default function PerformancePage() {
     return leadsPerDay;
   }, [leads]);
   
-  const isLoading = isLoadingProperties || isLoadingLeads;
 
   return (
     <div className="flex flex-col gap-8">
@@ -168,7 +165,7 @@ export default function PerformancePage() {
                 <Skeleton className="h-[300px] w-full"/>
             ) : (
                 <ResponsiveContainer width="100%" height={300}>
-                    <BarChart data={listingsByCity}>
+                    <RechartsBarChart data={listingsByCity}>
                     <CartesianGrid strokeDasharray="3 3" />
                     <XAxis dataKey="name" stroke="#888888" fontSize={12} tickLine={false} axisLine={false}/>
                     <YAxis stroke="#888888" fontSize={12} tickLine={false} axisLine={false} />
@@ -185,7 +182,7 @@ export default function PerformancePage() {
                         }
                     />
                     <Bar dataKey="listings" fill="hsl(var(--primary))" radius={[4, 4, 0, 0]} />
-                    </BarChart>
+                    </RechartsBarChart>
                 </ResponsiveContainer>
             )}
           </CardContent>
@@ -200,7 +197,7 @@ export default function PerformancePage() {
                 <Skeleton className="h-[300px] w-full"/>
             ) : (
                 <ResponsiveContainer width="100%" height={300}>
-                    <LineChart data={leadsByDate}>
+                    <RechartsLineChart data={leadsByDate}>
                     <CartesianGrid strokeDasharray="3 3" />
                     <XAxis dataKey="name" stroke="#888888" fontSize={12} tickLine={false} axisLine={false}/>
                     <YAxis stroke="#888888" fontSize={12} tickLine={false} axisLine={false}/>
@@ -218,7 +215,7 @@ export default function PerformancePage() {
                     />
                     <Legend />
                     <Line type="monotone" dataKey="leads" stroke="hsl(var(--primary))" activeDot={{ r: 8 }} />
-                    </LineChart>
+                    </RechartsLineChart>
                 </ResponsiveContainer>
             )}
           </CardContent>

@@ -1,23 +1,40 @@
+
 "use client";
 
 import { notFound, useParams } from "next/navigation";
 import { PropertyForm } from "../../components/property-form";
-import { useDoc, useMemoFirebase, useFirestore } from "@/firebase";
-import { doc } from "firebase/firestore";
 import type { Property } from "@/lib/types";
 import { Skeleton } from "@/components/ui/skeleton";
+import { useState, useEffect } from "react";
+
+// Mock data
+import propertiesData from '@/docs/properties.json';
 
 export default function EditPropertyPage() {
   const params = useParams();
   const id = params.id as string;
-  const firestore = useFirestore();
+  const [property, setProperty] = useState<Property | undefined>(undefined);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<Error | null>(null);
 
-  const propertyRef = useMemoFirebase(() => {
-    if (!firestore || !id) return null;
-    return doc(firestore, 'properties', id);
-  }, [firestore, id]);
-
-  const { data: property, isLoading, error } = useDoc<Property>(propertyRef);
+  useEffect(() => {
+    try {
+        const foundProperty = propertiesData.find(p => p.id === id);
+        if (foundProperty) {
+            // Convert date strings to Date objects
+            const typedProperty: Property = {
+                ...foundProperty,
+                createdAt: new Date(foundProperty.createdAt),
+                updatedAt: new Date(foundProperty.updatedAt),
+            }
+            setProperty(typedProperty);
+        }
+    } catch (e) {
+        setError(e as Error);
+    } finally {
+        setIsLoading(false);
+    }
+  }, [id]);
 
   if (isLoading) {
     return (

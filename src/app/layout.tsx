@@ -5,7 +5,6 @@ import { cn } from '@/lib/utils';
 import { Header } from '@/components/header';
 import { Footer } from '@/components/footer';
 import { Toaster } from '@/components/ui/toaster';
-import { FirebaseClientProvider } from '@/firebase';
 
 export const metadata: Metadata = {
   title: {
@@ -66,14 +65,12 @@ export default function RootLayout({
         <link rel="mask-icon" href="/safari-pinned-tab.svg" color="#e67e22"/>
       </head>
       <body className={cn('min-h-screen bg-background font-body antialiased')}>
-        <FirebaseClientProvider>
-          <div className="relative flex min-h-screen flex-col">
+        <div className="relative flex min-h-screen flex-col">
             <Header />
             <main className="flex-1">{children}</main>
             <Footer />
-          </div>
-          <Toaster />
-        </FirebaseClientProvider>
+        </div>
+        <Toaster />
       </body>
     </html>
   );

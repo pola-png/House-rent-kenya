@@ -1,3 +1,4 @@
+
 'use client';
 
 import {
@@ -8,40 +9,36 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { DollarSign, Home, Package, Users, List, Building, MapPin, Bed, Bath, Maximize } from "lucide-react";
-import { useCollection, useFirestore, useUser, useMemoFirebase } from "@/firebase";
-import { collection, query, where, orderBy, limit } from 'firebase/firestore';
 import type { Property, CallbackRequest } from '@/lib/types';
 import { Skeleton } from "@/components/ui/skeleton";
 import Link from "next/link";
 import Image from "next/image";
 import placeholderImages from "@/lib/placeholder-images.json";
 import { formatDistanceToNow } from 'date-fns';
-import { useMemo } from "react";
+import { useMemo, useState, useEffect } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 
+// Mock data imports
+import allProperties from '@/docs/properties.json';
+import allLeads from '@/docs/callback-requests.json';
+
 export default function Dashboard() {
-  const firestore = useFirestore();
-  const { user } = useUser();
+  const [properties, setProperties] = useState<Property[]>([]);
+  const [recentProperties, setRecentProperties] = useState<Property[]>([]);
+  const [leads, setLeads] = useState<CallbackRequest[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
 
-  const propertiesQuery = useMemoFirebase(() => {
-    if (!firestore || !user) return null;
-    return query(collection(firestore, 'properties'), where('landlordId', '==', user.uid));
-  }, [firestore, user]);
-
-  const recentPropertiesQuery = useMemoFirebase(() => {
-    if (!firestore || !user) return null;
-    return query(collection(firestore, 'properties'), where('landlordId', '==', user.uid), orderBy('createdAt', 'desc'), limit(5));
-  }, [firestore, user]);
-
-  const leadsQuery = useMemoFirebase(() => {
-    if (!firestore || !user) return null;
-    return query(collection(firestore, 'callback-requests'), where('agentId', '==', user.uid));
-  }, [firestore, user]);
-
-  const { data: properties, isLoading: isLoadingProperties } = useCollection<Property>(propertiesQuery);
-  const { data: recentProperties, isLoading: isLoadingRecent } = useCollection<Property>(recentPropertiesQuery);
-  const { data: leads, isLoading: isLoadingLeads } = useCollection<CallbackRequest>(leadsQuery);
+  useEffect(() => {
+    // Simulate fetching data
+    const typedProperties: Property[] = allProperties.map(p => ({ ...p, createdAt: new Date(p.createdAt), updatedAt: new Date(p.updatedAt) }));
+    const typedLeads: CallbackRequest[] = allLeads.map(l => ({ ...l, id: String(l.id), createdAt: new Date(l.createdAt) }));
+    
+    setProperties(typedProperties);
+    setRecentProperties(typedProperties.sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime()).slice(0, 5));
+    setLeads(typedLeads);
+    setIsLoading(false);
+  }, []);
 
   const stats = useMemo(() => {
     if (!properties) return null;
@@ -57,8 +54,6 @@ export default function Dashboard() {
   }, [properties]);
 
   const totalLeads = useMemo(() => leads?.length || 0, [leads]);
-  
-  const isLoading = isLoadingProperties || isLoadingLeads || isLoadingRecent;
 
   return (
     <div className="flex flex-col gap-4">
@@ -150,7 +145,7 @@ export default function Dashboard() {
                                     <div className="text-right flex-shrink-0">
                                         <Badge variant={property.status === 'Rented' ? 'destructive' : 'default'}>{property.status}</Badge>
                                         <p className="text-xs text-muted-foreground mt-2">
-                                            {formatDistanceToNow(property.createdAt.toDate(), { addSuffix: true })}
+                                            {formatDistanceToNow(property.createdAt, { addSuffix: true })}
                                         </p>
                                     </div>
                                 </div>

@@ -8,20 +8,21 @@ import Link from "next/link";
 import placeholderImages from "@/lib/placeholder-images.json";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { useCollection, useFirestore, useMemoFirebase } from "@/firebase";
-import { collection } from "firebase/firestore";
 import type { Development } from "@/lib/types";
 import { Skeleton } from "@/components/ui/skeleton";
-
+import { useState, useEffect } from "react";
+// Mock data
+import developmentsData from "@/docs/developments.json";
 
 export default function DevelopmentsPage() {
-  const firestore = useFirestore();
-  const developmentsQuery = useMemoFirebase(() => {
-    if (!firestore) return null;
-    return collection(firestore, "developments");
-  }, [firestore]);
+  const [developments, setDevelopments] = useState<Development[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
 
-  const { data: developments, isLoading } = useCollection<Development>(developmentsQuery);
+  useEffect(() => {
+    // Simulate fetching data
+    setDevelopments(developmentsData);
+    setIsLoading(false);
+  }, []);
   
   return (
     <div className="bg-background">

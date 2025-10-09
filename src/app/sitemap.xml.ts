@@ -1,12 +1,12 @@
 
 import { MetadataRoute } from 'next';
-import { firestoreAdmin } from '@/firebase/admin-config';
-import type { Property } from '@/lib/types';
-import type { Timestamp } from 'firebase-admin/firestore';
+import propertiesData from '@/docs/properties.json';
+import articlesData from '@/docs/articles.json';
+import developmentsData from '@/docs/developments.json';
 
 const BASE_URL = process.env.NEXT_PUBLIC_BASE_URL || 'https://houserent.co.ke';
 
-export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
+export default function sitemap(): MetadataRoute.Sitemap {
   const staticRoutes: MetadataRoute.Sitemap = [
     { url: BASE_URL, lastModified: new Date(), changeFrequency: 'daily', priority: 1.0 },
     { url: `${BASE_URL}/about`, lastModified: new Date(), changeFrequency: 'monthly', priority: 0.5 },
@@ -25,32 +25,27 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   ];
 
   try {
-    const propertiesSnapshot = await firestoreAdmin.collection('properties').get();
-    const propertyRoutes = propertiesSnapshot.docs.map(doc => {
-      const data = doc.data() as Property;
-      const lastModified = (data.updatedAt as unknown as Timestamp)?.toDate() || new Date();
+    const propertyRoutes = propertiesData.map(prop => {
       return {
-        url: `${BASE_URL}/property/${doc.id}`,
-        lastModified: lastModified,
+        url: `${BASE_URL}/property/${prop.id}`,
+        lastModified: new Date(prop.updatedAt),
         changeFrequency: 'weekly' as 'weekly',
         priority: 0.8,
       };
     });
 
-    const articlesSnapshot = await firestoreAdmin.collection('articles').get();
-    const articleRoutes = articlesSnapshot.docs.map(doc => {
+    const articleRoutes = articlesData.map(article => {
       return {
-        url: `${BASE_URL}/advice/${doc.id}`,
+        url: `${BASE_URL}/advice/${article.id}`,
         lastModified: new Date(),
         changeFrequency: 'monthly' as 'monthly',
         priority: 0.6,
       };
     });
     
-    const developmentsSnapshot = await firestoreAdmin.collection('developments').get();
-    const developmentRoutes = developmentsSnapshot.docs.map(doc => {
+    const developmentRoutes = developmentsData.map(dev => {
       return {
-        url: `${BASE_URL}/developments/${doc.id}`,
+        url: `${BASE_URL}/developments/${dev.id}`,
         lastModified: new Date(),
         changeFrequency: 'monthly' as 'monthly',
         priority: 0.7,

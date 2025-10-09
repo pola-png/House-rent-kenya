@@ -4,7 +4,7 @@
 import Image from 'next/image';
 import Link from 'next/link';
 import { ArrowRight, Building, Home as HomeIcon, MapPin, Search, Star, TrendingUp, Handshake, Verified } from 'lucide-react';
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -13,10 +13,10 @@ import { PropertyCard } from '@/components/property-card';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { useCollection, useFirestore, useMemoFirebase } from '@/firebase';
 import type { Property } from '@/lib/types';
 import { Skeleton } from '@/components/ui/skeleton';
-import { collection, query, where, limit } from 'firebase/firestore';
+// Mock Data
+import propertiesData from '@/docs/properties.json';
 
 
 const popularSearches = [
@@ -51,18 +51,21 @@ const features = [
 
 export default function Home() {
   const heroImageUrl = "https://images.unsplash.com/photo-1664372623516-0b1540d6771e?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw1fHxtb2Rlcm4lMjBhcGFydG1lbnR8ZW58MHx8fHwxNzU5NDQ3ODY5fDA&ixlib=rb-4.1.0&q=80&w=1080";
-  const firestore = useFirestore();
+  
+  const [featuredProperties, setFeaturedProperties] = useState<Property[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
 
-  const featuredQuery = useMemoFirebase(() => {
-    if (!firestore) return null;
-    return query(
-        collection(firestore, 'properties'), 
-        where('featured', '==', true), 
-        limit(6)
-    );
-  }, [firestore]);
-
-  const { data: featuredProperties, isLoading } = useCollection<Property>(featuredQuery);
+  useEffect(() => {
+    // Simulate fetching data
+    const featured = propertiesData.filter(p => p.featured).slice(0, 6);
+    const typedFeatured: Property[] = featured.map(p => ({
+        ...p,
+        createdAt: new Date(p.createdAt),
+        updatedAt: new Date(p.updatedAt)
+    }));
+    setFeaturedProperties(typedFeatured);
+    setIsLoading(false);
+  }, []);
 
 
   return (

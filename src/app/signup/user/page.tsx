@@ -1,3 +1,4 @@
+
 'use client';
 
 import Link from 'next/link';
@@ -7,17 +8,15 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
 import * as z from 'zod';
 import { useRouter } from 'next/navigation';
-import { GoogleAuthProvider, signInWithPopup, updateProfile } from 'firebase/auth';
 import React from 'react';
-import { doc, serverTimestamp } from 'firebase/firestore';
 
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import placeholderImages from '@/lib/placeholder-images.json';
-import { useAuth, useUser, useFirestore, setDocumentNonBlocking, initiateEmailSignUp } from '@/firebase';
 import { useToast } from '@/hooks/use-toast';
+import { useAuth } from '@/hooks/use-auth';
 
 const formSchema = z.object({
   firstName: z.string().min(1, { message: 'First name is required.' }),
@@ -28,11 +27,9 @@ const formSchema = z.object({
 
 export default function SignupPage() {
   const bgImage = placeholderImages.placeholderImages.find(img => img.id === 'auth_bg');
-  const auth = useAuth();
-  const firestore = useFirestore();
-  const { user, isUserLoading } = useUser();
   const router = useRouter();
   const { toast } = useToast();
+  const { signup } = useAuth();
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -44,82 +41,26 @@ export default function SignupPage() {
     },
   });
 
-  React.useEffect(() => {
-    if (user && !user.isAnonymous) {
-      router.push('/');
-    }
-  }, [user, isUserLoading, router]);
-
   async function onSubmit(values: z.infer<typeof formSchema>) {
-    initiateEmailSignUp(auth, values.email, values.password);
-    // The onAuthStateChanged listener will handle the rest of the user setup (profile update, firestore doc)
-    // To keep logic consistent, we can add a listener that only runs once for the next auth state change
-    const unsubscribe = auth.onAuthStateChanged(async (firebaseUser) => {
-      if (firebaseUser) {
-        unsubscribe(); // We only want this to run once
-        try {
-          const displayName = `${values.firstName} ${values.lastName}`;
-          await updateProfile(firebaseUser, { displayName });
-
-          const userDocRef = doc(firestore, "users", firebaseUser.uid);
-          setDocumentNonBlocking(userDocRef, {
-            uid: firebaseUser.uid,
-            firstName: values.firstName,
-            lastName: values.lastName,
-            displayName: displayName,
-            email: values.email,
-            role: 'user',
-            createdAt: serverTimestamp(),
-          }, { merge: true });
-
-          toast({
-              title: 'Account Created!',
-              description: 'You have successfully signed up.',
-          });
-        } catch(error: any) {
-           console.error(error);
-           toast({
-              variant: 'destructive',
-              title: 'Uh oh! Something went wrong.',
-              description: error.message || 'There was a problem with your signup.',
-          });
-        }
-      }
+     const success = signup(values.email, values.password, {
+        role: 'user',
+        firstName: values.firstName,
+        lastName: values.lastName,
     });
-  }
-
-  const handleGoogleSignUp = async () => {
-    const provider = new GoogleAuthProvider();
-    try {
-        const result = await signInWithPopup(auth, provider);
-        const firebaseUser = result.user;
-        const nameParts = firebaseUser.displayName?.split(' ') || ['User', ''];
-        
-        const userDocRef = doc(firestore, "users", firebaseUser.uid);
-        setDocumentNonBlocking(userDocRef, {
-            uid: firebaseUser.uid,
-            firstName: nameParts[0],
-            lastName: nameParts.slice(1).join(' '),
-            displayName: firebaseUser.displayName,
-            email: firebaseUser.email,
-            role: 'user',
-            createdAt: serverTimestamp(),
-        }, { merge: true });
-        
+    if (success) {
         toast({
             title: 'Account Created!',
-            description: 'You have successfully signed up with Google.',
+            description: 'You have successfully signed up.',
         });
-
-    } catch (error: any) {
-        console.error(error);
+        router.push('/login');
+    } else {
         toast({
-          variant: 'destructive',
-          title: 'Uh oh! Something went wrong.',
-          description: error.message || 'There was a problem with Google Sign-Up.',
+            variant: 'destructive',
+            title: 'Signup Failed',
+            description: 'An account with this email may already exist.',
         });
     }
-  };
+  }
 
   const { isSubmitting } = form.formState;
 
@@ -142,7 +83,7 @@ export default function SignupPage() {
                       <FormItem className="grid gap-2">
                         <FormLabel>First name</FormLabel>
                         <FormControl>
-                          <Input placeholder="Max" {...field} disabled={isSubmitting || isUserLoading}/>
+                          <Input placeholder="Max" {...field} disabled={isSubmitting}/>
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -155,7 +96,7 @@ export default function SignupPage() {
                       <FormItem className="grid gap-2">
                         <FormLabel>Last name</FormLabel>
                         <FormControl>
-                          <Input placeholder="Robinson" {...field} disabled={isSubmitting || isUserLoading}/>
+                          <Input placeholder="Robinson" {...field} disabled={isSubmitting}/>
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -169,7 +110,7 @@ export default function SignupPage() {
                     <FormItem className="grid gap-2">
                       <FormLabel>Email</FormLabel>
                       <FormControl>
-                        <Input type="email" placeholder="m@example.com" {...field} disabled={isSubmitting || isUserLoading}/>
+                        <Input type="email" placeholder="m@example.com" {...field} disabled={isSubmitting}/>
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -182,14 +123,14 @@ export default function SignupPage() {
                     <FormItem className="grid gap-2">
                       <FormLabel>Password</FormLabel>
                       <FormControl>
-                        <Input type="password" {...field} disabled={isSubmitting || isUserLoading}/>
+                        <Input type="password" {...field} disabled={isSubmitting}/>
                       </FormControl>
                       <FormMessage />
                     </FormItem>
                   )}
                 />
-                <Button type="submit" className="w-full" disabled={isSubmitting || isUserLoading}>
-                    {(isSubmitting || isUserLoading) && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                <Button type="submit" className="w-full" disabled={isSubmitting}>
+                    {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                   <UserPlus className="mr-2 h-4 w-4" />
                   Create an account
                 </Button>
@@ -203,8 +144,7 @@ export default function SignupPage() {
                 <span className="bg-background px-2 text-muted-foreground">Or continue with</span>
               </div>
             </div>
-            <Button variant="outline" className="w-full" onClick={handleGoogleSignUp} disabled={isSubmitting || isUserLoading}>
-              {(isSubmitting || isUserLoading) && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+            <Button variant="outline" className="w-full" disabled={isSubmitting}>
               Sign up with Google
             </Button>
             <div className="mt-4 text-center text-sm">

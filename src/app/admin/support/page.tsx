@@ -20,14 +20,11 @@ import {
   AccordionTrigger,
 } from '@/components/ui/accordion';
 import { LifeBuoy, Send, Loader2 } from 'lucide-react';
-import { Separator } from '@/components/ui/separator';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { Form, FormControl, FormField, FormItem, FormMessage } from '@/components/ui/form';
 import { useToast } from '@/hooks/use-toast';
-import { useUser, useFirestore, addDocumentNonBlocking } from '@/firebase';
-import { collection, serverTimestamp, addDoc } from 'firebase/firestore';
 import { useRouter } from 'next/navigation';
 
 const faqs = [
@@ -60,8 +57,6 @@ const supportFormSchema = z.object({
 
 export default function SupportPage() {
   const { toast } = useToast();
-  const { user } = useUser();
-  const firestore = useFirestore();
   const router = useRouter();
 
   const form = useForm<z.infer<typeof supportFormSchema>>({
@@ -75,50 +70,18 @@ export default function SupportPage() {
   const { isSubmitting } = form.formState;
 
   const onSubmit = async (values: z.infer<typeof supportFormSchema>) => {
-    if (!user) {
-      toast({
-        variant: 'destructive',
-        title: 'Not Authenticated',
-        description: 'You must be logged in to send a message.',
-      });
-      return;
-    }
+    // Mock creating a support ticket
+    const ticketId = `ticket_${Date.now()}`;
+    console.log("Creating ticket:", { ...values, ticketId });
+    
+    toast({
+      title: 'Message Sent!',
+      description: 'Our support team will get back to you shortly. You can view your ticket in the Messages tab.',
+    });
 
-    try {
-      // Create the support ticket
-      const ticketRef = await addDoc(collection(firestore, 'support-tickets'), {
-        userId: user.uid,
-        subject: values.subject,
-        status: 'open',
-        createdAt: serverTimestamp(),
-        updatedAt: serverTimestamp(),
-        lastMessage: values.message,
-      });
-
-      // Add the initial message to the messages sub-collection
-      const messagesRef = collection(firestore, 'support-tickets', ticketRef.id, 'messages');
-      await addDoc(messagesRef, {
-        text: values.message,
-        senderId: user.uid,
-        timestamp: serverTimestamp(),
-      });
-      
-      toast({
-        title: 'Message Sent!',
-        description: 'Our support team will get back to you shortly. You can view your ticket in the Messages tab.',
-      });
-
-      form.reset();
-      router.push(`/admin/messages?ticket=${ticketRef.id}`);
-
-    } catch (error: any) {
-      console.error('Error creating support ticket:', error);
-      toast({
-        variant: 'destructive',
-        title: 'Error',
-        description: 'Could not send your message. Please try again.',
-      });
-    }
+    form.reset();
+    // Navigate to the messages page with the new (mock) ticket ID
+    router.push(`/admin/messages?ticket=${ticketId}`);
   };
 
 

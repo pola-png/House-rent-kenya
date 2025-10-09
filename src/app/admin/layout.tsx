@@ -19,7 +19,8 @@ import {
   Users2,
   List,
   Settings,
-  LifeBuoy
+  LifeBuoy,
+  LogOut
 } from "lucide-react";
 import {
   SidebarProvider,
@@ -194,7 +195,12 @@ export default function AdminLayout({
                 <Link href="/admin/support">Support</Link>
               </DropdownMenuItem>
               <DropdownMenuSeparator />
-              <DropdownMenuItem>Logout</DropdownMenuItem>
+              <DropdownMenuItem asChild>
+                <Link href="/">
+                    <LogOut className="mr-2 h-4 w-4" />
+                    Logout
+                </Link>
+              </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
         </header>

@@ -1,3 +1,4 @@
+
 'use client';
 
 import {
@@ -14,8 +15,6 @@ import { Label } from '@/components/ui/label';
 import { Separator } from '@/components/ui/separator';
 import { Switch } from '@/components/ui/switch';
 import { Settings, Loader2 } from 'lucide-react';
-import { useUser, useFirestore, useDoc, useMemoFirebase, setDocumentNonBlocking } from '@/firebase';
-import { doc } from 'firebase/firestore';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
@@ -23,6 +22,11 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '
 import { useToast } from '@/hooks/use-toast';
 import { Skeleton } from '@/components/ui/skeleton';
 import type { UserProfile } from '@/lib/types';
+import { useState, useEffect } from 'react';
+
+// Mock data
+import usersData from '@/docs/users.json';
+const agentUser = usersData.find(u => u.role === 'agent');
 
 const profileFormSchema = z.object({
   firstName: z.string().min(1, 'First name is required.'),
@@ -36,16 +40,20 @@ const notificationsFormSchema = z.object({
 });
 
 export default function SettingsPage() {
-  const { user } = useUser();
-  const firestore = useFirestore();
   const { toast } = useToast();
+  const [userProfile, setUserProfile] = useState<UserProfile | undefined>(undefined);
+  const [isLoading, setIsLoading] = useState(true);
 
-  const userDocRef = useMemoFirebase(() => {
-    if (!firestore || !user) return null;
-    return doc(firestore, 'users', user.uid);
-  }, [firestore, user]);
-
-  const { data: userProfile, isLoading } = useDoc<UserProfile>(userDocRef);
+  useEffect(() => {
+    // Simulate fetching user profile
+    if (agentUser) {
+        setUserProfile({
+            ...agentUser,
+            createdAt: new Date(agentUser.createdAt)
+        });
+    }
+    setIsLoading(false);
+  }, []);
 
   const profileForm = useForm<z.infer<typeof profileFormSchema>>({
     resolver: zodResolver(profileFormSchema),
@@ -59,7 +67,6 @@ export default function SettingsPage() {
 
   const notificationsForm = useForm<z.infer<typeof notificationsFormSchema>>({
     resolver: zodResolver(notificationsFormSchema),
-    // In a real app, these values would come from the user's profile
     defaultValues: {
       emailNotifications: true,
       smsNotifications: false,
@@ -67,8 +74,7 @@ export default function SettingsPage() {
   });
 
   const handleProfileSave = (values: z.infer<typeof profileFormSchema>) => {
-    if (!userDocRef) return;
-    setDocumentNonBlocking(userDocRef, { ...values, displayName: `${values.firstName} ${values.lastName}` }, { merge: true });
+    console.log('Profile settings saved:', values);
     toast({
       title: 'Profile Updated',
       description: 'Your profile information has been saved.',
@@ -76,8 +82,6 @@ export default function SettingsPage() {
   };
 
   const handleNotificationsSave = (values: z.infer<typeof notificationsFormSchema>) => {
-     if (!userDocRef) return;
-    // In a real app, you'd save this to the user's profile
     console.log('Notification settings saved:', values);
     toast({
       title: 'Preferences Saved',
@@ -147,7 +151,7 @@ export default function SettingsPage() {
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="email">Email</Label>
-                    <Input id="email" type="email" value={user?.email || ''} readOnly disabled />
+                    <Input id="email" type="email" value={userProfile?.email || ''} readOnly disabled />
                   </div>
                   <FormField
                     control={profileForm.control}

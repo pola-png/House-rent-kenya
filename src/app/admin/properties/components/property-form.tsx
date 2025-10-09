@@ -7,7 +7,6 @@ import * as z from "zod";
 import { Loader2, Sparkles, Wand2, Image as ImageIcon, X, Star, ChevronDown, ChevronUp, Upload } from "lucide-react";
 import React from "react";
 import { useRouter } from "next/navigation";
-import { serverTimestamp, collection, doc, getDoc } from "firebase/firestore";
 import Image from "next/image";
 import Link from "next/link";
 
@@ -38,9 +37,13 @@ import { Progress } from "@/components/ui/progress";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
-import { useFirestore, useUser, addDocumentNonBlocking, setDocumentNonBlocking } from "@/firebase";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { Separator } from "@/components/ui/separator";
+
+// Mock user data
+import users from '@/docs/users.json';
+const currentUser = users.find(u => u.role === 'agent');
+
 
 const formSchema = z.object({
   title: z.string().min(10, {
@@ -73,8 +76,6 @@ interface PropertyFormProps {
 export function PropertyForm({ property }: PropertyFormProps) {
   const { toast } = useToast();
   const router = useRouter();
-  const firestore = useFirestore();
-  const { user } = useUser();
   const [isGeneratingDesc, setIsGeneratingDesc] = React.useState(false);
   const [isOptimizingSeo, setIsOptimizingSeo] = React.useState(false);
   const [seoScore, setSeoScore] = React.useState<number | null>(property ? 75 : null);
@@ -116,11 +117,11 @@ export function PropertyForm({ property }: PropertyFormProps) {
   });
 
   async function onSubmit(data: PropertyFormValues) {
-    if (!user) {
+    if (!currentUser) {
       toast({
         variant: "destructive",
-        title: "Authentication Error",
-        description: "You must be logged in to post a property.",
+        title: "Auth Error",
+        description: "No agent user found in mock data.",
       });
       return;
     }
@@ -131,40 +132,16 @@ export function PropertyForm({ property }: PropertyFormProps) {
     });
 
     try {
-        const userDocRef = doc(firestore, "users", user.uid);
-        const userDoc = await getDoc(userDocRef);
-        if (!userDoc.exists()) {
-            throw new Error("Agent profile not found.");
-        }
-        // We only need a subset of the user profile for the 'agent' field.
-        const { displayName, uid, email, photoURL, agencyName } = userDoc.data() as UserProfile;
-        const agentData = { displayName, uid, email, photoURL, agencyName };
-
-        const propertyData = {
-          ...data,
-          amenities: data.amenities.split(',').map(a => a.trim()),
-          price: Number(data.price),
-          bedrooms: Number(data.bedrooms),
-          bathrooms: Number(data.bathrooms),
-          area: Number(data.area),
-          landlordId: user.uid,
-          agent: agentData, // Use the subset of data
-          images: ['property_1_1', 'property_1_2', 'property_1_3'], // Placeholder images
-          updatedAt: serverTimestamp(),
-          createdAt: property ? property.createdAt : serverTimestamp(),
-        };
-
+        // This is a mock submission. In a real app, you'd save to a database.
+        console.log("Form data submitted:", data);
+        
         if (property) {
-            const propertyRef = doc(firestore, "properties", property.id);
-            setDocumentNonBlocking(propertyRef, propertyData, { merge: true });
             toast({
                 title: "Success!",
                 description: "Property has been updated successfully.",
             });
             router.push(`/admin/properties`);
         } else {
-            const collectionRef = collection(firestore, 'properties');
-            addDocumentNonBlocking(collectionRef, propertyData);
             toast({
                 title: "Success!",
                 description: "Property has been created successfully.",
@@ -198,7 +175,6 @@ export function PropertyForm({ property }: PropertyFormProps) {
   const handleRemoveImage = (indexToRemove: number) => {
     setImagePreviews(prev => prev.filter((_, index) => index !== indexToRemove));
     setImageFiles(prev => prev.filter((_, index) => index !== indexToRemove));
-    // Clean up the object URL to avoid memory leaks
     URL.revokeObjectURL(imagePreviews[indexToRemove]);
   };
   
@@ -218,11 +194,12 @@ export function PropertyForm({ property }: PropertyFormProps) {
         });
         return;
     }
-    // Placeholder for chat creation logic
     toast({
         title: "Screenshot Sent!",
         description: "An admin has been notified. Your chat will appear in the 'Messages' tab upon approval.",
     });
+    // In a real app, you would navigate to the messages page with the new ticket.
+    router.push('/admin/messages');
   }
 
   const handleGenerateDescription = async () => {

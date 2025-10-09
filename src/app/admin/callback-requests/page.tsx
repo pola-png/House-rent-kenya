@@ -4,31 +4,22 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Check, PhoneCall, User } from "lucide-react";
-import { useCollection, useFirestore, useUser, useMemoFirebase, updateDocumentNonBlocking } from "@/firebase";
-import { collection, query, where, doc } from "firebase/firestore";
 import type { CallbackRequest } from "@/lib/types";
 import { Skeleton } from "@/components/ui/skeleton";
 import { formatDistanceToNow } from 'date-fns';
+import { useState } from "react";
+// Mock data - in a real app, this would come from a database
+import mockRequests from "@/docs/callback-requests.json";
 
 export default function CallbackRequestsPage() {
-  const firestore = useFirestore();
-  const { user } = useUser();
-
-  const requestsQuery = useMemoFirebase(() => {
-    if (!firestore || !user) return null;
-    return query(
-      collection(firestore, "callback-requests"),
-      where("agentId", "==", user.uid),
-      where("status", "==", "pending")
-    );
-  }, [firestore, user]);
-
-  const { data: requests, isLoading } = useCollection<CallbackRequest>(requestsQuery);
+  // Use mock data
+  const [requests, setRequests] = useState<CallbackRequest[]>(
+      mockRequests.filter(r => r.status === 'pending').map(r => ({...r, id: String(r.id), createdAt: new Date(r.createdAt)}))
+  );
+  const [isLoading, setIsLoading] = useState(false);
 
   const handleMarkAsContacted = (requestId: string) => {
-    if (!firestore) return;
-    const requestDocRef = doc(firestore, "callback-requests", requestId);
-    updateDocumentNonBlocking(requestDocRef, { status: "contacted" });
+    setRequests(prev => prev.filter(req => req.id !== requestId));
   };
 
   return (
@@ -60,10 +51,10 @@ export default function CallbackRequestsPage() {
                     Interested in: {request.propertyTitle}
                   </p>
                    <p className="text-xs text-muted-foreground">
-                    Requested {formatDistanceToNow(request.createdAt.toDate(), { addSuffix: true })}
+                    Requested {formatDistanceToNow(request.createdAt, { addSuffix: true })}
                    </p>
                 </div>
-                <Button size="sm" onClick={() => handleMarkAsContacted(request.id)}>
+                <Button size="sm" onClick={() => handleMarkAsContacted(String(request.id))}>
                   <Check className="mr-2 h-4 w-4" />
                   Mark as Contacted
                 </Button>

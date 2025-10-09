@@ -1,3 +1,4 @@
+
 'use client';
 
 import Link from 'next/link';
@@ -7,7 +8,6 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
 import * as z from 'zod';
 import { useRouter } from 'next/navigation';
-import { sendPasswordResetEmail } from 'firebase/auth';
 import React from 'react';
 
 import { Button } from '@/components/ui/button';
@@ -15,7 +15,6 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Input } from '@/components/ui/input';
 import placeholderImages from '@/lib/placeholder-images.json';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
-import { useAuth } from '@/firebase';
 import { useToast } from '@/hooks/use-toast';
 
 const formSchema = z.object({
@@ -24,7 +23,6 @@ const formSchema = z.object({
 
 export default function ForgotPasswordPage() {
   const bgImage = placeholderImages.placeholderImages.find(img => img.id === 'auth_bg');
-  const auth = useAuth();
   const router = useRouter();
   const { toast } = useToast();
 
@@ -38,21 +36,13 @@ export default function ForgotPasswordPage() {
   const { isSubmitting } = form.formState;
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
-    try {
-      await sendPasswordResetEmail(auth, values.email);
-      toast({
-        title: 'Password Reset Email Sent',
-        description: 'Please check your inbox for instructions to reset your password.',
-      });
-      router.push('/login');
-    } catch (error: any) {
-      console.error(error);
-      toast({
-        variant: 'destructive',
-        title: 'Uh oh! Something went wrong.',
-        description: error.message || 'Could not send password reset email. Please check the email address.',
-      });
-    }
+    // Mock sending a password reset email
+    console.log("Sending password reset for:", values.email);
+    toast({
+      title: 'Password Reset Email Sent',
+      description: 'If an account exists, you will receive an email to reset your password.',
+    });
+    router.push('/login');
   }
 
   return (

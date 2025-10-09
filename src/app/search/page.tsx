@@ -4,44 +4,80 @@
 import { PropertyCard } from "@/components/property-card";
 import { SearchFilters } from "@/components/search-filters";
 import { Pagination, PaginationContent, PaginationEllipsis, PaginationItem, PaginationLink, PaginationNext, PaginationPrevious } from "@/components/ui/pagination";
-import { Map } from "@/components/map";
-import { Card } from "@/components/ui/card";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Terminal } from "lucide-react";
-import { useCollection, useFirestore, useMemoFirebase } from "@/firebase";
-import { collection, query, where } from "firebase/firestore";
-import type { Property } from "@/lib/types";
+import type { Property, UserProfile } from "@/lib/types";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useSearchParams } from "next/navigation";
-import { useMemo } from "react";
+import { useState, useEffect } from "react";
+
+// Mock data
+import propertiesData from '@/docs/properties.json';
+import usersData from '@/docs/users.json';
+
 
 export default function SearchPage() {
   const searchParams = useSearchParams();
-  const firestore = useFirestore();
+  const [properties, setProperties] = useState<Property[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
 
-  const propertiesQuery = useMemoFirebase(() => {
-    if (!firestore) return null;
-    
-    const constraints = [];
-    const q = searchParams.get('q');
+  useEffect(() => {
+    // Simulate fetching and filtering data
+    const q = searchParams.get('q')?.toLowerCase();
     const type = searchParams.get('type');
     const minPrice = searchParams.get('min_price');
     const maxPrice = searchParams.get('max_price');
     const beds = searchParams.get('beds');
-    
-    // Note: Firestore doesn't support full-text search or OR queries on different fields out of the box.
-    // The 'q' parameter is used for a simple location match here.
-    if (q) constraints.push(where('location', '>=', q), where('location', '<=', q + '\uf8ff'));
-    if (type) constraints.push(where('type', '==', type));
-    if (minPrice) constraints.push(where('price', '>=', parseInt(minPrice, 10)));
-    if (maxPrice) constraints.push(where('price', '<=', parseInt(maxPrice, 10)));
-    if (beds) constraints.push(where('bedrooms', '>=', parseInt(beds, 10)));
-    
-    return query(collection(firestore, 'properties'), ...constraints);
-  }, [firestore, searchParams]);
 
-  const { data: properties, isLoading } = useCollection<Property>(propertiesQuery);
-  const filteredProperties = properties || [];
+    const agentMap = new Map(usersData.map(user => [user.uid, user]));
+
+    let filtered = propertiesData.map(p => {
+        const agent = agentMap.get(p.landlordId) || usersData.find(u => u.role === 'agent');
+         return {
+            ...p,
+            createdAt: new Date(p.createdAt),
+            updatedAt: new Date(p.updatedAt),
+            agent: agent ? {
+                uid: agent.uid,
+                firstName: agent.firstName,
+                lastName: agent.lastName,
+                displayName: agent.displayName,
+                email: agent.email,
+                role: 'agent',
+                agencyName: agent.agencyName,
+                createdAt: new Date(agent.createdAt)
+            } : {
+                uid: 'default-agent',
+                firstName: 'Default',
+                lastName: 'Agent',
+                displayName: 'Default Agent',
+                email: 'agent@default.com',
+                role: 'agent',
+                agencyName: 'Default Agency',
+                createdAt: new Date()
+            }
+        };
+    });
+
+    if (q) {
+      filtered = filtered.filter(p => p.title.toLowerCase().includes(q) || p.location.toLowerCase().includes(q) || p.city.toLowerCase().includes(q));
+    }
+    if (type) {
+      filtered = filtered.filter(p => p.propertyType === type);
+    }
+    if (minPrice) {
+      filtered = filtered.filter(p => p.price >= parseInt(minPrice, 10));
+    }
+    if (maxPrice) {
+      filtered = filtered.filter(p => p.price <= parseInt(maxPrice, 10));
+    }
+    if (beds) {
+      filtered = filtered.filter(p => p.bedrooms >= parseInt(beds, 10));
+    }
+
+    setProperties(filtered);
+    setIsLoading(false);
+  }, [searchParams]);
 
   return (
     <div className="container mx-auto px-4 py-8">
@@ -56,25 +92,9 @@ export default function SearchPage() {
             {isLoading ? (
                 <Skeleton className="h-5 w-32" />
             ) : (
-                `Showing ${filteredProperties.length} results`
+                `Showing ${properties.length} results`
             )}
           </div>
-
-          <Card className="mb-8 h-[400px] overflow-hidden">
-             {process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY ? (
-                <Map properties={filteredProperties} />
-             ) : (
-                <div className="h-full w-full flex items-center justify-center bg-muted">
-                    <Alert>
-                        <Terminal className="h-4 w-4" />
-                        <AlertTitle>Map not available</AlertTitle>
-                        <AlertDescription>
-                            Please provide a Google Maps API key in your environment variables to display the map.
-                        </AlertDescription>
-                    </Alert>
-                </div>
-             )}
-          </Card>
           
           {isLoading ? (
              <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
@@ -87,16 +107,21 @@ export default function SearchPage() {
                     </div>
                 ))}
              </div>
-          ) : (
+          ) : properties.length > 0 ? (
             <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
-                {filteredProperties.map((property) => (
-                <PropertyCard key={property.id} property={property} />
+                {properties.map((property) => (
+                    <PropertyCard key={property.id} property={property} />
                 ))}
+            </div>
+          ) : (
+             <div className="text-center py-12 text-muted-foreground">
+                <p className="font-semibold">No properties found.</p>
+                <p className="text-sm">Try adjusting your search filters.</p>
             </div>
           )}
 
 
-          {!isLoading && (
+          {!isLoading && properties.length > 0 && (
             <div className="mt-12">
                 <Pagination>
                 <PaginationContent>
