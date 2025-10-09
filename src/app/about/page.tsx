@@ -1,4 +1,3 @@
-
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Award, Building, Info, Milestone, Target, Users } from "lucide-react";
 
@@ -97,7 +96,7 @@ export default function AboutPage() {
                              <Card className="ml-auto">
                                 <CardHeader>
                                     <CardTitle>The Future</CardTitle>
-                                    <CardDescription>We are continuously expanding our features, growing our network, and innovating to remain Kenya's #1 property portal.</CardDescription>
+                                    <CardDescription>We are continuously expanding our features, growing to remain Kenya's #1 property portal.</CardDescription>
                                 </CardHeader>
                             </Card>
                         </div>
