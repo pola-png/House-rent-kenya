@@ -10,7 +10,6 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent } from '@/components/ui/card';
 import { PropertyCard } from '@/components/property-card';
-import placeholderImages from '@/lib/placeholder-images.json';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -51,7 +50,7 @@ const features = [
 ];
 
 export default function Home() {
-  const heroImage = placeholderImages.placeholderImages.find(img => img.id === 'hero_main');
+  const heroImageUrl = "https://images.unsplash.com/photo-1664372623516-0b1540d6771e?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw1fHxtb2Rlcm4lMjBhcGFydG1lbnR8ZW58MHx8fHwxNzU5NDQ3ODY5fDA&ixlib=rb-4.1.0&q=80&w=1080";
   const firestore = useFirestore();
 
   const featuredQuery = useMemoFirebase(() => {
@@ -71,16 +70,14 @@ export default function Home() {
       <main className="flex-1">
         {/* Hero Section */}
         <section className="relative h-[70vh] md:h-[80vh] w-full flex items-center justify-center text-center text-white">
-          {heroImage && (
-            <Image
-              src={heroImage.imageUrl}
-              alt="Modern apartment building"
-              fill
-              priority
-              className="object-cover"
-              data-ai-hint={heroImage.imageHint}
-            />
-          )}
+          <Image
+            src={heroImageUrl}
+            alt="Modern apartment building"
+            fill
+            priority
+            className="object-cover"
+            data-ai-hint="modern apartment"
+          />
           <div className="absolute inset-0 bg-black/60" />
           <div className="relative z-10 px-4 w-full max-w-4xl">
             <h1 className="text-4xl md:text-6xl font-headline font-bold mb-4 drop-shadow-md">
