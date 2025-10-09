@@ -4,7 +4,6 @@
 import Link from 'next/link';
 import { Building, Menu, User, X, ChevronDown, Briefcase, UserCircle, LogOut, Home, Settings } from 'lucide-react';
 import React from 'react';
-import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 
 import { Button } from '@/components/ui/button';
@@ -33,13 +32,12 @@ const navLinks = [
 ];
 
 export function Header() {
-  const { user, logout } = useAuth();
+  const { user, logout, loading: isUserLoading } = useAuth();
   const { toast } = useToast();
   const router = useRouter();
   
   const linkClasses = `text-sm font-medium transition-colors hover:text-primary text-black`;
   const buttonBorderClasses = 'border-primary text-primary hover:bg-primary hover:text-primary-foreground';
-  const isUserLoading = false; // Mock loading state
 
   const handleLogout = () => {
     logout();

@@ -1,9 +1,8 @@
-
 'use client';
 
 import { useState, useEffect, createContext, useContext, ReactNode } from 'react';
 import type { UserProfile } from '@/lib/types';
-import users from '../../docs/users.json';
+import users from '@/docs/users.json';
 
 interface AuthContextType {
   user: UserProfile | null;
@@ -26,7 +25,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     try {
       const storedUser = localStorage.getItem('authUser');
       if (storedUser) {
-        setUser(JSON.parse(storedUser));
+        const parsedUser = JSON.parse(storedUser);
+        setUser({ ...parsedUser, createdAt: new Date(parsedUser.createdAt) });
       }
     } catch (error) {
       console.error("Failed to parse auth user from localStorage", error);

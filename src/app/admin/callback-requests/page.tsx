@@ -1,4 +1,3 @@
-
 'use client';
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -9,7 +8,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { formatDistanceToNow } from 'date-fns';
 import { useState } from "react";
 // Mock data - in a real app, this would come from a database
-import mockRequests from "../../../../docs/callback-requests.json";
+import mockRequests from "@/docs/callback-requests.json";
 
 export default function CallbackRequestsPage() {
   // Use mock data

@@ -1,4 +1,3 @@
-
 'use client';
 import Image from 'next/image';
 import { notFound, useParams } from 'next/navigation';
@@ -15,8 +14,8 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { useState, useEffect } from 'react';
 
 // Mock Data
-import propertiesData from '../../../docs/properties.json';
-import usersData from '../../../docs/users.json';
+import propertiesData from '@/docs/properties.json';
+import usersData from '@/docs/users.json';
 
 export default function PropertyPage() {
   const params = useParams();

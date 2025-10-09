@@ -1,14 +1,12 @@
-
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import * as z from "zod";
-import { Loader2, Sparkles, Wand2, Image as ImageIcon, X, Star, ChevronDown, ChevronUp, Upload } from "lucide-react";
+import { Loader2, Image as ImageIcon, X, Upload } from "lucide-react";
 import React from "react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
-import Link from "next/link";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -29,9 +27,8 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import type { Property, UserProfile } from "@/lib/types";
+import type { Property } from "@/lib/types";
 import { useToast } from "@/hooks/use-toast";
-import { Progress } from "@/components/ui/progress";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
@@ -39,7 +36,7 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/component
 import { Separator } from "@/components/ui/separator";
 
 // Mock user data
-import users from "../../../../../docs/users.json";
+import users from "@/docs/users.json";
 const currentUser = users.find(u => u.role === 'agent');
 
 
@@ -74,9 +71,6 @@ interface PropertyFormProps {
 export function PropertyForm({ property }: PropertyFormProps) {
   const { toast } = useToast();
   const router = useRouter();
-  const [isGeneratingDesc, setIsGeneratingDesc] = React.useState(false);
-  const [isOptimizingSeo, setIsOptimizingSeo] = React.useState(false);
-  const [seoScore, setSeoScore] = React.useState<number | null>(property ? 75 : null);
   const [imagePreviews, setImagePreviews] = React.useState<string[]>([]);
   const [imageFiles, setImageFiles] = React.useState<File[]>([]);
   const fileInputRef = React.useRef<HTMLInputElement>(null);
@@ -616,5 +610,3 @@ export function PropertyForm({ property }: PropertyFormProps) {
     </Form>
   );
 }
-
-    

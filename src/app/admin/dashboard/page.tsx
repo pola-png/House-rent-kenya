@@ -1,4 +1,3 @@
-
 'use client';
 
 import {
@@ -20,8 +19,8 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 
 // Mock data imports
-import allProperties from "../../../docs/properties.json";
-import allLeads from "../../../docs/callback-requests.json";
+import allProperties from "@/docs/properties.json";
+import allLeads from "@/docs/callback-requests.json";
 
 export default function Dashboard() {
   const [properties, setProperties] = useState<Property[]>([]);
