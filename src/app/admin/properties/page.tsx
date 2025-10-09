@@ -21,8 +21,8 @@ import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 
 // Mock Data
-import propertiesData from "../../../../docs/properties.json";
-import usersData from "../../../../docs/users.json";
+import propertiesData from "../../../docs/properties.json";
+import usersData from "../../../docs/users.json";
 
 
 export default function AdminPropertiesPage() {

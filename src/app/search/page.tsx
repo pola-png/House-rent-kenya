@@ -12,8 +12,8 @@ import { useSearchParams } from "next/navigation";
 import { useState, useEffect } from "react";
 
 // Mock data
-import propertiesData from "../../../docs/properties.json";
-import usersData from "../../../docs/users.json";
+import propertiesData from "../../docs/properties.json";
+import usersData from "../../docs/users.json";
 
 
 export default function SearchPage() {

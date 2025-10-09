@@ -17,6 +17,7 @@ import type { Property } from '@/lib/types';
 import { Skeleton } from '@/components/ui/skeleton';
 // Mock Data
 import propertiesData from '../../docs/properties.json';
+import usersData from '../../docs/users.json';
 
 
 const popularSearches = [
@@ -56,13 +57,33 @@ export default function Home() {
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    // Simulate fetching data
+    // Simulate fetching data and joining agent info
+    const agentMap = new Map(usersData.map(user => [user.uid, user]));
+    
     const featured = propertiesData.filter(p => p.featured).slice(0, 6);
-    const typedFeatured: Property[] = featured.map(p => ({
-        ...p,
-        createdAt: new Date(p.createdAt),
-        updatedAt: new Date(p.updatedAt)
-    }));
+    
+    const typedFeatured: Property[] = featured.map(p => {
+        const agent = agentMap.get(p.landlordId) || usersData.find(u => u.role === 'agent');
+        return {
+            ...p,
+            createdAt: new Date(p.createdAt),
+            updatedAt: new Date(p.updatedAt),
+            agent: agent ? {
+                ...agent,
+                createdAt: new Date(agent.createdAt)
+            } : {
+                uid: 'default-agent',
+                firstName: 'Default',
+                lastName: 'Agent',
+                displayName: 'Default Agent',
+                email: 'agent@default.com',
+                role: 'agent',
+                agencyName: 'Default Agency',
+                createdAt: new Date()
+            }
+        };
+    });
+
     setFeaturedProperties(typedFeatured);
     setIsLoading(false);
   }, []);
