@@ -1,0 +1,36 @@
+
+[
+    {
+        "id": "req1",
+        "userName": "David Chege",
+        "userEmail": "david.chege@example.com",
+        "location": "Kilimani, Nairobi",
+        "propertyType": "Apartment",
+        "bedrooms": 2,
+        "budget": 120000,
+        "status": "new",
+        "createdAt": "2024-07-30T09:00:00Z"
+    },
+    {
+        "id": "req2",
+        "userName": "Brenda Akinyi",
+        "userEmail": "brenda.akinyi@example.com",
+        "location": "Karen, Nairobi",
+        "propertyType": "House",
+        "bedrooms": 4,
+        "budget": 400000,
+        "status": "contacted",
+        "createdAt": "2024-07-29T14:20:00Z"
+    },
+    {
+        "id": "req3",
+        "userName": "Samuel Maina",
+        "userEmail": "samuel.maina@example.com",
+        "location": "Nyali, Mombasa",
+        "propertyType": "Villa",
+        "bedrooms": 3,
+        "budget": 250000,
+        "status": "matched",
+        "createdAt": "2024-07-28T11:45:00Z"
+    }
+]
