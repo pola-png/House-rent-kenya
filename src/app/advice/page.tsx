@@ -11,7 +11,7 @@ import type { Article } from "@/lib/types";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useState, useEffect } from "react";
 // Mock data
-import articlesData from "@/docs/articles.json";
+import articlesData from "../../../docs/articles.json";
 
 export default function AdvicePage() {
   const [adviceArticles, setAdviceArticles] = useState<Article[]>([]);

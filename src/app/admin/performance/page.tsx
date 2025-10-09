@@ -32,8 +32,8 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { useMemo, useState, useEffect } from 'react';
 
 // Mock data imports
-import allProperties from '@/docs/properties.json';
-import allLeads from '@/docs/callback-requests.json';
+import allProperties from "../../../../docs/properties.json";
+import allLeads from "../../../../docs/callback-requests.json";
 
 export default function PerformancePage() {
   const [properties, setProperties] = useState<Property[]>([]);

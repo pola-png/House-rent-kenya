@@ -8,7 +8,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { useState, useEffect } from "react";
 
 // Mock data
-import propertiesData from '@/docs/properties.json';
+import propertiesData from "../../../../../../docs/properties.json";
 
 export default function EditPropertyPage() {
   const params = useParams();

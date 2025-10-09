@@ -41,7 +41,7 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/component
 import { Separator } from "@/components/ui/separator";
 
 // Mock user data
-import users from '@/docs/users.json';
+import users from "../../../../../docs/users.json";
 const currentUser = users.find(u => u.role === 'agent');
 
 
