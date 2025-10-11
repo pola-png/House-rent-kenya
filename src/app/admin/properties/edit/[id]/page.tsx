@@ -1,71 +1,85 @@
 "use client";
 
-import { notFound, useParams } from "next/navigation";
-import { PropertyForm } from "../../components/property-form";
-import type { Property } from "@/lib/types";
-import { Skeleton } from "@/components/ui/skeleton";
+import { useParams, useRouter } from "next/navigation";
 import { useState, useEffect } from "react";
-
-// Mock data
-import propertiesData from "@/lib/docs/properties.json";
+import { PropertyForm } from "../../components/property-form";
+import { useAuth } from "@/hooks/use-auth-supabase";
+import { supabase } from "@/lib/supabase";
+import { Skeleton } from "@/components/ui/skeleton";
+import { Button } from "@/components/ui/button";
+import { ArrowLeft } from "lucide-react";
+import Link from "next/link";
 
 export default function EditPropertyPage() {
   const params = useParams();
-  const id = params.id as string;
-  const [property, setProperty] = useState<Property | undefined>(undefined);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<Error | null>(null);
+  const router = useRouter();
+  const { user, loading: authLoading } = useAuth();
+  const [property, setProperty] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    try {
-        const foundProperty = propertiesData.find(p => p.id === id);
-        if (foundProperty) {
-            // Convert date strings to Date objects
-            const typedProperty: Property = {
-                ...foundProperty,
-                createdAt: new Date(foundProperty.createdAt),
-                updatedAt: new Date(foundProperty.updatedAt),
-            }
-            setProperty(typedProperty);
-        }
-    } catch (e) {
-        setError(e as Error);
-    } finally {
-        setIsLoading(false);
+    if (!authLoading && !user) {
+      router.push("/login?redirect=/admin/properties");
+      return;
     }
-  }, [id]);
 
-  if (isLoading) {
+    if (user && params.id) {
+      fetchProperty();
+    }
+  }, [user, authLoading, params.id, router]);
+
+  const fetchProperty = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('properties')
+        .select('*')
+        .eq('id', params.id)
+        .eq('landlordId', user?.uid)
+        .single();
+
+      if (error) throw error;
+      setProperty(data);
+    } catch (error) {
+      console.error('Error fetching property:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  if (authLoading || loading) {
     return (
-        <div>
-            <h1 className="text-2xl font-bold font-headline mb-4">Edit Property</h1>
-            <Skeleton className="h-8 w-1/2 mb-6" />
-            <div className="space-y-4">
-                <Skeleton className="h-64 w-full" />
-                <Skeleton className="h-32 w-full" />
-            </div>
-        </div>
-    )
+      <div className="space-y-4">
+        <Skeleton className="h-8 w-64" />
+        <Skeleton className="h-96 w-full" />
+      </div>
+    );
   }
 
-  if (!property && !isLoading) {
-    notFound();
-  }
-  
-  if (error) {
-      console.error(error);
-      return <div>Error loading property.</div>
+  if (!property) {
+    return (
+      <div className="text-center py-12">
+        <p className="text-muted-foreground mb-4">Property not found or you don't have permission to edit it.</p>
+        <Button asChild>
+          <Link href="/admin/properties">Back to My Listings</Link>
+        </Button>
+      </div>
+    );
   }
 
   return (
     <div>
-        <h1 className="text-2xl font-bold font-headline mb-4">Edit Property</h1>
-        {property && (
-            <>
-                <p className="text-muted-foreground mb-6">Editing property: <span className="font-semibold">{property.title}</span></p>
-                <PropertyForm property={property} />
-            </>
-        )}
+      <div className="flex items-center gap-4 mb-6">
+        <Button variant="ghost" size="icon" asChild>
+          <Link href="/admin/properties">
+            <ArrowLeft className="h-4 w-4" />
+          </Link>
+        </Button>
+        <div>
+          <h1 className="text-2xl font-bold font-headline">Edit Property</h1>
+          <p className="text-muted-foreground">{property.title}</p>
+        </div>
+      </div>
+      <PropertyForm property={property} />
     </div>
-  )
+  );
 }

@@ -13,22 +13,20 @@ type PropertyCardProps = {
 };
 
 export function PropertyCard({ property }: PropertyCardProps) {
-  const mainImageId = property.images[0];
-  const image = placeholderImages.placeholderImages.find(img => img.id === mainImageId);
-  const agentImage = placeholderImages.placeholderImages.find(img => img.id === 'agent_1');
+  const mainImageUrl = property.images && property.images.length > 0 ? property.images[0] : null;
+  const agentPhotoUrl = property.agent?.photoURL;
 
 
   return (
     <Card className="overflow-hidden group hover:shadow-xl transition-shadow duration-300 flex flex-col">
       <Link href={`/property/${property.id}`} className="block flex flex-col h-full">
         <div className="relative h-56 w-full">
-          {image ? (
+          {mainImageUrl ? (
             <Image
-              src={image.imageUrl}
+              src={mainImageUrl}
               alt={property.title}
               fill
               className="object-cover transform group-hover:scale-105 transition-transform duration-300"
-              data-ai-hint={image.imageHint}
             />
           ) : (
             <div className="bg-muted h-full w-full flex items-center justify-center text-muted-foreground">
@@ -73,15 +71,21 @@ export function PropertyCard({ property }: PropertyCardProps) {
           </div>
           <div className="border-t pt-3 flex justify-between items-center">
              <div className="flex items-center gap-2">
-                {agentImage && property.agent.displayName && (
-                    <Avatar className="h-8 w-8">
-                        <AvatarImage src={agentImage.imageUrl} alt={property.agent.displayName} />
-                        <AvatarFallback>{property.agent.displayName.charAt(0)}</AvatarFallback>
-                    </Avatar>
+                {property.agent && (
+                    <>
+                      <Avatar className="h-8 w-8">
+                        {agentPhotoUrl && <AvatarImage src={agentPhotoUrl} alt={property.agent.displayName} />}
+                        <AvatarFallback>{property.agent.displayName?.charAt(0).toUpperCase() || 'A'}</AvatarFallback>
+                      </Avatar>
+                      <div className="flex flex-col">
+                        <span className="text-xs font-medium">{property.agent.displayName}</span>
+                        {property.agent.agencyName && (
+                          <span className="text-xs text-muted-foreground">{property.agent.agencyName}</span>
+                        )}
+                      </div>
+                    </>
                 )}
-                <span className="text-xs text-muted-foreground">{property.agent.displayName}</span>
              </div>
-             {/* Agency Logo can go here */}
           </div>
         </CardContent>
       </Link>

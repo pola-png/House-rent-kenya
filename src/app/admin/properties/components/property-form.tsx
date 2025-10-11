@@ -80,9 +80,21 @@ export function PropertyForm({ property }: PropertyFormProps) {
 
   const defaultValues: Partial<PropertyFormValues> = property
     ? {
-        ...property,
-        amenities: property.amenities.join(", "),
+        title: property.title,
+        description: property.description,
+        price: property.price,
+        location: property.location,
+        city: property.city,
+        bedrooms: property.bedrooms,
+        bathrooms: property.bathrooms,
+        area: property.area,
+        propertyType: property.propertyType,
+        status: property.status,
+        amenities: Array.isArray(property.amenities) ? property.amenities.join(", ") : property.amenities,
         keywords: property.keywords || "",
+        featured: property.featured || false,
+        latitude: property.latitude || -1.286389,
+        longitude: property.longitude || 36.817223,
       }
     : {
         title: "",
@@ -172,10 +184,17 @@ export function PropertyForm({ property }: PropertyFormProps) {
         };
         
         if (property) {
+            // For updates, keep existing images if no new ones uploaded
+            const finalPropertyData = {
+              ...propertyData,
+              images: uploadedImageUrls.length > 0 ? uploadedImageUrls : property.images
+            };
+
             const { error } = await supabase
               .from('properties')
-              .update(propertyData)
-              .eq('id', property.id);
+              .update(finalPropertyData)
+              .eq('id', property.id)
+              .eq('landlordId', user.uid);
             
             if (error) throw error;
             

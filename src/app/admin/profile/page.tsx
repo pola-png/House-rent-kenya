@@ -27,7 +27,7 @@ export default function ProfilePage() {
   });
 
   React.useEffect(() => {
-    if (user) {
+    if (user && !loading) {
       setFormData({
         firstName: user.firstName || '',
         lastName: user.lastName || '',
@@ -35,7 +35,7 @@ export default function ProfilePage() {
         agencyName: user.agencyName || ''
       });
     }
-  }, [user]);
+  }, [user, loading]);
 
   const handlePhotoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
