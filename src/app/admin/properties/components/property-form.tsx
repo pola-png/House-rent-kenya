@@ -36,6 +36,7 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/component
 import { Separator } from "@/components/ui/separator";
 import { useAuth } from "@/hooks/use-auth-supabase";
 import { supabase } from "@/lib/supabase";
+import { AISEOSimple } from "@/components/ai-seo-simple";
 
 
 const formSchema = z.object({
@@ -137,7 +138,6 @@ export function PropertyForm({ property }: PropertyFormProps) {
     });
 
     try {
-        // Upload images to Supabase Storage
         const uploadedImageUrls: string[] = [];
         
         for (const file of imageFiles) {
@@ -174,7 +174,7 @@ export function PropertyForm({ property }: PropertyFormProps) {
           amenities: data.amenities.split(',').map(a => a.trim()),
           status: data.status,
           keywords: data.keywords || '',
-          featured: false, // Always false initially, admin approves
+          featured: false,
           latitude: data.latitude,
           longitude: data.longitude,
           landlordId: user.uid,
@@ -184,7 +184,6 @@ export function PropertyForm({ property }: PropertyFormProps) {
         };
         
         if (property) {
-            // For updates, keep existing images if no new ones uploaded
             const finalPropertyData = {
               ...propertyData,
               images: uploadedImageUrls.length > 0 ? uploadedImageUrls : property.images
@@ -235,7 +234,6 @@ export function PropertyForm({ property }: PropertyFormProps) {
     const newFiles = Array.from(files);
     setImageFiles(prev => [...prev, ...newFiles]);
 
-    // Create local previews
     const newPreviews = newFiles.map(file => URL.createObjectURL(file));
     setImagePreviews(prev => [...prev, ...newPreviews]);
   };
@@ -266,7 +264,6 @@ export function PropertyForm({ property }: PropertyFormProps) {
         title: "Screenshot Sent!",
         description: "An admin has been notified. Your chat will appear in the 'Messages' tab upon approval.",
     });
-    // In a real app, you would navigate to the messages page with the new ticket.
     router.push('/admin/messages');
   }
 
@@ -656,10 +653,28 @@ export function PropertyForm({ property }: PropertyFormProps) {
 
             <Card>
                 <CardHeader>
-                    <CardTitle>SEO</CardTitle>
-                    <CardDescription>Improve your listing's visibility on search engines.</CardDescription>
+                    <CardTitle>AI SEO Optimization</CardTitle>
+                    <CardDescription>Generate SEO-optimized content with one click.</CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-4">
+                    <AISEOSimple
+                      formData={{
+                        title: form.watch('title') || '',
+                        description: form.watch('description') || '',
+                        propertyType: form.watch('propertyType') || 'Apartment',
+                        bedrooms: form.watch('bedrooms') || 1,
+                        bathrooms: form.watch('bathrooms') || 1,
+                        location: form.watch('location') || '',
+                        city: form.watch('city') || 'Nairobi',
+                        amenities: form.watch('amenities') || '',
+                        price: form.watch('price') || 0,
+                      }}
+                      onApply={(data) => {
+                        form.setValue('title', data.title);
+                        form.setValue('description', data.description);
+                        form.setValue('keywords', data.keywords);
+                      }}
+                    />
                     <FormField
                       control={form.control}
                       name="keywords"
