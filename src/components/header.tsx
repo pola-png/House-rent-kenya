@@ -73,9 +73,9 @@ export function Header() {
                 <Link href="/admin/dashboard">Dashboard</Link>
               </DropdownMenuItem>
             )}
-            {(user.role === 'agent' || user.role === 'admin') && (
-              <DropdownMenuItem asChild><Link href="/admin/profile">Profile</Link></DropdownMenuItem>
-            )}
+            <DropdownMenuItem asChild>
+              <Link href="/admin/profile">Profile</Link>
+            </DropdownMenuItem>
             <DropdownMenuItem asChild><Link href="/admin/settings">Settings</Link></DropdownMenuItem>
             <DropdownMenuSeparator />
             <DropdownMenuItem onClick={handleLogout}>
@@ -126,11 +126,9 @@ export function Header() {
                   <Link href="/admin/dashboard" className="flex items-center gap-2 p-4 text-lg font-medium transition-colors hover:text-primary"><Home className="h-5 w-5"/> Dashboard</Link>
               </SheetClose>
             )}
-            {(user.role === 'agent' || user.role === 'admin') && (
-              <SheetClose asChild>
-                  <Link href="/admin/profile" className="flex items-center gap-2 p-4 text-lg font-medium transition-colors hover:text-primary"><UserCircle className="h-5 w-5"/> Profile</Link>
-              </SheetClose>
-            )}
+            <SheetClose asChild>
+                <Link href="/admin/profile" className="flex items-center gap-2 p-4 text-lg font-medium transition-colors hover:text-primary"><UserCircle className="h-5 w-5"/> Profile</Link>
+            </SheetClose>
              <SheetClose asChild>
                 <Link href="/admin/settings" className="flex items-center gap-2 p-4 text-lg font-medium transition-colors hover:text-primary"><Settings className="h-5 w-5"/> Settings</Link>
             </SheetClose>

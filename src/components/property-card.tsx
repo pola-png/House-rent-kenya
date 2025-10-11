@@ -13,7 +13,9 @@ type PropertyCardProps = {
 };
 
 export function PropertyCard({ property }: PropertyCardProps) {
-  const mainImageUrl = property.images && property.images.length > 0 ? property.images[0] : null;
+  // Handle images whether they come as array or need parsing
+  const images = Array.isArray(property.images) ? property.images : [];
+  const mainImageUrl = images.length > 0 ? images[0] : null;
   const agentPhotoUrl = property.agent?.photoURL;
 
 
@@ -27,6 +29,7 @@ export function PropertyCard({ property }: PropertyCardProps) {
               alt={property.title}
               fill
               className="object-cover transform group-hover:scale-105 transition-transform duration-300"
+              unoptimized
             />
           ) : (
             <div className="bg-muted h-full w-full flex items-center justify-center text-muted-foreground">

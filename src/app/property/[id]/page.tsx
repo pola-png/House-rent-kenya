@@ -135,25 +135,29 @@ export default function PropertyPage() {
 
           <Carousel className="w-full mb-8">
             <CarouselContent>
-              {property.images && property.images.length > 0 ? property.images.map((imageUrl, index) => (
-                <CarouselItem key={index}>
-                  <div className="relative h-[300px] md:h-[500px] w-full overflow-hidden rounded-lg">
-                    <Image
-                      src={imageUrl}
-                      alt={`${property.title} - image ${index + 1}`}
-                      fill
-                      className="object-cover"
-                      priority={index === 0}
-                    />
-                  </div>
-                </CarouselItem>
-              )) : (
-                <CarouselItem>
-                  <div className="relative h-[300px] md:h-[500px] w-full overflow-hidden rounded-lg bg-muted flex items-center justify-center">
-                    <Building className="h-24 w-24 text-muted-foreground" />
-                  </div>
-                </CarouselItem>
-              )}
+              {(() => {
+                const images = Array.isArray(property.images) ? property.images : [];
+                return images.length > 0 ? images.map((imageUrl, index) => (
+                  <CarouselItem key={index}>
+                    <div className="relative h-[300px] md:h-[500px] w-full overflow-hidden rounded-lg">
+                      <Image
+                        src={imageUrl}
+                        alt={`${property.title} - image ${index + 1}`}
+                        fill
+                        className="object-cover"
+                        priority={index === 0}
+                        unoptimized
+                      />
+                    </div>
+                  </CarouselItem>
+                )) : (
+                  <CarouselItem>
+                    <div className="relative h-[300px] md:h-[500px] w-full overflow-hidden rounded-lg bg-muted flex items-center justify-center">
+                      <Building className="h-24 w-24 text-muted-foreground" />
+                    </div>
+                  </CarouselItem>
+                );
+              })()}
             </CarouselContent>
             <CarouselPrevious className="ml-16" />
             <CarouselNext className="mr-16" />

@@ -163,13 +163,14 @@ export default function Dashboard() {
             ) : recentProperties && recentProperties.length > 0 ? (
                 <div className="space-y-4">
                     {recentProperties.map(property => {
-                        const imageUrl = property.images && property.images.length > 0 ? property.images[0] : null;
+                        const images = Array.isArray(property.images) ? property.images : [];
+                        const imageUrl = images.length > 0 ? images[0] : null;
                         return (
                              <Link key={property.id} href={`/property/${property.id}`} className="block">
                                 <div className="flex items-center gap-4 p-2 rounded-lg hover:bg-muted">
                                     <div className="relative h-16 w-16 rounded-md overflow-hidden flex-shrink-0">
                                         {imageUrl ? (
-                                            <Image src={imageUrl} alt={property.title} fill className="object-cover" />
+                                            <Image src={imageUrl} alt={property.title} fill className="object-cover" unoptimized />
                                         ) : (
                                             <div className="h-full w-full bg-secondary flex items-center justify-center">
                                                 <Building className="h-6 w-6 text-muted-foreground"/>
