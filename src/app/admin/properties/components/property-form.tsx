@@ -125,6 +125,30 @@ export function PropertyForm({ property }: PropertyFormProps) {
     });
 
     try {
+        // Upload images to Supabase Storage
+        const uploadedImageUrls: string[] = [];
+        
+        for (const file of imageFiles) {
+          const fileExt = file.name.split('.').pop();
+          const fileName = `${user.uid}-${Date.now()}-${Math.random().toString(36).substring(7)}.${fileExt}`;
+          const filePath = `properties/${fileName}`;
+
+          const { error: uploadError } = await supabase.storage
+            .from('user-uploads')
+            .upload(filePath, file);
+
+          if (uploadError) {
+            console.error('Error uploading image:', uploadError);
+            continue;
+          }
+
+          const { data: { publicUrl } } = supabase.storage
+            .from('user-uploads')
+            .getPublicUrl(filePath);
+
+          uploadedImageUrls.push(publicUrl);
+        }
+
         const propertyData = {
           title: data.title,
           description: data.description,
@@ -138,11 +162,11 @@ export function PropertyForm({ property }: PropertyFormProps) {
           amenities: data.amenities.split(',').map(a => a.trim()),
           status: data.status,
           keywords: data.keywords || '',
-          featured: data.featured,
+          featured: false, // Always false initially, admin approves
           latitude: data.latitude,
           longitude: data.longitude,
           landlordId: user.uid,
-          images: imagePreviews.length > 0 ? imagePreviews : [
+          images: uploadedImageUrls.length > 0 ? uploadedImageUrls : [
             "https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?w=800"
           ]
         };
@@ -185,16 +209,16 @@ export function PropertyForm({ property }: PropertyFormProps) {
     }
   }
 
-  const handleImageChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+  const handleImageChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const files = event.target.files;
-    if (files) {
-      const newFiles = Array.from(files);
-      const newImageFiles = [...imageFiles, ...newFiles];
-      setImageFiles(newImageFiles);
+    if (!files || !user) return;
 
-      const newPreviews = newFiles.map(file => URL.createObjectURL(file));
-      setImagePreviews(prev => [...prev, ...newPreviews]);
-    }
+    const newFiles = Array.from(files);
+    setImageFiles(prev => [...prev, ...newFiles]);
+
+    // Create local previews
+    const newPreviews = newFiles.map(file => URL.createObjectURL(file));
+    setImagePreviews(prev => [...prev, ...newPreviews]);
   };
 
   const handleRemoveImage = (indexToRemove: number) => {

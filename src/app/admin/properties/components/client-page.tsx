@@ -13,7 +13,7 @@ import {
   getSortedRowModel,
   useReactTable,
 } from "@tanstack/react-table";
-import { MoreHorizontal, PlusCircle } from "lucide-react";
+import { MoreHorizontal, PlusCircle, Star, Copy, Trash2, Eye, Edit } from "lucide-react";
 import Link from 'next/link';
 
 import { Button } from "@/components/ui/button";
@@ -107,14 +107,53 @@ const columns: ColumnDef<Property>[] = [
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">
             <DropdownMenuLabel>Actions</DropdownMenuLabel>
+            <DropdownMenuItem asChild>
+              <Link href={`/property/${property.id}`}>
+                <Eye className="mr-2 h-4 w-4" />
+                View Property
+              </Link>
+            </DropdownMenuItem>
+            <DropdownMenuItem asChild>
+              <Link href={`/admin/properties/edit/${property.id}`}>
+                <Edit className="mr-2 h-4 w-4" />
+                Edit Property
+              </Link>
+            </DropdownMenuItem>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem asChild>
+              <Link href={`/admin/properties/promote/${property.id}`}>
+                <Star className="mr-2 h-4 w-4" />
+                Promote Property
+              </Link>
+            </DropdownMenuItem>
+            <DropdownMenuItem
+              onClick={() => {
+                // Duplicate property logic
+                navigator.clipboard.writeText(property.id);
+                alert('Property ID copied. Feature coming soon!');
+              }}
+            >
+              <Copy className="mr-2 h-4 w-4" />
+              Duplicate Property
+            </DropdownMenuItem>
+            <DropdownMenuSeparator />
             <DropdownMenuItem
               onClick={() => navigator.clipboard.writeText(property.id)}
             >
-              Copy property ID
+              Copy Property ID
             </DropdownMenuItem>
-            <DropdownMenuSeparator />
-            <DropdownMenuItem asChild><Link href={`/admin/properties/edit/${property.id}`}>Edit</Link></DropdownMenuItem>
-            <DropdownMenuItem asChild><Link href={`/property/${property.id}`}>View details</Link></DropdownMenuItem>
+            <DropdownMenuItem
+              className="text-destructive"
+              onClick={() => {
+                if (confirm('Are you sure you want to delete this property?')) {
+                  // Delete logic will be implemented
+                  alert('Delete feature coming soon!');
+                }
+              }}
+            >
+              <Trash2 className="mr-2 h-4 w-4" />
+              Delete Property
+            </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
       );

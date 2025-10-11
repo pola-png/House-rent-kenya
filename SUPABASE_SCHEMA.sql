@@ -62,6 +62,20 @@ CREATE TABLE developments (
   "createdAt" TIMESTAMP DEFAULT NOW()
 );
 
+-- Promotion Requests table
+CREATE TABLE promotion_requests (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  "propertyId" UUID REFERENCES properties(id) ON DELETE CASCADE,
+  "landlordId" TEXT NOT NULL,
+  weeks INTEGER NOT NULL,
+  amount NUMERIC NOT NULL,
+  "screenshotUrl" TEXT,
+  status TEXT DEFAULT 'pending',
+  "createdAt" TIMESTAMP DEFAULT NOW(),
+  "approvedAt" TIMESTAMP,
+  "approvedBy" TEXT
+);
+
 -- Callback Requests table
 CREATE TABLE callback_requests (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
@@ -79,6 +93,7 @@ ALTER TABLE properties ENABLE ROW LEVEL SECURITY;
 ALTER TABLE articles ENABLE ROW LEVEL SECURITY;
 ALTER TABLE developments ENABLE ROW LEVEL SECURITY;
 ALTER TABLE callback_requests ENABLE ROW LEVEL SECURITY;
+ALTER TABLE promotion_requests ENABLE ROW LEVEL SECURITY;
 
 -- Profiles policies
 CREATE POLICY "Public profiles are viewable by everyone" ON profiles FOR SELECT USING (true);
@@ -99,6 +114,10 @@ CREATE POLICY "Developments are viewable by everyone" ON developments FOR SELECT
 -- Callback requests policies
 CREATE POLICY "Users can view own callback requests" ON callback_requests FOR SELECT USING (auth.uid()::text = "agentId");
 CREATE POLICY "Anyone can create callback requests" ON callback_requests FOR INSERT WITH CHECK (true);
+
+-- Promotion requests policies
+CREATE POLICY "Users can view own promotion requests" ON promotion_requests FOR SELECT USING (auth.uid()::text = "landlordId");
+CREATE POLICY "Users can create promotion requests" ON promotion_requests FOR INSERT WITH CHECK (auth.uid()::text = "landlordId");
 
 -- Function to handle new user profile
 CREATE OR REPLACE FUNCTION public.handle_new_user()

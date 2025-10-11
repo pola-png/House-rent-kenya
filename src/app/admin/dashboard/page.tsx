@@ -17,27 +17,73 @@ import { formatDistanceToNow } from 'date-fns';
 import { useMemo, useState, useEffect } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-
-// Mock data imports
-import allProperties from "@/lib/docs/properties.json";
-import allLeads from "@/lib/docs/callback-requests.json";
+import { useAuth } from "@/hooks/use-auth-supabase";
+import { supabase } from "@/lib/supabase";
 
 export default function Dashboard() {
+  const { user } = useAuth();
   const [properties, setProperties] = useState<Property[]>([]);
   const [recentProperties, setRecentProperties] = useState<Property[]>([]);
   const [leads, setLeads] = useState<CallbackRequest[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    // Simulate fetching data
-    const typedProperties: Property[] = allProperties.map(p => ({ ...p, createdAt: new Date(p.createdAt), updatedAt: new Date(p.updatedAt) }));
-    const typedLeads: CallbackRequest[] = allLeads.map(l => ({ ...l, id: String(l.id), createdAt: new Date(l.createdAt) }));
+    if (user) {
+      fetchDashboardData();
+    }
+  }, [user]);
+
+  const fetchDashboardData = async () => {
+    if (!user) return;
     
-    setProperties(typedProperties);
-    setRecentProperties(typedProperties.sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime()).slice(0, 5));
-    setLeads(typedLeads);
-    setIsLoading(false);
-  }, []);
+    try {
+      const { data: propertiesData, error: propsError } = await supabase
+        .from('properties')
+        .select('*')
+        .eq('landlordId', user.uid)
+        .order('createdAt', { ascending: false });
+
+      if (propsError) throw propsError;
+
+      const typedProperties: Property[] = (propertiesData || []).map(p => ({
+        ...p,
+        createdAt: new Date(p.createdAt),
+        updatedAt: new Date(p.updatedAt),
+        agent: {
+          uid: user.uid,
+          firstName: user.firstName,
+          lastName: user.lastName,
+          displayName: user.displayName,
+          email: user.email,
+          role: user.role,
+          agencyName: user.agencyName,
+          photoURL: user.photoURL,
+          createdAt: user.createdAt
+        }
+      }));
+
+      setProperties(typedProperties);
+      setRecentProperties(typedProperties.slice(0, 5));
+
+      const { data: leadsData, error: leadsError } = await supabase
+        .from('callback_requests')
+        .select('*')
+        .eq('agentId', user.uid)
+        .order('createdAt', { ascending: false });
+
+      if (!leadsError && leadsData) {
+        const typedLeads: CallbackRequest[] = leadsData.map(l => ({
+          ...l,
+          createdAt: new Date(l.createdAt)
+        }));
+        setLeads(typedLeads);
+      }
+    } catch (error) {
+      console.error('Error fetching dashboard data:', error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   const stats = useMemo(() => {
     if (!properties) return null;
@@ -117,13 +163,13 @@ export default function Dashboard() {
             ) : recentProperties && recentProperties.length > 0 ? (
                 <div className="space-y-4">
                     {recentProperties.map(property => {
-                        const image = placeholderImages.placeholderImages.find(img => img.id === property.images[0]);
+                        const imageUrl = property.images && property.images.length > 0 ? property.images[0] : null;
                         return (
                              <Link key={property.id} href={`/property/${property.id}`} className="block">
                                 <div className="flex items-center gap-4 p-2 rounded-lg hover:bg-muted">
                                     <div className="relative h-16 w-16 rounded-md overflow-hidden flex-shrink-0">
-                                        {image ? (
-                                            <Image src={image.imageUrl} alt={property.title} fill className="object-cover" />
+                                        {imageUrl ? (
+                                            <Image src={imageUrl} alt={property.title} fill className="object-cover" />
                                         ) : (
                                             <div className="h-full w-full bg-secondary flex items-center justify-center">
                                                 <Building className="h-6 w-6 text-muted-foreground"/>

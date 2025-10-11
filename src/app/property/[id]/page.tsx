@@ -12,10 +12,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import type { Property, UserProfile } from '@/lib/types';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useState, useEffect } from 'react';
-
-// Mock Data
-import propertiesData from '@/lib/docs/properties.json';
-import usersData from '@/lib/docs/users.json';
+import { supabase } from '@/lib/supabase';
 
 export default function PropertyPage() {
   const params = useParams();
@@ -24,20 +21,57 @@ export default function PropertyPage() {
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    // Simulate fetching and joining data
-    const foundProperty = propertiesData.find(p => p.id === id);
-    if (foundProperty) {
-        const agent = usersData.find(u => u.uid === foundProperty.landlordId) as UserProfile;
-        const typedProperty: Property = {
-            ...foundProperty,
-            createdAt: new Date(foundProperty.createdAt),
-            updatedAt: new Date(foundProperty.updatedAt),
-            agent: agent || usersData.find(u => u.role === 'agent')! // Fallback agent
-        }
-      setProperty(typedProperty);
-    }
-    setIsLoading(false);
+    fetchProperty();
   }, [id]);
+
+  const fetchProperty = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('properties')
+        .select('*')
+        .eq('id', id)
+        .single();
+
+      if (error) throw error;
+
+      if (data) {
+        const { data: userData } = await supabase.auth.admin.getUserById(data.landlordId);
+        
+        const typedProperty: Property = {
+          ...data,
+          createdAt: new Date(data.createdAt),
+          updatedAt: new Date(data.updatedAt),
+          agent: userData?.user ? {
+            uid: userData.user.id,
+            firstName: userData.user.user_metadata?.firstName || '',
+            lastName: userData.user.user_metadata?.lastName || '',
+            displayName: userData.user.user_metadata?.displayName || userData.user.email?.split('@')[0] || '',
+            email: userData.user.email || '',
+            role: userData.user.user_metadata?.role || 'agent',
+            agencyName: userData.user.user_metadata?.agencyName,
+            phoneNumber: userData.user.user_metadata?.phoneNumber,
+            photoURL: userData.user.user_metadata?.photoURL,
+            createdAt: new Date(userData.user.created_at)
+          } : {
+            uid: 'default',
+            firstName: 'Property',
+            lastName: 'Agent',
+            displayName: 'Property Agent',
+            email: 'agent@houserent.co.ke',
+            role: 'agent',
+            agencyName: 'House Rent Kenya',
+            phoneNumber: '+254704202939',
+            createdAt: new Date()
+          }
+        };
+        setProperty(typedProperty);
+      }
+    } catch (error) {
+      console.error('Error fetching property:', error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   if (isLoading) {
     return (
@@ -62,7 +96,6 @@ export default function PropertyPage() {
     notFound();
   }
 
-  const agentImage = placeholderImages.placeholderImages.find(img => img.id === 'agent_1');
   const agentPhoneNumber = property.agent?.phoneNumber || '+254704202939';
   
   const jsonLd = {
@@ -102,27 +135,25 @@ export default function PropertyPage() {
 
           <Carousel className="w-full mb-8">
             <CarouselContent>
-              {property.images.map((imageId, index) => {
-                const image = placeholderImages.placeholderImages.find(img => img.id === imageId);
-                return (
-                  <CarouselItem key={index}>
-                    <div className="relative h-[300px] md:h-[500px] w-full overflow-hidden rounded-lg">
-                      {image ? (
-                        <Image
-                          src={image.imageUrl}
-                          alt={`${property.title} - image ${index + 1}`}
-                          fill
-                          className="object-cover"
-                          data-ai-hint={image.imageHint}
-                          priority={index === 0}
-                        />
-                      ) : (
-                          <div className="w-full h-full bg-muted flex items-center justify-center">No Image</div>
-                      )}
-                    </div>
-                  </CarouselItem>
-                );
-              })}
+              {property.images && property.images.length > 0 ? property.images.map((imageUrl, index) => (
+                <CarouselItem key={index}>
+                  <div className="relative h-[300px] md:h-[500px] w-full overflow-hidden rounded-lg">
+                    <Image
+                      src={imageUrl}
+                      alt={`${property.title} - image ${index + 1}`}
+                      fill
+                      className="object-cover"
+                      priority={index === 0}
+                    />
+                  </div>
+                </CarouselItem>
+              )) : (
+                <CarouselItem>
+                  <div className="relative h-[300px] md:h-[500px] w-full overflow-hidden rounded-lg bg-muted flex items-center justify-center">
+                    <Building className="h-24 w-24 text-muted-foreground" />
+                  </div>
+                </CarouselItem>
+              )}
             </CarouselContent>
             <CarouselPrevious className="ml-16" />
             <CarouselNext className="mr-16" />
@@ -187,8 +218,8 @@ export default function PropertyPage() {
                 <CardContent className="space-y-4">
                   <div className="flex flex-col sm:flex-row items-center gap-4 border-t pt-4">
                     <Avatar className="h-16 w-16">
-                      {agentImage && <AvatarImage src={agentImage.imageUrl} alt="Agent" data-ai-hint={agentImage.imageHint} />}
-                      <AvatarFallback><User /></AvatarFallback>
+                      {property.agent.photoURL && <AvatarImage src={property.agent.photoURL} alt={property.agent.displayName} />}
+                      <AvatarFallback>{property.agent.displayName?.charAt(0).toUpperCase() || <User />}</AvatarFallback>
                     </Avatar>
                     <div>
                       <h4 className="font-bold text-lg">{property.agent.displayName || 'Property Agent'}</h4>
