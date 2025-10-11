@@ -4,16 +4,16 @@ CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 -- Profiles table (extends auth.users)
 CREATE TABLE profiles (
   id UUID REFERENCES auth.users(id) ON DELETE CASCADE PRIMARY KEY,
-  first_name TEXT,
-  last_name TEXT,
-  display_name TEXT,
+  "firstName" TEXT,
+  "lastName" TEXT,
+  "displayName" TEXT,
   email TEXT,
   role TEXT DEFAULT 'user',
-  agency_name TEXT,
-  phone_number TEXT,
-  photo_url TEXT,
-  created_at TIMESTAMP DEFAULT NOW(),
-  updated_at TIMESTAMP DEFAULT NOW()
+  "agencyName" TEXT,
+  "phoneNumber" TEXT,
+  "photoURL" TEXT,
+  "createdAt" TIMESTAMP DEFAULT NOW(),
+  "updatedAt" TIMESTAMP DEFAULT NOW()
 );
 
 -- Properties table
@@ -22,22 +22,22 @@ CREATE TABLE properties (
   title TEXT NOT NULL,
   description TEXT,
   price NUMERIC NOT NULL,
-  property_type TEXT NOT NULL,
+  "propertyType" TEXT NOT NULL,
   bedrooms INTEGER,
   bathrooms INTEGER,
   area NUMERIC,
   location TEXT,
   city TEXT,
-  latitude NUMERIC,
-  longitude NUMERIC,
+  latitude NUMERIC DEFAULT -1.286389,
+  longitude NUMERIC DEFAULT 36.817223,
   images TEXT[],
   amenities TEXT[],
-  landlord_id UUID REFERENCES profiles(id),
+  "landlordId" TEXT NOT NULL,
   status TEXT DEFAULT 'For Rent',
   featured BOOLEAN DEFAULT false,
   keywords TEXT,
-  created_at TIMESTAMP DEFAULT NOW(),
-  updated_at TIMESTAMP DEFAULT NOW()
+  "createdAt" TIMESTAMP DEFAULT NOW(),
+  "updatedAt" TIMESTAMP DEFAULT NOW()
 );
 
 -- Articles table
@@ -45,9 +45,9 @@ CREATE TABLE articles (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
   title TEXT NOT NULL,
   excerpt TEXT,
-  image_url TEXT,
+  "imageUrl" TEXT,
   category TEXT,
-  created_at TIMESTAMP DEFAULT NOW()
+  "createdAt" TIMESTAMP DEFAULT NOW()
 );
 
 -- Developments table
@@ -55,22 +55,22 @@ CREATE TABLE developments (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
   title TEXT NOT NULL,
   location TEXT,
-  price_range TEXT,
+  "priceRange" TEXT,
   description TEXT,
-  image_url TEXT,
+  "imageUrl" TEXT,
   status TEXT,
-  created_at TIMESTAMP DEFAULT NOW()
+  "createdAt" TIMESTAMP DEFAULT NOW()
 );
 
 -- Callback Requests table
 CREATE TABLE callback_requests (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-  property_id UUID REFERENCES properties(id),
-  user_name TEXT,
-  user_phone TEXT,
-  agent_id UUID REFERENCES profiles(id),
+  "propertyId" UUID REFERENCES properties(id),
+  "userName" TEXT,
+  "userPhone" TEXT,
+  "agentId" TEXT,
   status TEXT DEFAULT 'pending',
-  created_at TIMESTAMP DEFAULT NOW()
+  "createdAt" TIMESTAMP DEFAULT NOW()
 );
 
 -- Enable Row Level Security
@@ -86,9 +86,9 @@ CREATE POLICY "Users can update own profile" ON profiles FOR UPDATE USING (auth.
 
 -- Properties policies
 CREATE POLICY "Properties are viewable by everyone" ON properties FOR SELECT USING (true);
-CREATE POLICY "Agents can insert properties" ON properties FOR INSERT WITH CHECK (auth.uid() = landlord_id);
-CREATE POLICY "Agents can update own properties" ON properties FOR UPDATE USING (auth.uid() = landlord_id);
-CREATE POLICY "Agents can delete own properties" ON properties FOR DELETE USING (auth.uid() = landlord_id);
+CREATE POLICY "Agents can insert properties" ON properties FOR INSERT WITH CHECK (auth.uid()::text = "landlordId");
+CREATE POLICY "Agents can update own properties" ON properties FOR UPDATE USING (auth.uid()::text = "landlordId");
+CREATE POLICY "Agents can delete own properties" ON properties FOR DELETE USING (auth.uid()::text = "landlordId");
 
 -- Articles policies (public read)
 CREATE POLICY "Articles are viewable by everyone" ON articles FOR SELECT USING (true);
@@ -97,14 +97,14 @@ CREATE POLICY "Articles are viewable by everyone" ON articles FOR SELECT USING (
 CREATE POLICY "Developments are viewable by everyone" ON developments FOR SELECT USING (true);
 
 -- Callback requests policies
-CREATE POLICY "Users can view own callback requests" ON callback_requests FOR SELECT USING (auth.uid() = agent_id);
+CREATE POLICY "Users can view own callback requests" ON callback_requests FOR SELECT USING (auth.uid()::text = "agentId");
 CREATE POLICY "Anyone can create callback requests" ON callback_requests FOR INSERT WITH CHECK (true);
 
 -- Function to handle new user profile
 CREATE OR REPLACE FUNCTION public.handle_new_user()
 RETURNS TRIGGER AS $$
 BEGIN
-  INSERT INTO public.profiles (id, first_name, last_name, display_name, email, role, agency_name, phone_number)
+  INSERT INTO public.profiles (id, "firstName", "lastName", "displayName", email, role, "agencyName", "phoneNumber")
   VALUES (
     NEW.id,
     NEW.raw_user_meta_data->>'firstName',

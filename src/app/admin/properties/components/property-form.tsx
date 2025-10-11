@@ -34,10 +34,8 @@ import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { Separator } from "@/components/ui/separator";
-
-// Mock user data
-import users from "@/lib/docs/users.json";
-const currentUser = users.find(u => u.role === 'agent');
+import { useAuth } from "@/hooks/use-auth-supabase";
+import { supabase } from "@/lib/supabase";
 
 
 const formSchema = z.object({
@@ -108,13 +106,16 @@ export function PropertyForm({ property }: PropertyFormProps) {
     mode: "onChange",
   });
 
+  const { user } = useAuth();
+
   async function onSubmit(data: PropertyFormValues) {
-    if (!currentUser) {
+    if (!user) {
       toast({
         variant: "destructive",
         title: "Auth Error",
-        description: "No agent user found in mock data.",
+        description: "You must be logged in to post a property.",
       });
+      router.push("/login");
       return;
     }
     
@@ -124,22 +125,54 @@ export function PropertyForm({ property }: PropertyFormProps) {
     });
 
     try {
-        // This is a mock submission. In a real app, you'd save to a database.
-        console.log("Form data submitted:", data);
+        const propertyData = {
+          title: data.title,
+          description: data.description,
+          price: data.price,
+          location: data.location,
+          city: data.city,
+          bedrooms: data.bedrooms,
+          bathrooms: data.bathrooms,
+          area: data.area,
+          propertyType: data.propertyType,
+          amenities: data.amenities.split(',').map(a => a.trim()),
+          status: data.status,
+          keywords: data.keywords || '',
+          featured: data.featured,
+          latitude: data.latitude,
+          longitude: data.longitude,
+          landlordId: user.uid,
+          images: imagePreviews.length > 0 ? imagePreviews : [
+            "https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?w=800"
+          ]
+        };
         
         if (property) {
+            const { error } = await supabase
+              .from('properties')
+              .update(propertyData)
+              .eq('id', property.id);
+            
+            if (error) throw error;
+            
             toast({
                 title: "Success!",
                 description: "Property has been updated successfully.",
             });
-            router.push(`/admin/properties`);
         } else {
+            const { error } = await supabase
+              .from('properties')
+              .insert([propertyData]);
+            
+            if (error) throw error;
+            
             toast({
                 title: "Success!",
                 description: "Property has been created successfully.",
             });
-            router.push('/admin/properties');
         }
+        
+        router.push('/admin/properties');
         router.refresh();
 
     } catch (e: any) {

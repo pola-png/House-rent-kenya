@@ -7,7 +7,7 @@ import { Building, LogIn, Loader2 } from 'lucide-react';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
 import * as z from 'zod';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import React from 'react';
 
 import { Button } from '@/components/ui/button';
@@ -27,6 +27,8 @@ const formSchema = z.object({
 export default function LoginPage() {
   const bgImage = placeholderImages.placeholderImages.find(img => img.id === 'auth_bg');
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const redirect = searchParams.get('redirect') || '/admin/dashboard';
   const { toast } = useToast();
   const { login, loginWithGoogle } = useAuth();
 
@@ -38,14 +40,14 @@ export default function LoginPage() {
     },
   });
 
-  function onSubmit(values: z.infer<typeof formSchema>) {
-    const success = login(values.email, values.password);
+  async function onSubmit(values: z.infer<typeof formSchema>) {
+    const success = await login(values.email, values.password);
     if (success) {
       toast({
         title: 'Logged In!',
         description: 'You have successfully signed in.',
       });
-      router.push('/admin/dashboard');
+      router.push(redirect);
     } else {
       toast({
         variant: 'destructive',
@@ -55,13 +57,12 @@ export default function LoginPage() {
     }
   }
   
-  const handleGoogleSignIn = () => {
-    loginWithGoogle();
+  const handleGoogleSignIn = async () => {
+    await loginWithGoogle();
     toast({
-        title: 'Logged In!',
-        description: 'You have successfully signed in with Google.',
+        title: 'Logging In...',
+        description: 'Redirecting to Google sign in.',
     });
-    router.push('/admin/dashboard');
   }
 
 

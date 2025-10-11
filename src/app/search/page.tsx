@@ -9,74 +9,101 @@ import type { Property, UserProfile } from "@/lib/types";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useSearchParams } from "next/navigation";
 import { useState, useEffect } from "react";
-
-// Mock data
-import propertiesData from "@/lib/docs/properties.json";
-import usersData from "@/lib/docs/users.json";
-
+import { supabase } from "@/lib/supabase";
 
 export default function SearchPage() {
   const searchParams = useSearchParams();
   const [properties, setProperties] = useState<Property[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [pageTitle, setPageTitle] = useState("Properties");
 
   useEffect(() => {
-    // Simulate fetching and filtering data
-    const q = searchParams.get('q')?.toLowerCase();
-    const type = searchParams.get('type');
-    const minPrice = searchParams.get('min_price');
-    const maxPrice = searchParams.get('max_price');
-    const beds = searchParams.get('beds');
+    fetchProperties();
+  }, [searchParams]);
 
-    const agentMap = new Map(usersData.map(user => [user.uid, user]));
+  const fetchProperties = async () => {
+    setIsLoading(true);
+    try {
+      const q = searchParams.get('q')?.toLowerCase();
+      const type = searchParams.get('type');
+      const minPrice = searchParams.get('min_price');
+      const maxPrice = searchParams.get('max_price');
+      const beds = searchParams.get('beds');
 
-    let filtered = propertiesData.map(p => {
-        const agent = agentMap.get(p.landlordId) || usersData.find(u => u.role === 'agent');
-         return {
+      let query = supabase.from('properties').select('*');
+
+      // Filter by listing type (rent/sale)
+      if (type === 'rent') {
+        query = query.eq('status', 'For Rent');
+        setPageTitle("Properties for Rent");
+      } else if (type === 'buy') {
+        query = query.eq('status', 'For Sale');
+        setPageTitle("Properties for Sale");
+      }
+
+      // Search query
+      if (q) {
+        query = query.or(`title.ilike.%${q}%,location.ilike.%${q}%,city.ilike.%${q}%`);
+      }
+
+      // Price filters
+      if (minPrice) {
+        query = query.gte('price', parseInt(minPrice, 10));
+      }
+      if (maxPrice) {
+        query = query.lte('price', parseInt(maxPrice, 10));
+      }
+
+      // Bedroom filter
+      if (beds) {
+        query = query.gte('bedrooms', parseInt(beds, 10));
+      }
+
+      const { data, error } = await query.order('createdAt', { ascending: false });
+
+      if (error) throw error;
+
+      // Fetch agent details for each property
+      const propertiesWithAgents = await Promise.all(
+        (data || []).map(async (p) => {
+          const { data: userData } = await supabase.auth.admin.getUserById(p.landlordId);
+          
+          return {
             ...p,
             createdAt: new Date(p.createdAt),
             updatedAt: new Date(p.updatedAt),
-            agent: agent ? {
-                uid: agent.uid,
-                firstName: agent.firstName,
-                lastName: agent.lastName,
-                displayName: agent.displayName,
-                email: agent.email,
-                role: 'agent',
-                agencyName: agent.agencyName,
-                createdAt: new Date(agent.createdAt)
+            agent: userData?.user ? {
+              uid: userData.user.id,
+              firstName: userData.user.user_metadata?.firstName || '',
+              lastName: userData.user.user_metadata?.lastName || '',
+              displayName: userData.user.user_metadata?.displayName || userData.user.email?.split('@')[0] || '',
+              email: userData.user.email || '',
+              role: userData.user.user_metadata?.role || 'agent',
+              agencyName: userData.user.user_metadata?.agencyName,
+              photoURL: userData.user.user_metadata?.photoURL,
+              createdAt: new Date(userData.user.created_at)
             } : {
-                uid: 'default-agent',
-                firstName: 'Default',
-                lastName: 'Agent',
-                displayName: 'Default Agent',
-                email: 'agent@default.com',
-                role: 'agent',
-                agencyName: 'Default Agency',
-                createdAt: new Date()
+              uid: 'default-agent',
+              firstName: 'Default',
+              lastName: 'Agent',
+              displayName: 'Default Agent',
+              email: 'agent@default.com',
+              role: 'agent',
+              agencyName: 'Default Agency',
+              createdAt: new Date()
             }
-        };
-    });
+          };
+        })
+      );
 
-    if (q) {
-      filtered = filtered.filter(p => p.title.toLowerCase().includes(q) || p.location.toLowerCase().includes(q) || p.city.toLowerCase().includes(q));
+      setProperties(propertiesWithAgents);
+    } catch (error) {
+      console.error('Error fetching properties:', error);
+      setProperties([]);
+    } finally {
+      setIsLoading(false);
     }
-    if (type) {
-      filtered = filtered.filter(p => p.propertyType === type);
-    }
-    if (minPrice) {
-      filtered = filtered.filter(p => p.price >= parseInt(minPrice, 10));
-    }
-    if (maxPrice) {
-      filtered = filtered.filter(p => p.price <= parseInt(maxPrice, 10));
-    }
-    if (beds) {
-      filtered = filtered.filter(p => p.bedrooms >= parseInt(beds, 10));
-    }
-
-    setProperties(filtered);
-    setIsLoading(false);
-  }, [searchParams]);
+  };
 
   return (
     <div className="container mx-auto px-4 py-8">
@@ -86,7 +113,7 @@ export default function SearchPage() {
         </aside>
 
         <main className="lg:col-span-3">
-          <h1 className="text-3xl font-headline font-bold mb-2">Properties for Rent</h1>
+          <h1 className="text-3xl font-headline font-bold mb-2">{pageTitle}</h1>
           <div className="text-muted-foreground mb-6">
             {isLoading ? (
                 <Skeleton className="h-5 w-32" />

@@ -1,3 +1,4 @@
+"use client";
 
 import Link from "next/link";
 import {
@@ -46,14 +47,41 @@ import {
 import { Input } from "@/components/ui/input";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import placeholderImages from "@/lib/placeholder-images.json";
+import { useAuth } from "@/hooks/use-auth-supabase";
+import { useRouter } from "next/navigation";
+import { useEffect } from "react";
+import { Skeleton } from "@/components/ui/skeleton";
 
 export default function AdminLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
-    const adminAvatar = placeholderImages.placeholderImages.find(img => img.id === 'agent_1');
+  const { user, loading, logout } = useAuth();
+  const router = useRouter();
+
+  useEffect(() => {
+    if (!loading && !user) {
+      router.push("/login?redirect=/admin/dashboard");
+    }
+  }, [user, loading, router]);
+
+  const handleLogout = async () => {
+    await logout();
+    router.push("/");
+  };
+
+  if (loading) {
+    return (
+      <div className="flex h-screen items-center justify-center">
+        <Loader2 className="h-8 w-8 animate-spin" />
+      </div>
+    );
+  }
+
+  if (!user) {
+    return null;
+  }
 
   return (
     <SidebarProvider>
@@ -180,14 +208,17 @@ export default function AdminLayout({
                 className="overflow-hidden rounded-full"
               >
                 <Avatar>
-                    {adminAvatar && <AvatarImage src={adminAvatar.imageUrl} alt="Admin" />}
-                    <AvatarFallback>A</AvatarFallback>
+                    {user.photoURL && <AvatarImage src={user.photoURL} alt={user.displayName} />}
+                    <AvatarFallback>{user.displayName?.charAt(0).toUpperCase() || 'U'}</AvatarFallback>
                 </Avatar>
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
-              <DropdownMenuLabel>My Account</DropdownMenuLabel>
+              <DropdownMenuLabel>{user.displayName}</DropdownMenuLabel>
               <DropdownMenuSeparator />
+              <DropdownMenuItem asChild>
+                <Link href="/admin/profile">Profile</Link>
+              </DropdownMenuItem>
               <DropdownMenuItem asChild>
                 <Link href="/admin/settings">Settings</Link>
               </DropdownMenuItem>
@@ -195,11 +226,9 @@ export default function AdminLayout({
                 <Link href="/admin/support">Support</Link>
               </DropdownMenuItem>
               <DropdownMenuSeparator />
-              <DropdownMenuItem asChild>
-                <Link href="/">
-                    <LogOut className="mr-2 h-4 w-4" />
-                    Logout
-                </Link>
+              <DropdownMenuItem onClick={handleLogout}>
+                <LogOut className="mr-2 h-4 w-4" />
+                Logout
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>

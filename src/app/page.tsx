@@ -15,9 +15,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import type { Property } from '@/lib/types';
 import { Skeleton } from '@/components/ui/skeleton';
-// Mock Data
-import propertiesData from '@/lib/docs/properties.json';
-import usersData from '@/lib/docs/users.json';
+import { supabase } from '@/lib/supabase';
 
 
 const popularSearches = [
@@ -57,36 +55,59 @@ export default function Home() {
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    // Simulate fetching data and joining agent info
-    const agentMap = new Map(usersData.map(user => [user.uid, user]));
-    
-    const featured = propertiesData.filter(p => p.featured).slice(0, 6);
-    
-    const typedFeatured: Property[] = featured.map(p => {
-        const agent = agentMap.get(p.landlordId) || usersData.find(u => u.role === 'agent');
-        return {
+    fetchFeaturedProperties();
+  }, []);
+
+  const fetchFeaturedProperties = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('properties')
+        .select('*')
+        .eq('featured', true)
+        .limit(6)
+        .order('createdAt', { ascending: false });
+
+      if (error) throw error;
+
+      const propertiesWithAgents = await Promise.all(
+        (data || []).map(async (p) => {
+          const { data: userData } = await supabase.auth.admin.getUserById(p.landlordId);
+          
+          return {
             ...p,
             createdAt: new Date(p.createdAt),
             updatedAt: new Date(p.updatedAt),
-            agent: agent ? {
-                ...agent,
-                createdAt: new Date(agent.createdAt)
+            agent: userData?.user ? {
+              uid: userData.user.id,
+              firstName: userData.user.user_metadata?.firstName || '',
+              lastName: userData.user.user_metadata?.lastName || '',
+              displayName: userData.user.user_metadata?.displayName || userData.user.email?.split('@')[0] || '',
+              email: userData.user.email || '',
+              role: userData.user.user_metadata?.role || 'agent',
+              agencyName: userData.user.user_metadata?.agencyName,
+              photoURL: userData.user.user_metadata?.photoURL,
+              createdAt: new Date(userData.user.created_at)
             } : {
-                uid: 'default-agent',
-                firstName: 'Default',
-                lastName: 'Agent',
-                displayName: 'Default Agent',
-                email: 'agent@default.com',
-                role: 'agent',
-                agencyName: 'Default Agency',
-                createdAt: new Date()
+              uid: 'default-agent',
+              firstName: 'Default',
+              lastName: 'Agent',
+              displayName: 'Default Agent',
+              email: 'agent@default.com',
+              role: 'agent',
+              agencyName: 'Default Agency',
+              createdAt: new Date()
             }
-        };
-    });
+          };
+        })
+      );
 
-    setFeaturedProperties(typedFeatured);
-    setIsLoading(false);
-  }, []);
+      setFeaturedProperties(propertiesWithAgents);
+    } catch (error) {
+      console.error('Error fetching featured properties:', error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
 
   return (
