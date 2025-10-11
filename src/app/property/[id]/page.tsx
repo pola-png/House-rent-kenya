@@ -35,23 +35,27 @@ export default function PropertyPage() {
       if (error) throw error;
 
       if (data) {
-        const { data: userData } = await supabase.auth.admin.getUserById(data.landlordId);
+        const { data: profileData } = await supabase
+          .from('profiles')
+          .select('*')
+          .eq('id', data.landlordId)
+          .single();
         
         const typedProperty: Property = {
           ...data,
           createdAt: new Date(data.createdAt),
           updatedAt: new Date(data.updatedAt),
-          agent: userData?.user ? {
-            uid: userData.user.id,
-            firstName: userData.user.user_metadata?.firstName || '',
-            lastName: userData.user.user_metadata?.lastName || '',
-            displayName: userData.user.user_metadata?.displayName || userData.user.email?.split('@')[0] || '',
-            email: userData.user.email || '',
-            role: userData.user.user_metadata?.role || 'agent',
-            agencyName: userData.user.user_metadata?.agencyName,
-            phoneNumber: userData.user.user_metadata?.phoneNumber,
-            photoURL: userData.user.user_metadata?.photoURL,
-            createdAt: new Date(userData.user.created_at)
+          agent: profileData ? {
+            uid: profileData.id,
+            firstName: profileData.firstName || '',
+            lastName: profileData.lastName || '',
+            displayName: profileData.displayName || profileData.email?.split('@')[0] || '',
+            email: profileData.email || '',
+            role: profileData.role || 'agent',
+            agencyName: profileData.agencyName,
+            phoneNumber: profileData.phoneNumber,
+            photoURL: profileData.photoURL,
+            createdAt: new Date(profileData.createdAt)
           } : {
             uid: 'default',
             firstName: 'Property',

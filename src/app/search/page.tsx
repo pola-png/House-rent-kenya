@@ -66,22 +66,27 @@ export default function SearchPage() {
       // Fetch agent details for each property
       const propertiesWithAgents = await Promise.all(
         (data || []).map(async (p) => {
-          const { data: userData } = await supabase.auth.admin.getUserById(p.landlordId);
+          const { data: profileData } = await supabase
+            .from('profiles')
+            .select('*')
+            .eq('id', p.landlordId)
+            .single();
           
           return {
             ...p,
             createdAt: new Date(p.createdAt),
             updatedAt: new Date(p.updatedAt),
-            agent: userData?.user ? {
-              uid: userData.user.id,
-              firstName: userData.user.user_metadata?.firstName || '',
-              lastName: userData.user.user_metadata?.lastName || '',
-              displayName: userData.user.user_metadata?.displayName || userData.user.email?.split('@')[0] || '',
-              email: userData.user.email || '',
-              role: userData.user.user_metadata?.role || 'agent',
-              agencyName: userData.user.user_metadata?.agencyName,
-              photoURL: userData.user.user_metadata?.photoURL,
-              createdAt: new Date(userData.user.created_at)
+            agent: profileData ? {
+              uid: profileData.id,
+              firstName: profileData.firstName || '',
+              lastName: profileData.lastName || '',
+              displayName: profileData.displayName || profileData.email?.split('@')[0] || '',
+              email: profileData.email || '',
+              role: profileData.role || 'agent',
+              agencyName: profileData.agencyName,
+              phoneNumber: profileData.phoneNumber,
+              photoURL: profileData.photoURL,
+              createdAt: new Date(profileData.createdAt)
             } : {
               uid: 'default-agent',
               firstName: 'Default',
