@@ -41,22 +41,23 @@ export default function SignupPage() {
   });
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
-     const success = signup(values.email, values.password, {
+     const success = await signup(values.email, values.password, {
         role: 'user',
         firstName: values.firstName,
         lastName: values.lastName,
+        displayName: `${values.firstName} ${values.lastName}`,
     });
     if (success) {
         toast({
             title: 'Account Created!',
-            description: 'You have successfully signed up.',
+            description: 'You have successfully signed up. Please log in.',
         });
         router.push('/login');
     } else {
         toast({
             variant: 'destructive',
             title: 'Signup Failed',
-            description: 'An account with this email may already exist.',
+            description: 'Could not create account. Please try again.',
         });
     }
   }

@@ -45,23 +45,24 @@ export default function AgentSignupPage() {
   });
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
-    const success = signup(values.email, values.password, {
+    const success = await signup(values.email, values.password, {
         role: 'agent',
         firstName: values.firstName,
         lastName: values.lastName,
+        displayName: `${values.firstName} ${values.lastName}`,
         agencyName: values.agencyName,
     });
     if (success) {
         toast({
             title: 'Account Created!',
-            description: 'Your agent account has been successfully created.',
+            description: 'Your agent account has been successfully created. Please log in.',
         });
         router.push('/login');
     } else {
         toast({
             variant: 'destructive',
             title: 'Signup Failed',
-            description: 'An account with this email may already exist.',
+            description: 'Could not create account. Please try again.',
         });
     }
   }

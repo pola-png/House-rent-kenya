@@ -1,243 +1,144 @@
-'use client';
+"use client";
 
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-  CardFooter,
-} from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Separator } from '@/components/ui/separator';
-import { Switch } from '@/components/ui/switch';
-import { Settings, Loader2 } from 'lucide-react';
-import { useForm } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
-import * as z from 'zod';
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
-import { useToast } from '@/hooks/use-toast';
-import { Skeleton } from '@/components/ui/skeleton';
-import type { UserProfile } from '@/lib/types';
-import { useState, useEffect } from 'react';
-
-// Mock data
-import usersData from "@/lib/docs/users.json";
-const agentUser = usersData.find(u => u.role === 'agent');
-
-const profileFormSchema = z.object({
-  firstName: z.string().min(1, 'First name is required.'),
-  lastName: z.string().min(1, 'Last name is required.'),
-  agencyName: z.string().optional(),
-});
-
-const notificationsFormSchema = z.object({
-  emailNotifications: z.boolean().default(true),
-  smsNotifications: z.boolean().default(false),
-});
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Settings as SettingsIcon, User, Bell, Lock, Shield } from "lucide-react";
+import { useAuth } from "@/hooks/use-auth-supabase";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Switch } from "@/components/ui/switch";
+import { Separator } from "@/components/ui/separator";
+import { Skeleton } from "@/components/ui/skeleton";
 
 export default function SettingsPage() {
-  const { toast } = useToast();
-  const [userProfile, setUserProfile] = useState<UserProfile | undefined>(undefined);
-  const [isLoading, setIsLoading] = useState(true);
+  const { user, loading } = useAuth();
 
-  useEffect(() => {
-    // Simulate fetching user profile
-    if (agentUser) {
-        setUserProfile({
-            ...agentUser,
-            createdAt: new Date(agentUser.createdAt)
-        });
-    }
-    setIsLoading(false);
-  }, []);
+  if (loading) {
+    return (
+      <div className="space-y-6">
+        <Skeleton className="h-8 w-48" />
+        <Skeleton className="h-64 w-full" />
+      </div>
+    );
+  }
 
-  const profileForm = useForm<z.infer<typeof profileFormSchema>>({
-    resolver: zodResolver(profileFormSchema),
-    values: {
-      firstName: userProfile?.firstName || '',
-      lastName: userProfile?.lastName || '',
-      agencyName: userProfile?.agencyName || '',
-    },
-    enableReinitialize: true,
-  });
-
-  const notificationsForm = useForm<z.infer<typeof notificationsFormSchema>>({
-    resolver: zodResolver(notificationsFormSchema),
-    defaultValues: {
-      emailNotifications: true,
-      smsNotifications: false,
-    },
-  });
-
-  const handleProfileSave = (values: z.infer<typeof profileFormSchema>) => {
-    console.log('Profile settings saved:', values);
-    toast({
-      title: 'Profile Updated',
-      description: 'Your profile information has been saved.',
-    });
-  };
-
-  const handleNotificationsSave = (values: z.infer<typeof notificationsFormSchema>) => {
-    console.log('Notification settings saved:', values);
-    toast({
-      title: 'Preferences Saved',
-      description: 'Your notification preferences have been updated.',
-    });
-  };
+  if (!user) return null;
 
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold font-headline flex items-center gap-2">
-          <Settings className="h-6 w-6" />
-          Settings
-        </h1>
-        <p className="text-muted-foreground">
-          Manage your account settings, preferences, and notifications.
-        </p>
+        <h1 className="text-2xl font-bold font-headline">Settings</h1>
+        <p className="text-muted-foreground">Manage your account settings and preferences.</p>
       </div>
-      <Separator />
 
       <Card>
-        <Form {...profileForm}>
-          <form onSubmit={profileForm.handleSubmit(handleProfileSave)}>
-            <CardHeader>
-              <CardTitle>Profile</CardTitle>
-              <CardDescription>Update your personal and agency details.</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              {isLoading ? (
-                <div className="space-y-4">
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <Skeleton className="h-10 w-full" />
-                        <Skeleton className="h-10 w-full" />
-                    </div>
-                     <Skeleton className="h-10 w-full" />
-                     <Skeleton className="h-10 w-full" />
-                </div>
-              ) : (
-                <>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <FormField
-                      control={profileForm.control}
-                      name="firstName"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>First Name</FormLabel>
-                          <FormControl>
-                            <Input {...field} />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                    <FormField
-                      control={profileForm.control}
-                      name="lastName"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Last Name</FormLabel>
-                          <FormControl>
-                            <Input {...field} />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="email">Email</Label>
-                    <Input id="email" type="email" value={userProfile?.email || ''} readOnly disabled />
-                  </div>
-                  <FormField
-                    control={profileForm.control}
-                    name="agencyName"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Agency Name</FormLabel>
-                        <FormControl>
-                          <Input {...field} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                </>
-              )}
-            </CardContent>
-            <CardFooter className="border-t px-6 py-4">
-              <Button type="submit" disabled={profileForm.formState.isSubmitting}>
-                {profileForm.formState.isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                Save Profile
-              </Button>
-            </CardFooter>
-          </form>
-        </Form>
-      </Card>
-
-      <Card>
-        <Form {...notificationsForm}>
-          <form onSubmit={notificationsForm.handleSubmit(handleNotificationsSave)}>
-            <CardHeader>
-              <CardTitle>Notifications</CardTitle>
-              <CardDescription>Choose how you want to be notified about important events.</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <FormField
-                control={notificationsForm.control}
-                name="emailNotifications"
-                render={({ field }) => (
-                  <FormItem className="flex items-center justify-between rounded-lg border p-4">
-                    <div>
-                      <FormLabel htmlFor="email-notifications">Email Notifications</FormLabel>
-                      <p className="text-sm text-muted-foreground">
-                        Receive emails about new leads, messages, and property alerts.
-                      </p>
-                    </div>
-                    <FormControl>
-                      <Switch id="email-notifications" checked={field.value} onCheckedChange={field.onChange} />
-                    </FormControl>
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={notificationsForm.control}
-                name="smsNotifications"
-                render={({ field }) => (
-                  <FormItem className="flex items-center justify-between rounded-lg border p-4">
-                    <div>
-                      <FormLabel htmlFor="sms-notifications">SMS Notifications</FormLabel>
-                      <p className="text-sm text-muted-foreground">Get instant SMS alerts for high-priority events.</p>
-                    </div>
-                    <FormControl>
-                      <Switch id="sms-notifications" checked={field.value} onCheckedChange={field.onChange} />
-                    </FormControl>
-                  </FormItem>
-                )}
-              />
-            </CardContent>
-            <CardFooter className="border-t px-6 py-4">
-              <Button type="submit" disabled={notificationsForm.formState.isSubmitting}>
-                 {notificationsForm.formState.isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                Save Preferences
-              </Button>
-            </CardFooter>
-          </form>
-        </Form>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <User className="h-5 w-5" />
+            Account Information
+          </CardTitle>
+          <CardDescription>View your account details</CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="space-y-2">
+            <Label>Email</Label>
+            <Input value={user.email} disabled />
+          </div>
+          <div className="space-y-2">
+            <Label>Account Type</Label>
+            <Input value={user.role === 'agent' ? 'Agent' : user.role === 'admin' ? 'Admin' : 'User'} disabled />
+          </div>
+          <div className="space-y-2">
+            <Label>Member Since</Label>
+            <Input value={new Date(user.createdAt).toLocaleDateString()} disabled />
+          </div>
+        </CardContent>
       </Card>
 
       <Card>
         <CardHeader>
-          <CardTitle>Appearance</CardTitle>
-          <CardDescription>Customize the look and feel of your dashboard.</CardDescription>
+          <CardTitle className="flex items-center gap-2">
+            <Bell className="h-5 w-5" />
+            Notifications
+          </CardTitle>
+          <CardDescription>Manage your notification preferences</CardDescription>
         </CardHeader>
-        <CardContent>
-          <p className="text-muted-foreground">Theme customization (Light/Dark mode) will be implemented here.</p>
+        <CardContent className="space-y-4">
+          <div className="flex items-center justify-between">
+            <div className="space-y-0.5">
+              <Label>Email Notifications</Label>
+              <p className="text-sm text-muted-foreground">Receive email updates about new properties</p>
+            </div>
+            <Switch defaultChecked />
+          </div>
+          <Separator />
+          <div className="flex items-center justify-between">
+            <div className="space-y-0.5">
+              <Label>Property Alerts</Label>
+              <p className="text-sm text-muted-foreground">Get notified when properties match your criteria</p>
+            </div>
+            <Switch defaultChecked />
+          </div>
+          <Separator />
+          <div className="flex items-center justify-between">
+            <div className="space-y-0.5">
+              <Label>Marketing Emails</Label>
+              <p className="text-sm text-muted-foreground">Receive promotional offers and updates</p>
+            </div>
+            <Switch />
+          </div>
         </CardContent>
       </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Lock className="h-5 w-5" />
+            Security
+          </CardTitle>
+          <CardDescription>Manage your password and security settings</CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <Button variant="outline">Change Password</Button>
+          <Separator />
+          <div className="flex items-center justify-between">
+            <div className="space-y-0.5">
+              <Label>Two-Factor Authentication</Label>
+              <p className="text-sm text-muted-foreground">Add an extra layer of security</p>
+            </div>
+            <Button variant="outline" size="sm">Enable</Button>
+          </div>
+        </CardContent>
+      </Card>
+
+      {(user.role === 'agent' || user.role === 'admin') && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Shield className="h-5 w-5" />
+              Agent Settings
+            </CardTitle>
+            <CardDescription>Manage your agent-specific settings</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="flex items-center justify-between">
+              <div className="space-y-0.5">
+                <Label>Auto-respond to inquiries</Label>
+                <p className="text-sm text-muted-foreground">Automatically send responses to property inquiries</p>
+              </div>
+              <Switch />
+            </div>
+            <Separator />
+            <div className="flex items-center justify-between">
+              <div className="space-y-0.5">
+                <Label>Show contact information</Label>
+                <p className="text-sm text-muted-foreground">Display your contact details on listings</p>
+              </div>
+              <Switch defaultChecked />
+            </div>
+          </CardContent>
+        </Card>
+      )}
     </div>
   );
 }

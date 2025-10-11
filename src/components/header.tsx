@@ -68,10 +68,14 @@ export function Header() {
           <DropdownMenuContent align="end">
             <DropdownMenuLabel>My Account</DropdownMenuLabel>
             <DropdownMenuSeparator />
-            <DropdownMenuItem asChild>
-              <Link href="/admin/dashboard">Dashboard</Link>
-            </DropdownMenuItem>
-            <DropdownMenuItem asChild><Link href="/admin/profile">Profile</Link></DropdownMenuItem>
+            {(user.role === 'agent' || user.role === 'admin') && (
+              <DropdownMenuItem asChild>
+                <Link href="/admin/dashboard">Dashboard</Link>
+              </DropdownMenuItem>
+            )}
+            {(user.role === 'agent' || user.role === 'admin') && (
+              <DropdownMenuItem asChild><Link href="/admin/profile">Profile</Link></DropdownMenuItem>
+            )}
             <DropdownMenuItem asChild><Link href="/admin/settings">Settings</Link></DropdownMenuItem>
             <DropdownMenuSeparator />
             <DropdownMenuItem onClick={handleLogout}>
@@ -117,12 +121,16 @@ export function Header() {
       return (
         <div className="flex flex-col gap-2">
             <p className="text-sm font-medium text-muted-foreground px-4">My Account</p>
-            <SheetClose asChild>
-                <Link href="/admin/dashboard" className="flex items-center gap-2 p-4 text-lg font-medium transition-colors hover:text-primary"><Home className="h-5 w-5"/> Dashboard</Link>
-            </SheetClose>
-            <SheetClose asChild>
-                <Link href="/admin/profile" className="flex items-center gap-2 p-4 text-lg font-medium transition-colors hover:text-primary"><UserCircle className="h-5 w-5"/> Profile</Link>
-            </SheetClose>
+            {(user.role === 'agent' || user.role === 'admin') && (
+              <SheetClose asChild>
+                  <Link href="/admin/dashboard" className="flex items-center gap-2 p-4 text-lg font-medium transition-colors hover:text-primary"><Home className="h-5 w-5"/> Dashboard</Link>
+              </SheetClose>
+            )}
+            {(user.role === 'agent' || user.role === 'admin') && (
+              <SheetClose asChild>
+                  <Link href="/admin/profile" className="flex items-center gap-2 p-4 text-lg font-medium transition-colors hover:text-primary"><UserCircle className="h-5 w-5"/> Profile</Link>
+              </SheetClose>
+            )}
              <SheetClose asChild>
                 <Link href="/admin/settings" className="flex items-center gap-2 p-4 text-lg font-medium transition-colors hover:text-primary"><Settings className="h-5 w-5"/> Settings</Link>
             </SheetClose>
@@ -177,9 +185,11 @@ export function Header() {
           </nav>
 
           <div className="hidden md:flex items-center gap-2">
-            <Button variant="outline" className={buttonBorderClasses} asChild>
-              <Link href="/admin/properties/new">List your property</Link>
-            </Button>
+            {user && (user.role === 'agent' || user.role === 'admin') && (
+              <Button variant="outline" className={buttonBorderClasses} asChild>
+                <Link href="/admin/properties/new">List your property</Link>
+              </Button>
+            )}
             {renderUserAuth()}
           </div>
 
@@ -218,11 +228,13 @@ export function Header() {
                     ))}
                   </nav>
                   <div className="p-4 border-t flex flex-col gap-4">
-                    <SheetClose asChild>
-                      <Button variant="outline" className='border-primary text-primary' asChild>
-                        <Link href="/admin/properties/new">List your property</Link>
-                      </Button>
-                    </SheetClose>
+                    {user && (user.role === 'agent' || user.role === 'admin') && (
+                      <SheetClose asChild>
+                        <Button variant="outline" className='border-primary text-primary' asChild>
+                          <Link href="/admin/properties/new">List your property</Link>
+                        </Button>
+                      </SheetClose>
+                    )}
                      <Separator />
                      <MobileUserAuth />
                   </div>

@@ -63,6 +63,8 @@ export default function AdminLayout({
   useEffect(() => {
     if (!loading && !user) {
       router.push("/login?redirect=/admin/dashboard");
+    } else if (!loading && user && user.role !== 'agent' && user.role !== 'admin') {
+      router.push("/");
     }
   }, [user, loading, router]);
 
@@ -79,7 +81,7 @@ export default function AdminLayout({
     );
   }
 
-  if (!user) {
+  if (!user || (user.role !== 'agent' && user.role !== 'admin')) {
     return null;
   }
 
