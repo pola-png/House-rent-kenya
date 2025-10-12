@@ -43,17 +43,14 @@ export function SearchFilters() {
   const selectedBaths = searchParams.get('baths');
   const selectedAmenities = searchParams.getAll('amenities');
   
-  // Sync state with URL params
+  // Initialize state from URL on mount and when searchParams change
   useEffect(() => {
     setKeyword(urlKeyword);
-  }, [urlKeyword]);
-  
-  useEffect(() => {
     setPriceRange([
       urlMinPrice ? parseInt(urlMinPrice, 10) : 0,
       urlMaxPrice ? parseInt(urlMaxPrice, 10) : 1000000
     ]);
-  }, [urlMinPrice, urlMaxPrice]);
+  }, [searchParams]);
   
   const createQueryString = useCallback((paramsToUpdate: Record<string, string | string[] | null>) => {
     const params = new URLSearchParams(searchParams.toString());
