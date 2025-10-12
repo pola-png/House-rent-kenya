@@ -16,6 +16,22 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import type { Property } from '@/lib/types';
 import { Skeleton } from '@/components/ui/skeleton';
 import { supabase } from '@/lib/supabase';
+import { SEOSchema } from '@/components/seo-schema';
+import { Metadata } from 'next';
+
+export const metadata: Metadata = {
+  title: 'House Rent Kenya - Find Premium Apartments, Houses & Homes for Rent | #1 Property Platform',
+  description: 'Discover 10,000+ verified rental properties in Kenya. Premium apartments in Nairobi, Westlands, Kilimani. Instant booking, virtual tours, trusted agents. Start your search now!',
+  keywords: 'house rent kenya, apartments nairobi, property rental kenya, houses for rent, westlands apartments, kilimani houses, karen homes, real estate kenya',
+  openGraph: {
+    title: 'House Rent Kenya - 10,000+ Premium Properties | Instant Booking',
+    description: 'Find your dream home in Kenya. Browse verified apartments, houses & luxury properties. Virtual tours, instant booking, trusted agents.',
+    images: [{ url: '/og-home.jpg', width: 1200, height: 630 }],
+  },
+  alternates: {
+    canonical: 'https://houserent.co.ke',
+  },
+};
 
 
 const popularSearches = [
@@ -117,9 +133,12 @@ export default function Home() {
 
   return (
     <div className="flex flex-col min-h-screen">
+      <SEOSchema type="homepage" />
+      <SEOSchema type="organization" />
+      
       <main className="flex-1">
         {/* Hero Section */}
-        <section className="relative h-[70vh] md:h-[80vh] w-full flex items-center justify-center text-center text-white">
+        <section className="relative h-[70vh] md:h-[80vh] w-full flex items-center justify-center text-center text-white" itemScope itemType="https://schema.org/WebSite">
           <Image
             src={heroImageUrl}
             alt="Modern apartment building"
@@ -130,11 +149,11 @@ export default function Home() {
           />
           <div className="absolute inset-0 bg-black/60" />
           <div className="relative z-10 px-4 w-full max-w-4xl">
-            <h1 className="text-4xl md:text-6xl font-headline font-bold mb-4 drop-shadow-md">
-              Find your perfect property
+            <h1 className="text-4xl md:text-6xl font-headline font-bold mb-4 drop-shadow-md" itemProp="name">
+              Find Your Perfect Home in Kenya - 10,000+ Premium Properties
             </h1>
-            <p className="text-lg md:text-xl max-w-2xl mx-auto mb-8 drop-shadow">
-              Kenya's #1 property portal for rentals and sales.
+            <p className="text-lg md:text-xl max-w-2xl mx-auto mb-8 drop-shadow" itemProp="description">
+              Kenya's #1 property rental platform. Discover verified apartments, houses & luxury homes in Nairobi, Westlands, Kilimani. Instant booking, virtual tours, trusted agents.
             </p>
             <Tabs defaultValue="rent" className="max-w-3xl mx-auto">
                 <TabsList className="grid w-full grid-cols-4 bg-black/50 backdrop-blur-sm border border-white/20">
@@ -215,10 +234,10 @@ export default function Home() {
         </section>
 
         {/* Featured Properties Section */}
-        <section className="py-12 md:py-20 bg-background">
+        <section className="py-12 md:py-20 bg-background" itemScope itemType="https://schema.org/ItemList">
           <div className="container mx-auto px-4">
-            <h2 className="text-3xl md:text-4xl font-headline font-bold text-center mb-2">Featured Properties</h2>
-            <p className="text-center text-muted-foreground mb-10 max-w-2xl mx-auto">Handpicked listings from our team, featuring the best of what's available for rent right now.</p>
+            <h2 className="text-3xl md:text-4xl font-headline font-bold text-center mb-2" itemProp="name">Featured Premium Properties in Kenya</h2>
+            <p className="text-center text-muted-foreground mb-10 max-w-2xl mx-auto" itemProp="description">Handpicked verified listings from our team, featuring the best premium apartments, houses & homes available for rent in Nairobi, Westlands, Kilimani & across Kenya.</p>
             {isLoading ? (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
                     {[...Array(3)].map((_, i) => (
@@ -232,8 +251,11 @@ export default function Home() {
                 </div>
             ) : (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-                {featuredProperties && featuredProperties.map((property) => (
-                    <PropertyCard key={property.id} property={property} />
+                {featuredProperties && featuredProperties.map((property, index) => (
+                    <div key={property.id} itemProp="itemListElement" itemScope itemType="https://schema.org/ListItem">
+                      <meta itemProp="position" content={String(index + 1)} />
+                      <PropertyCard property={property} />
+                    </div>
                 ))}
                 </div>
             )}
@@ -248,9 +270,9 @@ export default function Home() {
         </section>
         
         {/* Popular Searches */}
-        <section className="py-12 md:py-20 bg-secondary/50">
+        <section className="py-12 md:py-20 bg-secondary/50" itemScope itemType="https://schema.org/WebPage">
           <div className="container mx-auto px-4">
-            <h2 className="text-3xl md:text-4xl font-headline font-bold text-center mb-10">Popular Searches</h2>
+            <h2 className="text-3xl md:text-4xl font-headline font-bold text-center mb-10" itemProp="name">Popular Property Searches in Kenya</h2>
             <div className="flex flex-wrap justify-center gap-2">
               {popularSearches.map((search, index) => (
                 <Button key={index} variant="outline" asChild className="bg-background">
@@ -262,13 +284,13 @@ export default function Home() {
         </section>
         
         {/* Why Choose Us */}
-        <section className="py-12 md:py-20 bg-background">
+        <section className="py-12 md:py-20 bg-background" itemScope itemType="https://schema.org/Service">
           <div className="container mx-auto px-4">
              <div className="text-center max-w-3xl mx-auto">
               <Badge variant="outline" className="mb-4">Why House Rent Kenya</Badge>
-              <h2 className="text-3xl md:text-4xl font-headline font-bold mb-4">Your Guide to the Property Market</h2>
-              <p className="text-muted-foreground text-lg mb-12">
-                We are dedicated to simplifying your property search experience with our comprehensive platform and expert support.
+              <h2 className="text-3xl md:text-4xl font-headline font-bold mb-4" itemProp="name">Kenya's Most Trusted Property Platform</h2>
+              <p className="text-muted-foreground text-lg mb-12" itemProp="description">
+                Join thousands of satisfied tenants and landlords who trust House Rent Kenya for verified properties, instant booking, virtual tours & expert support across Nairobi, Westlands, Kilimani & all Kenya.
               </p>
             </div>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-8">

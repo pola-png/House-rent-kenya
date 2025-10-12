@@ -1,40 +1,79 @@
-import type {NextConfig} from 'next';
-
-const nextConfig: NextConfig = {
-  /* config options here */
-  typescript: {
-    ignoreBuildErrors: true,
-  },
-  eslint: {
-    ignoreDuringBuilds: true,
-  },
+/** @type {import('next').NextConfig} */
+const nextConfig = {
   images: {
-    remotePatterns: [
+    domains: ['images.unsplash.com', 'plus.unsplash.com'],
+    unoptimized: true,
+    formats: ['image/webp', 'image/avif'],
+  },
+  experimental: {
+    optimizeCss: true,
+    optimizePackageImports: ['lucide-react', '@radix-ui/react-icons'],
+  },
+  compress: true,
+  poweredByHeader: false,
+  generateEtags: false,
+  async headers() {
+    return [
       {
-        protocol: 'https',
-        hostname: 'placehold.co',
-        port: '',
-        pathname: '/**',
+        source: '/(.*)',
+        headers: [
+          {
+            key: 'X-Content-Type-Options',
+            value: 'nosniff',
+          },
+          {
+            key: 'X-Frame-Options',
+            value: 'DENY',
+          },
+          {
+            key: 'X-XSS-Protection',
+            value: '1; mode=block',
+          },
+          {
+            key: 'Referrer-Policy',
+            value: 'origin-when-cross-origin',
+          },
+          {
+            key: 'Permissions-Policy',
+            value: 'camera=(), microphone=(), geolocation=()',
+          },
+        ],
       },
       {
-        protocol: 'https',
-        hostname: 'images.unsplash.com',
-        port: '',
-        pathname: '/**',
+        source: '/sitemap.xml',
+        headers: [
+          {
+            key: 'Content-Type',
+            value: 'application/xml',
+          },
+          {
+            key: 'Cache-Control',
+            value: 'public, max-age=86400, s-maxage=86400',
+          },
+        ],
       },
       {
-        protocol: 'https',
-        hostname: 'picsum.photos',
-        port: '',
-        pathname: '/**',
+        source: '/robots.txt',
+        headers: [
+          {
+            key: 'Content-Type',
+            value: 'text/plain',
+          },
+          {
+            key: 'Cache-Control',
+            value: 'public, max-age=86400, s-maxage=86400',
+          },
+        ],
       },
+    ];
+  },
+  async rewrites() {
+    return [
       {
-        protocol: 'https',
-        hostname: '*.supabase.co',
-        port: '',
-        pathname: '/**',
+        source: '/sitemap.xml',
+        destination: '/api/sitemap',
       },
-    ],
+    ];
   },
 };
 
