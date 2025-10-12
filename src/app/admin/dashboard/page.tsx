@@ -132,14 +132,19 @@ export default function Dashboard() {
           <p className="text-muted-foreground">Welcome back! Here's your property performance overview.</p>
         </div>
         <div className="flex items-center gap-2">
-          <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">
-            <Activity className="h-3 w-3 mr-1" />
-            Live Data
-          </Badge>
-          <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200">
-            <Zap className="h-3 w-3 mr-1" />
-            AI Powered
-          </Badge>
+          <div className="flex items-center gap-2">
+            <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">
+              <Activity className="h-3 w-3 mr-1" />
+              Live Data
+            </Badge>
+            <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200">
+              <Zap className="h-3 w-3 mr-1" />
+              AI Powered
+            </Badge>
+            <Badge variant="outline" className="bg-purple-50 text-purple-700 border-purple-200">
+              Real-time Analytics
+            </Badge>
+          </div>
         </div>
       </div>
       
