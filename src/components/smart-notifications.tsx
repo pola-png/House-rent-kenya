@@ -120,20 +120,9 @@ export function SmartNotifications() {
         }
       }
 
-      // Always add some helpful notifications
-      realNotifications.push({
-        id: '4',
-        type: 'market_update',
-        title: 'Market Insight',
-        message: 'Properties with virtual tours get 60% more inquiries',
-        timestamp: new Date(Date.now() - 1000 * 60 * 60 * 12),
-        read: true,
-        priority: 'low'
-      });
-
-      // Add welcome notification for new users
+      // Only add welcome notification for new users with no properties
       if (!properties || properties.length === 0) {
-        realNotifications.unshift({
+        realNotifications.push({
           id: '0',
           type: 'market_update',
           title: 'Welcome to House Rent Kenya!',

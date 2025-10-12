@@ -56,41 +56,36 @@ export function RealAgentRating() {
         
         console.log('Total views:', totalViews, 'Rented:', rentedCount, 'Total:', totalProperties);
         
-        // Rating algorithm based on performance
-        let score = 3.0; // Base score
-        
-        // Boost for views
-        if (totalViews > 5) score += 0.3;
-        if (totalViews > 10) score += 0.2;
-        
-        // Boost for successful rentals
-        const successRate = totalProperties > 0 ? rentedCount / totalProperties : 0;
-        score += successRate * 1.5;
-        
-        // Boost for having properties
-        if (totalProperties > 0) score += 0.5;
-        
-        // Cap at 5.0
-        score = Math.min(5.0, score);
-        
-        // Calculate review count based on activity
-        const reviewCount = Math.max(1, Math.floor(totalViews / 2) + rentedCount * 2 + totalProperties);
-        
-        const finalRating = {
-          score: Number(score.toFixed(1)),
-          reviews: reviewCount
-        };
-        
-        console.log('Final rating:', finalRating);
-        setRating(finalRating);
+        // Only show rating if there's actual activity
+        if (totalViews > 0 || rentedCount > 0) {
+          let score = 0;
+          
+          // Boost for views
+          if (totalViews > 5) score += 1.0;
+          if (totalViews > 10) score += 1.0;
+          if (totalViews > 20) score += 1.0;
+          
+          // Boost for successful rentals
+          const successRate = totalProperties > 0 ? rentedCount / totalProperties : 0;
+          score += successRate * 2.0;
+          
+          score = Math.min(5.0, score);
+          
+          const reviewCount = Math.floor(totalViews / 5) + rentedCount * 2;
+          
+          setRating({
+            score: Number(score.toFixed(1)),
+            reviews: reviewCount
+          });
+        } else {
+          setRating({ score: 0, reviews: 0 });
+        }
       } else {
-        // New agent with no properties
-        setRating({ score: 3.5, reviews: 1 });
+        setRating({ score: 0, reviews: 0 });
       }
     } catch (error) {
       console.error('Error calculating rating:', error);
-      // Fallback to default
-      setRating({ score: 3.0, reviews: 1 });
+      setRating({ score: 0, reviews: 0 });
     } finally {
       setIsLoading(false);
     }
@@ -107,12 +102,12 @@ export function RealAgentRating() {
 
   return (
     <div className="space-y-2">
-      <div className="text-2xl font-bold">{rating.score}★</div>
+      <div className="text-2xl font-bold">{rating.score > 0 ? `${rating.score}★` : '0'}</div>
       <div className="flex items-center text-xs text-yellow-600">
         <Star className="h-3 w-3 mr-1 fill-current" />
-        Based on {rating.reviews} reviews
+        {rating.reviews > 0 ? `Based on ${rating.reviews} reviews` : 'No reviews yet'}
       </div>
-      <p className="text-xs text-muted-foreground">Real performance rating</p>
+      <p className="text-xs text-muted-foreground">{rating.score > 0 ? 'Real performance rating' : 'Start getting views to build rating'}</p>
     </div>
   );
 }
