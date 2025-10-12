@@ -34,29 +34,29 @@ export function SearchFilters() {
   });
   const debouncedPriceRange = useDebounce(priceRange, 500);
 
-  // Read initial values from URL for controlled components
-  const selectedTypes = [...searchParams.getAll('property_type'), ...searchParams.getAll('type')].filter(t => !['rent', 'buy', 'short-let', 'land'].includes(t));
+  // Initialize state from URL parameters
+  const [initialized, setInitialized] = useState(false);
+  
+  useEffect(() => {
+    if (!initialized) {
+      const urlKeyword = searchParams.get('q') || '';
+      const urlMinPrice = searchParams.get('min_price');
+      const urlMaxPrice = searchParams.get('max_price');
+      
+      setKeyword(urlKeyword);
+      setPriceRange([
+        urlMinPrice ? parseInt(urlMinPrice, 10) : 0,
+        urlMaxPrice ? parseInt(urlMaxPrice, 10) : 1000000
+      ]);
+      setInitialized(true);
+    }
+  }, [searchParams, initialized]);
+  
+  // Read current values from URL
+  const selectedTypes = searchParams.getAll('property_type');
   const selectedBeds = searchParams.get('beds');
   const selectedBaths = searchParams.get('baths');
   const selectedAmenities = searchParams.getAll('amenities');
-  
-  // Update local state when URL params change
-  useEffect(() => {
-    const urlKeyword = searchParams.get('q') || '';
-    if (urlKeyword !== keyword) {
-      setKeyword(urlKeyword);
-    }
-  }, [searchParams]);
-  
-  useEffect(() => {
-    const urlMinPrice = searchParams.get('min_price');
-    const urlMaxPrice = searchParams.get('max_price');
-    const newMin = urlMinPrice ? parseInt(urlMinPrice, 10) : 0;
-    const newMax = urlMaxPrice ? parseInt(urlMaxPrice, 10) : 1000000;
-    if (newMin !== priceRange[0] || newMax !== priceRange[1]) {
-      setPriceRange([newMin, newMax]);
-    }
-  }, [searchParams]);
   
   const createQueryString = useCallback((paramsToUpdate: Record<string, string | string[] | null>) => {
     const params = new URLSearchParams(searchParams.toString());
@@ -171,18 +171,18 @@ export function SearchFilters() {
             <AccordionTrigger className="font-bold">Property Type</AccordionTrigger>
             <AccordionContent className="space-y-2 pt-2">
               {propertyTypes.map((type) => {
-                const isChecked = selectedTypes.some(t => t.toLowerCase() === type.toLowerCase());
+                const isChecked = selectedTypes.includes(type.toLowerCase()) || selectedTypes.includes(type);
                 return (
                   <div key={type} className="flex items-center space-x-2">
                     <Checkbox 
                       id={`type-${type}`}
                       checked={isChecked}
-                      onCheckedChange={(checked) => handleCheckboxChange('property_type', type, !!checked)}
+                      onCheckedChange={(checked) => handleCheckboxChange('property_type', type.toLowerCase(), !!checked)}
                     />
                     <Label htmlFor={`type-${type}`} className="font-normal">{type}</Label>
                   </div>
                 );
-              })}
+              })
             </AccordionContent>
           </AccordionItem>
           
