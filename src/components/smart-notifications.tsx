@@ -35,11 +35,18 @@ export function SmartNotifications() {
     if (!user) return;
 
     try {
-      const { data: properties } = await supabase
+      console.log('Generating notifications for user:', user.uid);
+      
+      const { data: properties, error: propsError } = await supabase
         .from('properties')
         .select('*')
         .eq('landlordId', user.uid)
         .order('createdAt', { ascending: false });
+
+      if (propsError) {
+        console.error('Error fetching user properties:', propsError);
+        throw propsError;
+      }
 
       const { data: allProperties } = await supabase
         .from('properties')
@@ -47,6 +54,7 @@ export function SmartNotifications() {
         .order('createdAt', { ascending: false })
         .limit(10);
 
+      console.log('User properties:', properties?.length || 0);
       const realNotifications: Notification[] = [];
 
       if (properties && properties.length > 0) {
@@ -100,7 +108,7 @@ export function SmartNotifications() {
         }
       }
 
-      // Market insight notification
+      // Always add some helpful notifications
       realNotifications.push({
         id: '4',
         type: 'market_update',
@@ -111,6 +119,20 @@ export function SmartNotifications() {
         priority: 'low'
       });
 
+      // Add welcome notification for new users
+      if (!properties || properties.length === 0) {
+        realNotifications.unshift({
+          id: '0',
+          type: 'market_update',
+          title: 'Welcome to House Rent Kenya!',
+          message: 'Start by posting your first property to attract potential tenants',
+          timestamp: new Date(Date.now() - 1000 * 60 * 5),
+          read: false,
+          priority: 'high'
+        });
+      }
+
+      console.log('Generated notifications:', realNotifications.length);
       setNotifications(realNotifications);
     } catch (error) {
       console.error('Error generating notifications:', error);
