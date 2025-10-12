@@ -69,10 +69,31 @@ export default function Home() {
   
   const [featuredProperties, setFeaturedProperties] = useState<Property[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [searchForm, setSearchForm] = useState({
+    location: '',
+    type: '',
+    minBeds: '',
+    minPrice: '',
+    maxPrice: '',
+    listingType: 'rent'
+  });
 
   useEffect(() => {
     fetchFeaturedProperties();
   }, []);
+
+  const handleSearch = () => {
+    const params = new URLSearchParams();
+    
+    if (searchForm.location) params.set('q', searchForm.location);
+    if (searchForm.listingType) params.set('type', searchForm.listingType);
+    if (searchForm.type) params.set('property_type', searchForm.type);
+    if (searchForm.minBeds) params.set('beds', searchForm.minBeds);
+    if (searchForm.minPrice) params.set('min_price', searchForm.minPrice);
+    if (searchForm.maxPrice) params.set('max_price', searchForm.maxPrice);
+    
+    window.location.href = `/search?${params.toString()}`;
+  };
 
   const fetchFeaturedProperties = async () => {
     try {
@@ -155,7 +176,7 @@ export default function Home() {
             <p className="text-lg md:text-xl max-w-2xl mx-auto mb-8 drop-shadow" itemProp="description">
               Kenya's #1 property rental platform. Discover verified apartments, houses & luxury homes in Nairobi, Westlands, Kilimani. Instant booking, virtual tours, trusted agents.
             </p>
-            <Tabs defaultValue="rent" className="max-w-3xl mx-auto">
+            <Tabs value={searchForm.listingType} onValueChange={(value) => setSearchForm(prev => ({...prev, listingType: value}))} className="max-w-3xl mx-auto">
                 <TabsList className="grid w-full grid-cols-4 bg-black/50 backdrop-blur-sm border border-white/20">
                     <TabsTrigger value="rent" className="data-[state=active]:bg-white data-[state=active]:text-primary text-white">RENT</TabsTrigger>
                     <TabsTrigger value="buy" className="data-[state=active]:bg-white data-[state=active]:text-primary text-white">BUY</TabsTrigger>
@@ -171,17 +192,18 @@ export default function Home() {
                                   type="text"
                                   placeholder="Enter location, e.g., Nairobi, Kilimani"
                                   className="w-full pl-10 text-foreground h-12 text-base"
+                                  value={searchForm.location}
+                                  onChange={(e) => setSearchForm(prev => ({...prev, location: e.target.value}))}
+                                  onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
                               />
                           </div>
-                          <Button asChild size="lg" className="w-full md:w-auto h-12">
-                              <Link href="/search">
-                                  <Search className="mr-2 h-5 w-5" />
-                                  Search
-                              </Link>
+                          <Button size="lg" className="w-full md:w-auto h-12" onClick={handleSearch}>
+                              <Search className="mr-2 h-5 w-5" />
+                              Search
                           </Button>
                       </div>
                       <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
-                        <Select>
+                        <Select value={searchForm.type} onValueChange={(value) => setSearchForm(prev => ({...prev, type: value}))}>
                           <SelectTrigger className="text-foreground">
                             <SelectValue placeholder="Type" />
                           </SelectTrigger>
@@ -193,7 +215,7 @@ export default function Home() {
                             <SelectItem value="villa">Villa</SelectItem>
                           </SelectContent>
                         </Select>
-                        <Select>
+                        <Select value={searchForm.minBeds} onValueChange={(value) => setSearchForm(prev => ({...prev, minBeds: value}))}>
                           <SelectTrigger className="text-foreground">
                             <SelectValue placeholder="Min Beds" />
                           </SelectTrigger>
@@ -204,7 +226,7 @@ export default function Home() {
                             <SelectItem value="4">4+</SelectItem>
                           </SelectContent>
                         </Select>
-                         <Select>
+                         <Select value={searchForm.minPrice} onValueChange={(value) => setSearchForm(prev => ({...prev, minPrice: value}))}>
                           <SelectTrigger className="text-foreground">
                             <SelectValue placeholder="Min Price" />
                           </SelectTrigger>
@@ -215,7 +237,7 @@ export default function Home() {
                             <SelectItem value="200000">Ksh 200,000</SelectItem>
                           </SelectContent>
                         </Select>
-                        <Select>
+                        <Select value={searchForm.maxPrice} onValueChange={(value) => setSearchForm(prev => ({...prev, maxPrice: value}))}>
                           <SelectTrigger className="text-foreground">
                             <SelectValue placeholder="Max Price" />
                           </SelectTrigger>
@@ -274,11 +296,43 @@ export default function Home() {
           <div className="container mx-auto px-4">
             <h2 className="text-3xl md:text-4xl font-headline font-bold text-center mb-10" itemProp="name">Popular Property Searches in Kenya</h2>
             <div className="flex flex-wrap justify-center gap-2">
-              {popularSearches.map((search, index) => (
-                <Button key={index} variant="outline" asChild className="bg-background">
-                  <Link href={`/search?q=${encodeURIComponent(search)}`}>{search}</Link>
-                </Button>
-              ))}
+              {popularSearches.map((search, index) => {
+                const searchQuery = search.toLowerCase();
+                let searchUrl = '/search?';
+                
+                // Extract property type and location from search text
+                if (searchQuery.includes('apartment')) {
+                  searchUrl += 'property_type=apartment&';
+                }
+                if (searchQuery.includes('house')) {
+                  searchUrl += 'property_type=house&';
+                }
+                if (searchQuery.includes('townhouse')) {
+                  searchUrl += 'property_type=townhouse&';
+                }
+                if (searchQuery.includes('penthouse')) {
+                  searchUrl += 'property_type=penthouse&';
+                }
+                if (searchQuery.includes('villa')) {
+                  searchUrl += 'property_type=villa&';
+                }
+                
+                // Extract bedroom count
+                if (searchQuery.includes('4 bedroom')) {
+                  searchUrl += 'beds=4&';
+                } else if (searchQuery.includes('3 bedroom')) {
+                  searchUrl += 'beds=3&';
+                }
+                
+                // Add location as general search query
+                searchUrl += `q=${encodeURIComponent(search)}&type=rent`;
+                
+                return (
+                  <Button key={index} variant="outline" asChild className="bg-background">
+                    <Link href={searchUrl}>{search}</Link>
+                  </Button>
+                );
+              })
             </div>
           </div>
         </section>

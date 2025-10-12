@@ -32,6 +32,7 @@ export default function SearchPage() {
     try {
       const q = searchParams.get('q')?.toLowerCase();
       const type = searchParams.get('type');
+      const propertyType = searchParams.get('property_type');
       const minPrice = searchParams.get('min_price');
       const maxPrice = searchParams.get('max_price');
       const beds = searchParams.get('beds');
@@ -40,16 +41,27 @@ export default function SearchPage() {
 
       // Filter by listing type (rent/sale)
       if (type === 'rent') {
-        query = query.eq('status', 'For Rent');
+        query = query.in('status', ['Available', 'For Rent']);
         setPageTitle("Properties for Rent");
       } else if (type === 'buy') {
         query = query.eq('status', 'For Sale');
         setPageTitle("Properties for Sale");
+      } else if (type === 'short-let') {
+        query = query.eq('status', 'Short Let');
+        setPageTitle("Short Let Properties");
+      } else if (type === 'land') {
+        query = query.eq('propertyType', 'Land');
+        setPageTitle("Land for Sale");
       }
 
       // Search query
       if (q) {
-        query = query.or(`title.ilike.%${q}%,location.ilike.%${q}%,city.ilike.%${q}%`);
+        query = query.or(`title.ilike.%${q}%,location.ilike.%${q}%,city.ilike.%${q}%,propertyType.ilike.%${q}%`);
+      }
+
+      // Property type filter
+      if (propertyType) {
+        query = query.ilike('propertyType', `%${propertyType}%`);
       }
 
       // Price filters
