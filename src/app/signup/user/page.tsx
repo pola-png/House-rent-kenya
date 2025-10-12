@@ -20,6 +20,7 @@ import { useAuth } from '@/hooks/use-auth-supabase';
 const formSchema = z.object({
   firstName: z.string().min(1, { message: 'First name is required.' }),
   lastName: z.string().min(1, { message: 'Last name is required.' }),
+  phoneNumber: z.string().min(10, { message: 'Phone number is required (minimum 10 digits).' }),
   email: z.string().email({ message: 'Please enter a valid email.' }),
   password: z.string().min(6, { message: 'Password must be at least 6 characters.' }),
 });
@@ -35,6 +36,7 @@ export default function SignupPage() {
     defaultValues: {
       firstName: '',
       lastName: '',
+      phoneNumber: '',
       email: '',
       password: '',
     },
@@ -46,6 +48,7 @@ export default function SignupPage() {
         firstName: values.firstName,
         lastName: values.lastName,
         displayName: `${values.firstName} ${values.lastName}`,
+        phoneNumber: values.phoneNumber,
     });
     if (success) {
         toast({
@@ -103,6 +106,19 @@ export default function SignupPage() {
                     )}
                   />
                 </div>
+                <FormField
+                  control={form.control}
+                  name="phoneNumber"
+                  render={({ field }) => (
+                    <FormItem className="grid gap-2">
+                      <FormLabel>Phone Number</FormLabel>
+                      <FormControl>
+                        <Input placeholder="+254712345678" {...field} disabled={isSubmitting}/>
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
                 <FormField
                   control={form.control}
                   name="email"

@@ -220,6 +220,16 @@ Don't miss this opportunity to secure a premium property in one of ${currentData
       router.push("/login");
       return;
     }
+
+    if (!user.phoneNumber) {
+      toast({
+        variant: "destructive",
+        title: "Phone Number Required",
+        description: "Please add your phone number in your profile before posting properties.",
+      });
+      router.push("/admin/profile");
+      return;
+    }
     
     toast({
         title: "Submitting...",

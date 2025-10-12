@@ -129,38 +129,36 @@ export default function Dashboard() {
 
   return (
     <div className="flex flex-col gap-6">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-bold font-headline tracking-tight">Agent Dashboard</h1>
-          <p className="text-muted-foreground">Welcome back! Here's your property performance overview.</p>
+          <h1 className="text-2xl sm:text-3xl font-bold font-headline tracking-tight">Agent Dashboard</h1>
+          <p className="text-muted-foreground text-sm sm:text-base">Welcome back! Here's your property performance overview.</p>
         </div>
-        <div className="flex items-center gap-2">
-          <div className="flex items-center gap-2">
-            <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">
-              <Activity className="h-3 w-3 mr-1" />
-              Live Data
-            </Badge>
-            <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200">
-              <Zap className="h-3 w-3 mr-1" />
-              AI Powered
-            </Badge>
-            <Badge variant="outline" className="bg-purple-50 text-purple-700 border-purple-200">
-              Real-time Analytics
-            </Badge>
-          </div>
+        <div className="flex flex-wrap items-center gap-2">
+          <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200 text-xs">
+            <Activity className="h-3 w-3 mr-1" />
+            Live Data
+          </Badge>
+          <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200 text-xs">
+            <Zap className="h-3 w-3 mr-1" />
+            AI Powered
+          </Badge>
+          <Badge variant="outline" className="bg-purple-50 text-purple-700 border-purple-200 text-xs hidden sm:inline-flex">
+            Real-time Analytics
+          </Badge>
         </div>
       </div>
       
       <Tabs defaultValue="overview" className="w-full">
-        <TabsList className="grid w-full grid-cols-4">
-          <TabsTrigger value="overview">Overview</TabsTrigger>
-          <TabsTrigger value="analytics">Analytics</TabsTrigger>
-          <TabsTrigger value="performance">Performance</TabsTrigger>
-          <TabsTrigger value="insights">AI Insights</TabsTrigger>
+        <TabsList className="grid w-full grid-cols-2 sm:grid-cols-4">
+          <TabsTrigger value="overview" className="text-xs sm:text-sm">Overview</TabsTrigger>
+          <TabsTrigger value="analytics" className="text-xs sm:text-sm">Analytics</TabsTrigger>
+          <TabsTrigger value="performance" className="text-xs sm:text-sm">Performance</TabsTrigger>
+          <TabsTrigger value="insights" className="text-xs sm:text-sm">AI Insights</TabsTrigger>
         </TabsList>
         
         <TabsContent value="overview" className="space-y-6">
-          <div className="grid gap-4 md:grid-cols-2 md:gap-8 lg:grid-cols-4">
+          <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
             <Card className="relative overflow-hidden">
               <div className="absolute top-0 right-0 w-20 h-20 bg-gradient-to-br from-blue-500/10 to-purple-500/10 rounded-full -mr-10 -mt-10"></div>
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
@@ -250,7 +248,7 @@ export default function Dashboard() {
           </div>
           
           {/* Performance Metrics */}
-          <div className="grid gap-4 md:grid-cols-3">
+          <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
             <Card>
               <CardHeader className="pb-2">
                 <CardTitle className="text-sm font-medium flex items-center gap-2">
@@ -299,7 +297,7 @@ export default function Dashboard() {
             </Card>
           </div>
           
-          <div className="grid gap-4 md:gap-8 lg:grid-cols-2 xl:grid-cols-3">
+          <div className="grid gap-4 grid-cols-1 lg:grid-cols-2 xl:grid-cols-3">
             <Card className="xl:col-span-2">
           <CardHeader>
             <CardTitle>Recent Listings</CardTitle>

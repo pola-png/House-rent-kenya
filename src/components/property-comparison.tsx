@@ -44,7 +44,7 @@ export function PropertyComparison({ properties }: PropertyComparisonProps) {
         <CardTitle>Compare Properties ({selectedProperties.length}/3)</CardTitle>
       </CardHeader>
       <CardContent>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
           {selectedProperties.map((property) => (
             <div key={property.id} className="relative border rounded-lg p-4">
               <Button
@@ -99,7 +99,7 @@ export function PropertyComparison({ properties }: PropertyComparisonProps) {
           ))}
         </div>
         
-        <div className="mt-4 flex justify-between">
+        <div className="mt-4 flex flex-col sm:flex-row justify-between gap-2">
           <Button variant="outline" onClick={() => setSelectedProperties([])}>
             Clear All
           </Button>

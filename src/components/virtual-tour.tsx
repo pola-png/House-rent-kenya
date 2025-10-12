@@ -64,27 +64,29 @@ export function VirtualTour({ propertyId, images, title }: VirtualTourProps) {
           
           {/* Tour Controls Overlay */}
           <div className="absolute inset-0 bg-black/20 opacity-0 hover:opacity-100 transition-opacity duration-300">
-            <div className="absolute bottom-4 left-4 right-4 flex items-center justify-between">
-              <div className="flex items-center gap-2">
+            <div className="absolute bottom-2 sm:bottom-4 left-2 sm:left-4 right-2 sm:right-4 flex flex-col sm:flex-row items-center justify-between gap-2">
+              <div className="flex items-center gap-1 sm:gap-2">
                 <Button
                   size="sm"
                   variant="secondary"
                   onClick={isPlaying ? () => setIsPlaying(false) : startTour}
+                  className="text-xs sm:text-sm"
                 >
-                  <Play className="h-4 w-4 mr-1" />
-                  {isPlaying ? 'Pause Tour' : 'Start Tour'}
+                  <Play className="h-3 w-3 sm:h-4 sm:w-4 mr-1" />
+                  <span className="hidden sm:inline">{isPlaying ? 'Pause Tour' : 'Start Tour'}</span>
+                  <span className="sm:hidden">{isPlaying ? 'Pause' : 'Play'}</span>
                 </Button>
                 <Button size="sm" variant="secondary" onClick={() => setIsMuted(!isMuted)}>
-                  {isMuted ? <VolumeX className="h-4 w-4" /> : <Volume2 className="h-4 w-4" />}
+                  {isMuted ? <VolumeX className="h-3 w-3 sm:h-4 sm:w-4" /> : <Volume2 className="h-3 w-3 sm:h-4 sm:w-4" />}
                 </Button>
               </div>
               
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-1 sm:gap-2">
                 <Button size="sm" variant="secondary" onClick={() => setCurrentImageIndex(0)}>
-                  <RotateCcw className="h-4 w-4" />
+                  <RotateCcw className="h-3 w-3 sm:h-4 sm:w-4" />
                 </Button>
                 <Button size="sm" variant="secondary" onClick={() => setIsFullscreen(!isFullscreen)}>
-                  <Maximize className="h-4 w-4" />
+                  <Maximize className="h-3 w-3 sm:h-4 sm:w-4" />
                 </Button>
               </div>
             </div>
@@ -121,16 +123,18 @@ export function VirtualTour({ propertyId, images, title }: VirtualTourProps) {
         </div>
 
         {/* Tour Info */}
-        <div className="flex items-center justify-between text-sm text-muted-foreground">
-          <span>Image {currentImageIndex + 1} of {images.length}</span>
-          <div className="flex items-center gap-4">
-            <Badge variant="outline">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 text-sm text-muted-foreground">
+          <span className="text-xs sm:text-sm">Image {currentImageIndex + 1} of {images.length}</span>
+          <div className="flex items-center gap-2">
+            <Badge variant="outline" className="text-xs">
               <Video className="h-3 w-3 mr-1" />
-              HD Quality
+              <span className="hidden sm:inline">HD Quality</span>
+              <span className="sm:hidden">HD</span>
             </Badge>
-            <Badge variant="outline">
+            <Badge variant="outline" className="text-xs">
               <Camera className="h-3 w-3 mr-1" />
-              360° Available
+              <span className="hidden sm:inline">360° Available</span>
+              <span className="sm:hidden">360°</span>
             </Badge>
           </div>
         </div>

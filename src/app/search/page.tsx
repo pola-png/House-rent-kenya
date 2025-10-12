@@ -119,21 +119,25 @@ export default function SearchPage() {
   return (
     <div className="container mx-auto px-4 py-8">
       <Tabs defaultValue="search" className="w-full">
-        <TabsList className="grid w-full grid-cols-4">
-          <TabsTrigger value="search" className="flex items-center gap-2">
-            <Filter className="h-4 w-4" />
-            Search
+        <TabsList className="grid w-full grid-cols-2 sm:grid-cols-4">
+          <TabsTrigger value="search" className="flex items-center gap-1 text-xs sm:text-sm">
+            <Filter className="h-3 w-3 sm:h-4 sm:w-4" />
+            <span className="hidden sm:inline">Search</span>
+            <span className="sm:hidden">Find</span>
           </TabsTrigger>
-          <TabsTrigger value="advanced" className="flex items-center gap-2">
-            <Sparkles className="h-4 w-4" />
-            Advanced
+          <TabsTrigger value="advanced" className="flex items-center gap-1 text-xs sm:text-sm">
+            <Sparkles className="h-3 w-3 sm:h-4 sm:w-4" />
+            <span className="hidden sm:inline">Advanced</span>
+            <span className="sm:hidden">AI</span>
           </TabsTrigger>
-          <TabsTrigger value="analytics" className="flex items-center gap-2">
-            <BarChart3 className="h-4 w-4" />
-            Analytics
+          <TabsTrigger value="analytics" className="flex items-center gap-1 text-xs sm:text-sm">
+            <BarChart3 className="h-3 w-3 sm:h-4 sm:w-4" />
+            <span className="hidden sm:inline">Analytics</span>
+            <span className="sm:hidden">Stats</span>
           </TabsTrigger>
-          <TabsTrigger value="compare" className="flex items-center gap-2">
-            Compare
+          <TabsTrigger value="compare" className="flex items-center gap-1 text-xs sm:text-sm">
+            <span className="hidden sm:inline">Compare</span>
+            <span className="sm:hidden">Comp</span>
           </TabsTrigger>
         </TabsList>
 

@@ -22,6 +22,7 @@ const formSchema = z.object({
   agencyName: z.string().min(1, { message: 'Agency name is required.' }),
   firstName: z.string().min(1, { message: 'First name is required.' }),
   lastName: z.string().min(1, { message: 'Last name is required.' }),
+  phoneNumber: z.string().min(10, { message: 'Phone number is required (minimum 10 digits).' }),
   email: z.string().email({ message: 'Please enter a valid email.' }),
   password: z.string().min(6, { message: 'Password must be at least 6 characters.' }),
 });
@@ -39,6 +40,7 @@ export default function AgentSignupPage() {
       agencyName: '',
       firstName: '',
       lastName: '',
+      phoneNumber: '',
       email: '',
       password: '',
     },
@@ -51,6 +53,7 @@ export default function AgentSignupPage() {
         lastName: values.lastName,
         displayName: `${values.firstName} ${values.lastName}`,
         agencyName: values.agencyName,
+        phoneNumber: values.phoneNumber,
     });
     if (success) {
         toast({
@@ -121,6 +124,19 @@ export default function AgentSignupPage() {
                     )}
                   />
                 </div>
+                <FormField
+                  control={form.control}
+                  name="phoneNumber"
+                  render={({ field }) => (
+                    <FormItem className="grid gap-2">
+                      <FormLabel>Phone Number</FormLabel>
+                      <FormControl>
+                        <Input placeholder="+254712345678" {...field} disabled={isSubmitting}/>
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
                 <FormField
                   control={form.control}
                   name="email"

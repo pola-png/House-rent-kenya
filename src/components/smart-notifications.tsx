@@ -189,17 +189,18 @@ export function SmartNotifications() {
     <Card>
       <CardHeader>
         <div className="flex items-center justify-between">
-          <CardTitle className="flex items-center gap-2">
-            <Bell className="h-5 w-5" />
-            Smart Notifications
+          <CardTitle className="flex items-center gap-2 text-sm sm:text-base">
+            <Bell className="h-4 w-4 sm:h-5 sm:w-5" />
+            <span className="hidden sm:inline">Smart Notifications</span>
+            <span className="sm:hidden">Notifications</span>
             {unreadCount > 0 && (
-              <Badge variant="destructive" className="ml-2">
+              <Badge variant="destructive" className="ml-1 sm:ml-2 text-xs">
                 {unreadCount}
               </Badge>
             )}
           </CardTitle>
-          <Button variant="ghost" size="sm" onClick={() => setShowAll(!showAll)}>
-            {showAll ? 'Show Less' : 'View All'}
+          <Button variant="ghost" size="sm" onClick={() => setShowAll(!showAll)} className="text-xs sm:text-sm">
+            {showAll ? 'Less' : 'All'}
           </Button>
         </div>
       </CardHeader>
@@ -228,28 +229,28 @@ export function SmartNotifications() {
                   </div>
                   
                   <div className="flex-1 min-w-0">
-                    <div className="flex items-center justify-between mb-1">
-                      <h4 className={`font-medium text-sm ${
+                    <div className="flex items-start justify-between mb-1 gap-2">
+                      <h4 className={`font-medium text-xs sm:text-sm flex-1 ${
                         !notification.read ? 'text-gray-900' : 'text-gray-600'
                       }`}>
                         {notification.title}
                       </h4>
-                      <div className="flex items-center gap-2">
+                      <div className="flex items-center gap-1 flex-shrink-0">
                         {!notification.read && (
                           <div className="w-2 h-2 bg-blue-600 rounded-full"></div>
                         )}
                         <Button
                           variant="ghost"
                           size="sm"
-                          className="h-6 w-6 p-0"
+                          className="h-5 w-5 sm:h-6 sm:w-6 p-0"
                           onClick={() => removeNotification(notification.id)}
                         >
-                          <X className="h-3 w-3" />
+                          <X className="h-2 w-2 sm:h-3 sm:w-3" />
                         </Button>
                       </div>
                     </div>
                     
-                    <p className="text-sm text-gray-600 mb-2">
+                    <p className="text-xs sm:text-sm text-gray-600 mb-2 pr-2">
                       {notification.message}
                     </p>
                     
