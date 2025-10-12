@@ -21,6 +21,7 @@ export interface Property {
   updatedAt: Date;
   featured?: boolean;
   keywords?: string;
+  views?: number;
 }
 
 export interface UserProfile {

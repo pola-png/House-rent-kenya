@@ -35,6 +35,12 @@ export default function PropertyPage() {
       if (error) throw error;
 
       if (data) {
+        // Increment view count
+        await supabase
+          .from('properties')
+          .update({ views: (data.views || 0) + 1 })
+          .eq('id', id);
+
         const { data: profileData } = await supabase
           .from('profiles')
           .select('*')
@@ -43,6 +49,7 @@ export default function PropertyPage() {
         
         const typedProperty: Property = {
           ...data,
+          views: (data.views || 0) + 1,
           createdAt: new Date(data.createdAt),
           updatedAt: new Date(data.updatedAt),
           agent: profileData ? {
@@ -131,9 +138,14 @@ export default function PropertyPage() {
         <div className="container mx-auto px-4 py-12">
           <div className="mb-8">
             <h1 className="text-3xl md:text-4xl font-bold font-headline mb-2">{property.title}</h1>
-            <div className="flex items-center text-muted-foreground">
-              <MapPin className="h-5 w-5 mr-2" />
-              <span>{property.location}, {property.city}</span>
+            <div className="flex items-center justify-between text-muted-foreground">
+              <div className="flex items-center">
+                <MapPin className="h-5 w-5 mr-2" />
+                <span>{property.location}, {property.city}</span>
+              </div>
+              <div className="text-sm">
+                {property.views || 0} views
+              </div>
             </div>
           </div>
 
@@ -177,7 +189,7 @@ export default function PropertyPage() {
                       <CardTitle className="text-2xl mt-2">Property Overview</CardTitle>
                     </div>
                     <div className="text-3xl font-bold text-primary">
-                      Ksh {property.price.toLocaleString()}<span className="text-base font-normal text-muted-foreground">/month</span>
+                      Ksh {property.price.toLocaleString()}{property.status === 'For Rent' && <span className="text-base font-normal text-muted-foreground">/month</span>}
                     </div>
                   </div>
                 </CardHeader>

@@ -50,7 +50,7 @@ export function PropertyCard({ property }: PropertyCardProps) {
         <CardContent className="p-4 space-y-3 flex-grow flex flex-col">
           <div className="flex-grow">
             <div className="text-xl font-bold text-primary">
-              Ksh {property.price.toLocaleString()}<span className="text-sm font-normal text-muted-foreground">/month</span>
+              Ksh {property.price.toLocaleString()}{property.status === 'For Rent' && <span className="text-sm font-normal text-muted-foreground">/month</span>}
             </div>
             <h3 className="text-lg font-bold font-headline truncate" title={property.title}>{property.title}</h3>
             <div className="flex items-center text-muted-foreground text-sm">
@@ -88,6 +88,9 @@ export function PropertyCard({ property }: PropertyCardProps) {
                       </div>
                     </>
                 )}
+             </div>
+             <div className="text-xs text-muted-foreground">
+               {property.views || 0} views
              </div>
           </div>
         </CardContent>

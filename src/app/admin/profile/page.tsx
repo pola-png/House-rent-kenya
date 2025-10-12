@@ -63,6 +63,12 @@ export default function ProfilePage() {
 
       if (updateError) throw updateError;
 
+      // Update profiles table
+      await supabase
+        .from('profiles')
+        .update({ photoURL: publicUrl })
+        .eq('id', user.uid);
+
       toast({
         title: "Success!",
         description: "Profile photo updated successfully."
@@ -86,7 +92,8 @@ export default function ProfilePage() {
     
     setSaving(true);
     try {
-      const { error } = await supabase.auth.updateUser({
+      // Update auth user metadata
+      const { error: authError } = await supabase.auth.updateUser({
         data: {
           firstName: formData.firstName,
           lastName: formData.lastName,
@@ -96,7 +103,22 @@ export default function ProfilePage() {
         }
       });
 
-      if (error) throw error;
+      if (authError) throw authError;
+
+      // Update profiles table
+      const { error: profileError } = await supabase
+        .from('profiles')
+        .update({
+          firstName: formData.firstName,
+          lastName: formData.lastName,
+          phoneNumber: formData.phoneNumber,
+          agencyName: formData.agencyName,
+          displayName: `${formData.firstName} ${formData.lastName}`,
+          updatedAt: new Date().toISOString()
+        })
+        .eq('id', user.uid);
+
+      if (profileError) throw profileError;
 
       toast({
         title: "Success!",
