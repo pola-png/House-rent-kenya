@@ -169,10 +169,12 @@ export default function Dashboard() {
                 {isLoading ? <Skeleton className="h-8 w-16" /> : (
                   <div className="space-y-1">
                     <div className="text-2xl font-bold">{stats?.totalProperties}</div>
-                    <div className="flex items-center text-xs text-green-600">
-                      <TrendingUp className="h-3 w-3 mr-1" />
-                      +2 this month
-                    </div>
+                    {stats?.totalProperties > 0 && (
+                      <div className="flex items-center text-xs text-muted-foreground">
+                        <Package className="h-3 w-3 mr-1" />
+                        Total portfolio
+                      </div>
+                    )}
                   </div>
                 )}
                 <p className="text-xs text-muted-foreground">Portfolio size</p>
@@ -260,7 +262,7 @@ export default function Dashboard() {
                 <div className="space-y-2">
                   <div className="text-2xl font-bold">{realTimeStats.responseRate.toFixed(1)}%</div>
                   <Progress value={realTimeStats.responseRate} className="h-2" />
-                  <p className="text-xs text-muted-foreground">Above industry average</p>
+                  <p className="text-xs text-muted-foreground">{realTimeStats.responseRate > 0 ? 'Response performance' : 'No data yet'}</p>
                 </div>
               </CardContent>
             </Card>
@@ -275,9 +277,9 @@ export default function Dashboard() {
               <CardContent>
                 <div className="space-y-2">
                   <div className="text-2xl font-bold">{Math.round(realTimeStats.avgResponseTime)}min</div>
-                  <div className="flex items-center text-xs text-green-600">
-                    <TrendingDown className="h-3 w-3 mr-1" />
-                    15% faster than last month
+                  <div className="flex items-center text-xs text-muted-foreground">
+                    <Calendar className="h-3 w-3 mr-1" />
+                    {realTimeStats.avgResponseTime > 0 ? 'Average time' : 'No data'}
                   </div>
                   <p className="text-xs text-muted-foreground">Response speed</p>
                 </div>
@@ -398,20 +400,28 @@ export default function Dashboard() {
                 <CardTitle>Weekly Insights</CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="space-y-3">
-                  <div className="flex items-center gap-3">
-                    <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-                    <span className="text-sm">Peak viewing time: 6-8 PM</span>
+                {recentProperties.length > 0 ? (
+                  <div className="space-y-3">
+                    <div className="flex items-center gap-3">
+                      <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+                      <span className="text-sm">Total properties: {properties.length}</span>
+                    </div>
+                    <div className="flex items-center gap-3">
+                      <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
+                      <span className="text-sm">Total views: {realTimeStats.totalViews}</span>
+                    </div>
+                    <div className="flex items-center gap-3">
+                      <div className="w-2 h-2 bg-purple-500 rounded-full"></div>
+                      <span className="text-sm">Active listings: {stats?.activeRentals || 0}</span>
+                    </div>
                   </div>
-                  <div className="flex items-center gap-3">
-                    <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
-                    <span className="text-sm">Most popular: 2-3 bedroom apartments</span>
+                ) : (
+                  <div className="text-center py-8 text-muted-foreground">
+                    <BarChart3 className="h-12 w-12 mx-auto mb-4 opacity-50" />
+                    <p>No insights available yet</p>
+                    <p className="text-sm">Add properties to see performance insights</p>
                   </div>
-                  <div className="flex items-center gap-3">
-                    <div className="w-2 h-2 bg-purple-500 rounded-full"></div>
-                    <span className="text-sm">Avg time on listing: 3.2 minutes</span>
-                  </div>
-                </div>
+                )}
               </CardContent>
             </Card>
           </div>
@@ -426,26 +436,39 @@ export default function Dashboard() {
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="space-y-4">
-                <div className="p-4 bg-gradient-to-r from-blue-50 to-purple-50 rounded-lg border">
-                  <h4 className="font-semibold text-blue-900 mb-2">Optimization Recommendations</h4>
-                  <ul className="space-y-2 text-sm text-blue-800">
-                    <li>• Add more photos to increase views by 35%</li>
-                    <li>• Properties with virtual tours get 60% more inquiries</li>
-                    <li>• Consider reducing price by 5% for faster rental</li>
-                    <li>• Best posting time: Tuesday-Thursday, 2-4 PM</li>
-                  </ul>
+              {properties.length > 0 ? (
+                <div className="space-y-4">
+                  <div className="p-4 bg-gradient-to-r from-blue-50 to-purple-50 rounded-lg border">
+                    <h4 className="font-semibold text-blue-900 mb-2">Your Performance</h4>
+                    <ul className="space-y-2 text-sm text-blue-800">
+                      <li>• You have {properties.length} {properties.length === 1 ? 'property' : 'properties'} listed</li>
+                      <li>• Total views across all properties: {realTimeStats.totalViews}</li>
+                      <li>• Active listings: {stats?.activeRentals || 0}</li>
+                      {realTimeStats.totalViews === 0 && <li>• Add photos and descriptions to get more views</li>}
+                    </ul>
+                  </div>
+                  
+                  {realTimeStats.totalViews > 0 && (
+                    <div className="p-4 bg-gradient-to-r from-green-50 to-emerald-50 rounded-lg border">
+                      <h4 className="font-semibold text-green-900 mb-2">Activity Summary</h4>
+                      <ul className="space-y-2 text-sm text-green-800">
+                        <li>• Average views per property: {Math.round(realTimeStats.totalViews / properties.length)}</li>
+                        <li>• Properties generating interest: {properties.filter(p => (p.views || 0) > 0).length}</li>
+                        <li>• Response rate: {realTimeStats.responseRate.toFixed(1)}%</li>
+                      </ul>
+                    </div>
+                  )}
                 </div>
-                
-                <div className="p-4 bg-gradient-to-r from-green-50 to-emerald-50 rounded-lg border">
-                  <h4 className="font-semibold text-green-900 mb-2">Market Opportunities</h4>
-                  <ul className="space-y-2 text-sm text-green-800">
-                    <li>• High demand for 1BR apartments in Westlands</li>
-                    <li>• Furnished properties rent 25% faster</li>
-                    <li>• Pet-friendly listings have 40% less competition</li>
-                  </ul>
+              ) : (
+                <div className="text-center py-12 text-muted-foreground">
+                  <Zap className="h-12 w-12 mx-auto mb-4 opacity-50" />
+                  <p className="font-semibold">No insights available yet</p>
+                  <p className="text-sm mb-4">Post your first property to get AI-powered insights</p>
+                  <Button size="sm" asChild>
+                    <Link href="/admin/properties/new">Post a Property</Link>
+                  </Button>
                 </div>
-              </div>
+              )}
             </CardContent>
           </Card>
         </TabsContent>
