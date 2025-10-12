@@ -6,6 +6,9 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Bell, X, Heart, TrendingDown, MapPin, Clock, Star } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
+import { useAuth } from "@/hooks/use-auth-supabase";
+import { supabase } from "@/lib/supabase";
+import { useEffect } from "react";
 
 interface Notification {
   id: string;
@@ -19,44 +22,100 @@ interface Notification {
 }
 
 export function SmartNotifications() {
-  const [notifications, setNotifications] = useState<Notification[]>([
-    {
-      id: '1',
-      type: 'price_drop',
-      title: 'Price Drop Alert',
-      message: 'Modern 2BR apartment in Kilimani reduced by Ksh 15,000',
-      timestamp: new Date(Date.now() - 1000 * 60 * 30),
-      read: false,
-      priority: 'high'
-    },
-    {
-      id: '2',
-      type: 'new_match',
-      title: 'New Property Match',
-      message: '3 new properties match your search criteria in Westlands',
-      timestamp: new Date(Date.now() - 1000 * 60 * 60 * 2),
-      read: false,
-      priority: 'medium'
-    },
-    {
-      id: '3',
-      type: 'agent_response',
-      title: 'Agent Response',
-      message: 'Sarah from Prime Properties responded to your inquiry',
-      timestamp: new Date(Date.now() - 1000 * 60 * 60 * 4),
-      read: true,
-      priority: 'high'
-    },
-    {
-      id: '4',
-      type: 'market_update',
-      title: 'Market Update',
-      message: 'Rental prices in your area increased by 5% this month',
-      timestamp: new Date(Date.now() - 1000 * 60 * 60 * 24),
-      read: true,
-      priority: 'low'
+  const [notifications, setNotifications] = useState<Notification[]>([]);
+  const { user } = useAuth();
+
+  useEffect(() => {
+    if (user) {
+      generateRealNotifications();
     }
-  ]);
+  }, [user]);
+
+  const generateRealNotifications = async () => {
+    if (!user) return;
+
+    try {
+      const { data: properties } = await supabase
+        .from('properties')
+        .select('*')
+        .eq('landlordId', user.uid)
+        .order('createdAt', { ascending: false });
+
+      const { data: allProperties } = await supabase
+        .from('properties')
+        .select('location, price, createdAt')
+        .order('createdAt', { ascending: false })
+        .limit(10);
+
+      const realNotifications: Notification[] = [];
+
+      if (properties && properties.length > 0) {
+        // High view property notification
+        const highViewProperty = properties.find(p => (p.views || 0) > 5);
+        if (highViewProperty) {
+          realNotifications.push({
+            id: '1',
+            type: 'market_update',
+            title: 'High Interest Property',
+            message: `Your property "${highViewProperty.title}" has ${highViewProperty.views} views`,
+            timestamp: new Date(Date.now() - 1000 * 60 * 30),
+            read: false,
+            priority: 'high'
+          });
+        }
+
+        // New property in same area
+        if (allProperties) {
+          const userLocations = properties.map(p => p.location);
+          const newInArea = allProperties.find(p => 
+            userLocations.includes(p.location) && 
+            p.createdAt > new Date(Date.now() - 1000 * 60 * 60 * 24).toISOString()
+          );
+          
+          if (newInArea) {
+            realNotifications.push({
+              id: '2',
+              type: 'new_match',
+              title: 'New Competition',
+              message: `New property listed in ${newInArea.location} for Ksh ${newInArea.price.toLocaleString()}`,
+              timestamp: new Date(Date.now() - 1000 * 60 * 60 * 2),
+              read: false,
+              priority: 'medium'
+            });
+          }
+        }
+
+        // Low view property suggestion
+        const lowViewProperty = properties.find(p => (p.views || 0) < 2);
+        if (lowViewProperty) {
+          realNotifications.push({
+            id: '3',
+            type: 'market_update',
+            title: 'Optimization Suggestion',
+            message: `Consider adding more photos to "${lowViewProperty.title}" to increase views`,
+            timestamp: new Date(Date.now() - 1000 * 60 * 60 * 6),
+            read: true,
+            priority: 'low'
+          });
+        }
+      }
+
+      // Market insight notification
+      realNotifications.push({
+        id: '4',
+        type: 'market_update',
+        title: 'Market Insight',
+        message: 'Properties with virtual tours get 60% more inquiries',
+        timestamp: new Date(Date.now() - 1000 * 60 * 60 * 12),
+        read: true,
+        priority: 'low'
+      });
+
+      setNotifications(realNotifications);
+    } catch (error) {
+      console.error('Error generating notifications:', error);
+    }
+  };
 
   const [showAll, setShowAll] = useState(false);
   const unreadCount = notifications.filter(n => !n.read).length;

@@ -14,6 +14,7 @@ import { Progress } from "@/components/ui/progress";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { MarketAnalytics } from "@/components/market-analytics";
 import { SmartNotifications } from "@/components/smart-notifications";
+import { RealAgentRating } from "@/components/real-agent-rating";
 import Link from "next/link";
 import Image from "next/image";
 import placeholderImages from "@/lib/placeholder-images.json";
@@ -111,14 +112,16 @@ export default function Dashboard() {
 
   const stats = useMemo(() => {
     if (!properties) return null;
-    const activeListings = properties.filter(p => p.status !== 'Rented');
+    const activeListings = properties.filter(p => p.status !== 'Rented' && p.status !== 'Sold');
+    const rentedProperties = properties.filter(p => p.status === 'Rented');
+    const soldProperties = properties.filter(p => p.status === 'Sold');
     const totalProperties = properties.length;
-    const estMonthlyIncome = activeListings.reduce((sum, p) => sum + p.price, 0);
+    const actualMonthlyIncome = [...rentedProperties, ...soldProperties].reduce((sum, p) => sum + p.price, 0);
 
     return {
       totalProperties,
       activeRentals: activeListings.length,
-      estMonthlyIncome,
+      actualMonthlyIncome,
     };
   }, [properties]);
 
@@ -227,7 +230,7 @@ export default function Dashboard() {
                 {isLoading ? <Skeleton className="h-8 w-16" /> : (
                   <div className="space-y-1">
                     <div className="text-2xl font-bold">
-                      Ksh {stats?.estMonthlyIncome.toLocaleString('en-KE', { maximumFractionDigits: 0 })}
+                      Ksh {stats?.actualMonthlyIncome.toLocaleString('en-KE', { maximumFractionDigits: 0 })}
                     </div>
                     <div className="flex items-center text-xs">
                       {realTimeStats.weeklyGrowth >= 0 ? (
@@ -241,7 +244,7 @@ export default function Dashboard() {
                     </div>
                   </div>
                 )}
-                <p className="text-xs text-muted-foreground">Potential earnings</p>
+                <p className="text-xs text-muted-foreground">Actual earnings</p>
               </CardContent>
             </Card>
           </div>
@@ -291,14 +294,7 @@ export default function Dashboard() {
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="space-y-2">
-                  <div className="text-2xl font-bold">4.8★</div>
-                  <div className="flex items-center text-xs text-yellow-600">
-                    <Star className="h-3 w-3 mr-1 fill-current" />
-                    Based on 127 reviews
-                  </div>
-                  <p className="text-xs text-muted-foreground">Client satisfaction</p>
-                </div>
+                <RealAgentRating />
               </CardContent>
             </Card>
           </div>
