@@ -35,10 +35,28 @@ export function SearchFilters() {
   const debouncedPriceRange = useDebounce(priceRange, 500);
 
   // Read initial values from URL for controlled components
-  const selectedTypes = searchParams.getAll('property_type');
+  const selectedTypes = [...searchParams.getAll('property_type'), ...searchParams.getAll('type')].filter(t => !['rent', 'buy', 'short-let', 'land'].includes(t));
   const selectedBeds = searchParams.get('beds');
   const selectedBaths = searchParams.get('baths');
   const selectedAmenities = searchParams.getAll('amenities');
+  
+  // Update local state when URL params change
+  useEffect(() => {
+    const urlKeyword = searchParams.get('q') || '';
+    if (urlKeyword !== keyword) {
+      setKeyword(urlKeyword);
+    }
+  }, [searchParams]);
+  
+  useEffect(() => {
+    const urlMinPrice = searchParams.get('min_price');
+    const urlMaxPrice = searchParams.get('max_price');
+    const newMin = urlMinPrice ? parseInt(urlMinPrice, 10) : 0;
+    const newMax = urlMaxPrice ? parseInt(urlMaxPrice, 10) : 1000000;
+    if (newMin !== priceRange[0] || newMax !== priceRange[1]) {
+      setPriceRange([newMin, newMax]);
+    }
+  }, [searchParams]);
   
   const createQueryString = useCallback((paramsToUpdate: Record<string, string | string[] | null>) => {
     const params = new URLSearchParams(searchParams.toString());
@@ -103,30 +121,68 @@ export function SearchFilters() {
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-6">
-        <div className="relative">
+        {/* Show active filters from home page */}
+        {(searchParams.get('q') || searchParams.get('beds') || searchParams.get('min_price') || searchParams.get('max_price') || selectedTypes.length > 0) && (
+          <div className="p-3 bg-blue-50 rounded-lg border border-blue-200">
+            <div className="text-xs font-medium text-blue-800 mb-2">Active Filters:</div>
+            <div className="flex flex-wrap gap-1">
+              {searchParams.get('q') && (
+                <span className="px-2 py-1 bg-blue-100 text-blue-800 text-xs rounded">
+                  "{searchParams.get('q')}"
+                </span>
+              )}
+              {selectedTypes.map(type => (
+                <span key={type} className="px-2 py-1 bg-blue-100 text-blue-800 text-xs rounded">
+                  {type}
+                </span>
+              ))}
+              {searchParams.get('beds') && (
+                <span className="px-2 py-1 bg-blue-100 text-blue-800 text-xs rounded">
+                  {searchParams.get('beds')}+ beds
+                </span>
+              )}
+              {(searchParams.get('min_price') || searchParams.get('max_price')) && (
+                <span className="px-2 py-1 bg-blue-100 text-blue-800 text-xs rounded">
+                  Ksh {searchParams.get('min_price') || '0'} - {searchParams.get('max_price') || '1M+'}
+                </span>
+              )}
+            </div>
+          </div>
+        )}
+        <div className="space-y-2">
+          <div className="relative">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
             <Input 
-              placeholder="Keyword..." 
+              placeholder="Search location, property type..." 
               className="pl-10" 
               value={keyword}
               onChange={(e) => setKeyword(e.target.value)}
             />
+          </div>
+          {keyword && (
+            <div className="text-xs text-muted-foreground">
+              Searching for: <span className="font-medium">"{keyword}"</span>
+            </div>
+          )}
         </div>
         
         <Accordion type="multiple" defaultValue={['type', 'price']} className="w-full">
           <AccordionItem value="type">
             <AccordionTrigger className="font-bold">Property Type</AccordionTrigger>
             <AccordionContent className="space-y-2 pt-2">
-              {propertyTypes.map((type) => (
-                <div key={type} className="flex items-center space-x-2">
-                  <Checkbox 
-                    id={`type-${type}`}
-                    checked={selectedTypes.includes(type)}
-                    onCheckedChange={(checked) => handleCheckboxChange('property_type', type, !!checked)}
-                  />
-                  <Label htmlFor={`type-${type}`} className="font-normal">{type}</Label>
-                </div>
-              ))}
+              {propertyTypes.map((type) => {
+                const isChecked = selectedTypes.some(t => t.toLowerCase() === type.toLowerCase());
+                return (
+                  <div key={type} className="flex items-center space-x-2">
+                    <Checkbox 
+                      id={`type-${type}`}
+                      checked={isChecked}
+                      onCheckedChange={(checked) => handleCheckboxChange('property_type', type, !!checked)}
+                    />
+                    <Label htmlFor={`type-${type}`} className="font-normal">{type}</Label>
+                  </div>
+                );
+              })}
             </AccordionContent>
           </AccordionItem>
           

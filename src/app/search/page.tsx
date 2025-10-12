@@ -32,8 +32,11 @@ export default function SearchPage() {
     try {
       const q = searchParams.get('q')?.toLowerCase();
       const listingType = searchParams.get('type'); // rent/buy from home page
-      const propertyTypes = searchParams.getAll('property_type'); // from home page
-      const filterTypes = searchParams.getAll('type'); // from search filters
+      const propertyTypes = searchParams.getAll('property_type'); // from search filters
+      // Get property type from home page (single parameter)
+      const homePropertyType = searchParams.get('property_type');
+      const allPropertyTypes = [...propertyTypes];
+      if (homePropertyType) allPropertyTypes.push(homePropertyType);
       const minPrice = searchParams.get('min_price');
       const maxPrice = searchParams.get('max_price');
       const beds = searchParams.get('beds');
@@ -63,12 +66,12 @@ export default function SearchPage() {
       }
 
       // Property type filters (from home page or search filters)
-      const allPropertyTypes = [...propertyTypes, ...filterTypes].filter(Boolean);
-      if (allPropertyTypes.length > 0) {
+      const uniquePropertyTypes = [...new Set(allPropertyTypes)].filter(Boolean);
+      if (uniquePropertyTypes.length > 0) {
         // Use OR condition for multiple property types
-        const typeConditions = allPropertyTypes.map(type => `propertyType.ilike.%${type}%`);
+        const typeConditions = uniquePropertyTypes.map(type => `propertyType.ilike.%${type}%`);
         if (typeConditions.length === 1) {
-          query = query.ilike('propertyType', `%${allPropertyTypes[0]}%`);
+          query = query.ilike('propertyType', `%${uniquePropertyTypes[0]}%`);
         } else {
           query = query.or(typeConditions.join(','));
         }
