@@ -24,39 +24,31 @@ export function SearchFilters() {
   const searchParams = useSearchParams();
 
   // State for immediate input, debounced for URL update
-  const [keyword, setKeyword] = useState(searchParams.get('q') || '');
+  const [keyword, setKeyword] = useState('');
+  const [priceRange, setPriceRange] = useState([0, 1000000]);
   const debouncedKeyword = useDebounce(keyword, 500);
-
-  const [priceRange, setPriceRange] = useState(() => {
-    const min = searchParams.get('min_price');
-    const max = searchParams.get('max_price');
-    return [min ? parseInt(min, 10) : 0, max ? parseInt(max, 10) : 1000000];
-  });
   const debouncedPriceRange = useDebounce(priceRange, 500);
 
-  // Initialize state from URL parameters
-  const [initialized, setInitialized] = useState(false);
-  
-  useEffect(() => {
-    if (!initialized) {
-      const urlKeyword = searchParams.get('q') || '';
-      const urlMinPrice = searchParams.get('min_price');
-      const urlMaxPrice = searchParams.get('max_price');
-      
-      setKeyword(urlKeyword);
-      setPriceRange([
-        urlMinPrice ? parseInt(urlMinPrice, 10) : 0,
-        urlMaxPrice ? parseInt(urlMaxPrice, 10) : 1000000
-      ]);
-      setInitialized(true);
-    }
-  }, [searchParams, initialized]);
-  
   // Read current values from URL
+  const urlKeyword = searchParams.get('q') || '';
+  const urlMinPrice = searchParams.get('min_price');
+  const urlMaxPrice = searchParams.get('max_price');
   const selectedTypes = searchParams.getAll('property_type');
   const selectedBeds = searchParams.get('beds');
   const selectedBaths = searchParams.get('baths');
   const selectedAmenities = searchParams.getAll('amenities');
+  
+  // Sync state with URL params
+  useEffect(() => {
+    setKeyword(urlKeyword);
+  }, [urlKeyword]);
+  
+  useEffect(() => {
+    setPriceRange([
+      urlMinPrice ? parseInt(urlMinPrice, 10) : 0,
+      urlMaxPrice ? parseInt(urlMaxPrice, 10) : 1000000
+    ]);
+  }, [urlMinPrice, urlMaxPrice]);
   
   const createQueryString = useCallback((paramsToUpdate: Record<string, string | string[] | null>) => {
     const params = new URLSearchParams(searchParams.toString());
