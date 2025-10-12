@@ -11,6 +11,7 @@ import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { VirtualTour } from '@/components/virtual-tour';
 import { SmartNotifications } from '@/components/smart-notifications';
+import { ViewTracker } from '@/components/view-tracker';
 import type { Property, UserProfile } from '@/lib/types';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useState, useEffect } from 'react';
@@ -37,11 +38,14 @@ export default function PropertyPage() {
       if (error) throw error;
 
       if (data) {
-        // Increment view count
-        await supabase
+        // Increment view count (fire and forget)
+        supabase
           .from('properties')
           .update({ views: (data.views || 0) + 1 })
-          .eq('id', id);
+          .eq('id', id)
+          .then(({ error }) => {
+            if (error) console.error('Error updating views:', error);
+          });
 
         const { data: profileData } = await supabase
           .from('profiles')
@@ -145,9 +149,10 @@ export default function PropertyPage() {
                 <MapPin className="h-5 w-5 mr-2" />
                 <span>{property.location}, {property.city}</span>
               </div>
-              <div className="text-sm">
-                {property.views || 0} views
-              </div>
+              <ViewTracker 
+                propertyId={property.id}
+                initialViews={property.views || 0}
+              />
             </div>
           </div>
 
