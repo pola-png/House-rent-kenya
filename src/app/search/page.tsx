@@ -31,25 +31,28 @@ export default function SearchPage() {
     setIsLoading(true);
     try {
       const q = searchParams.get('q')?.toLowerCase();
-      const type = searchParams.get('type');
-      const propertyType = searchParams.get('property_type');
+      const listingType = searchParams.get('type'); // rent/buy from home page
+      const propertyTypes = searchParams.getAll('property_type'); // from home page
+      const filterTypes = searchParams.getAll('type'); // from search filters
       const minPrice = searchParams.get('min_price');
       const maxPrice = searchParams.get('max_price');
       const beds = searchParams.get('beds');
+      const baths = searchParams.get('baths');
+      const amenities = searchParams.getAll('amenities');
 
       let query = supabase.from('properties').select('*');
 
-      // Filter by listing type (rent/sale)
-      if (type === 'rent') {
+      // Filter by listing type (rent/sale) from home page
+      if (listingType === 'rent') {
         query = query.in('status', ['Available', 'For Rent']);
         setPageTitle("Properties for Rent");
-      } else if (type === 'buy') {
+      } else if (listingType === 'buy') {
         query = query.eq('status', 'For Sale');
         setPageTitle("Properties for Sale");
-      } else if (type === 'short-let') {
+      } else if (listingType === 'short-let') {
         query = query.eq('status', 'Short Let');
         setPageTitle("Short Let Properties");
-      } else if (type === 'land') {
+      } else if (listingType === 'land') {
         query = query.eq('propertyType', 'Land');
         setPageTitle("Land for Sale");
       }
@@ -59,9 +62,28 @@ export default function SearchPage() {
         query = query.or(`title.ilike.%${q}%,location.ilike.%${q}%,city.ilike.%${q}%,propertyType.ilike.%${q}%`);
       }
 
-      // Property type filter
-      if (propertyType) {
-        query = query.ilike('propertyType', `%${propertyType}%`);
+      // Property type filters (from home page or search filters)
+      const allPropertyTypes = [...propertyTypes, ...filterTypes].filter(Boolean);
+      if (allPropertyTypes.length > 0) {
+        // Use OR condition for multiple property types
+        const typeConditions = allPropertyTypes.map(type => `propertyType.ilike.%${type}%`);
+        if (typeConditions.length === 1) {
+          query = query.ilike('propertyType', `%${allPropertyTypes[0]}%`);
+        } else {
+          query = query.or(typeConditions.join(','));
+        }
+      }
+
+      // Bathroom filter
+      if (baths) {
+        query = query.gte('bathrooms', parseInt(baths, 10));
+      }
+
+      // Amenities filter
+      if (amenities.length > 0) {
+        amenities.forEach(amenity => {
+          query = query.contains('amenities', [amenity]);
+        });
       }
 
       // Price filters

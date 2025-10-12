@@ -35,7 +35,7 @@ export function SearchFilters() {
   const debouncedPriceRange = useDebounce(priceRange, 500);
 
   // Read initial values from URL for controlled components
-  const selectedTypes = searchParams.getAll('type');
+  const selectedTypes = searchParams.getAll('property_type');
   const selectedBeds = searchParams.get('beds');
   const selectedBaths = searchParams.get('baths');
   const selectedAmenities = searchParams.getAll('amenities');
@@ -79,7 +79,12 @@ export function SearchFilters() {
   };
 
   const clearFilters = () => {
-    router.push(pathname, { scroll: false });
+    // Preserve listing type (rent/buy) from home page when clearing filters
+    const listingType = searchParams.get('type');
+    const preservedParams = listingType ? `?type=${listingType}` : '';
+    router.push(pathname + preservedParams, { scroll: false });
+    setKeyword('');
+    setPriceRange([0, 1000000]);
   };
 
 
@@ -117,7 +122,7 @@ export function SearchFilters() {
                   <Checkbox 
                     id={`type-${type}`}
                     checked={selectedTypes.includes(type)}
-                    onCheckedChange={(checked) => handleCheckboxChange('type', type, !!checked)}
+                    onCheckedChange={(checked) => handleCheckboxChange('property_type', type, !!checked)}
                   />
                   <Label htmlFor={`type-${type}`} className="font-normal">{type}</Label>
                 </div>
@@ -153,7 +158,7 @@ export function SearchFilters() {
                     size="sm"
                     onClick={() => handleRadioChange('beds', selectedBeds === String(num) ? null : String(num))}
                     >
-                      {num}{num > 0 ? '+' : ''} Bed{num !== 1 ? 's' : ''}
+                      {num}+ Bed{num !== 1 ? 's' : ''}
                     </Button>
                 ))}
               </div>
@@ -171,7 +176,7 @@ export function SearchFilters() {
                     size="sm"
                     onClick={() => handleRadioChange('baths', selectedBaths === String(num) ? null : String(num))}
                     >
-                      {num}{num > 0 ? '+' : ''} Bath{num !== 1 ? 's' : ''}
+                      {num}+ Bath{num !== 1 ? 's' : ''}
                     </Button>
                 ))}
               </div>
