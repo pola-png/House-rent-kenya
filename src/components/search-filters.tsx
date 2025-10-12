@@ -33,7 +33,10 @@ export function SearchFilters() {
   const urlKeyword = searchParams.get('q') || '';
   const urlMinPrice = searchParams.get('min_price');
   const urlMaxPrice = searchParams.get('max_price');
-  const selectedTypes = searchParams.getAll('property_type');
+  // Get property types from both single param (home page) and multiple params (filters)
+  const propertyTypeParam = searchParams.get('property_type');
+  const propertyTypeParams = searchParams.getAll('property_type');
+  const selectedTypes = propertyTypeParam ? [propertyTypeParam, ...propertyTypeParams.filter(p => p !== propertyTypeParam)] : propertyTypeParams;
   const selectedBeds = searchParams.get('beds');
   const selectedBaths = searchParams.get('baths');
   const selectedAmenities = searchParams.getAll('amenities');
@@ -163,7 +166,7 @@ export function SearchFilters() {
             <AccordionTrigger className="font-bold">Property Type</AccordionTrigger>
             <AccordionContent className="space-y-2 pt-2">
               {propertyTypes.map((type) => {
-                const isChecked = selectedTypes.includes(type.toLowerCase()) || selectedTypes.includes(type);
+                const isChecked = selectedTypes.some(t => t.toLowerCase() === type.toLowerCase());
                 return (
                   <div key={type} className="flex items-center space-x-2">
                     <Checkbox 
