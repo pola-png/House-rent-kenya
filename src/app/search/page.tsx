@@ -99,7 +99,8 @@ export default function SearchPage() {
 
       // Bedroom filter
       if (beds) {
-        query = query.gte('bedrooms', parseInt(beds, 10));
+        const bedroomCount = beds === '4+' ? 4 : parseInt(beds, 10);
+        query = query.gte('bedrooms', bedroomCount);
       }
 
       const { data, error } = await query.order('createdAt', { ascending: false });

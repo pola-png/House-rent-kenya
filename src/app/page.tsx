@@ -85,12 +85,12 @@ export default function Home() {
   const handleSearch = () => {
     const params = new URLSearchParams();
     
-    if (searchForm.location) params.set('q', searchForm.location);
+    if (searchForm.location.trim()) params.set('q', searchForm.location.trim());
     if (searchForm.listingType) params.set('type', searchForm.listingType);
-    if (searchForm.type) params.set('property_type', searchForm.type);
-    if (searchForm.minBeds) params.set('beds', searchForm.minBeds);
-    if (searchForm.minPrice) params.set('min_price', searchForm.minPrice);
-    if (searchForm.maxPrice) params.set('max_price', searchForm.maxPrice);
+    if (searchForm.type && searchForm.type !== '') params.set('property_type', searchForm.type);
+    if (searchForm.minBeds && searchForm.minBeds !== '') params.set('beds', searchForm.minBeds);
+    if (searchForm.minPrice && searchForm.minPrice !== '') params.set('min_price', searchForm.minPrice);
+    if (searchForm.maxPrice && searchForm.maxPrice !== '') params.set('max_price', searchForm.maxPrice);
     
     window.location.href = `/search?${params.toString()}`;
   };
@@ -203,7 +203,7 @@ export default function Home() {
                           </Button>
                       </div>
                       <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
-                        <Select value={searchForm.type} onValueChange={(value) => setSearchForm(prev => ({...prev, type: value}))}>
+                        <Select value={searchForm.type} onValueChange={(value) => setSearchForm(prev => ({...prev, type: value || ''}))}>
                           <SelectTrigger className="text-foreground">
                             <SelectValue placeholder="Type" />
                           </SelectTrigger>
@@ -215,18 +215,18 @@ export default function Home() {
                             <SelectItem value="villa">Villa</SelectItem>
                           </SelectContent>
                         </Select>
-                        <Select value={searchForm.minBeds} onValueChange={(value) => setSearchForm(prev => ({...prev, minBeds: value}))}>
+                        <Select value={searchForm.minBeds} onValueChange={(value) => setSearchForm(prev => ({...prev, minBeds: value || ''}))}>
                           <SelectTrigger className="text-foreground">
                             <SelectValue placeholder="Min Beds" />
                           </SelectTrigger>
                           <SelectContent>
-                            <SelectItem value="1">1</SelectItem>
-                            <SelectItem value="2">2</SelectItem>
-                            <SelectItem value="3">3</SelectItem>
+                            <SelectItem value="1">1+</SelectItem>
+                            <SelectItem value="2">2+</SelectItem>
+                            <SelectItem value="3">3+</SelectItem>
                             <SelectItem value="4">4+</SelectItem>
                           </SelectContent>
                         </Select>
-                         <Select value={searchForm.minPrice} onValueChange={(value) => setSearchForm(prev => ({...prev, minPrice: value}))}>
+                         <Select value={searchForm.minPrice} onValueChange={(value) => setSearchForm(prev => ({...prev, minPrice: value || ''}))}>
                           <SelectTrigger className="text-foreground">
                             <SelectValue placeholder="Min Price" />
                           </SelectTrigger>
@@ -237,7 +237,7 @@ export default function Home() {
                             <SelectItem value="200000">Ksh 200,000</SelectItem>
                           </SelectContent>
                         </Select>
-                        <Select value={searchForm.maxPrice} onValueChange={(value) => setSearchForm(prev => ({...prev, maxPrice: value}))}>
+                        <Select value={searchForm.maxPrice} onValueChange={(value) => setSearchForm(prev => ({...prev, maxPrice: value || ''}))}>
                           <SelectTrigger className="text-foreground">
                             <SelectValue placeholder="Max Price" />
                           </SelectTrigger>

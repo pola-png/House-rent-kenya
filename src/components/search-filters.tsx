@@ -36,7 +36,9 @@ export function SearchFilters() {
   // Get property types from both single param (home page) and multiple params (filters)
   const propertyTypeParam = searchParams.get('property_type');
   const propertyTypeParams = searchParams.getAll('property_type');
-  const selectedTypes = propertyTypeParam ? [propertyTypeParam, ...propertyTypeParams.filter(p => p !== propertyTypeParam)] : propertyTypeParams;
+  const allSelectedTypes = propertyTypeParam ? [propertyTypeParam, ...propertyTypeParams.filter(p => p !== propertyTypeParam)] : propertyTypeParams;
+  // Normalize property types to match filter options (capitalize first letter)
+  const selectedTypes = allSelectedTypes.map(type => type.charAt(0).toUpperCase() + type.slice(1).toLowerCase());
   const selectedBeds = searchParams.get('beds');
   const selectedBaths = searchParams.get('baths');
   const selectedAmenities = searchParams.getAll('amenities');
@@ -69,12 +71,21 @@ export function SearchFilters() {
   }, [searchParams]);
 
   useEffect(() => {
-    router.push(pathname + '?' + createQueryString({ q: debouncedKeyword || null }), { scroll: false });
-  }, [debouncedKeyword, pathname, router, createQueryString]);
+    if (debouncedKeyword !== urlKeyword) {
+      router.push(pathname + '?' + createQueryString({ q: debouncedKeyword || null }), { scroll: false });
+    }
+  }, [debouncedKeyword, urlKeyword, pathname, router, createQueryString]);
 
   useEffect(() => {
-    router.push(pathname + '?' + createQueryString({ min_price: debouncedPriceRange[0] > 0 ? String(debouncedPriceRange[0]) : null, max_price: debouncedPriceRange[1] < 1000000 ? String(debouncedPriceRange[1]) : null }), { scroll: false });
-  }, [debouncedPriceRange, pathname, router, createQueryString]);
+    const currentMin = urlMinPrice ? parseInt(urlMinPrice, 10) : 0;
+    const currentMax = urlMaxPrice ? parseInt(urlMaxPrice, 10) : 1000000;
+    if (debouncedPriceRange[0] !== currentMin || debouncedPriceRange[1] !== currentMax) {
+      router.push(pathname + '?' + createQueryString({ 
+        min_price: debouncedPriceRange[0] > 0 ? String(debouncedPriceRange[0]) : null, 
+        max_price: debouncedPriceRange[1] < 1000000 ? String(debouncedPriceRange[1]) : null 
+      }), { scroll: false });
+    }
+  }, [debouncedPriceRange, urlMinPrice, urlMaxPrice, pathname, router, createQueryString]);
 
   const handleCheckboxChange = (key: string, value: string, checked: boolean) => {
     const currentValues = searchParams.getAll(key);
@@ -128,7 +139,7 @@ export function SearchFilters() {
               )}
               {selectedTypes.map(type => (
                 <span key={type} className="px-2 py-1 bg-blue-100 text-blue-800 text-xs rounded">
-                  {type}
+                  {type.charAt(0).toUpperCase() + type.slice(1)}
                 </span>
               ))}
               {searchParams.get('beds') && (
@@ -166,7 +177,7 @@ export function SearchFilters() {
             <AccordionTrigger className="font-bold">Property Type</AccordionTrigger>
             <AccordionContent className="space-y-2 pt-2">
               {propertyTypes.map((type) => {
-                const isChecked = selectedTypes.some(t => t.toLowerCase() === type.toLowerCase());
+                const isChecked = selectedTypes.includes(type);
                 return (
                   <div key={type} className="flex items-center space-x-2">
                     <Checkbox 

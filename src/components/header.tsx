@@ -2,11 +2,12 @@
 "use client";
 
 import Link from 'next/link';
-import { Building, Menu, User, X, ChevronDown, Briefcase, UserCircle, LogOut, Home, Settings } from 'lucide-react';
-import React from 'react';
+import { Building, Menu, User, X, ChevronDown, Briefcase, UserCircle, LogOut, Home, Settings, Search } from 'lucide-react';
+import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
 
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 import { Sheet, SheetContent, SheetTrigger, SheetClose } from '@/components/ui/sheet';
 import {
   DropdownMenu,
@@ -35,6 +36,7 @@ export function Header() {
   const { user, logout, loading: isUserLoading } = useAuth();
   const { toast } = useToast();
   const router = useRouter();
+  const [searchQuery, setSearchQuery] = useState('');
   
   const linkClasses = `text-sm font-medium transition-colors hover:text-primary text-black`;
   const buttonBorderClasses = 'border-primary text-primary hover:bg-primary hover:text-primary-foreground';
@@ -46,6 +48,18 @@ export function Header() {
       description: 'You have been successfully logged out.',
     });
     router.push('/');
+  };
+
+  const handleSearch = () => {
+    if (searchQuery.trim()) {
+      router.push(`/search?q=${encodeURIComponent(searchQuery.trim())}`);
+    }
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter') {
+      handleSearch();
+    }
   };
 
   const renderUserAuth = () => {
@@ -170,19 +184,33 @@ export function Header() {
             </span>
           </Link>
 
-          <nav className="hidden md:flex items-center gap-6">
-            {navLinks.map((link) => (
-              <Link
-                key={`${link.href}-${link.label}`}
-                href={link.href}
-                className={linkClasses}
-              >
-                {link.label}
-              </Link>
-            ))}
-          </nav>
+          <div className="hidden lg:flex items-center gap-6">
+            <nav className="flex items-center gap-6">
+              {navLinks.map((link) => (
+                <Link
+                  key={`${link.href}-${link.label}`}
+                  href={link.href}
+                  className={linkClasses}
+                >
+                  {link.label}
+                </Link>
+              ))}
+            </nav>
+            
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <Input
+                type="text"
+                placeholder="Search properties..."
+                className="w-64 pl-10"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                onKeyDown={handleKeyDown}
+              />
+            </div>
+          </div>
 
-          <div className="hidden md:flex items-center gap-2">
+          <div className="hidden lg:flex items-center gap-2">
             {user && (user.role === 'agent' || user.role === 'admin') && (
               <Button variant="outline" className={buttonBorderClasses} asChild>
                 <Link href="/admin/properties/new">List your property</Link>
@@ -191,7 +219,7 @@ export function Header() {
             {renderUserAuth()}
           </div>
 
-          <div className="md:hidden">
+          <div className="lg:hidden">
             <Sheet>
               <SheetTrigger asChild>
                 <Button variant="ghost" size="icon" className={`text-black hover:bg-black/20`}>
@@ -212,6 +240,19 @@ export function Header() {
                          <X className="h-6 w-6" />
                        </Button>
                     </SheetClose>
+                  </div>
+                  <div className="p-4">
+                    <div className="relative mb-4">
+                      <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                      <Input
+                        type="text"
+                        placeholder="Search properties..."
+                        className="w-full pl-10"
+                        value={searchQuery}
+                        onChange={(e) => setSearchQuery(e.target.value)}
+                        onKeyDown={handleKeyDown}
+                      />
+                    </div>
                   </div>
                   <nav className="flex-1 flex flex-col gap-1 p-4">
                     {navLinks.map((link) => (
