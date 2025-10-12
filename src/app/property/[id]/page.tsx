@@ -1,7 +1,7 @@
 'use client';
 import Image from 'next/image';
 import { notFound, useParams } from 'next/navigation';
-import { Bed, Bath, Maximize, MapPin, CheckCircle, Phone, User } from 'lucide-react';
+import { Bed, Bath, Maximize, MapPin, CheckCircle, Phone, User, Building } from 'lucide-react';
 import placeholderImages from '@/lib/placeholder-images.json';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -9,6 +9,8 @@ import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious
 import { Separator } from '@/components/ui/separator';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { VirtualTour } from '@/components/virtual-tour';
+import { SmartNotifications } from '@/components/smart-notifications';
 import type { Property, UserProfile } from '@/lib/types';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useState, useEffect } from 'react';
@@ -179,7 +181,14 @@ export default function PropertyPage() {
             <CarouselNext className="mr-16" />
           </Carousel>
 
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-12">
+          {/* Virtual Tour Section */}
+          <VirtualTour 
+            propertyId={property.id}
+            images={Array.isArray(property.images) ? property.images : []}
+            title={property.title}
+          />
+
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-12 mt-8">
             <div className="lg:col-span-2">
               <Card>
                 <CardHeader>
@@ -229,7 +238,9 @@ export default function PropertyPage() {
               </Card>
             </div>
 
-            <div className="lg:col-span-1">
+            <div className="lg:col-span-1 space-y-6">
+              <SmartNotifications />
+              
               <Card className="sticky top-24">
                 <CardHeader>
                     <p className="text-sm text-muted-foreground">Marketed By</p>
