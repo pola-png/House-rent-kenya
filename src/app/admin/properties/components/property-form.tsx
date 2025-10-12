@@ -3,7 +3,7 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import * as z from "zod";
-import { Loader2, Image as ImageIcon, X, Upload } from "lucide-react";
+import { Loader2, Image as ImageIcon, X, Upload, Sparkles } from "lucide-react";
 import React from "react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
@@ -120,6 +120,95 @@ export function PropertyForm({ property }: PropertyFormProps) {
   });
 
   const { user } = useAuth();
+
+  const generateAIDescription = async (onChange: (value: string) => void) => {
+    const currentData = {
+      propertyType: form.getValues('propertyType'),
+      bedrooms: form.getValues('bedrooms'),
+      bathrooms: form.getValues('bathrooms'),
+      location: form.getValues('location'),
+      city: form.getValues('city'),
+      amenities: form.getValues('amenities') || '',
+      price: form.getValues('price')
+    };
+
+    if (!currentData.propertyType || !currentData.location) {
+      toast({
+        variant: "destructive",
+        title: "Missing Information",
+        description: "Please fill in property type and location first.",
+      });
+      return;
+    }
+
+    toast({
+      title: "Generating AI Description...",
+      description: "Please wait while we create your property description.",
+    });
+
+    // Simulate AI generation
+    setTimeout(() => {
+      const amenitiesList = currentData.amenities.split(',').map(a => a.trim()).filter(Boolean);
+      const amenitiesText = amenitiesList.length > 0 
+        ? `Enjoy premium amenities including ${amenitiesList.slice(0, 3).join(', ')}${amenitiesList.length > 3 ? ' and more' : ''}.`
+        : 'This property offers excellent amenities for comfortable living.';
+
+      const aiDescription = `Discover this exceptional ${currentData.bedrooms}-bedroom, ${currentData.bathrooms}-bathroom ${currentData.propertyType.toLowerCase()} located in the prestigious ${currentData.location} area of ${currentData.city}.
+
+This beautifully designed property offers modern living at its finest, featuring spacious rooms, contemporary finishes, and thoughtful layouts that maximize both comfort and functionality. ${amenitiesText}
+
+Perfect for ${currentData.bedrooms <= 2 ? 'professionals, couples, or small families' : 'families or those seeking extra space'}, this property combines convenience with luxury living. The prime location provides easy access to shopping centers, restaurants, schools, and major transport links.
+
+Key Features:
+• ${currentData.bedrooms} spacious bedrooms with ample natural light
+• ${currentData.bathrooms} modern bathroom${currentData.bathrooms > 1 ? 's' : ''} with quality fixtures
+• Prime location in ${currentData.location}
+• ${amenitiesList.length > 0 ? amenitiesList.join('\n• ') : 'Premium amenities'}
+
+Don't miss this opportunity to secure a premium property in one of ${currentData.city}'s most sought-after neighborhoods. Contact us today to schedule a viewing!`;
+
+      onChange(aiDescription);
+      
+      toast({
+        title: "AI Description Generated!",
+        description: "Your property description has been created successfully.",
+      });
+    }, 1500);
+  };
+
+  const generateAITitle = async (onChange: (value: string) => void) => {
+    const currentData = {
+      propertyType: form.getValues('propertyType'),
+      bedrooms: form.getValues('bedrooms'),
+      location: form.getValues('location'),
+      city: form.getValues('city')
+    };
+
+    if (!currentData.propertyType || !currentData.location) {
+      toast({
+        variant: "destructive",
+        title: "Missing Information",
+        description: "Please fill in property type and location first.",
+      });
+      return;
+    }
+
+    const templates = [
+      `Stunning ${currentData.bedrooms}BR ${currentData.propertyType} in Prime ${currentData.location}`,
+      `Luxury ${currentData.bedrooms}-Bedroom ${currentData.propertyType} | ${currentData.location}, ${currentData.city}`,
+      `Modern ${currentData.bedrooms}BR ${currentData.propertyType} with Premium Amenities - ${currentData.location}`,
+      `Spacious ${currentData.bedrooms}-Bedroom ${currentData.propertyType} in Exclusive ${currentData.location}`,
+      `Premium ${currentData.bedrooms}BR ${currentData.propertyType} | Heart of ${currentData.location}`
+    ];
+    
+    const aiTitle = templates[Math.floor(Math.random() * templates.length)];
+    onChange(aiTitle);
+    
+    toast({
+      title: "AI Title Generated!",
+      description: "Your property title has been created successfully.",
+    });
+  };
 
   async function onSubmit(data: PropertyFormValues) {
     if (!user) {
@@ -285,7 +374,19 @@ export function PropertyForm({ property }: PropertyFormProps) {
                   name="title"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Title</FormLabel>
+                      <FormLabel className="flex items-center justify-between">
+                        <span>Title</span>
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          onClick={() => generateAITitle(field.onChange)}
+                          disabled={!form.watch('propertyType') || !form.watch('location')}
+                        >
+                          <Sparkles className="h-4 w-4 mr-1" />
+                          AI Generate
+                        </Button>
+                      </FormLabel>
                       <FormControl>
                         <Input placeholder="e.g., Luxury 3-Bedroom Apartment in Kilimani" {...field} />
                       </FormControl>
@@ -300,6 +401,16 @@ export function PropertyForm({ property }: PropertyFormProps) {
                     <FormItem>
                       <FormLabel className="flex items-center justify-between">
                         <span>Description</span>
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          onClick={() => generateAIDescription(field.onChange)}
+                          disabled={!form.watch('propertyType') || !form.watch('location')}
+                        >
+                          <Sparkles className="h-4 w-4 mr-1" />
+                          AI Generate
+                        </Button>
                       </FormLabel>
                       <FormControl>
                         <Textarea
