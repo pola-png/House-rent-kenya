@@ -79,15 +79,15 @@ export default function Dashboard() {
       
       // Calculate real-time stats
       const totalViews = typedProperties.reduce((sum, p) => sum + (p.views || 0), 0);
-      const todayViews = Math.floor(totalViews * 0.15); // Simulate today's views
-      const weeklyGrowth = Math.random() * 20 - 5; // Random growth between -5% and 15%
+      const todayViews = 0; // No fake data
+      const weeklyGrowth = 0; // No fake data
       
       setRealTimeStats({
         totalViews,
         todayViews,
         weeklyGrowth,
-        responseRate: 85 + Math.random() * 10, // 85-95%
-        avgResponseTime: 15 + Math.random() * 30 // 15-45 minutes
+        responseRate: 0, // No fake data
+        avgResponseTime: 0 // No fake data
       });
 
       const { data: leadsData, error: leadsError } = await supabase
@@ -211,10 +211,12 @@ export default function Dashboard() {
                 {isLoading ? <Skeleton className="h-8 w-16" /> : (
                   <div className="space-y-1">
                     <div className="text-2xl font-bold">{realTimeStats.totalViews.toLocaleString()}</div>
-                    <div className="flex items-center text-xs text-blue-600">
-                      <Eye className="h-3 w-3 mr-1" />
-                      {realTimeStats.todayViews} today
-                    </div>
+                    {realTimeStats.todayViews > 0 && (
+                      <div className="flex items-center text-xs text-blue-600">
+                        <Eye className="h-3 w-3 mr-1" />
+                        {realTimeStats.todayViews} today
+                      </div>
+                    )}
                   </div>
                 )}
                 <p className="text-xs text-muted-foreground">Property views</p>
@@ -232,16 +234,18 @@ export default function Dashboard() {
                     <div className="text-2xl font-bold">
                       Ksh {stats?.actualMonthlyIncome.toLocaleString('en-KE', { maximumFractionDigits: 0 })}
                     </div>
-                    <div className="flex items-center text-xs">
-                      {realTimeStats.weeklyGrowth >= 0 ? (
-                        <TrendingUp className="h-3 w-3 mr-1 text-green-600" />
-                      ) : (
-                        <TrendingDown className="h-3 w-3 mr-1 text-red-600" />
-                      )}
-                      <span className={realTimeStats.weeklyGrowth >= 0 ? 'text-green-600' : 'text-red-600'}>
-                        {realTimeStats.weeklyGrowth >= 0 ? '+' : ''}{realTimeStats.weeklyGrowth.toFixed(1)}% this week
-                      </span>
-                    </div>
+                    {realTimeStats.weeklyGrowth !== 0 && (
+                      <div className="flex items-center text-xs">
+                        {realTimeStats.weeklyGrowth >= 0 ? (
+                          <TrendingUp className="h-3 w-3 mr-1 text-green-600" />
+                        ) : (
+                          <TrendingDown className="h-3 w-3 mr-1 text-red-600" />
+                        )}
+                        <span className={realTimeStats.weeklyGrowth >= 0 ? 'text-green-600' : 'text-red-600'}>
+                          {realTimeStats.weeklyGrowth >= 0 ? '+' : ''}{realTimeStats.weeklyGrowth.toFixed(1)}% this week
+                        </span>
+                      </div>
+                    )}
                   </div>
                 )}
                 <p className="text-xs text-muted-foreground">Actual earnings</p>

@@ -107,18 +107,15 @@ export function AIRecommendations({ userPreferences, viewedProperties = [] }: AI
           
           setSmartAlerts(alerts);
         } else {
-          // Default metrics for non-logged users
+          // No fake data for non-logged users
           setRealTimeMetrics({
-            matchScore: 85,
-            avgResponse: 15,
-            agentRating: 4.2,
-            agentReviews: 12
+            matchScore: 0,
+            avgResponse: 0,
+            agentRating: 0,
+            agentReviews: 0
           });
           
-          setSmartAlerts([
-            { id: '1', message: 'Sign up to get personalized property matches', type: 'info' },
-            { id: '2', message: 'New properties added daily in your area', type: 'trend' }
-          ]);
+          setSmartAlerts([]);
         }
         
         const propertiesWithAgents = await Promise.all(
@@ -223,20 +220,28 @@ export function AIRecommendations({ userPreferences, viewedProperties = [] }: AI
         </div>
 
         {/* Personalized Metrics */}
-        <div className="grid grid-cols-3 gap-4">
-          <div className="text-center p-3 bg-green-50 rounded-lg">
-            <div className="text-2xl font-bold text-green-600">{realTimeMetrics.matchScore}%</div>
-            <div className="text-xs text-green-700">Match Score</div>
+        {user && (realTimeMetrics.matchScore > 0 || realTimeMetrics.avgResponse > 0 || realTimeMetrics.agentRating > 0) && (
+          <div className="grid grid-cols-3 gap-4">
+            {realTimeMetrics.matchScore > 0 && (
+              <div className="text-center p-3 bg-green-50 rounded-lg">
+                <div className="text-2xl font-bold text-green-600">{realTimeMetrics.matchScore}%</div>
+                <div className="text-xs text-green-700">Match Score</div>
+              </div>
+            )}
+            {realTimeMetrics.avgResponse > 0 && (
+              <div className="text-center p-3 bg-blue-50 rounded-lg">
+                <div className="text-2xl font-bold text-blue-600">{realTimeMetrics.avgResponse}min</div>
+                <div className="text-xs text-blue-700">Avg Response</div>
+              </div>
+            )}
+            {realTimeMetrics.agentRating > 0 && (
+              <div className="text-center p-3 bg-purple-50 rounded-lg">
+                <div className="text-2xl font-bold text-purple-600">{realTimeMetrics.agentRating}★</div>
+                <div className="text-xs text-purple-700">Based on {realTimeMetrics.agentReviews} reviews</div>
+              </div>
+            )}
           </div>
-          <div className="text-center p-3 bg-blue-50 rounded-lg">
-            <div className="text-2xl font-bold text-blue-600">{realTimeMetrics.avgResponse}min</div>
-            <div className="text-xs text-blue-700">Avg Response</div>
-          </div>
-          <div className="text-center p-3 bg-purple-50 rounded-lg">
-            <div className="text-2xl font-bold text-purple-600">{realTimeMetrics.agentRating}★</div>
-            <div className="text-xs text-purple-700">Based on {realTimeMetrics.agentReviews} reviews</div>
-          </div>
-        </div>
+        )}
 
         {/* Recommendations List */}
         {loading ? (

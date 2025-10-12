@@ -8,7 +8,6 @@ import { Bell, X, Heart, TrendingDown, MapPin, Clock, Star } from "lucide-react"
 import { formatDistanceToNow } from "date-fns";
 import { useAuth } from "@/hooks/use-auth-supabase";
 import { supabase } from "@/lib/supabase";
-import { useEffect } from "react";
 
 interface Notification {
   id: string;
@@ -120,18 +119,7 @@ export function SmartNotifications() {
         }
       }
 
-      // Only add welcome notification for new users with no properties
-      if (!properties || properties.length === 0) {
-        realNotifications.push({
-          id: '0',
-          type: 'market_update',
-          title: 'Welcome to House Rent Kenya!',
-          message: 'Start by posting your first property to attract potential tenants',
-          timestamp: new Date(Date.now() - 1000 * 60 * 5),
-          read: false,
-          priority: 'high'
-        });
-      }
+      // No fake welcome notifications - only real data-based notifications
 
       console.log('Generated notifications:', realNotifications.length);
       setNotifications(realNotifications);

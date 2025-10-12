@@ -60,18 +60,20 @@ export function RealAgentRating() {
         if (totalViews > 0 || rentedCount > 0) {
           let score = 0;
           
-          // Boost for views
-          if (totalViews > 5) score += 1.0;
+          // Real performance-based scoring
           if (totalViews > 10) score += 1.0;
-          if (totalViews > 20) score += 1.0;
+          if (totalViews > 25) score += 1.0;
+          if (totalViews > 50) score += 1.0;
           
           // Boost for successful rentals
           const successRate = totalProperties > 0 ? rentedCount / totalProperties : 0;
-          score += successRate * 2.0;
+          if (successRate > 0.5) score += 1.0;
+          if (successRate > 0.8) score += 1.0;
           
           score = Math.min(5.0, score);
           
-          const reviewCount = Math.floor(totalViews / 5) + rentedCount * 2;
+          // Only count as reviews if there's significant activity
+          const reviewCount = totalViews > 10 ? Math.floor(totalViews / 10) + rentedCount : 0;
           
           setRating({
             score: Number(score.toFixed(1)),
@@ -103,11 +105,15 @@ export function RealAgentRating() {
   return (
     <div className="space-y-2">
       <div className="text-2xl font-bold">{rating.score > 0 ? `${rating.score}★` : '0'}</div>
-      <div className="flex items-center text-xs text-yellow-600">
-        <Star className="h-3 w-3 mr-1 fill-current" />
-        {rating.reviews > 0 ? `Based on ${rating.reviews} reviews` : 'No reviews yet'}
-      </div>
-      <p className="text-xs text-muted-foreground">{rating.score > 0 ? 'Real performance rating' : 'Start getting views to build rating'}</p>
+      {rating.reviews > 0 ? (
+        <div className="flex items-center text-xs text-yellow-600">
+          <Star className="h-3 w-3 mr-1 fill-current" />
+          Based on {rating.reviews} reviews
+        </div>
+      ) : (
+        <div className="text-xs text-muted-foreground">No reviews yet</div>
+      )}
+      <p className="text-xs text-muted-foreground">{rating.score > 0 ? 'Performance rating' : 'No activity yet'}</p>
     </div>
   );
 }
