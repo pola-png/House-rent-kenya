@@ -36,7 +36,7 @@ export function PropertyCard({ property }: PropertyCardProps) {
               No Image
             </div>
           )}
-          <Badge className="absolute top-3 left-3">{property.propertyType}</Badge>
+          <Badge className="absolute top-3 left-3">{property.status}</Badge>
            {property.status === 'Rented' && (
               <Badge variant="destructive" className="absolute top-3 right-3">Rented</Badge>
            )}

@@ -185,7 +185,7 @@ export default function PropertyPage() {
                 <CardHeader>
                   <div className="flex flex-col md:flex-row justify-between md:items-center gap-4">
                     <div>
-                      <Badge>{property.propertyType}</Badge>
+                      <Badge>{property.status}</Badge>
                       <CardTitle className="text-2xl mt-2">Property Overview</CardTitle>
                     </div>
                     <div className="text-3xl font-bold text-primary">
