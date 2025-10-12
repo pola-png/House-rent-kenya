@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Sparkles, TrendingUp, Heart, MapPin, Star } from "lucide-react";
 import { PropertyCard } from "./property-card";
 import type { Property } from "@/lib/types";
+import { supabase } from "@/lib/supabase";
 
 interface AIRecommendationsProps {
   userPreferences?: {
@@ -24,23 +25,73 @@ export function AIRecommendations({ userPreferences, viewedProperties = [] }: AI
   const [recommendationType, setRecommendationType] = useState<'similar' | 'trending' | 'budget'>('similar');
 
   useEffect(() => {
-    // Simulate AI recommendation logic
-    const generateRecommendations = () => {
+    const fetchRecommendations = async () => {
       setLoading(true);
       
-      // Simulate API call delay
-      setTimeout(() => {
-        // Mock recommendations based on type
-        const mockRecommendations: Property[] = [
-          // This would be replaced with actual AI-generated recommendations
-        ];
+      try {
+        // Fetch real properties from Supabase based on recommendation type
+        let query = supabase.from('properties').select('*');
         
-        setRecommendations(mockRecommendations);
+        if (recommendationType === 'trending') {
+          query = query.order('views', { ascending: false }).limit(3);
+        } else if (recommendationType === 'budget') {
+          query = query.order('price', { ascending: true }).limit(3);
+        } else {
+          query = query.order('createdAt', { ascending: false }).limit(3);
+        }
+        
+        const { data, error } = await query;
+        
+        if (error) throw error;
+        
+        const propertiesWithAgents = await Promise.all(
+          (data || []).map(async (p) => {
+            const { data: profileData } = await supabase
+              .from('profiles')
+              .select('*')
+              .eq('id', p.landlordId)
+              .single();
+            
+            return {
+              ...p,
+              createdAt: new Date(p.createdAt),
+              updatedAt: new Date(p.updatedAt),
+              agent: profileData ? {
+                uid: profileData.id,
+                firstName: profileData.firstName || '',
+                lastName: profileData.lastName || '',
+                displayName: profileData.displayName || 'Agent',
+                email: profileData.email || '',
+                role: profileData.role || 'agent',
+                agencyName: profileData.agencyName,
+                phoneNumber: profileData.phoneNumber,
+                photoURL: profileData.photoURL,
+                createdAt: new Date(profileData.createdAt)
+              } : {
+                uid: 'default',
+                firstName: 'Property',
+                lastName: 'Agent',
+                displayName: 'Property Agent',
+                email: 'agent@houserent.co.ke',
+                role: 'agent',
+                agencyName: 'House Rent Kenya',
+                phoneNumber: '+254704202939',
+                createdAt: new Date()
+              }
+            };
+          })
+        );
+        
+        setRecommendations(propertiesWithAgents);
+      } catch (error) {
+        console.error('Error fetching recommendations:', error);
+        setRecommendations([]);
+      } finally {
         setLoading(false);
-      }, 1000);
+      }
     };
 
-    generateRecommendations();
+    fetchRecommendations();
   }, [recommendationType, userPreferences, viewedProperties]);
 
   const recommendationTypes = [
