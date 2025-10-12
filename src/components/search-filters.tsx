@@ -43,14 +43,14 @@ export function SearchFilters() {
   const selectedBaths = searchParams.get('baths');
   const selectedAmenities = searchParams.getAll('amenities');
   
-  // Initialize state from URL on mount and when searchParams change
+  // Initialize state from URL on mount and when URL values change
   useEffect(() => {
     setKeyword(urlKeyword);
     setPriceRange([
       urlMinPrice ? parseInt(urlMinPrice, 10) : 0,
       urlMaxPrice ? parseInt(urlMaxPrice, 10) : 1000000
     ]);
-  }, [searchParams]);
+  }, [urlKeyword, urlMinPrice, urlMaxPrice]);
   
   const createQueryString = useCallback((paramsToUpdate: Record<string, string | string[] | null>) => {
     const params = new URLSearchParams(searchParams.toString());
@@ -68,10 +68,10 @@ export function SearchFilters() {
   }, [searchParams]);
 
   useEffect(() => {
-    if (debouncedKeyword !== urlKeyword) {
+    if (debouncedKeyword !== urlKeyword && keyword === debouncedKeyword) {
       router.push(pathname + '?' + createQueryString({ q: debouncedKeyword || null }), { scroll: false });
     }
-  }, [debouncedKeyword, urlKeyword, pathname, router, createQueryString]);
+  }, [debouncedKeyword]);
 
   useEffect(() => {
     const currentMin = urlMinPrice ? parseInt(urlMinPrice, 10) : 0;
