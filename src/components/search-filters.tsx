@@ -23,34 +23,39 @@ export function SearchFilters() {
   const pathname = usePathname();
   const searchParams = useSearchParams();
 
-  // State for immediate input, debounced for URL update
-  const [keyword, setKeyword] = useState('');
-  const [priceRange, setPriceRange] = useState([0, 1000000]);
-  const debouncedKeyword = useDebounce(keyword, 500);
-  const debouncedPriceRange = useDebounce(priceRange, 500);
-
   // Read current values from URL
   const urlKeyword = searchParams.get('q') || '';
   const urlMinPrice = searchParams.get('min_price');
   const urlMaxPrice = searchParams.get('max_price');
-  // Get property types from both single param (home page) and multiple params (filters)
   const propertyTypeParam = searchParams.get('property_type');
   const propertyTypeParams = searchParams.getAll('property_type');
   const allSelectedTypes = propertyTypeParam ? [propertyTypeParam, ...propertyTypeParams.filter(p => p !== propertyTypeParam)] : propertyTypeParams;
-  // Normalize property types to match filter options (capitalize first letter)
   const selectedTypes = allSelectedTypes.map(type => type.charAt(0).toUpperCase() + type.slice(1).toLowerCase());
   const selectedBeds = searchParams.get('beds');
   const selectedBaths = searchParams.get('baths');
   const selectedAmenities = searchParams.getAll('amenities');
   
-  // Initialize state from URL on mount and when URL values change
+  // State for immediate input, initialized from URL
+  const [keyword, setKeyword] = useState(urlKeyword);
+  const [priceRange, setPriceRange] = useState([
+    urlMinPrice ? parseInt(urlMinPrice, 10) : 0,
+    urlMaxPrice ? parseInt(urlMaxPrice, 10) : 1000000
+  ]);
+  const debouncedKeyword = useDebounce(keyword, 500);
+  const debouncedPriceRange = useDebounce(priceRange, 500);
+  
+  // Sync state when URL changes (from external navigation)
   useEffect(() => {
-    setKeyword(urlKeyword);
-    setPriceRange([
-      urlMinPrice ? parseInt(urlMinPrice, 10) : 0,
-      urlMaxPrice ? parseInt(urlMaxPrice, 10) : 1000000
-    ]);
-  }, [urlKeyword, urlMinPrice, urlMaxPrice]);
+    if (urlKeyword !== keyword) setKeyword(urlKeyword);
+  }, [urlKeyword]);
+  
+  useEffect(() => {
+    const newMin = urlMinPrice ? parseInt(urlMinPrice, 10) : 0;
+    const newMax = urlMaxPrice ? parseInt(urlMaxPrice, 10) : 1000000;
+    if (newMin !== priceRange[0] || newMax !== priceRange[1]) {
+      setPriceRange([newMin, newMax]);
+    }
+  }, [urlMinPrice, urlMaxPrice]);
   
   const createQueryString = useCallback((paramsToUpdate: Record<string, string | string[] | null>) => {
     const params = new URLSearchParams(searchParams.toString());
