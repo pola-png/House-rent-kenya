@@ -12,7 +12,19 @@ export function RealAgentRating() {
 
   useEffect(() => {
     if (user) {
+      console.log('RealAgentRating: User detected, calculating rating for:', user.uid);
       calculateRating();
+    }
+  }, [user]);
+
+  // Force refresh every 30 seconds
+  useEffect(() => {
+    if (user) {
+      const interval = setInterval(() => {
+        console.log('RealAgentRating: Auto-refreshing rating');
+        calculateRating();
+      }, 30000);
+      return () => clearInterval(interval);
     }
   }, [user]);
 

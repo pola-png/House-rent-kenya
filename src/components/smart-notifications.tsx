@@ -27,7 +27,19 @@ export function SmartNotifications() {
 
   useEffect(() => {
     if (user) {
+      console.log('SmartNotifications: User detected, generating notifications for:', user.uid);
       generateRealNotifications();
+    }
+  }, [user]);
+
+  // Force refresh every 60 seconds
+  useEffect(() => {
+    if (user) {
+      const interval = setInterval(() => {
+        console.log('SmartNotifications: Auto-refreshing notifications');
+        generateRealNotifications();
+      }, 60000);
+      return () => clearInterval(interval);
     }
   }, [user]);
 

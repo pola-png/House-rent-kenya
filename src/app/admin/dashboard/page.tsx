@@ -294,7 +294,7 @@ export default function Dashboard() {
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <RealAgentRating />
+                <RealAgentRating key={user?.uid} />
               </CardContent>
             </Card>
           </div>
@@ -363,7 +363,7 @@ export default function Dashboard() {
             </Card>
             
             <div className="xl:col-span-1">
-              <SmartNotifications />
+              <SmartNotifications key={user?.uid} />
             </div>
           </div>
         </TabsContent>
