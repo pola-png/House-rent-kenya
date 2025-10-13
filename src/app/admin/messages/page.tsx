@@ -33,7 +33,7 @@ export default function MessagesPage() {
 
   React.useEffect(() => {
     // Simulate fetching tickets
-    const typedTickets: SupportTicket[] = mockTicketsData.map(t => ({...t, id: String(t.id), createdAt: new Date(t.createdAt), updatedAt: new Date(t.updatedAt) }));
+    const typedTickets: SupportTicket[] = mockTicketsData.map(t => ({...t, id: String(t.id), createdAt: new Date(t.createdAt), updatedAt: new Date(t.updatedAt), status: t.status as "open" | "closed" }));
     setTickets(typedTickets.sort((a,b) => b.updatedAt.getTime() - a.updatedAt.getTime()));
     setIsLoadingTickets(false);
   }, []);
