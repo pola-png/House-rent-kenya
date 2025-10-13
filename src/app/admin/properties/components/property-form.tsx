@@ -54,7 +54,7 @@ const formSchema = z.object({
   area: z.coerce.number().positive(),
   propertyType: z.enum(["Apartment", "House", "Condo", "Townhouse", "Villa"]),
   amenities: z.string().min(3),
-  status: z.enum(["For Rent", "For Sale", "Short Let", "Land", "Rented"]),
+  status: z.enum(["For Rent", "For Sale", "Short Let", "Land", "Rented", "Sold"]),
   keywords: z.string().optional(),
   featured: z.boolean().default(false),
   latitude: z.coerce.number().min(-90).max(90).default(-1.286389),
