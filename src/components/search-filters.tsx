@@ -190,7 +190,7 @@ export function SearchFilters() {
                     <Label htmlFor={`type-${type}`} className="font-normal">{type}</Label>
                   </div>
                 );
-              })
+              })}
             </AccordionContent>
           </AccordionItem>
           
