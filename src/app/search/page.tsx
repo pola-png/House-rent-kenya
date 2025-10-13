@@ -223,14 +223,16 @@ export default function SearchPage() {
                     <PaginationContent>
                       <PaginationItem>
                         <PaginationPrevious 
-                          onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                          href="#"
+                          onClick={(e) => { e.preventDefault(); setCurrentPage(p => Math.max(1, p - 1)); }}
                           className={currentPage === 1 ? 'pointer-events-none opacity-50' : 'cursor-pointer'}
                         />
                       </PaginationItem>
                       {Array.from({ length: Math.ceil(properties.length / itemsPerPage) }, (_, i) => i + 1).map((page) => (
                         <PaginationItem key={page}>
                           <PaginationLink 
-                            onClick={() => setCurrentPage(page)}
+                            href="#"
+                            onClick={(e) => { e.preventDefault(); setCurrentPage(page); }}
                             isActive={currentPage === page}
                             className="cursor-pointer"
                           >
@@ -240,7 +242,8 @@ export default function SearchPage() {
                       ))}
                       <PaginationItem>
                         <PaginationNext 
-                          onClick={() => setCurrentPage(p => Math.min(Math.ceil(properties.length / itemsPerPage), p + 1))}
+                          href="#"
+                          onClick={(e) => { e.preventDefault(); setCurrentPage(p => Math.min(Math.ceil(properties.length / itemsPerPage), p + 1)); }}
                           className={currentPage === Math.ceil(properties.length / itemsPerPage) ? 'pointer-events-none opacity-50' : 'cursor-pointer'}
                         />
                       </PaginationItem>
