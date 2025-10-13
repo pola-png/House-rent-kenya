@@ -21,7 +21,8 @@ import {
   List,
   Settings,
   LifeBuoy,
-  LogOut
+  LogOut,
+  Loader2
 } from "lucide-react";
 import {
   SidebarProvider,
