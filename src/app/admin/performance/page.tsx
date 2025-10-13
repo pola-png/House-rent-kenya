@@ -45,7 +45,8 @@ export default function PerformancePage() {
       ...p, 
       createdAt: new Date(p.createdAt), 
       updatedAt: new Date(p.updatedAt),
-      status: p.status as "For Rent" | "For Sale" | "Short Let" | "Land" | "Rented" | "Sold"
+      status: p.status as "For Rent" | "For Sale" | "Short Let" | "Land" | "Rented" | "Sold",
+      propertyType: p.propertyType as "Apartment" | "House" | "Condo" | "Townhouse" | "Villa"
     }));
     const typedLeads: CallbackRequest[] = allLeads.map(l => ({ 
       ...l, 
