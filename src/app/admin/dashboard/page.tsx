@@ -169,7 +169,7 @@ export default function Dashboard() {
                 {isLoading ? <Skeleton className="h-8 w-16" /> : (
                   <div className="space-y-1">
                     <div className="text-2xl font-bold">{stats?.totalProperties}</div>
-                    {stats?.totalProperties > 0 && (
+                    {(stats?.totalProperties ?? 0) > 0 && (
                       <div className="flex items-center text-xs text-muted-foreground">
                         <Package className="h-3 w-3 mr-1" />
                         Total portfolio
