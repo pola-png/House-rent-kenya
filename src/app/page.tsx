@@ -17,21 +17,6 @@ import type { Property } from '@/lib/types';
 import { Skeleton } from '@/components/ui/skeleton';
 import { supabase } from '@/lib/supabase';
 import { SEOSchema } from '@/components/seo-schema';
-import { Metadata } from 'next';
-
-export const metadata: Metadata = {
-  title: 'House Rent Kenya - Find Premium Apartments, Houses & Homes for Rent | #1 Property Platform',
-  description: 'Discover 10,000+ verified rental properties in Kenya. Premium apartments in Nairobi, Westlands, Kilimani. Instant booking, virtual tours, trusted agents. Start your search now!',
-  keywords: 'house rent kenya, apartments nairobi, property rental kenya, houses for rent, westlands apartments, kilimani houses, karen homes, real estate kenya',
-  openGraph: {
-    title: 'House Rent Kenya - 10,000+ Premium Properties | Instant Booking',
-    description: 'Find your dream home in Kenya. Browse verified apartments, houses & luxury properties. Virtual tours, instant booking, trusted agents.',
-    images: [{ url: '/og-home.jpg', width: 1200, height: 630 }],
-  },
-  alternates: {
-    canonical: 'https://houserent.co.ke',
-  },
-};
 
 
 const popularSearches = [
