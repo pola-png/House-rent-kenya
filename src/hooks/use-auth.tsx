@@ -39,7 +39,18 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     // This is a mock login. In a real app, you'd verify credentials.
     const foundUser = users.find(u => u.email === email);
     if (foundUser) {
-        const userProfile = {...foundUser, createdAt: new Date(foundUser.createdAt)}
+        const userProfile: UserProfile = {
+          uid: foundUser.uid,
+          firstName: foundUser.firstName,
+          lastName: foundUser.lastName,
+          displayName: foundUser.displayName,
+          email: foundUser.email,
+          phoneNumber: foundUser.phoneNumber,
+          role: foundUser.role as "user" | "agent" | "admin",
+          agencyName: foundUser.agencyName,
+          photoURL: foundUser.photoURL,
+          createdAt: new Date(foundUser.createdAt)
+        };
         localStorage.setItem('authUser', JSON.stringify(userProfile));
         setUser(userProfile);
         return true;
@@ -51,7 +62,18 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     // Mock Google login by picking the first agent
     const googleUser = users.find(u => u.role === 'agent');
     if (googleUser) {
-        const userProfile = {...googleUser, createdAt: new Date(googleUser.createdAt)}
+        const userProfile: UserProfile = {
+          uid: googleUser.uid,
+          firstName: googleUser.firstName,
+          lastName: googleUser.lastName,
+          displayName: googleUser.displayName,
+          email: googleUser.email,
+          phoneNumber: googleUser.phoneNumber,
+          role: googleUser.role as "user" | "agent" | "admin",
+          agencyName: googleUser.agencyName,
+          photoURL: googleUser.photoURL,
+          createdAt: new Date(googleUser.createdAt)
+        };
         localStorage.setItem('authUser', JSON.stringify(userProfile));
         setUser(userProfile);
     }
