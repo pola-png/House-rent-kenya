@@ -6,19 +6,46 @@ import type { UserProfile } from '@/lib/types';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Button } from '@/components/ui/button';
 import { useState, useEffect } from 'react';
-// Mock data
-import usersData from "@/lib/docs/users.json";
+import { supabase } from '@/lib/supabase';
 
 export default function AgentsPage() {
   const [agents, setAgents] = useState<UserProfile[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    // Simulate fetching agents from mock data
-    const agentUsers = usersData.filter(user => user.role === 'agent').map(a => ({...a, uid: String(a.uid), createdAt: new Date(a.createdAt)}));
-    setAgents(agentUsers);
-    setIsLoading(false);
+    fetchAgents();
   }, []);
+
+  const fetchAgents = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('role', 'agent')
+        .order('createdAt', { ascending: false });
+
+      if (error) throw error;
+
+      const typedAgents: UserProfile[] = (data || []).map(a => ({
+        uid: a.id,
+        firstName: a.firstName || '',
+        lastName: a.lastName || '',
+        displayName: a.displayName || a.email?.split('@')[0] || '',
+        email: a.email || '',
+        role: a.role as "user" | "agent",
+        agencyName: a.agencyName,
+        phoneNumber: a.phoneNumber,
+        photoURL: a.photoURL,
+        createdAt: new Date(a.createdAt)
+      }));
+
+      setAgents(typedAgents);
+    } catch (error) {
+      console.error('Error fetching agents:', error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   return (
     <div className="bg-background">

@@ -6,20 +6,81 @@ import { Check, PhoneCall, User } from "lucide-react";
 import type { CallbackRequest } from "@/lib/types";
 import { Skeleton } from "@/components/ui/skeleton";
 import { formatDistanceToNow } from 'date-fns';
-import { useState } from "react";
-// Mock data - in a real app, this would come from a database
-import mockRequests from "@/lib/docs/callback-requests.json";
+import { useState, useEffect } from "react";
+import { useAuth } from "@/hooks/use-auth-supabase";
+import { supabase } from "@/lib/supabase";
+import { useToast } from "@/hooks/use-toast";
 
 export default function CallbackRequestsPage() {
-  // Use mock data
-  const [requests, setRequests] = useState<CallbackRequest[]>(
-      mockRequests.filter(r => r.status === 'pending').map(r => ({...r, id: String(r.id), createdAt: new Date(r.createdAt)}))
-  );
-  const [isLoading, setIsLoading] = useState(false);
+  const { user } = useAuth();
+  const { toast } = useToast();
+  const [requests, setRequests] = useState<CallbackRequest[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
 
-  const handleMarkAsContacted = (requestId: string) => {
-    setRequests(prev => prev.filter(req => req.id !== requestId));
+  useEffect(() => {
+    if (user) {
+      fetchRequests();
+    }
+  }, [user]);
+
+  const fetchRequests = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('callback_requests')
+        .select(`
+          *,
+          properties:propertyId (title)
+        `)
+        .eq('agentId', user?.uid)
+        .eq('status', 'pending')
+        .order('createdAt', { ascending: false });
+
+      if (error) throw error;
+
+      const typedRequests: CallbackRequest[] = (data || []).map(r => ({
+        id: r.id,
+        propertyId: r.propertyId,
+        propertyTitle: r.properties?.title || 'Unknown Property',
+        userName: r.userName,
+        userPhone: r.userPhone,
+        agentId: r.agentId,
+        status: r.status as "pending" | "contacted",
+        createdAt: new Date(r.createdAt)
+      }));
+
+      setRequests(typedRequests);
+    } catch (error) {
+      console.error('Error fetching callback requests:', error);
+    } finally {
+      setIsLoading(false);
+    }
   };
+
+  const handleMarkAsContacted = async (requestId: string) => {
+    try {
+      const { error } = await supabase
+        .from('callback_requests')
+        .update({ status: 'contacted' })
+        .eq('id', requestId);
+
+      if (error) throw error;
+
+      setRequests(prev => prev.filter(req => req.id !== requestId));
+      toast({
+        title: 'Marked as Contacted',
+        description: 'Request has been marked as contacted.'
+      });
+    } catch (error) {
+      console.error('Error updating request:', error);
+      toast({
+        variant: 'destructive',
+        title: 'Error',
+        description: 'Could not update request status.'
+      });
+    }
+  };
+
+
 
   return (
     <Card>

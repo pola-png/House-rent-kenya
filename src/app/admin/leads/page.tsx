@@ -4,31 +4,83 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Check, Mail, Phone, Star, User } from "lucide-react";
-import type { CallbackRequest } from "@/lib/types";
+import { CallbackRequest } from "@/lib/types";
 import { Skeleton } from "@/components/ui/skeleton";
 import { formatDistanceToNow } from 'date-fns';
 import { useState, useEffect } from "react";
 import { Badge } from "@/components/ui/badge";
-// Mock data - in a real app, this would come from a database
-import mockRequests from "@/lib/docs/callback-requests.json";
+import { useAuth } from "@/hooks/use-auth-supabase";
+import { supabase } from "@/lib/supabase";
+import { useToast } from "@/hooks/use-toast";
 
 export default function LeadsPage() {
+  const { user } = useAuth();
+  const { toast } = useToast();
   const [requests, setRequests] = useState<CallbackRequest[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    // Use mock data
-    setRequests(
-      mockRequests.map(r => ({...r, id: String(r.id), createdAt: new Date(r.createdAt)}))
-        .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime())
-    );
-    setIsLoading(false);
-  }, []);
+    if (user) {
+      fetchRequests();
+    }
+  }, [user]);
 
-  const handleStatusChange = (requestId: string, status: "pending" | "contacted") => {
-    setRequests(prev => prev.map(req => 
-      req.id === requestId ? { ...req, status } : req
-    ));
+  const fetchRequests = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('callback_requests')
+        .select(`
+          *,
+          properties:propertyId (title)
+        `)
+        .eq('agentId', user?.uid)
+        .order('createdAt', { ascending: false });
+
+      if (error) throw error;
+
+      const typedRequests: CallbackRequest[] = (data || []).map(r => ({
+        id: r.id,
+        propertyId: r.propertyId,
+        propertyTitle: r.properties?.title || 'Unknown Property',
+        userName: r.userName,
+        userPhone: r.userPhone,
+        agentId: r.agentId,
+        status: r.status as "pending" | "contacted",
+        createdAt: new Date(r.createdAt)
+      }));
+
+      setRequests(typedRequests);
+    } catch (error) {
+      console.error('Error fetching leads:', error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleStatusChange = async (requestId: string, status: "pending" | "contacted") => {
+    try {
+      const { error } = await supabase
+        .from('callback_requests')
+        .update({ status })
+        .eq('id', requestId);
+
+      if (error) throw error;
+
+      setRequests(prev => prev.map(req => 
+        req.id === requestId ? { ...req, status } : req
+      ));
+      toast({
+        title: 'Status Updated',
+        description: `Lead marked as ${status}.`
+      });
+    } catch (error) {
+      console.error('Error updating status:', error);
+      toast({
+        variant: 'destructive',
+        title: 'Error',
+        description: 'Could not update lead status.'
+      });
+    }
   };
 
   return (
