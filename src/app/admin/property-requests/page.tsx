@@ -32,7 +32,8 @@ export default function PropertyRequestsPage() {
         // Simulate fetching and transforming data
         const typedRequests: PropertyRequest[] = mockPropertyRequests.map(req => ({
             ...req,
-            createdAt: new Date(req.createdAt)
+            createdAt: new Date(req.createdAt),
+            status: req.status as 'new' | 'contacted' | 'matched'
         }));
         setRequests(typedRequests);
         setIsLoading(false);
