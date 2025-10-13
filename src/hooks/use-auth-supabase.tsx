@@ -22,17 +22,19 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   useEffect(() => {
     // Get initial session
-    supabase.auth.getSession().then(({ data: { session } }) => {
+    supabase.auth.getSession().then(async ({ data: { session } }) => {
       if (session?.user) {
-        setUser(mapSupabaseUser(session.user));
+        const userProfile = await fetchUserProfile(session.user);
+        setUser(userProfile);
       }
       setLoading(false);
     });
 
     // Listen for auth changes
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, session) => {
       if (session?.user) {
-        setUser(mapSupabaseUser(session.user));
+        const userProfile = await fetchUserProfile(session.user);
+        setUser(userProfile);
       } else {
         setUser(null);
       }
@@ -41,18 +43,24 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     return () => subscription.unsubscribe();
   }, []);
 
-  const mapSupabaseUser = (supabaseUser: User): UserProfile => {
+  const fetchUserProfile = async (supabaseUser: User): Promise<UserProfile> => {
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('*')
+      .eq('id', supabaseUser.id)
+      .single();
+
     const metadata = supabaseUser.user_metadata;
     return {
       uid: supabaseUser.id,
       email: supabaseUser.email!,
-      firstName: metadata?.firstName || metadata?.first_name || '',
-      lastName: metadata?.lastName || metadata?.last_name || '',
-      displayName: metadata?.displayName || metadata?.full_name || supabaseUser.email?.split('@')[0] || '',
-      role: metadata?.role || 'user',
-      phoneNumber: metadata?.phoneNumber || supabaseUser.phone,
-      agencyName: metadata?.agencyName,
-      photoURL: metadata?.photoURL || supabaseUser.user_metadata?.avatar_url,
+      firstName: profile?.firstName || metadata?.firstName || metadata?.first_name || '',
+      lastName: profile?.lastName || metadata?.lastName || metadata?.last_name || '',
+      displayName: profile?.displayName || metadata?.displayName || metadata?.full_name || supabaseUser.email?.split('@')[0] || '',
+      role: profile?.role || metadata?.role || 'user',
+      phoneNumber: profile?.phoneNumber || metadata?.phoneNumber || supabaseUser.phone,
+      agencyName: profile?.agencyName || metadata?.agencyName,
+      photoURL: profile?.photoURL || metadata?.photoURL || supabaseUser.user_metadata?.avatar_url,
       createdAt: new Date(supabaseUser.created_at)
     };
   };
