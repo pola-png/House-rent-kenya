@@ -14,7 +14,7 @@ export interface Property {
   longitude: number;
   images: string[];
   amenities: string[];
-  agent: UserProfile;
+  agent?: UserProfile;
   landlordId: string;
   status: "For Rent" | "For Sale" | "Short Let" | "Land" | "Rented" | "Sold";
   createdAt: Date;
