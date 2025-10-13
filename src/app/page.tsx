@@ -317,7 +317,7 @@ export default function Home() {
                     <Link href={searchUrl}>{search}</Link>
                   </Button>
                 );
-              })
+              })}
             </div>
           </div>
         </section>
