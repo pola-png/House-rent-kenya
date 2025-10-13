@@ -41,8 +41,8 @@ export default function PerformancePage() {
 
   useEffect(() => {
     // Simulate fetching data
-    const typedProperties: Property[] = allProperties.map(p => ({ ...p, createdAt: new Date(p.createdAt), updatedAt: new Date(p.updatedAt) }));
-    const typedLeads: CallbackRequest[] = allLeads.map(l => ({ ...l, id: String(l.id), createdAt: new Date(l.createdAt) }));
+    const typedProperties: Property[] = allProperties.map(p => ({ ...p, createdAt: new Date(p.createdAt), updatedAt: new Date(p.updatedAt), status: p.status as "For Rent" | "For Sale" | "Short Let" | "Land" | "Rented" | "Sold" }));
+    const typedLeads: CallbackRequest[] = allLeads.map(l => ({ ...l, id: String(l.id), createdAt: new Date(l.createdAt), status: l.status as "pending" | "contacted" }));
 
     setProperties(typedProperties);
     setLeads(typedLeads);

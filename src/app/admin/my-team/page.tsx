@@ -17,7 +17,7 @@ export default function MyTeamPage() {
 
   useEffect(() => {
     // Simulate fetching agents from mock data
-    const agentUsers = usersData.filter(user => user.role === 'agent').map(a => ({...a, uid: String(a.uid), createdAt: new Date(a.createdAt)}));
+    const agentUsers = usersData.filter(user => user.role === 'agent').map(a => ({...a, uid: String(a.uid), createdAt: new Date(a.createdAt), role: a.role as "user" | "agent" | "admin"}));
     setAgents(agentUsers);
     setIsLoading(false);
   }, []);
