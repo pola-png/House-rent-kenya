@@ -1,4 +1,4 @@
-import { MetadataRoute } from 'next';
+import type { MetadataRoute } from 'next';
 
 export default function robots(): MetadataRoute.Robots {
   return {
@@ -20,6 +20,5 @@ export default function robots(): MetadataRoute.Robots {
       },
     ],
     sitemap: 'https://houserent.co.ke/sitemap.xml',
-    host: 'https://houserent.co.ke',
   };
 }
