@@ -44,14 +44,21 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   }, []);
 
   const fetchUserProfile = async (supabaseUser: User): Promise<UserProfile> => {
-    const { data: profile } = await supabase
+    const { data: profile, error } = await supabase
       .from('profiles')
       .select('*')
       .eq('id', supabaseUser.id)
       .single();
 
+    if (error) {
+      console.error('Error fetching profile:', error);
+    }
+
+    console.log('Profile from DB:', profile);
+    console.log('User metadata:', supabaseUser.user_metadata);
+
     const metadata = supabaseUser.user_metadata;
-    return {
+    const userProfile = {
       uid: supabaseUser.id,
       email: supabaseUser.email!,
       firstName: profile?.firstName || metadata?.firstName || metadata?.first_name || '',
@@ -63,6 +70,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       photoURL: profile?.photoURL || metadata?.photoURL || supabaseUser.user_metadata?.avatar_url,
       createdAt: new Date(supabaseUser.created_at)
     };
+
+    console.log('Final user profile with role:', userProfile.role);
+    return userProfile;
   };
 
   const login = async (email: string, password: string): Promise<boolean> => {
