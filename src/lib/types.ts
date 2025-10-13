@@ -16,7 +16,7 @@ export interface Property {
   amenities: string[];
   agent: UserProfile;
   landlordId: string;
-  status: "For Rent" | "For Sale" | "Short Let" | "Land" | "Rented";
+  status: "For Rent" | "For Sale" | "Short Let" | "Land" | "Rented" | "Sold";
   createdAt: Date;
   updatedAt: Date;
   featured?: boolean;
@@ -31,7 +31,7 @@ export interface UserProfile {
   displayName: string;
   email: string;
   phoneNumber?: string;
-  role: "user" | "agent";
+  role: "user" | "agent" | "admin";
   agencyName?: string;
   createdAt: Date;
   photoURL?: string;
