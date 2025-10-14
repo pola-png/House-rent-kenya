@@ -77,6 +77,8 @@ export function PropertyForm({ property }: PropertyFormProps) {
   const [promotionWeeks, setPromotionWeeks] = React.useState(1);
   const weeklyRate = 5;
   const [screenshotFile, setScreenshotFile] = React.useState<File | null>(null);
+  const [isGeneratingTitle, setIsGeneratingTitle] = React.useState(false);
+  const [isGeneratingDesc, setIsGeneratingDesc] = React.useState(false);
 
 
   const defaultValues: Partial<PropertyFormValues> = property
@@ -141,6 +143,7 @@ export function PropertyForm({ property }: PropertyFormProps) {
       return;
     }
 
+    setIsGeneratingDesc(true);
     toast({
       title: "Generating AI Description...",
       description: "Please wait while we create your property description.",
@@ -164,12 +167,15 @@ export function PropertyForm({ property }: PropertyFormProps) {
         title: "AI Description Generated!",
         description: "Your property description has been created successfully.",
       });
-    } catch (error) {
+    } catch (error: any) {
+      console.error('AI Description Error:', error);
       toast({
         variant: "destructive",
         title: "Generation Failed",
-        description: "Could not generate description. Please try again.",
+        description: error.message || "Could not generate description. Please try again.",
       });
+    } finally {
+      setIsGeneratingDesc(false);
     }
   };
 
@@ -190,6 +196,7 @@ export function PropertyForm({ property }: PropertyFormProps) {
       return;
     }
 
+    setIsGeneratingTitle(true);
     try {
       const prompt = `Generate a catchy, SEO-optimized property listing title for a ${currentData.bedrooms}-bedroom ${currentData.propertyType} in ${currentData.location}, ${currentData.city}. Keep it under 80 characters, professional, and attention-grabbing. Only return the title, nothing else.`;
 
@@ -208,12 +215,15 @@ export function PropertyForm({ property }: PropertyFormProps) {
         title: "AI Title Generated!",
         description: "Your property title has been created successfully.",
       });
-    } catch (error) {
+    } catch (error: any) {
+      console.error('AI Title Error:', error);
       toast({
         variant: "destructive",
         title: "Generation Failed",
-        description: "Could not generate title. Please try again.",
+        description: error.message || "Could not generate title. Please try again.",
       });
+    } finally {
+      setIsGeneratingTitle(false);
     }
   };
 
@@ -398,10 +408,10 @@ export function PropertyForm({ property }: PropertyFormProps) {
                           variant="outline"
                           size="sm"
                           onClick={() => generateAITitle(field.onChange)}
-                          disabled={!form.watch('propertyType') || !form.watch('location')}
+                          disabled={isGeneratingTitle || !form.watch('propertyType') || !form.watch('location')}
                         >
-                          <Sparkles className="h-4 w-4 mr-1" />
-                          AI Generate
+                          {isGeneratingTitle ? <Loader2 className="h-4 w-4 mr-1 animate-spin" /> : <Sparkles className="h-4 w-4 mr-1" />}
+                          {isGeneratingTitle ? 'Generating...' : 'AI Generate'}
                         </Button>
                       </FormLabel>
                       <FormControl>
@@ -423,10 +433,10 @@ export function PropertyForm({ property }: PropertyFormProps) {
                           variant="outline"
                           size="sm"
                           onClick={() => generateAIDescription(field.onChange)}
-                          disabled={!form.watch('propertyType') || !form.watch('location')}
+                          disabled={isGeneratingDesc || !form.watch('propertyType') || !form.watch('location')}
                         >
-                          <Sparkles className="h-4 w-4 mr-1" />
-                          AI Generate
+                          {isGeneratingDesc ? <Loader2 className="h-4 w-4 mr-1 animate-spin" /> : <Sparkles className="h-4 w-4 mr-1" />}
+                          {isGeneratingDesc ? 'Generating...' : 'AI Generate'}
                         </Button>
                       </FormLabel>
                       <FormControl>

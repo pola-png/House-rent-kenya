@@ -4,9 +4,10 @@ export async function POST(request: NextRequest) {
   try {
     const { prompt, type } = await request.json();
     
-    const apiKey = process.env.NEXT_PUBLIC_GEMINI_API_KEY;
+    const apiKey = process.env.GEMINI_API_KEY || process.env.NEXT_PUBLIC_GEMINI_API_KEY;
     
     if (!apiKey) {
+      console.error('Gemini API key not found in environment variables');
       return NextResponse.json(
         { error: 'Gemini API key not configured' },
         { status: 500 }
@@ -31,11 +32,18 @@ export async function POST(request: NextRequest) {
     );
 
     if (!response.ok) {
-      throw new Error('Gemini API request failed');
+      const errorData = await response.json();
+      console.error('Gemini API error:', errorData);
+      throw new Error(`Gemini API request failed: ${response.status}`);
     }
 
     const data = await response.json();
     const generatedText = data.candidates?.[0]?.content?.parts?.[0]?.text || '';
+    
+    if (!generatedText) {
+      console.error('No text generated from Gemini API:', data);
+      throw new Error('No content generated');
+    }
 
     return NextResponse.json({ text: generatedText, type });
   } catch (error: any) {
