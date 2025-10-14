@@ -146,34 +146,31 @@ export function PropertyForm({ property }: PropertyFormProps) {
       description: "Please wait while we create your property description.",
     });
 
-    // Simulate AI generation
-    setTimeout(() => {
-      const amenitiesList = currentData.amenities.split(',').map(a => a.trim()).filter(Boolean);
-      const amenitiesText = amenitiesList.length > 0 
-        ? `Enjoy premium amenities including ${amenitiesList.slice(0, 3).join(', ')}${amenitiesList.length > 3 ? ' and more' : ''}.`
-        : 'This property offers excellent amenities for comfortable living.';
+    try {
+      const prompt = `Write a compelling, professional property description for a ${currentData.bedrooms}-bedroom, ${currentData.bathrooms}-bathroom ${currentData.propertyType} in ${currentData.location}, ${currentData.city}. Price: Ksh ${currentData.price.toLocaleString()}. Amenities: ${currentData.amenities || 'standard amenities'}. Make it engaging, highlight key features, and include a call to action. Format with paragraphs and bullet points for key features.`;
 
-      const aiDescription = `Discover this exceptional ${currentData.bedrooms}-bedroom, ${currentData.bathrooms}-bathroom ${currentData.propertyType.toLowerCase()} located in the prestigious ${currentData.location} area of ${currentData.city}.
+      const response = await fetch('/api/ai/generate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ prompt, type: 'description' })
+      });
 
-This beautifully designed property offers modern living at its finest, featuring spacious rooms, contemporary finishes, and thoughtful layouts that maximize both comfort and functionality. ${amenitiesText}
+      if (!response.ok) throw new Error('Failed to generate');
 
-Perfect for ${currentData.bedrooms <= 2 ? 'professionals, couples, or small families' : 'families or those seeking extra space'}, this property combines convenience with luxury living. The prime location provides easy access to shopping centers, restaurants, schools, and major transport links.
-
-Key Features:
-• ${currentData.bedrooms} spacious bedrooms with ample natural light
-• ${currentData.bathrooms} modern bathroom${currentData.bathrooms > 1 ? 's' : ''} with quality fixtures
-• Prime location in ${currentData.location}
-• ${amenitiesList.length > 0 ? amenitiesList.join('\n• ') : 'Premium amenities'}
-
-Don't miss this opportunity to secure a premium property in one of ${currentData.city}'s most sought-after neighborhoods. Contact us today to schedule a viewing!`;
-
-      onChange(aiDescription);
+      const data = await response.json();
+      onChange(data.text);
       
       toast({
         title: "AI Description Generated!",
         description: "Your property description has been created successfully.",
       });
-    }, 1500);
+    } catch (error) {
+      toast({
+        variant: "destructive",
+        title: "Generation Failed",
+        description: "Could not generate description. Please try again.",
+      });
+    }
   };
 
   const generateAITitle = async (onChange: (value: string) => void) => {
@@ -193,21 +190,31 @@ Don't miss this opportunity to secure a premium property in one of ${currentData
       return;
     }
 
-    const templates = [
-      `Stunning ${currentData.bedrooms}BR ${currentData.propertyType} in Prime ${currentData.location}`,
-      `Luxury ${currentData.bedrooms}-Bedroom ${currentData.propertyType} | ${currentData.location}, ${currentData.city}`,
-      `Modern ${currentData.bedrooms}BR ${currentData.propertyType} with Premium Amenities - ${currentData.location}`,
-      `Spacious ${currentData.bedrooms}-Bedroom ${currentData.propertyType} in Exclusive ${currentData.location}`,
-      `Premium ${currentData.bedrooms}BR ${currentData.propertyType} | Heart of ${currentData.location}`
-    ];
-    
-    const aiTitle = templates[Math.floor(Math.random() * templates.length)];
-    onChange(aiTitle);
-    
-    toast({
-      title: "AI Title Generated!",
-      description: "Your property title has been created successfully.",
-    });
+    try {
+      const prompt = `Generate a catchy, SEO-optimized property listing title for a ${currentData.bedrooms}-bedroom ${currentData.propertyType} in ${currentData.location}, ${currentData.city}. Keep it under 80 characters, professional, and attention-grabbing. Only return the title, nothing else.`;
+
+      const response = await fetch('/api/ai/generate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ prompt, type: 'title' })
+      });
+
+      if (!response.ok) throw new Error('Failed to generate');
+
+      const data = await response.json();
+      onChange(data.text.trim());
+      
+      toast({
+        title: "AI Title Generated!",
+        description: "Your property title has been created successfully.",
+      });
+    } catch (error) {
+      toast({
+        variant: "destructive",
+        title: "Generation Failed",
+        description: "Could not generate title. Please try again.",
+      });
+    }
   };
 
   async function onSubmit(data: PropertyFormValues) {

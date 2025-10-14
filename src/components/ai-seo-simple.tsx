@@ -40,14 +40,40 @@ export function AISEOSimple({ formData, onApply }: AISEOSimpleProps) {
     setIsGenerating(true);
     
     try {
-      // Simulate AI generation with realistic delay
-      await new Promise(resolve => setTimeout(resolve, 2000));
+      const titlePrompt = `Generate a catchy, SEO-optimized property listing title for a ${formData.bedrooms}-bedroom ${formData.propertyType} in ${formData.location}, ${formData.city}. Keep it under 80 characters. Only return the title.`;
       
-      // Generate AI-powered content based on form data
+      const descPrompt = `Write a compelling property description for a ${formData.bedrooms}-bedroom, ${formData.bathrooms}-bathroom ${formData.propertyType} in ${formData.location}, ${formData.city}. Price: Ksh ${formData.price.toLocaleString()}. Amenities: ${formData.amenities || 'standard amenities'}. Make it engaging with paragraphs and bullet points.`;
+      
+      const keywordsPrompt = `Generate 10-15 SEO keywords for a ${formData.bedrooms}-bedroom ${formData.propertyType} in ${formData.location}, ${formData.city}. Return as comma-separated list only.`;
+
+      const [titleRes, descRes, keywordsRes] = await Promise.all([
+        fetch('/api/ai/generate', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ prompt: titlePrompt, type: 'title' })
+        }),
+        fetch('/api/ai/generate', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ prompt: descPrompt, type: 'description' })
+        }),
+        fetch('/api/ai/generate', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ prompt: keywordsPrompt, type: 'keywords' })
+        })
+      ]);
+
+      const [titleData, descData, keywordsData] = await Promise.all([
+        titleRes.json(),
+        descRes.json(),
+        keywordsRes.json()
+      ]);
+      
       const aiContent: AIGeneratedContent = {
-        title: generateTitle(formData),
-        description: generateDescription(formData),
-        keywords: generateKeywords(formData)
+        title: titleData.text.trim(),
+        description: descData.text,
+        keywords: keywordsData.text.trim()
       };
       
       setGeneratedContent(aiContent);
