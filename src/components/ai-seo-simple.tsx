@@ -40,40 +40,38 @@ export function AISEOSimple({ formData, onApply }: AISEOSimpleProps) {
     setIsGenerating(true);
     
     try {
+      const apiKey = process.env.NEXT_PUBLIC_GEMINI_API_KEY || 'AIzaSyBytiBEktDdWwh6tOF_GYZT_Ds7kCOvXvs';
+      
       const titlePrompt = `Generate a catchy, SEO-optimized property listing title for a ${formData.bedrooms}-bedroom ${formData.propertyType} in ${formData.location}, ${formData.city}. Keep it under 80 characters. Only return the title.`;
       
       const descPrompt = `Write a compelling property description for a ${formData.bedrooms}-bedroom, ${formData.bathrooms}-bathroom ${formData.propertyType} in ${formData.location}, ${formData.city}. Price: Ksh ${formData.price.toLocaleString()}. Amenities: ${formData.amenities || 'standard amenities'}. Make it engaging with paragraphs and bullet points.`;
       
       const keywordsPrompt = `Generate 10-15 SEO keywords for a ${formData.bedrooms}-bedroom ${formData.propertyType} in ${formData.location}, ${formData.city}. Return as comma-separated list only.`;
 
-      const [titleRes, descRes, keywordsRes] = await Promise.all([
-        fetch('/api/ai/generate', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ prompt: titlePrompt, type: 'title' })
-        }),
-        fetch('/api/ai/generate', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ prompt: descPrompt, type: 'description' })
-        }),
-        fetch('/api/ai/generate', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ prompt: keywordsPrompt, type: 'keywords' })
-        })
-      ]);
+      const callGemini = async (prompt: string) => {
+        const response = await fetch(
+          `https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key=${apiKey}`,
+          {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] })
+          }
+        );
+        if (!response.ok) throw new Error('Failed to generate');
+        const data = await response.json();
+        return data.candidates?.[0]?.content?.parts?.[0]?.text || '';
+      };
 
-      const [titleData, descData, keywordsData] = await Promise.all([
-        titleRes.json(),
-        descRes.json(),
-        keywordsRes.json()
+      const [title, description, keywords] = await Promise.all([
+        callGemini(titlePrompt),
+        callGemini(descPrompt),
+        callGemini(keywordsPrompt)
       ]);
       
       const aiContent: AIGeneratedContent = {
-        title: titleData.text.trim(),
-        description: descData.text,
-        keywords: keywordsData.text.trim()
+        title: title.trim(),
+        description: description,
+        keywords: keywords.trim()
       };
       
       setGeneratedContent(aiContent);
@@ -83,6 +81,7 @@ export function AISEOSimple({ formData, onApply }: AISEOSimpleProps) {
         description: "Review and apply the AI-generated content to your listing.",
       });
     } catch (error) {
+      console.error('AI Generation Error:', error);
       toast({
         variant: "destructive",
         title: "Generation Failed",
