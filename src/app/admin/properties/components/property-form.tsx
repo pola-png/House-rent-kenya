@@ -52,7 +52,7 @@ const formSchema = z.object({
   bedrooms: z.coerce.number().int().min(1),
   bathrooms: z.coerce.number().int().min(1),
   area: z.coerce.number().positive(),
-  propertyType: z.enum(["Apartment", "House", "Condo", "Townhouse", "Villa"]),
+  propertyType: z.enum(["Apartment", "House", "Condo", "Townhouse", "Villa", "Bedsitter"]),
   amenities: z.string().min(3),
   status: z.enum(["For Rent", "For Sale", "Short Let", "Land", "Rented", "Sold"]),
   keywords: z.string().optional(),
@@ -495,6 +495,12 @@ Don't miss this opportunity to secure a premium property in one of ${currentData
                                   <RadioGroupItem value="Villa" id="r-villa" />
                                 </FormControl>
                                 <Label htmlFor="r-villa" className="font-normal">Villa</Label>
+                              </FormItem>
+                               <FormItem className="flex items-center space-x-2 space-y-0">
+                                <FormControl>
+                                  <RadioGroupItem value="Bedsitter" id="r-bedsitter" />
+                                </FormControl>
+                                <Label htmlFor="r-bedsitter" className="font-normal">Bedsitter</Label>
                               </FormItem>
                             </RadioGroup>
                           </FormControl>
