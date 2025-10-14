@@ -6,8 +6,11 @@ import { supabase } from '@/lib/supabase';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Users, Shield, UserCog } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Switch } from '@/components/ui/switch';
+import { Users, Shield, UserCog, Ban, CheckCircle, Crown } from 'lucide-react';
 import { useRouter } from 'next/navigation';
+import { useToast } from '@/hooks/use-toast';
 
 interface User {
   id: string;
@@ -18,11 +21,15 @@ interface User {
   displayName: string;
   phoneNumber?: string;
   createdAt: string;
+  isActive?: boolean;
+  isPro?: boolean;
+  proExpiresAt?: string;
 }
 
 export default function AdminUsersPage() {
   const { user } = useAuth();
   const router = useRouter();
+  const { toast } = useToast();
   const [users, setUsers] = useState<User[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
@@ -58,9 +65,52 @@ export default function AdminUsersPage() {
         .eq('id', userId);
 
       if (error) throw error;
+      toast({ title: 'Role Updated', description: 'User role has been updated successfully.' });
       fetchUsers();
     } catch (error) {
       console.error('Error updating role:', error);
+      toast({ title: 'Error', description: 'Failed to update user role.', variant: 'destructive' });
+    }
+  };
+
+  const toggleUserStatus = async (userId: string, isActive: boolean) => {
+    try {
+      const { error } = await supabase
+        .from('profiles')
+        .update({ isActive: !isActive })
+        .eq('id', userId);
+
+      if (error) throw error;
+      toast({ title: isActive ? 'User Deactivated' : 'User Activated', description: 'User status updated.' });
+      fetchUsers();
+    } catch (error) {
+      console.error('Error toggling status:', error);
+      toast({ title: 'Error', description: 'Failed to update user status.', variant: 'destructive' });
+    }
+  };
+
+  const toggleProStatus = async (userId: string, isPro: boolean) => {
+    try {
+      const updates: any = { isPro: !isPro };
+      if (!isPro) {
+        const expiryDate = new Date();
+        expiryDate.setMonth(expiryDate.getMonth() + 1);
+        updates.proExpiresAt = expiryDate.toISOString();
+      } else {
+        updates.proExpiresAt = null;
+      }
+
+      const { error } = await supabase
+        .from('profiles')
+        .update(updates)
+        .eq('id', userId);
+
+      if (error) throw error;
+      toast({ title: isPro ? 'Pro Removed' : 'Pro Activated', description: 'Pro status updated.' });
+      fetchUsers();
+    } catch (error) {
+      console.error('Error toggling pro:', error);
+      toast({ title: 'Error', description: 'Failed to update Pro status.', variant: 'destructive' });
     }
   };
 
@@ -112,11 +162,34 @@ export default function AdminUsersPage() {
             {users.map((u) => (
               <div key={u.id} className="flex items-center justify-between p-4 border rounded-lg">
                 <div className="flex-1">
-                  <div className="font-semibold">{u.displayName || `${u.firstName} ${u.lastName}`}</div>
+                  <div className="flex items-center gap-2">
+                    <div className="font-semibold">{u.displayName || `${u.firstName} ${u.lastName}`}</div>
+                    {u.isPro && <Crown className="h-4 w-4 text-yellow-500" />}
+                    {u.isActive === false && <Ban className="h-4 w-4 text-red-500" />}
+                  </div>
                   <div className="text-sm text-muted-foreground">{u.email}</div>
                   {u.phoneNumber && <div className="text-sm text-muted-foreground">{u.phoneNumber}</div>}
+                  {u.isPro && u.proExpiresAt && (
+                    <div className="text-xs text-muted-foreground">Pro expires: {new Date(u.proExpiresAt).toLocaleDateString()}</div>
+                  )}
                 </div>
-                <div className="flex items-center gap-4">
+                <div className="flex items-center gap-3">
+                  <div className="flex flex-col gap-2">
+                    <div className="flex items-center gap-2">
+                      <span className="text-xs">Active</span>
+                      <Switch
+                        checked={u.isActive !== false}
+                        onCheckedChange={() => toggleUserStatus(u.id, u.isActive !== false)}
+                      />
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <span className="text-xs">Pro</span>
+                      <Switch
+                        checked={u.isPro || false}
+                        onCheckedChange={() => toggleProStatus(u.id, u.isPro || false)}
+                      />
+                    </div>
+                  </div>
                   <Badge variant={u.role === 'admin' ? 'default' : u.role === 'agent' ? 'secondary' : 'outline'}>
                     {u.role}
                   </Badge>

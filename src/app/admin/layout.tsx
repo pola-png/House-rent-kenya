@@ -22,7 +22,8 @@ import {
   Settings,
   LifeBuoy,
   LogOut,
-  Loader2
+  Loader2,
+  CheckCircle
 } from "lucide-react";
 import {
   SidebarProvider,
@@ -71,6 +72,8 @@ export default function AdminLayout({
     await logout();
     router.push("/");
   };
+
+  const isAdmin = user?.role === 'admin';
 
   if (loading) {
     return (
@@ -151,14 +154,16 @@ export default function AdminLayout({
                 </Link>
               </SidebarMenuButton>
             </SidebarMenuItem>
-             <SidebarMenuItem>
-              <SidebarMenuButton asChild tooltip="Performance">
-                <Link href="/admin/performance">
-                  <AreaChart className="h-5 w-5" />
-                  <span>Performance</span>
-                </Link>
-              </SidebarMenuButton>
-            </SidebarMenuItem>
+             {!isAdmin && (
+               <SidebarMenuItem>
+                <SidebarMenuButton asChild tooltip="Performance">
+                  <Link href="/admin/performance">
+                    <AreaChart className="h-5 w-5" />
+                    <span>Performance</span>
+                  </Link>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+             )}
              <SidebarMenuItem>
               <SidebarMenuButton asChild tooltip="Profile">
                 <Link href="/admin/profile">
@@ -183,6 +188,50 @@ export default function AdminLayout({
                 </Link>
               </SidebarMenuButton>
             </SidebarMenuItem>
+            {user.role === 'admin' && (
+              <>
+                <SidebarMenuItem>
+                  <SidebarMenuButton asChild tooltip="Analytics">
+                    <Link href="/admin/analytics">
+                      <AreaChart className="h-5 w-5" />
+                      <span>Analytics</span>
+                    </Link>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+                <SidebarMenuItem>
+                  <SidebarMenuButton asChild tooltip="Bulk Actions">
+                    <Link href="/admin/bulk-actions">
+                      <Star className="h-5 w-5" />
+                      <span>Bulk Actions</span>
+                    </Link>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+                <SidebarMenuItem>
+                  <SidebarMenuButton asChild tooltip="Payment Approvals">
+                    <Link href="/admin/payment-approvals">
+                      <CheckCircle className="h-5 w-5" />
+                      <span>Payment Approvals</span>
+                    </Link>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+                <SidebarMenuItem>
+                  <SidebarMenuButton asChild tooltip="All Users">
+                    <Link href="/admin/users">
+                      <Users className="h-5 w-5" />
+                      <span>All Users</span>
+                    </Link>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+                <SidebarMenuItem>
+                  <SidebarMenuButton asChild tooltip="System Settings">
+                    <Link href="/admin/system-settings">
+                      <Settings className="h-5 w-5" />
+                      <span>System Settings</span>
+                    </Link>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+              </>
+            )}
           </SidebarMenu>
           <SidebarFooter className="p-4 border-t">
              <Button variant="ghost" className="w-full justify-start" asChild>
