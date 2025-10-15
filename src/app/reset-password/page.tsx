@@ -59,21 +59,36 @@ export default function ResetPasswordPage() {
     }
 
     try {
+      console.log('Attempting password update...');
+      
       const { data, error } = await supabase.auth.updateUser({
         password: values.password,
       });
+
+      console.log('Update response:', { data, error });
 
       if (error) {
         console.error('Password reset error:', error);
         toast({
           variant: 'destructive',
           title: 'Reset Failed',
-          description: 'The reset link may have expired. Please request a new one.',
+          description: error.message || 'The reset link may have expired. Please request a new one.',
         });
-        setTimeout(() => router.push('/forgot-password'), 2000);
         return;
       }
 
+      if (!data?.user) {
+        console.error('No user data returned');
+        toast({
+          variant: 'destructive',
+          title: 'Reset Failed',
+          description: 'Unable to update password. Please try again.',
+        });
+        return;
+      }
+
+      console.log('Password updated successfully');
+      
       toast({
         title: 'Password Updated!',
         description: 'Your password has been changed successfully.',
@@ -86,7 +101,7 @@ export default function ResetPasswordPage() {
       toast({
         variant: 'destructive',
         title: 'Error',
-        description: 'Something went wrong. Please try again.',
+        description: error.message || 'Something went wrong. Please try again.',
       });
     }
   }
