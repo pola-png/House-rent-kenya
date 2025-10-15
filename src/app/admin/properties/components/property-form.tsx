@@ -403,7 +403,7 @@ export function PropertyForm({ property }: PropertyFormProps) {
     }
   };
   
-  const handleSendForApproval = () => {
+  const handleSendForApproval = async () => {
     if (!screenshotFile) {
         toast({
             variant: "destructive",
@@ -412,11 +412,66 @@ export function PropertyForm({ property }: PropertyFormProps) {
         });
         return;
     }
-    toast({
-        title: "Screenshot Sent!",
-        description: "An admin has been notified. Your chat will appear in the 'Messages' tab upon approval.",
-    });
-    router.push('/admin/messages');
+
+    if (!property?.id) {
+        toast({
+            variant: "destructive",
+            title: "Property Required",
+            description: "Please save the property first before requesting promotion.",
+        });
+        return;
+    }
+
+    if (!user) return;
+
+    try {
+        toast({ title: "Uploading...", description: "Sending payment screenshot to admin." });
+
+        const fileExt = screenshotFile.name.split('.').pop();
+        const fileName = `payment-${user.uid}-${Date.now()}.${fileExt}`;
+        const filePath = `payment-screenshots/${fileName}`;
+
+        const { error: uploadError } = await supabase.storage
+          .from('user-uploads')
+          .upload(filePath, screenshotFile, { upsert: true });
+
+        if (uploadError) throw uploadError;
+
+        const { data: { publicUrl } } = supabase.storage
+          .from('user-uploads')
+          .getPublicUrl(filePath);
+
+        const { error: insertError } = await supabase
+          .from('payment_requests')
+          .insert([{
+            propertyId: property.id,
+            propertyTitle: property.title,
+            userId: user.uid,
+            userName: user.displayName || user.email,
+            userEmail: user.email,
+            amount: promotionWeeks * weeklyRate,
+            paymentScreenshot: publicUrl,
+            status: 'pending',
+            promotionType: `Featured - ${promotionWeeks} week${promotionWeeks > 1 ? 's' : ''}`,
+            createdAt: new Date().toISOString()
+          }]);
+
+        if (insertError) throw insertError;
+
+        toast({
+            title: "Request Submitted!",
+            description: "Admin will review your payment and approve your promotion soon.",
+        });
+        
+        router.push('/admin/promotions');
+    } catch (error: any) {
+        console.error('Promotion request error:', error);
+        toast({
+            variant: "destructive",
+            title: "Submission Failed",
+            description: error.message || "Could not submit promotion request.",
+        });
+    }
   }
 
   return (

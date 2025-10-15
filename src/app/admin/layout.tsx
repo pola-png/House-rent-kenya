@@ -123,6 +123,14 @@ export default function AdminLayout({
                 </Link>
               </SidebarMenuButton>
             </SidebarMenuItem>
+            <SidebarMenuItem>
+              <SidebarMenuButton asChild tooltip="Promotions">
+                <Link href="/admin/promotions">
+                  <Star className="h-5 w-5" />
+                  <span>Promotions</span>
+                </Link>
+              </SidebarMenuButton>
+            </SidebarMenuItem>
              <SidebarMenuItem>
               <SidebarMenuButton asChild tooltip="Leads">
                 <Link href="/admin/leads">
