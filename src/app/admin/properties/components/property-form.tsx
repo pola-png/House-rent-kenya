@@ -113,7 +113,7 @@ export function PropertyForm({ property }: PropertyFormProps) {
         amenities: "",
         status: "For Rent",
         propertyType: "Apartment",
-        keywords: ""
+        keywords: "",
         featured: false,
       };
 
