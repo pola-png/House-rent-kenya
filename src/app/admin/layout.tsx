@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import Link from "next/link";
 import {
   Bell,
@@ -62,6 +63,7 @@ export default function AdminLayout({
 }) {
   const { user, loading, logout } = useAuth();
   const router = useRouter();
+  const [open, setOpen] = useState(false);
 
   useEffect(() => {
     if (!loading && !user) {
@@ -89,7 +91,7 @@ export default function AdminLayout({
   }
 
   return (
-    <SidebarProvider>
+    <SidebarProvider open={open} onOpenChange={setOpen}>
       <Sidebar collapsible="icon">
         <SidebarContent className="flex flex-col">
           <SidebarHeader className="p-4">
@@ -101,7 +103,7 @@ export default function AdminLayout({
           <SidebarMenu className="flex-1 p-4">
             <SidebarMenuItem>
               <SidebarMenuButton asChild tooltip="Dashboard">
-                <Link href="/admin/dashboard">
+                <Link href="/admin/dashboard" onClick={() => setOpen(false)}>
                   <Home className="h-5 w-5" />
                   <span>Dashboard</span>
                 </Link>
@@ -109,7 +111,7 @@ export default function AdminLayout({
             </SidebarMenuItem>
             <SidebarMenuItem>
               <SidebarMenuButton asChild tooltip="Post a Property">
-                <Link href="/admin/properties/new">
+                <Link href="/admin/properties/new" onClick={() => setOpen(false)}>
                   <PlusCircle className="h-5 w-5" />
                   <span>Post a Property</span>
                 </Link>
@@ -117,7 +119,7 @@ export default function AdminLayout({
             </SidebarMenuItem>
             <SidebarMenuItem>
               <SidebarMenuButton asChild tooltip="My Listings">
-                <Link href="/admin/properties">
+                <Link href="/admin/properties" onClick={() => setOpen(false)}>
                   <List className="h-5 w-5" />
                   <span>My Listings</span>
                 </Link>
@@ -125,7 +127,7 @@ export default function AdminLayout({
             </SidebarMenuItem>
             <SidebarMenuItem>
               <SidebarMenuButton asChild tooltip="Promotions">
-                <Link href="/admin/promotions">
+                <Link href="/admin/promotions" onClick={() => setOpen(false)}>
                   <Star className="h-5 w-5" />
                   <span>Promotions</span>
                 </Link>
@@ -133,7 +135,7 @@ export default function AdminLayout({
             </SidebarMenuItem>
              <SidebarMenuItem>
               <SidebarMenuButton asChild tooltip="Leads">
-                <Link href="/admin/leads">
+                <Link href="/admin/leads" onClick={() => setOpen(false)}>
                   <Star className="h-5 w-5" />
                   <span>Leads</span>
                 </Link>
@@ -141,7 +143,7 @@ export default function AdminLayout({
             </SidebarMenuItem>
              <SidebarMenuItem>
               <SidebarMenuButton asChild tooltip="Property Requests">
-                <Link href="/admin/property-requests">
+                <Link href="/admin/property-requests" onClick={() => setOpen(false)}>
                   <Heart className="h-5 w-5" />
                   <span>Property Requests</span>
                 </Link>
@@ -149,7 +151,7 @@ export default function AdminLayout({
             </SidebarMenuItem>
             <SidebarMenuItem>
               <SidebarMenuButton asChild tooltip="Callback Requests">
-                <Link href="/admin/callback-requests">
+                <Link href="/admin/callback-requests" onClick={() => setOpen(false)}>
                   <PhoneCall className="h-5 w-5" />
                   <span>Callback Requests</span>
                 </Link>
@@ -157,7 +159,7 @@ export default function AdminLayout({
             </SidebarMenuItem>
              <SidebarMenuItem>
               <SidebarMenuButton asChild tooltip="Subscription">
-                <Link href="/admin/subscription">
+                <Link href="/admin/subscription" onClick={() => setOpen(false)}>
                   <Package className="h-5 w-5" />
                   <span>Subscription</span>
                 </Link>
@@ -166,7 +168,7 @@ export default function AdminLayout({
              {!isAdmin && (
                <SidebarMenuItem>
                 <SidebarMenuButton asChild tooltip="Performance">
-                  <Link href="/admin/performance">
+                  <Link href="/admin/performance" onClick={() => setOpen(false)}>
                     <AreaChart className="h-5 w-5" />
                     <span>Performance</span>
                   </Link>
@@ -175,7 +177,7 @@ export default function AdminLayout({
              )}
              <SidebarMenuItem>
               <SidebarMenuButton asChild tooltip="Profile">
-                <Link href="/admin/profile">
+                <Link href="/admin/profile" onClick={() => setOpen(false)}>
                   <User className="h-5 w-5" />
                   <span>Profile</span>
                 </Link>
@@ -183,7 +185,7 @@ export default function AdminLayout({
             </SidebarMenuItem>
              <SidebarMenuItem>
               <SidebarMenuButton asChild tooltip="My Team">
-                <Link href="/admin/my-team">
+                <Link href="/admin/my-team" onClick={() => setOpen(false)}>
                   <Users2 className="h-5 w-5" />
                   <span>My Team</span>
                 </Link>
@@ -191,7 +193,7 @@ export default function AdminLayout({
             </SidebarMenuItem>
             <SidebarMenuItem>
               <SidebarMenuButton asChild tooltip="Messages">
-                <Link href="/admin/messages">
+                <Link href="/admin/messages" onClick={() => setOpen(false)}>
                   <MessageSquare className="h-5 w-5" />
                   <span>Messages</span>
                 </Link>
@@ -201,7 +203,7 @@ export default function AdminLayout({
               <>
                 <SidebarMenuItem>
                   <SidebarMenuButton asChild tooltip="Analytics">
-                    <Link href="/admin/analytics">
+                    <Link href="/admin/analytics" onClick={() => setOpen(false)}>
                       <AreaChart className="h-5 w-5" />
                       <span>Analytics</span>
                     </Link>
@@ -209,7 +211,7 @@ export default function AdminLayout({
                 </SidebarMenuItem>
                 <SidebarMenuItem>
                   <SidebarMenuButton asChild tooltip="Bulk Actions">
-                    <Link href="/admin/bulk-actions">
+                    <Link href="/admin/bulk-actions" onClick={() => setOpen(false)}>
                       <Star className="h-5 w-5" />
                       <span>Bulk Actions</span>
                     </Link>
@@ -217,7 +219,7 @@ export default function AdminLayout({
                 </SidebarMenuItem>
                 <SidebarMenuItem>
                   <SidebarMenuButton asChild tooltip="Payment Approvals">
-                    <Link href="/admin/payment-approvals">
+                    <Link href="/admin/payment-approvals" onClick={() => setOpen(false)}>
                       <CheckCircle className="h-5 w-5" />
                       <span>Payment Approvals</span>
                     </Link>
@@ -225,7 +227,7 @@ export default function AdminLayout({
                 </SidebarMenuItem>
                 <SidebarMenuItem>
                   <SidebarMenuButton asChild tooltip="All Users">
-                    <Link href="/admin/users">
+                    <Link href="/admin/users" onClick={() => setOpen(false)}>
                       <Users className="h-5 w-5" />
                       <span>All Users</span>
                     </Link>
@@ -233,7 +235,7 @@ export default function AdminLayout({
                 </SidebarMenuItem>
                 <SidebarMenuItem>
                   <SidebarMenuButton asChild tooltip="System Settings">
-                    <Link href="/admin/system-settings">
+                    <Link href="/admin/system-settings" onClick={() => setOpen(false)}>
                       <Settings className="h-5 w-5" />
                       <span>System Settings</span>
                     </Link>
@@ -244,7 +246,7 @@ export default function AdminLayout({
           </SidebarMenu>
           <SidebarFooter className="p-4 border-t">
              <Button variant="ghost" className="w-full justify-start" asChild>
-                <Link href="/admin/settings">
+                <Link href="/admin/settings" onClick={() => setOpen(false)}>
                     <Settings className="h-5 w-5 mr-2" />
                     <span>Settings</span>
                 </Link>
