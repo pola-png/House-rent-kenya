@@ -28,40 +28,9 @@ export default function ResetPasswordPage() {
   const router = useRouter();
   const { toast } = useToast();
   const [isReady, setIsReady] = useState(false);
-  const [error, setError] = useState('');
 
   useEffect(() => {
-    const checkSession = async () => {
-      const hashParams = new URLSearchParams(window.location.hash.substring(1));
-      const accessToken = hashParams.get('access_token');
-      const type = hashParams.get('type');
-      
-      if (accessToken && type === 'recovery') {
-        setIsReady(true);
-        return;
-      }
-      
-      const { data: { session } } = await supabase.auth.getSession();
-      
-      if (session) {
-        setIsReady(true);
-      } else {
-        setTimeout(() => {
-          setError('Invalid or expired reset link. Please request a new one.');
-        }, 2000);
-      }
-    };
-    
-    checkSession();
-    
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
-      if (event === 'PASSWORD_RECOVERY' || (event === 'SIGNED_IN' && session)) {
-        setIsReady(true);
-        setError('');
-      }
-    });
-    
-    return () => subscription.unsubscribe();
+    setIsReady(true);
   }, []);
 
   const form = useForm<z.infer<typeof formSchema>>({
@@ -80,7 +49,18 @@ export default function ResetPasswordPage() {
         password: values.password,
       });
 
-      if (error) throw error;
+      if (error) {
+        if (error.message.includes('session') || error.message.includes('token')) {
+          toast({
+            variant: 'destructive',
+            title: 'Reset Link Expired',
+            description: 'Your reset link has expired. Please request a new one.',
+          });
+          setTimeout(() => router.push('/forgot-password'), 2000);
+          return;
+        }
+        throw error;
+      }
 
       toast({
         title: 'Password Updated',
@@ -98,26 +78,6 @@ export default function ResetPasswordPage() {
     }
   }
 
-  if (error) {
-    return (
-      <div className="flex items-center justify-center py-12 min-h-[calc(100vh-5rem)]">
-        <Card className="mx-auto max-w-sm w-full">
-          <CardHeader>
-            <CardTitle className="text-2xl font-headline">Reset Link Invalid</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <Alert variant="destructive">
-              <AlertDescription>{error}</AlertDescription>
-            </Alert>
-            <Button asChild className="w-full">
-              <Link href="/forgot-password">Request New Reset Link</Link>
-            </Button>
-          </CardContent>
-        </Card>
-      </div>
-    );
-  }
-  
   if (!isReady) {
     return (
       <div className="flex flex-col items-center justify-center min-h-[calc(100vh-5rem)] gap-4">
