@@ -63,9 +63,6 @@ export function Header() {
   };
 
   const renderUserAuth = () => {
-    if (isUserLoading) {
-      return <Skeleton className="h-10 w-24" />;
-    }
     if (user) {
       return (
         <DropdownMenu>
@@ -128,9 +125,6 @@ export function Header() {
   };
   
   const MobileUserAuth = () => {
-    if (isUserLoading) {
-      return <Skeleton className="h-10 w-full" />;
-    }
     if (user) {
       return (
         <div className="flex flex-col gap-2">

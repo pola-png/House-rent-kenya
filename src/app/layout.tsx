@@ -84,16 +84,7 @@ export const metadata: Metadata = {
   category: 'Real Estate',
   classification: 'Property Rental Platform',
   referrer: 'origin-when-cross-origin',
-  colorScheme: 'light dark',
-  themeColor: [
-    { media: '(prefers-color-scheme: light)', color: '#ffffff' },
-    { media: '(prefers-color-scheme: dark)', color: '#000000' },
-  ],
-  viewport: {
-    width: 'device-width',
-    initialScale: 1,
-    maximumScale: 5,
-  },
+
   verification: {
     google: 'your-google-verification-code',
     yandex: 'your-yandex-verification-code',
