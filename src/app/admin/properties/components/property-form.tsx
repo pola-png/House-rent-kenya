@@ -96,7 +96,7 @@ export function PropertyForm({ property }: PropertyFormProps) {
         propertyType: property.propertyType,
         status: property.status,
         amenities: Array.isArray(property.amenities) ? property.amenities.join(", ") : property.amenities,
-        keywords: property.keywords || ""
+        keywords: property.keywords || "",
         featured: property.featured || false,
         latitude: property.latitude || -1.286389,
         longitude: property.longitude || 36.817223,
