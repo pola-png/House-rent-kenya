@@ -41,7 +41,37 @@ import type { Property } from "@/lib/types";
 import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
 
-const columns: ColumnDef<Property>[] = [
+interface PropertiesClientProps {
+  data: Property[];
+}
+
+export function PropertiesClient({ data: initialData }: PropertiesClientProps) {
+  const { toast } = useToast();
+  const [properties, setProperties] = React.useState<Property[]>(initialData);
+  
+  React.useEffect(() => {
+    setProperties(initialData);
+  }, [initialData]);
+
+  const handleDelete = async (propertyId: string) => {
+    if (!confirm('Are you sure you want to delete this property?')) return;
+    
+    try {
+      const { error } = await supabase
+        .from('properties')
+        .delete()
+        .eq('id', propertyId);
+      
+      if (error) throw error;
+      
+      setProperties(prev => prev.filter(p => p.id !== propertyId));
+      toast({ title: 'Success', description: 'Property deleted successfully.' });
+    } catch (error: any) {
+      toast({ variant: 'destructive', title: 'Error', description: error.message || 'Failed to delete property.' });
+    }
+  };
+
+  const columns: ColumnDef<Property>[] = [
     {
     id: "select",
     header: ({ table }) => (
@@ -130,7 +160,6 @@ const columns: ColumnDef<Property>[] = [
             </DropdownMenuItem>
             <DropdownMenuItem
               onClick={() => {
-                // Duplicate property logic
                 navigator.clipboard.writeText(property.id);
                 alert('Property ID copied. Feature coming soon!');
               }}
@@ -158,35 +187,6 @@ const columns: ColumnDef<Property>[] = [
   },
 ];
 
-interface PropertiesClientProps {
-  data: Property[];
-}
-
-export function PropertiesClient({ data: initialData }: PropertiesClientProps) {
-  const { toast } = useToast();
-  const [properties, setProperties] = React.useState<Property[]>(initialData);
-  
-  React.useEffect(() => {
-    setProperties(initialData);
-  }, [initialData]);
-
-  const handleDelete = async (propertyId: string) => {
-    if (!confirm('Are you sure you want to delete this property?')) return;
-    
-    try {
-      const { error } = await supabase
-        .from('properties')
-        .delete()
-        .eq('id', propertyId);
-      
-      if (error) throw error;
-      
-      setProperties(prev => prev.filter(p => p.id !== propertyId));
-      toast({ title: 'Success', description: 'Property deleted successfully.' });
-    } catch (error: any) {
-      toast({ variant: 'destructive', title: 'Error', description: error.message || 'Failed to delete property.' });
-    }
-  };
   const [sorting, setSorting] = React.useState<SortingState>([]);
   const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>([]);
   const [columnVisibility, setColumnVisibility] = React.useState<VisibilityState>({
