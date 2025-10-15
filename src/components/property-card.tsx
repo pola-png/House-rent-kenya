@@ -40,7 +40,7 @@ export function PropertyCard({ property }: PropertyCardProps) {
            {property.status === 'Rented' && (
               <Badge variant="destructive" className="absolute top-3 right-3">Rented</Badge>
            )}
-           {(property.isPremium || property.ispremium) && (
+           {property.isPremium && (
             <div className="absolute bottom-3 left-3 flex gap-2">
               <Badge variant="default" className="bg-yellow-500 hover:bg-yellow-600 text-white flex items-center gap-1">
                 <Award className="w-3 h-3"/>

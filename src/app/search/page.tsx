@@ -106,7 +106,7 @@ function SearchContent() {
         query = query.gte('bedrooms', bedroomCount);
       }
 
-      const { data, error } = await query.order('ispremium', { ascending: false, nullsFirst: false }).order('createdAt', { ascending: false });
+      const { data, error } = await query.order('isPremium', { ascending: false, nullsFirst: false }).order('createdAt', { ascending: false });
 
       if (error) throw error;
 
@@ -151,10 +151,8 @@ function SearchContent() {
 
       // Sort to ensure promoted properties are at the top
       const sortedProperties = propertiesWithAgents.sort((a, b) => {
-        const aIsPremium = a.isPremium || a.ispremium;
-        const bIsPremium = b.isPremium || b.ispremium;
-        if (aIsPremium && !bIsPremium) return -1;
-        if (!aIsPremium && bIsPremium) return 1;
+        if (a.isPremium && !b.isPremium) return -1;
+        if (!a.isPremium && b.isPremium) return 1;
         return 0;
       });
 

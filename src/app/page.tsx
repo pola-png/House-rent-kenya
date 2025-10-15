@@ -86,8 +86,8 @@ export default function Home() {
       const { data, error } = await supabase
         .from('properties')
         .select('*')
-        .eq('ispremium', true)
-        .or(`featuredexpiresat.is.null,featuredexpiresat.gt.${now}`)
+        .eq('isPremium', true)
+        .or(`featuredExpiresAt.is.null,featuredExpiresAt.gt.${now}`)
         .limit(6)
         .order('createdAt', { ascending: false });
 
