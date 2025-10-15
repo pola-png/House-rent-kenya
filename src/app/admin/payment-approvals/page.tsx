@@ -60,6 +60,26 @@ export default function PaymentApprovalsPage() {
 
   const handleApprove = async (requestId: string, propertyId: string, promotionType: string) => {
     try {
+      // Extract weeks from promotionType (e.g., "Featured - 2 weeks")
+      const weeksMatch = promotionType.match(/(\d+)\s*week/);
+      const weeks = weeksMatch ? parseInt(weeksMatch[1]) : 4;
+
+      console.log('Promoting property:', propertyId, 'for', weeks, 'weeks');
+
+      // Use RPC function to promote property (bypasses RLS)
+      const { data: rpcData, error: rpcError } = await supabase
+        .rpc('promote_property', {
+          property_id: propertyId,
+          weeks_count: weeks
+        });
+
+      if (rpcError) {
+        console.error('RPC error:', rpcError);
+        throw rpcError;
+      }
+
+      console.log('Property promoted via RPC:', rpcData);
+
       // Update payment request status
       const { error: paymentError } = await supabase
         .from("payment_requests")
@@ -68,35 +88,17 @@ export default function PaymentApprovalsPage() {
 
       if (paymentError) throw paymentError;
 
-      // Update property based on promotion type
-      const updates: any = {};
-      if (promotionType === "featured") {
-        updates.featured = true;
-        const expiryDate = new Date();
-        expiryDate.setDate(expiryDate.getDate() + 30);
-        updates.featuredExpiresAt = expiryDate.toISOString();
-      } else if (promotionType === "premium") {
-        updates.isPremium = true;
-      }
-
-      const { error: propertyError } = await supabase
-        .from("properties")
-        .update(updates)
-        .eq("id", propertyId);
-
-      if (propertyError) throw propertyError;
-
       toast({
         title: "Payment Approved",
         description: "Property has been promoted successfully.",
       });
 
       fetchPaymentRequests();
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error approving payment:", error);
       toast({
         title: "Error",
-        description: "Failed to approve payment.",
+        description: error.message || "Failed to approve payment.",
         variant: "destructive",
       });
     }
