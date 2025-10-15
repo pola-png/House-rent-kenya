@@ -8,7 +8,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
 import * as z from 'zod';
 import { useRouter, useSearchParams } from 'next/navigation';
-import React from 'react';
+import React, { Suspense } from 'react';
 
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -24,7 +24,7 @@ const formSchema = z.object({
   password: z.string().min(1, { message: 'Password is required.' }),
 });
 
-export default function LoginPage() {
+function LoginForm() {
   const bgImage = placeholderImages.placeholderImages.find(img => img.id === 'auth_bg');
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -69,8 +69,8 @@ export default function LoginPage() {
   const { isSubmitting } = form.formState;
 
   return (
-    <div className="w-full lg:grid lg:min-h-[calc(100vh-5rem)] lg:grid-cols-2 xl:min-h-[calc(100vh-5rem)]">
-      <div className="flex items-center justify-center py-12">
+    <>
+      <div className="flex items-center justify-center py-12 lg:min-h-[calc(100vh-5rem)]">
         <Card className="mx-auto max-w-sm w-full">
           <CardHeader>
             <CardTitle className="text-2xl font-headline">Login</CardTitle>
@@ -138,6 +138,22 @@ export default function LoginPage() {
           </CardContent>
         </Card>
       </div>
+    </>
+  );
+}
+
+export default function LoginPage() {
+  const bgImage = placeholderImages.placeholderImages.find(img => img.id === 'auth_bg');
+  
+  return (
+    <div className="w-full lg:grid lg:min-h-[calc(100vh-5rem)] lg:grid-cols-2 xl:min-h-[calc(100vh-5rem)]">
+      <Suspense fallback={
+        <div className="flex items-center justify-center py-12">
+          <Loader2 className="h-8 w-8 animate-spin" />
+        </div>
+      }>
+        <LoginForm />
+      </Suspense>
       <div className="hidden bg-muted lg:block relative">
         {bgImage && (
           <Image
