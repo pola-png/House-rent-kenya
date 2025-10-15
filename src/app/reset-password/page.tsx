@@ -1,7 +1,8 @@
 'use client';
 
 import Link from 'next/link';
-import { Building, Lock, Loader2 } from 'lucide-react';
+import { Building, Lock, Loader2, CheckCircle } from 'lucide-react';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
 import * as z from 'zod';
@@ -27,13 +28,42 @@ export default function ResetPasswordPage() {
   const router = useRouter();
   const { toast } = useToast();
   const [isReady, setIsReady] = useState(false);
+  const [error, setError] = useState('');
 
   useEffect(() => {
-    supabase.auth.onAuthStateChange((event) => {
+    const checkSession = async () => {
+      const { data: { session }, error } = await supabase.auth.getSession();
+      
+      if (error) {
+        setError('Invalid or expired reset link. Please request a new one.');
+        return;
+      }
+      
+      if (session) {
+        setIsReady(true);
+      } else {
+        const hashParams = new URLSearchParams(window.location.hash.substring(1));
+        const accessToken = hashParams.get('access_token');
+        const type = hashParams.get('type');
+        
+        if (accessToken && type === 'recovery') {
+          setIsReady(true);
+        } else {
+          setError('Invalid or expired reset link. Please request a new one.');
+        }
+      }
+    };
+    
+    checkSession();
+    
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event) => {
       if (event === 'PASSWORD_RECOVERY') {
         setIsReady(true);
+        setError('');
       }
     });
+    
+    return () => subscription.unsubscribe();
   }, []);
 
   const form = useForm<z.infer<typeof formSchema>>({
@@ -56,9 +86,11 @@ export default function ResetPasswordPage() {
 
       toast({
         title: 'Password Updated',
-        description: 'Your password has been successfully changed.',
+        description: 'Your password has been successfully changed. You can now login.',
       });
-      router.push('/login');
+      
+      await supabase.auth.signOut();
+      setTimeout(() => router.push('/login'), 1000);
     } catch (error: any) {
       toast({
         variant: 'destructive',
@@ -68,10 +100,31 @@ export default function ResetPasswordPage() {
     }
   }
 
+  if (error) {
+    return (
+      <div className="flex items-center justify-center py-12 min-h-[calc(100vh-5rem)]">
+        <Card className="mx-auto max-w-sm w-full">
+          <CardHeader>
+            <CardTitle className="text-2xl font-headline">Reset Link Invalid</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <Alert variant="destructive">
+              <AlertDescription>{error}</AlertDescription>
+            </Alert>
+            <Button asChild className="w-full">
+              <Link href="/forgot-password">Request New Reset Link</Link>
+            </Button>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+  
   if (!isReady) {
     return (
-      <div className="flex items-center justify-center min-h-[calc(100vh-5rem)]">
+      <div className="flex flex-col items-center justify-center min-h-[calc(100vh-5rem)] gap-4">
         <Loader2 className="h-8 w-8 animate-spin" />
+        <p className="text-muted-foreground">Verifying reset link...</p>
       </div>
     );
   }
