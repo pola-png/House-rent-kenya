@@ -28,8 +28,13 @@ export default function ResetPasswordPage() {
   const router = useRouter();
   const { toast } = useToast();
   const [isReady, setIsReady] = useState(false);
+  const [hasToken, setHasToken] = useState(false);
 
   useEffect(() => {
+    const hash = window.location.hash;
+    if (hash && hash.includes('access_token')) {
+      setHasToken(true);
+    }
     setIsReady(true);
   }, []);
 
@@ -44,36 +49,44 @@ export default function ResetPasswordPage() {
   const { isSubmitting } = form.formState;
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
+    if (!hasToken) {
+      toast({
+        variant: 'destructive',
+        title: 'Invalid Link',
+        description: 'Please use the reset link from your email.',
+      });
+      return;
+    }
+
     try {
-      const { error } = await supabase.auth.updateUser({
+      const { data, error } = await supabase.auth.updateUser({
         password: values.password,
       });
 
       if (error) {
-        if (error.message.includes('session') || error.message.includes('token')) {
-          toast({
-            variant: 'destructive',
-            title: 'Reset Link Expired',
-            description: 'Your reset link has expired. Please request a new one.',
-          });
-          setTimeout(() => router.push('/forgot-password'), 2000);
-          return;
-        }
-        throw error;
+        console.error('Password reset error:', error);
+        toast({
+          variant: 'destructive',
+          title: 'Reset Failed',
+          description: 'The reset link may have expired. Please request a new one.',
+        });
+        setTimeout(() => router.push('/forgot-password'), 2000);
+        return;
       }
 
       toast({
-        title: 'Password Updated',
-        description: 'Your password has been successfully changed. You can now login.',
+        title: 'Password Updated!',
+        description: 'Your password has been changed successfully.',
       });
       
       await supabase.auth.signOut();
-      setTimeout(() => router.push('/login'), 1000);
+      setTimeout(() => router.push('/login'), 1500);
     } catch (error: any) {
+      console.error('Unexpected error:', error);
       toast({
         variant: 'destructive',
         title: 'Error',
-        description: error.message || 'Failed to update password.',
+        description: 'Something went wrong. Please try again.',
       });
     }
   }
@@ -97,6 +110,13 @@ export default function ResetPasswordPage() {
           </CardDescription>
         </CardHeader>
         <CardContent>
+          {!hasToken && (
+            <Alert variant="destructive" className="mb-4">
+              <AlertDescription>
+                Please use the reset link from your email. Direct access is not allowed.
+              </AlertDescription>
+            </Alert>
+          )}
           <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="grid gap-4">
               <FormField
