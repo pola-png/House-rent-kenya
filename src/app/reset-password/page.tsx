@@ -32,32 +32,30 @@ export default function ResetPasswordPage() {
 
   useEffect(() => {
     const checkSession = async () => {
-      const { data: { session }, error } = await supabase.auth.getSession();
+      const hashParams = new URLSearchParams(window.location.hash.substring(1));
+      const accessToken = hashParams.get('access_token');
+      const type = hashParams.get('type');
       
-      if (error) {
-        setError('Invalid or expired reset link. Please request a new one.');
+      if (accessToken && type === 'recovery') {
+        setIsReady(true);
         return;
       }
+      
+      const { data: { session } } = await supabase.auth.getSession();
       
       if (session) {
         setIsReady(true);
       } else {
-        const hashParams = new URLSearchParams(window.location.hash.substring(1));
-        const accessToken = hashParams.get('access_token');
-        const type = hashParams.get('type');
-        
-        if (accessToken && type === 'recovery') {
-          setIsReady(true);
-        } else {
+        setTimeout(() => {
           setError('Invalid or expired reset link. Please request a new one.');
-        }
+        }, 2000);
       }
     };
     
     checkSession();
     
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((event) => {
-      if (event === 'PASSWORD_RECOVERY') {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      if (event === 'PASSWORD_RECOVERY' || (event === 'SIGNED_IN' && session)) {
         setIsReady(true);
         setError('');
       }
