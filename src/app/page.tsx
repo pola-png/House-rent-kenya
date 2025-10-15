@@ -158,35 +158,35 @@ export default function Home() {
           />
           <div className="absolute inset-0 bg-black/60" />
           <div className="relative z-10 px-4 w-full max-w-4xl">
-            <h1 className="text-4xl md:text-6xl font-headline font-bold mb-4 drop-shadow-md" itemProp="name">
-              Find Your Perfect Home in Kenya - 10,000+ Premium Properties
+            <h1 className="text-2xl sm:text-3xl md:text-5xl lg:text-6xl font-headline font-bold mb-3 md:mb-4 drop-shadow-md px-2" itemProp="name">
+              Find Your Perfect Home in Kenya
             </h1>
-            <p className="text-lg md:text-xl max-w-2xl mx-auto mb-8 drop-shadow" itemProp="description">
-              Kenya's #1 property rental platform. Discover verified apartments, houses & luxury homes in Nairobi, Westlands, Kilimani. Instant booking, virtual tours, trusted agents.
+            <p className="text-sm sm:text-base md:text-lg lg:text-xl max-w-2xl mx-auto mb-6 md:mb-8 drop-shadow px-4" itemProp="description">
+              Kenya's #1 property rental platform. Discover verified apartments & homes in Nairobi, Westlands, Kilimani.
             </p>
             <Tabs value={searchForm.listingType} onValueChange={(value) => setSearchForm(prev => ({...prev, listingType: value}))} className="max-w-3xl mx-auto">
                 <TabsList className="grid w-full grid-cols-4 bg-black/50 backdrop-blur-sm border border-white/20">
-                    <TabsTrigger value="rent" className="data-[state=active]:bg-white data-[state=active]:text-primary text-white">RENT</TabsTrigger>
-                    <TabsTrigger value="buy" className="data-[state=active]:bg-white data-[state=active]:text-primary text-white">BUY</TabsTrigger>
-                    <TabsTrigger value="short-let" className="data-[state=active]:bg-white data-[state=active]:text-primary text-white">SHORT LET</TabsTrigger>
-                    <TabsTrigger value="land" className="data-[state=active]:bg-white data-[state=active]:text-primary text-white">LAND</TabsTrigger>
+                    <TabsTrigger value="rent" className="data-[state=active]:bg-white data-[state=active]:text-primary text-white text-xs sm:text-sm">RENT</TabsTrigger>
+                    <TabsTrigger value="buy" className="data-[state=active]:bg-white data-[state=active]:text-primary text-white text-xs sm:text-sm">BUY</TabsTrigger>
+                    <TabsTrigger value="short-let" className="data-[state=active]:bg-white data-[state=active]:text-primary text-white text-xs sm:text-sm">SHORT</TabsTrigger>
+                    <TabsTrigger value="land" className="data-[state=active]:bg-white data-[state=active]:text-primary text-white text-xs sm:text-sm">LAND</TabsTrigger>
                 </TabsList>
-                <div className="bg-white/90 backdrop-blur-sm p-4 rounded-b-lg shadow-lg">
+                <div className="bg-white/90 backdrop-blur-sm p-3 sm:p-4 rounded-b-lg shadow-lg">
                     <div className="flex flex-col gap-4">
-                      <div className="flex flex-col md:flex-row gap-2">
+                      <div className="flex flex-col sm:flex-row gap-2">
                           <div className="relative flex-grow">
-                              <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+                              <MapPin className="absolute left-2 sm:left-3 top-1/2 -translate-y-1/2 h-4 sm:h-5 w-4 sm:w-5 text-muted-foreground" />
                               <Input
                                   type="text"
-                                  placeholder="Enter location, e.g., Nairobi, Kilimani"
-                                  className="w-full pl-10 text-foreground h-12 text-base"
+                                  placeholder="Location (e.g., Nairobi)"
+                                  className="w-full pl-8 sm:pl-10 text-foreground h-10 sm:h-12 text-sm sm:text-base"
                                   value={searchForm.location}
                                   onChange={(e) => setSearchForm(prev => ({...prev, location: e.target.value}))}
                                   onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
                               />
                           </div>
-                          <Button size="lg" className="w-full md:w-auto h-12" onClick={handleSearch}>
-                              <Search className="mr-2 h-5 w-5" />
+                          <Button size="lg" className="w-full sm:w-auto h-10 sm:h-12" onClick={handleSearch}>
+                              <Search className="mr-2 h-4 sm:h-5 w-4 sm:w-5" />
                               Search
                           </Button>
                       </div>
@@ -246,10 +246,10 @@ export default function Home() {
         {/* Featured Properties Section */}
         <section className="py-12 md:py-20 bg-background" itemScope itemType="https://schema.org/ItemList">
           <div className="container mx-auto px-4">
-            <h2 className="text-3xl md:text-4xl font-headline font-bold text-center mb-2" itemProp="name">Sponsored Premium Properties</h2>
-            <p className="text-center text-muted-foreground mb-10 max-w-2xl mx-auto" itemProp="description">Verified premium listings featuring the best apartments, houses & homes available for rent in Nairobi, Westlands, Kilimani & across Kenya.</p>
+            <h2 className="text-2xl sm:text-3xl md:text-4xl font-headline font-bold text-center mb-2 px-4" itemProp="name">Sponsored Premium Properties</h2>
+            <p className="text-center text-sm sm:text-base text-muted-foreground mb-8 sm:mb-10 max-w-2xl mx-auto px-4" itemProp="description">Verified premium listings featuring the best apartments & homes in Nairobi & across Kenya.</p>
             {isLoading ? (
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 md:gap-8">
                     {[...Array(3)].map((_, i) => (
                         <div key={i} className="space-y-4">
                             <Skeleton className="h-56 w-full" />
@@ -260,7 +260,7 @@ export default function Home() {
                     ))}
                 </div>
             ) : (
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 md:gap-8">
                 {featuredProperties && featuredProperties.map((property, index) => (
                     <div key={property.id} itemProp="itemListElement" itemScope itemType="https://schema.org/ListItem">
                       <meta itemProp="position" content={String(index + 1)} />
@@ -282,7 +282,7 @@ export default function Home() {
         {/* Popular Searches */}
         <section className="py-12 md:py-20 bg-secondary/50" itemScope itemType="https://schema.org/WebPage">
           <div className="container mx-auto px-4">
-            <h2 className="text-3xl md:text-4xl font-headline font-bold text-center mb-10" itemProp="name">Popular Property Searches in Kenya</h2>
+            <h2 className="text-2xl sm:text-3xl md:text-4xl font-headline font-bold text-center mb-6 sm:mb-10 px-4" itemProp="name">Popular Searches</h2>
             <div className="flex flex-wrap justify-center gap-2">
               {popularSearches.map((search, index) => {
                 const searchQuery = search.toLowerCase();
@@ -330,7 +330,7 @@ export default function Home() {
           <div className="container mx-auto px-4">
              <div className="text-center max-w-3xl mx-auto">
               <Badge variant="outline" className="mb-4">Why House Rent Kenya</Badge>
-              <h2 className="text-3xl md:text-4xl font-headline font-bold mb-4" itemProp="name">Kenya's Most Trusted Property Platform</h2>
+              <h2 className="text-2xl sm:text-3xl md:text-4xl font-headline font-bold mb-4 px-4" itemProp="name">Kenya's Most Trusted Platform</h2>
               <p className="text-muted-foreground text-lg mb-12" itemProp="description">
                 Join thousands of satisfied tenants and landlords who trust House Rent Kenya for verified properties, instant booking, virtual tours & expert support across Nairobi, Westlands, Kilimani & all Kenya.
               </p>
@@ -356,11 +356,11 @@ export default function Home() {
         {/* Call to Action */}
         <section className="py-20 bg-primary text-primary-foreground">
           <div className="container mx-auto px-4 text-center">
-            <h2 className="text-3xl md:text-4xl font-headline font-bold mb-4">Ready to Find Your Dream Home?</h2>
+            <h2 className="text-2xl sm:text-3xl md:text-4xl font-headline font-bold mb-4 px-4">Ready to Find Your Dream Home?</h2>
             <p className="text-lg max-w-2xl mx-auto mb-8">
               Create an account to save your favorite properties and get personalized alerts.
             </p>
-            <div className="flex justify-center gap-4">
+            <div className="flex flex-col sm:flex-row justify-center gap-3 sm:gap-4 px-4">
               <Button size="lg" variant="secondary" asChild>
                 <Link href="/search">Start Searching</Link>
               </Button>

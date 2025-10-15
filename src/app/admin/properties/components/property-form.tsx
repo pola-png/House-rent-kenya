@@ -534,6 +534,9 @@ export function PropertyForm({ property }: PropertyFormProps) {
                         <Textarea
                           placeholder="Tell us a little bit about the property"
                           className="resize-y min-h-[150px]"
+                          onPaste={(e) => {
+                            e.stopPropagation();
+                          }}
                           {...field}
                         />
                       </FormControl>
