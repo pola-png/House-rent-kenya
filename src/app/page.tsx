@@ -91,42 +91,43 @@ export default function Home() {
 
       if (error) throw error;
 
-      const propertiesWithAgents = await Promise.all(
-        (data || []).map(async (p) => {
-          const { data: profileData } = await supabase
-            .from('profiles')
-            .select('*')
-            .eq('id', p.landlordId)
-            .single();
-          
-          return {
-            ...p,
-            createdAt: new Date(p.createdAt),
-            updatedAt: new Date(p.updatedAt),
-            agent: profileData ? {
-              uid: profileData.id,
-              firstName: profileData.firstName || '',
-              lastName: profileData.lastName || '',
-              displayName: profileData.displayName || profileData.email?.split('@')[0] || '',
-              email: profileData.email || '',
-              role: profileData.role || 'agent',
-              agencyName: profileData.agencyName,
-              phoneNumber: profileData.phoneNumber,
-              photoURL: profileData.photoURL,
-              createdAt: new Date(profileData.createdAt)
-            } : {
-              uid: 'default-agent',
-              firstName: 'Default',
-              lastName: 'Agent',
-              displayName: 'Default Agent',
-              email: 'agent@default.com',
-              role: 'agent',
-              agencyName: 'Default Agency',
-              createdAt: new Date()
-            }
-          };
-        })
-      );
+      const landlordIds = [...new Set((data || []).map(p => p.landlordId))];
+      const { data: profiles } = await supabase
+        .from('profiles')
+        .select('*')
+        .in('id', landlordIds);
+      
+      const profileMap = new Map(profiles?.map(p => [p.id, p]) || []);
+      
+      const propertiesWithAgents = (data || []).map(p => {
+        const profileData = profileMap.get(p.landlordId);
+        return {
+          ...p,
+          createdAt: new Date(p.createdAt),
+          updatedAt: new Date(p.updatedAt),
+          agent: profileData ? {
+            uid: profileData.id,
+            firstName: profileData.firstName || '',
+            lastName: profileData.lastName || '',
+            displayName: profileData.displayName || profileData.email?.split('@')[0] || '',
+            email: profileData.email || '',
+            role: profileData.role || 'agent',
+            agencyName: profileData.agencyName,
+            phoneNumber: profileData.phoneNumber,
+            photoURL: profileData.photoURL,
+            createdAt: new Date(profileData.createdAt)
+          } : {
+            uid: 'default-agent',
+            firstName: 'Default',
+            lastName: 'Agent',
+            displayName: 'Default Agent',
+            email: 'agent@default.com',
+            role: 'agent',
+            agencyName: 'Default Agency',
+            createdAt: new Date()
+          }
+        };
+      });
 
       setFeaturedProperties(propertiesWithAgents);
     } catch (error) {

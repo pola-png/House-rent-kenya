@@ -29,15 +29,15 @@ export default function AdminPropertiesPage() {
   const router = useRouter();
 
   useEffect(() => {
-    if (!authLoading && !user) {
+    if (authLoading) return;
+    
+    if (!user) {
       router.push("/login?redirect=/admin/properties");
       return;
     }
 
-    if (user) {
-      fetchProperties();
-    }
-  }, [user, authLoading, router]);
+    fetchProperties();
+  }, [user, authLoading]);
 
   const fetchProperties = async () => {
     if (!user) return;

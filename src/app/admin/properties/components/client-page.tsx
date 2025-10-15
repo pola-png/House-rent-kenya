@@ -120,9 +120,17 @@ export function PropertiesClient({ data: initialData }: PropertiesClientProps) {
       return <div className="text-right font-medium">{formatted}</div>;
     },
   },
-    {
+  {
     accessorKey: "location",
     header: "Location",
+  },
+  {
+    accessorKey: "views",
+    header: () => <div className="text-right">Views</div>,
+    cell: ({ row }) => {
+      const views = row.getValue("views") as number || 0;
+      return <div className="text-right font-medium">{views.toLocaleString()}</div>;
+    },
   },
   {
     id: "actions",
@@ -193,6 +201,7 @@ export function PropertiesClient({ data: initialData }: PropertiesClientProps) {
     status: false,
     price: false,
     location: false,
+    views: false,
   });
   const [rowSelection, setRowSelection] = React.useState({});
 

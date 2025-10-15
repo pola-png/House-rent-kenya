@@ -7,7 +7,7 @@ import Image from 'next/image';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { MapPin, Bed, Bath, Maximize, Phone, Mail, Share2, Heart, MessageSquare } from 'lucide-react';
+import { MapPin, Bed, Bath, Maximize, Phone, Mail, Share2, Heart, MessageSquare, Eye, Calendar } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -66,7 +66,7 @@ export default function PropertyDetailClient({ id }: PropertyDetailClientProps) 
         } : undefined
       });
 
-      await supabase.from('properties').update({ views: (data.views || 0) + 1 }).eq('id', id);
+      supabase.from('properties').update({ views: (data.views || 0) + 1 }).eq('id', id);
     } catch (error) {
       console.error('Error fetching property:', error);
     } finally {
@@ -207,8 +207,23 @@ export default function PropertyDetailClient({ id }: PropertyDetailClientProps) 
                 <Maximize className="h-5 w-5 text-muted-foreground" />
                 <span>{property.area} sqft</span>
               </div>
+              <div className="flex items-center gap-2">
+                <Eye className="h-5 w-5 text-muted-foreground" />
+                <span>{property.views || 0} Views</span>
+              </div>
               <Badge>{property.propertyType}</Badge>
               <Badge variant="secondary">{property.status}</Badge>
+            </div>
+            
+            <div className="flex items-center gap-4 text-sm text-muted-foreground mb-6 pb-6 border-b">
+              <div className="flex items-center gap-1">
+                <Calendar className="h-4 w-4" />
+                <span>Listed {new Date(property.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}</span>
+              </div>
+              <div className="flex items-center gap-1">
+                <Eye className="h-4 w-4" />
+                <span className="font-medium">{property.views || 0} total views</span>
+              </div>
             </div>
 
             <div className="prose max-w-none">

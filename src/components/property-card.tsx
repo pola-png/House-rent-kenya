@@ -1,7 +1,7 @@
 
 import Image from 'next/image';
 import Link from 'next/link';
-import { MapPin, Bed, Bath, Car, Maximize, Star } from 'lucide-react';
+import { MapPin, Bed, Bath, Car, Maximize, Star, Eye } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import type { Property } from '@/lib/types';
@@ -89,8 +89,9 @@ export function PropertyCard({ property }: PropertyCardProps) {
                     </>
                 )}
              </div>
-             <div className="text-xs text-muted-foreground">
-               {property.views || 0} views
+             <div className="flex items-center gap-1 text-xs text-muted-foreground">
+               <Eye className="h-3 w-3" />
+               <span>{property.views || 0}</span>
              </div>
           </div>
         </CardContent>
