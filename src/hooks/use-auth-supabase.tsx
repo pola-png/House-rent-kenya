@@ -18,29 +18,35 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUser] = useState<UserProfile | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
 
   useEffect(() => {
+    let mounted = true;
+    
     // Get initial session
     supabase.auth.getSession().then(async ({ data: { session } }) => {
+      if (!mounted) return;
       if (session?.user) {
         const userProfile = await fetchUserProfile(session.user);
-        setUser(userProfile);
+        if (mounted) setUser(userProfile);
       }
-      setLoading(false);
     });
 
     // Listen for auth changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, session) => {
+      if (!mounted) return;
       if (session?.user) {
         const userProfile = await fetchUserProfile(session.user);
-        setUser(userProfile);
+        if (mounted) setUser(userProfile);
       } else {
-        setUser(null);
+        if (mounted) setUser(null);
       }
     });
 
-    return () => subscription.unsubscribe();
+    return () => {
+      mounted = false;
+      subscription.unsubscribe();
+    };
   }, []);
 
   const fetchUserProfile = async (supabaseUser: User): Promise<UserProfile> => {
