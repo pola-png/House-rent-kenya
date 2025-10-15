@@ -88,7 +88,7 @@ export default function ProfilePage() {
         description: "Profile photo updated successfully."
       });
       
-      setTimeout(() => window.location.reload(), 500);
+      window.location.reload();
     } catch (error: any) {
       console.error('Error uploading photo:', error);
       toast({
