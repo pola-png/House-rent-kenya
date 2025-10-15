@@ -1,7 +1,7 @@
 
 import Image from 'next/image';
 import Link from 'next/link';
-import { MapPin, Bed, Bath, Car, Maximize, Star, Eye } from 'lucide-react';
+import { MapPin, Bed, Bath, Car, Maximize, Star, Eye, BadgeCheck, Award } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import type { Property } from '@/lib/types';
@@ -40,11 +40,17 @@ export function PropertyCard({ property }: PropertyCardProps) {
            {property.status === 'Rented' && (
               <Badge variant="destructive" className="absolute top-3 right-3">Rented</Badge>
            )}
-           {property.featured && (
-            <Badge variant="default" className="absolute bottom-3 left-3 bg-accent text-accent-foreground flex items-center gap-1">
-                <Star className="w-3 h-3"/>
-                Pro
-            </Badge>
+           {property.isPremium && (
+            <div className="absolute bottom-3 left-3 flex gap-2">
+              <Badge variant="default" className="bg-yellow-500 hover:bg-yellow-600 text-white flex items-center gap-1">
+                <Award className="w-3 h-3"/>
+                Sponsored
+              </Badge>
+              <Badge variant="default" className="bg-blue-500 hover:bg-blue-600 text-white flex items-center gap-1">
+                <BadgeCheck className="w-3 h-3"/>
+                Verified
+              </Badge>
+            </div>
            )}
         </div>
         <CardContent className="p-4 space-y-3 flex-grow flex flex-col">

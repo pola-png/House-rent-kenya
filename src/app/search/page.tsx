@@ -106,7 +106,7 @@ function SearchContent() {
         query = query.gte('bedrooms', bedroomCount);
       }
 
-      const { data, error } = await query.order('createdAt', { ascending: false });
+      const { data, error } = await query.order('isPremium', { ascending: false, nullsFirst: false }).order('createdAt', { ascending: false });
 
       if (error) throw error;
 
@@ -149,7 +149,14 @@ function SearchContent() {
         };
       });
 
-      setProperties(propertiesWithAgents);
+      // Sort to ensure promoted properties are at the top
+      const sortedProperties = propertiesWithAgents.sort((a, b) => {
+        if (a.isPremium && !b.isPremium) return -1;
+        if (!a.isPremium && b.isPremium) return 1;
+        return 0;
+      });
+
+      setProperties(sortedProperties);
     } catch (error) {
       console.error('Error fetching properties:', error);
       setProperties([]);

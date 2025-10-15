@@ -82,10 +82,12 @@ export default function Home() {
 
   const fetchFeaturedProperties = async () => {
     try {
+      const now = new Date().toISOString();
       const { data, error } = await supabase
         .from('properties')
         .select('*')
-        .eq('featured', true)
+        .eq('isPremium', true)
+        .or(`featuredExpiresAt.is.null,featuredExpiresAt.gt.${now}`)
         .limit(6)
         .order('createdAt', { ascending: false });
 
@@ -244,8 +246,8 @@ export default function Home() {
         {/* Featured Properties Section */}
         <section className="py-12 md:py-20 bg-background" itemScope itemType="https://schema.org/ItemList">
           <div className="container mx-auto px-4">
-            <h2 className="text-3xl md:text-4xl font-headline font-bold text-center mb-2" itemProp="name">Featured Premium Properties in Kenya</h2>
-            <p className="text-center text-muted-foreground mb-10 max-w-2xl mx-auto" itemProp="description">Handpicked verified listings from our team, featuring the best premium apartments, houses & homes available for rent in Nairobi, Westlands, Kilimani & across Kenya.</p>
+            <h2 className="text-3xl md:text-4xl font-headline font-bold text-center mb-2" itemProp="name">Sponsored Premium Properties</h2>
+            <p className="text-center text-muted-foreground mb-10 max-w-2xl mx-auto" itemProp="description">Verified premium listings featuring the best apartments, houses & homes available for rent in Nairobi, Westlands, Kilimani & across Kenya.</p>
             {isLoading ? (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
                     {[...Array(3)].map((_, i) => (
