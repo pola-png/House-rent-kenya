@@ -315,6 +315,12 @@ export default function PropertyDetailClient({ id }: PropertyDetailClientProps) 
                     {property.agent.agencyName && (
                       <div className="text-sm text-muted-foreground">{property.agent.agencyName}</div>
                     )}
+                    {property.agent.phoneNumber && (
+                      <div className="text-sm text-muted-foreground flex items-center gap-1">
+                        <Phone className="h-3 w-3" />
+                        {property.agent.phoneNumber}
+                      </div>
+                    )}
                   </div>
                   {property.agent.phoneNumber && (
                     <Button className="w-full" asChild>
