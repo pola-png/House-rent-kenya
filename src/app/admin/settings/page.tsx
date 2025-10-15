@@ -1,7 +1,10 @@
 "use client";
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Settings as SettingsIcon, User, Bell, Lock, Shield } from "lucide-react";
+import { Settings as SettingsIcon, User, Bell, Lock, Shield, Loader2 } from "lucide-react";
+import { supabase } from "@/lib/supabase";
+import { useToast } from "@/hooks/use-toast";
+import { useState } from "react";
 import { useAuth } from "@/hooks/use-auth-supabase";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -12,6 +15,34 @@ import { Skeleton } from "@/components/ui/skeleton";
 
 export default function SettingsPage() {
   const { user, loading } = useAuth();
+  const { toast } = useToast();
+  const [isChangingPassword, setIsChangingPassword] = useState(false);
+  
+  const handleChangePassword = async () => {
+    if (!user?.email) return;
+    
+    setIsChangingPassword(true);
+    try {
+      const { error } = await supabase.auth.resetPasswordForEmail(user.email, {
+        redirectTo: `${window.location.origin}/reset-password`,
+      });
+      
+      if (error) throw error;
+      
+      toast({
+        title: 'Password Reset Email Sent',
+        description: 'Check your email for a password reset link.',
+      });
+    } catch (error: any) {
+      toast({
+        variant: 'destructive',
+        title: 'Error',
+        description: error.message || 'Failed to send reset email.',
+      });
+    } finally {
+      setIsChangingPassword(false);
+    }
+  };
 
   if (loading) {
     return (
@@ -99,7 +130,10 @@ export default function SettingsPage() {
           <CardDescription>Manage your password and security settings</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
-          <Button variant="outline">Change Password</Button>
+          <Button variant="outline" onClick={handleChangePassword} disabled={isChangingPassword}>
+            {isChangingPassword && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+            Change Password
+          </Button>
           <Separator />
           <div className="flex items-center justify-between">
             <div className="space-y-0.5">

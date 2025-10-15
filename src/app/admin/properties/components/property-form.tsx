@@ -289,12 +289,20 @@ export function PropertyForm({ property }: PropertyFormProps) {
           const fileName = `${user.uid}-${Date.now()}-${Math.random().toString(36).substring(7)}.${fileExt}`;
           const filePath = `properties/${fileName}`;
 
-          const { error: uploadError } = await supabase.storage
+          const { error: uploadError, data: uploadData } = await supabase.storage
             .from('user-uploads')
-            .upload(filePath, file);
+            .upload(filePath, file, { upsert: true });
 
           if (uploadError) {
             console.error('Error uploading image:', uploadError);
+            if (uploadError.message.includes('not found')) {
+              toast({
+                variant: "destructive",
+                title: "Storage Error",
+                description: "Storage bucket not configured. Property will be posted without images.",
+              });
+              break;
+            }
             continue;
           }
 

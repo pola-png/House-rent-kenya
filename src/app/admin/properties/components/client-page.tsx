@@ -27,6 +27,8 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
+import { supabase } from "@/lib/supabase";
+import { useToast } from "@/hooks/use-toast";
 import {
   Table,
   TableBody,
@@ -144,12 +146,7 @@ const columns: ColumnDef<Property>[] = [
             </DropdownMenuItem>
             <DropdownMenuItem
               className="text-destructive"
-              onClick={() => {
-                if (confirm('Are you sure you want to delete this property?')) {
-                  // Delete logic will be implemented
-                  alert('Delete feature coming soon!');
-                }
-              }}
+              onClick={() => handleDelete(property.id)}
             >
               <Trash2 className="mr-2 h-4 w-4" />
               Delete Property
@@ -165,7 +162,31 @@ interface PropertiesClientProps {
   data: Property[];
 }
 
-export function PropertiesClient({ data }: PropertiesClientProps) {
+export function PropertiesClient({ data: initialData }: PropertiesClientProps) {
+  const { toast } = useToast();
+  const [properties, setProperties] = React.useState<Property[]>(initialData);
+  
+  React.useEffect(() => {
+    setProperties(initialData);
+  }, [initialData]);
+
+  const handleDelete = async (propertyId: string) => {
+    if (!confirm('Are you sure you want to delete this property?')) return;
+    
+    try {
+      const { error } = await supabase
+        .from('properties')
+        .delete()
+        .eq('id', propertyId);
+      
+      if (error) throw error;
+      
+      setProperties(prev => prev.filter(p => p.id !== propertyId));
+      toast({ title: 'Success', description: 'Property deleted successfully.' });
+    } catch (error: any) {
+      toast({ variant: 'destructive', title: 'Error', description: error.message || 'Failed to delete property.' });
+    }
+  };
   const [sorting, setSorting] = React.useState<SortingState>([]);
   const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>([]);
   const [columnVisibility, setColumnVisibility] = React.useState<VisibilityState>({
@@ -176,7 +197,7 @@ export function PropertiesClient({ data }: PropertiesClientProps) {
   const [rowSelection, setRowSelection] = React.useState({});
 
   const table = useReactTable({
-    data,
+    data: properties,
     columns,
     onSortingChange: setSorting,
     onColumnFiltersChange: setColumnFilters,

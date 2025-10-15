@@ -128,30 +128,50 @@ export default function PropertyDetailClient({ id }: PropertyDetailClientProps) 
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         <div className="lg:col-span-2 space-y-6">
-          <div className="relative h-96 rounded-lg overflow-hidden">
+          <div className="relative h-96 rounded-lg overflow-hidden group">
             {property.images && property.images.length > 0 ? (
-              <Image
-                src={property.images[currentImageIndex]}
-                alt={property.title}
-                fill
-                className="object-cover"
-              />
+              <>
+                <Image
+                  src={property.images[currentImageIndex]}
+                  alt={property.title}
+                  fill
+                  className="object-cover"
+                />
+                {property.images.length > 1 && (
+                  <>
+                    <Button
+                      variant="secondary"
+                      size="icon"
+                      className="absolute left-4 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity"
+                      onClick={() => setCurrentImageIndex((prev) => (prev === 0 ? property.images!.length - 1 : prev - 1))}
+                    >
+                      <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m15 18-6-6 6-6"/></svg>
+                    </Button>
+                    <Button
+                      variant="secondary"
+                      size="icon"
+                      className="absolute right-4 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity"
+                      onClick={() => setCurrentImageIndex((prev) => (prev === property.images!.length - 1 ? 0 : prev + 1))}
+                    >
+                      <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m9 18 6-6-6-6"/></svg>
+                    </Button>
+                    <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-2">
+                      {property.images.map((_, index) => (
+                        <button
+                          key={index}
+                          onClick={() => setCurrentImageIndex(index)}
+                          className={`w-2 h-2 rounded-full transition-all ${
+                            index === currentImageIndex ? 'bg-white w-8' : 'bg-white/50'
+                          }`}
+                        />
+                      ))}
+                    </div>
+                  </>
+                )}
+              </>
             ) : (
               <div className="w-full h-full bg-muted flex items-center justify-center">
                 <span className="text-muted-foreground">No image available</span>
-              </div>
-            )}
-            {property.images && property.images.length > 1 && (
-              <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-2">
-                {property.images.map((_, index) => (
-                  <button
-                    key={index}
-                    onClick={() => setCurrentImageIndex(index)}
-                    className={`w-2 h-2 rounded-full ${
-                      index === currentImageIndex ? 'bg-white' : 'bg-white/50'
-                    }`}
-                  />
-                ))}
               </div>
             )}
           </div>
@@ -229,9 +249,14 @@ export default function PropertyDetailClient({ id }: PropertyDetailClientProps) 
                       </a>
                     </Button>
                   )}
-                  <Button variant="outline" className="w-full" onClick={() => setShowCallbackForm(!showCallbackForm)}>
+                  <Button 
+                    variant="outline" 
+                    className="w-full" 
+                    onClick={() => setShowCallbackForm(!showCallbackForm)}
+                    type="button"
+                  >
                     <MessageSquare className="h-4 w-4 mr-2" />
-                    Request Callback
+                    {showCallbackForm ? 'Cancel' : 'Request Callback'}
                   </Button>
                   {showCallbackForm && (
                     <div className="space-y-3 p-4 border rounded-lg">

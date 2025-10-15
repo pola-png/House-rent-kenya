@@ -36,6 +36,7 @@ import {
   SidebarFooter,
   SidebarTrigger,
   SidebarInset,
+  SidebarRail,
 } from "@/components/ui/sidebar";
 import { Button } from "@/components/ui/button";
 import {
@@ -89,8 +90,7 @@ export default function AdminLayout({
 
   return (
     <SidebarProvider>
-      <div className="flex min-h-screen w-full">
-      <Sidebar>
+      <Sidebar collapsible="icon">
         <SidebarContent className="flex flex-col">
           <SidebarHeader className="p-4">
             <Link href="/admin/dashboard" className="flex items-center gap-2 font-semibold">
@@ -243,10 +243,11 @@ export default function AdminLayout({
              </Button>
           </SidebarFooter>
         </SidebarContent>
+        <SidebarRail />
       </Sidebar>
       <SidebarInset>
         <header className="sticky top-0 z-30 flex h-14 items-center gap-4 border-b bg-background px-4 sm:static sm:h-auto sm:border-0 sm:bg-transparent sm:px-6">
-          <SidebarTrigger className="sm:hidden" />
+          <SidebarTrigger />
           
           <div className="relative ml-auto flex-1 md:grow-0">
             {/* Search can be added here if needed */}
@@ -286,7 +287,6 @@ export default function AdminLayout({
         </header>
         <main className="flex-1 p-4 sm:px-6 sm:py-0">{children}</main>
       </SidebarInset>
-      </div>
     </SidebarProvider>
   );
 }

@@ -47,11 +47,16 @@ export default function ProfilePage() {
       const fileName = `${user.uid}-${Date.now()}.${fileExt}`;
       const filePath = `avatars/${fileName}`;
 
-      const { error: uploadError } = await supabase.storage
+      const { error: uploadError, data: uploadData } = await supabase.storage
         .from('user-uploads')
-        .upload(filePath, file);
+        .upload(filePath, file, { upsert: true });
 
-      if (uploadError) throw uploadError;
+      if (uploadError) {
+        if (uploadError.message.includes('not found')) {
+          throw new Error('Storage bucket not configured. Please contact admin.');
+        }
+        throw uploadError;
+      }
 
       const { data: { publicUrl } } = supabase.storage
         .from('user-uploads')
@@ -63,7 +68,6 @@ export default function ProfilePage() {
 
       if (updateError) throw updateError;
 
-      // Update profiles table
       await supabase
         .from('profiles')
         .update({ photoURL: publicUrl })
@@ -80,7 +84,7 @@ export default function ProfilePage() {
       toast({
         variant: "destructive",
         title: "Upload Failed",
-        description: error.message || "Could not upload photo."
+        description: error.message || "Could not upload photo. Ensure storage is configured."
       });
     } finally {
       setUploading(false);

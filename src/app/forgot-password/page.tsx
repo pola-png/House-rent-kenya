@@ -16,6 +16,7 @@ import { Input } from '@/components/ui/input';
 import placeholderImages from '@/lib/placeholder-images.json';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { useToast } from '@/hooks/use-toast';
+import { supabase } from '@/lib/supabase';
 
 const formSchema = z.object({
   email: z.string().email({ message: 'Please enter a valid email.' }),
@@ -36,13 +37,25 @@ export default function ForgotPasswordPage() {
   const { isSubmitting } = form.formState;
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
-    // Mock sending a password reset email
-    console.log("Sending password reset for:", values.email);
-    toast({
-      title: 'Password Reset Email Sent',
-      description: 'If an account exists, you will receive an email to reset your password.',
-    });
-    router.push('/login');
+    try {
+      const { error } = await supabase.auth.resetPasswordForEmail(values.email, {
+        redirectTo: `${window.location.origin}/reset-password`,
+      });
+      
+      if (error) throw error;
+      
+      toast({
+        title: 'Password Reset Email Sent',
+        description: 'Check your email for a password reset link.',
+      });
+      router.push('/login');
+    } catch (error: any) {
+      toast({
+        variant: 'destructive',
+        title: 'Error',
+        description: error.message || 'Failed to send reset email.',
+      });
+    }
   }
 
   return (

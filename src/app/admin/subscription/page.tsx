@@ -28,7 +28,7 @@ const plans = [
         period: "",
         description: "For agents just getting started.",
         features: [
-            "Up to 5 active listings",
+            "Unlimited active listings",
             "Basic support",
             "Standard placement in search results",
         ],
@@ -42,7 +42,7 @@ const plans = [
         period: "/month",
         description: "For professionals who want to stand out.",
         features: [
-            "Up to 50 active listings",
+            "Unlimited active listings",
             "Priority support",
             "Promote listings with 'Pro' badge",
             "Higher placement in search results",
