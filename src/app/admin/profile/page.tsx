@@ -43,11 +43,17 @@ export default function ProfilePage() {
 
     setUploading(true);
     try {
+      // Delete old photo if exists
+      if (user.photoURL) {
+        const oldPath = user.photoURL.split('/').slice(-2).join('/');
+        await supabase.storage.from('user-uploads').remove([oldPath]);
+      }
+
       const fileExt = file.name.split('.').pop();
-      const fileName = `${user.uid}-${Date.now()}.${fileExt}`;
+      const fileName = `${user.uid}.${fileExt}`;
       const filePath = `avatars/${fileName}`;
 
-      const { error: uploadError, data: uploadData } = await supabase.storage
+      const { error: uploadError } = await supabase.storage
         .from('user-uploads')
         .upload(filePath, file, { upsert: true });
 
@@ -62,23 +68,27 @@ export default function ProfilePage() {
         .from('user-uploads')
         .getPublicUrl(filePath);
 
+      const newPhotoURL = `${publicUrl}?t=${Date.now()}`;
+
       const { error: updateError } = await supabase.auth.updateUser({
-        data: { photoURL: publicUrl }
+        data: { photoURL: newPhotoURL }
       });
 
       if (updateError) throw updateError;
 
-      await supabase
+      const { error: profileError } = await supabase
         .from('profiles')
-        .update({ photoURL: publicUrl })
+        .update({ photoURL: newPhotoURL })
         .eq('id', user.uid);
+
+      if (profileError) throw profileError;
 
       toast({
         title: "Success!",
         description: "Profile photo updated successfully."
       });
       
-      window.location.reload();
+      setTimeout(() => window.location.reload(), 500);
     } catch (error: any) {
       console.error('Error uploading photo:', error);
       toast({
@@ -86,7 +96,6 @@ export default function ProfilePage() {
         title: "Upload Failed",
         description: error.message || "Could not upload photo. Ensure storage is configured."
       });
-    } finally {
       setUploading(false);
     }
   };
