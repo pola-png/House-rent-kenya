@@ -1,18 +1,17 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
-import { useState, useEffect } from "react";
+import { useAuth } from "@/hooks/use-auth-supabase";
+import { supabase } from "@/lib/supabase";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Separator } from "@/components/ui/separator";
-import { Star, Upload, Loader2, ArrowLeft } from "lucide-react";
+import { Loader2, Upload, ArrowLeft } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import { useAuth } from "@/hooks/use-auth-supabase";
-import { supabase } from "@/lib/supabase";
 import Link from "next/link";
-import { Skeleton } from "@/components/ui/skeleton";
+import Image from "next/image";
 
 export default function PromotePropertyPage() {
   const params = useParams();
@@ -21,9 +20,10 @@ export default function PromotePropertyPage() {
   const { toast } = useToast();
   const [property, setProperty] = useState<any>(null);
   const [loading, setLoading] = useState(true);
-  const [submitting, setSubmitting] = useState(false);
   const [promotionWeeks, setPromotionWeeks] = useState(1);
   const [screenshotFile, setScreenshotFile] = useState<File | null>(null);
+  const [screenshotPreview, setScreenshotPreview] = useState<string | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const weeklyRate = 5;
 
   useEffect(() => {
@@ -45,183 +45,167 @@ export default function PromotePropertyPage() {
       setProperty(data);
     } catch (error) {
       console.error('Error fetching property:', error);
-      toast({
-        variant: "destructive",
-        title: "Error",
-        description: "Could not load property details."
-      });
+      toast({ variant: "destructive", title: "Error", description: "Property not found" });
+      router.push('/admin/properties');
     } finally {
       setLoading(false);
     }
   };
 
-  const handleScreenshotChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
+  const handleScreenshotChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
     if (file) {
       setScreenshotFile(file);
+      setScreenshotPreview(URL.createObjectURL(file));
     }
   };
 
-  const handleSubmitPromotion = async () => {
+  const handleSubmit = async () => {
     if (!screenshotFile) {
-      toast({
-        variant: "destructive",
-        title: "Screenshot Required",
-        description: "Please upload a payment screenshot to proceed."
-      });
+      toast({ variant: "destructive", title: "No Screenshot", description: "Please upload payment screenshot" });
       return;
     }
 
     if (!user || !property) return;
 
-    setSubmitting(true);
+    setIsSubmitting(true);
     try {
+      toast({ title: "Uploading...", description: "Sending payment screenshot to admin." });
+
       const fileExt = screenshotFile.name.split('.').pop();
-      const fileName = `promotion-${user.uid}-${Date.now()}.${fileExt}`;
-      const filePath = `promotion-screenshots/${fileName}`;
+      const fileName = `payment-${user.uid}-${Date.now()}.${fileExt}`;
+      const filePath = `payment-screenshots/${fileName}`;
 
       const { error: uploadError } = await supabase.storage
         .from('user-uploads')
-        .upload(filePath, screenshotFile);
+        .upload(filePath, screenshotFile, { upsert: true });
 
       if (uploadError) throw uploadError;
 
-      toast({
-        title: "Promotion Request Submitted!",
-        description: "An admin will review your payment and activate the promotion soon."
-      });
+      const { data: { publicUrl } } = supabase.storage
+        .from('user-uploads')
+        .getPublicUrl(filePath);
 
-      router.push('/admin/properties');
+      const { error: insertError } = await supabase
+        .from('payment_requests')
+        .insert([{
+          propertyId: property.id,
+          propertyTitle: property.title,
+          userId: user.uid,
+          userName: user.displayName || user.email,
+          userEmail: user.email,
+          amount: promotionWeeks * weeklyRate,
+          paymentScreenshot: publicUrl,
+          status: 'pending',
+          promotionType: `Featured - ${promotionWeeks} week${promotionWeeks > 1 ? 's' : ''}`,
+          createdAt: new Date().toISOString()
+        }]);
+
+      if (insertError) throw insertError;
+
+      toast({ title: "Request Submitted!", description: "Admin will review your payment soon." });
+      router.push('/admin/promotions');
     } catch (error: any) {
-      console.error('Error submitting promotion:', error);
-      toast({
-        variant: "destructive",
-        title: "Submission Failed",
-        description: error.message || "Could not submit promotion request."
-      });
+      console.error('Promotion request error:', error);
+      toast({ variant: "destructive", title: "Submission Failed", description: error.message });
     } finally {
-      setSubmitting(false);
+      setIsSubmitting(false);
     }
   };
 
   if (loading) {
     return (
-      <div className="space-y-6">
-        <Skeleton className="h-8 w-64" />
-        <Skeleton className="h-96 w-full" />
+      <div className="flex items-center justify-center min-h-screen">
+        <Loader2 className="h-8 w-8 animate-spin" />
       </div>
     );
   }
 
-  if (!property) {
-    return (
-      <Card>
-        <CardContent className="py-12 text-center">
-          <p className="text-muted-foreground">Property not found.</p>
-          <Button asChild className="mt-4">
-            <Link href="/admin/properties">Back to My Listings</Link>
-          </Button>
-        </CardContent>
-      </Card>
-    );
-  }
+  if (!property) return null;
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center gap-4">
-        <Button variant="ghost" size="icon" asChild>
-          <Link href="/admin/properties">
-            <ArrowLeft className="h-4 w-4" />
-          </Link>
-        </Button>
-        <div>
-          <h1 className="text-2xl font-bold font-headline">Promote Property</h1>
-          <p className="text-muted-foreground">{property.title}</p>
-        </div>
-      </div>
+    <div className="container mx-auto p-6 max-w-2xl space-y-6">
+      <Button variant="ghost" asChild>
+        <Link href="/admin/properties">
+          <ArrowLeft className="h-4 w-4 mr-2" />
+          Back to Properties
+        </Link>
+      </Button>
 
       <Card>
         <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Star className="h-5 w-5 text-primary" />
-            Feature as "Pro"
-          </CardTitle>
-          <CardDescription>
-            Promote this property on the homepage and at the top of search results.
-          </CardDescription>
+          <CardTitle>Promote Property</CardTitle>
+          <CardDescription>Boost your property's visibility with featured placement</CardDescription>
         </CardHeader>
         <CardContent className="space-y-6">
-          <div className="bg-muted p-4 rounded-lg">
-            <h3 className="font-semibold mb-2">Benefits:</h3>
-            <ul className="space-y-1 text-sm text-muted-foreground">
-              <li>✓ Featured on homepage</li>
-              <li>✓ Top position in search</li>
-              <li>✓ Special "Pro" badge</li>
-              <li>✓ 3x more visibility</li>
-            </ul>
+          <div className="p-4 bg-muted rounded-lg">
+            <h3 className="font-semibold mb-2">{property.title}</h3>
+            <p className="text-sm text-muted-foreground">{property.location}, {property.city}</p>
           </div>
 
-          <Separator />
-
           <div className="space-y-4">
-            <div className="flex items-center gap-4">
-              <div className="grid gap-2 flex-1">
-                <Label htmlFor="promotion-weeks">Number of Weeks</Label>
-                <Input 
-                  id="promotion-weeks" 
-                  type="number" 
-                  min="1" 
-                  value={promotionWeeks} 
-                  onChange={(e) => setPromotionWeeks(Math.max(1, parseInt(e.target.value) || 1))}
+            <div>
+              <Label htmlFor="weeks">Number of Weeks</Label>
+              <Input
+                id="weeks"
+                type="number"
+                min="1"
+                value={promotionWeeks}
+                onChange={(e) => setPromotionWeeks(Math.max(1, parseInt(e.target.value) || 1))}
+                className="mt-2"
+              />
+            </div>
+
+            <div className="p-4 bg-primary/10 rounded-lg">
+              <div className="flex justify-between items-center">
+                <span className="font-semibold">Total Amount</span>
+                <span className="text-2xl font-bold">${(promotionWeeks * weeklyRate).toLocaleString()}</span>
+              </div>
+              <p className="text-sm text-muted-foreground mt-1">${weeklyRate} per week</p>
+            </div>
+          </div>
+
+          <div className="space-y-4 p-4 bg-muted rounded-lg">
+            <h4 className="font-semibold">Payment Instructions</h4>
+            <div className="space-y-2 text-sm">
+              <p><span className="font-medium">Send Money to:</span> +254704202939</p>
+              <p><span className="font-medium">Name:</span> Edwin</p>
+              <p><span className="font-medium">Amount:</span> ${(promotionWeeks * weeklyRate).toLocaleString()}</p>
+            </div>
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="screenshot">Upload Payment Screenshot</Label>
+            <Input
+              id="screenshot"
+              type="file"
+              accept="image/png, image/jpeg"
+              onChange={handleScreenshotChange}
+            />
+            {screenshotPreview && (
+              <div className="relative w-full h-48 mt-4 border rounded-lg overflow-hidden">
+                <Image
+                  src={screenshotPreview}
+                  alt="Payment Screenshot Preview"
+                  fill
+                  className="object-contain"
                 />
               </div>
-              <div className="text-right">
-                <p className="text-sm text-muted-foreground">Total</p>
-                <p className="font-bold text-2xl text-primary">${(promotionWeeks * weeklyRate)}</p>
-              </div>
-            </div>
+            )}
           </div>
 
-          <Separator />
-
-          <div className="space-y-4">
-            <div className="text-sm bg-primary/10 p-4 rounded-md">
-              <p className="font-semibold mb-2">Step 1: M-Pesa Payment</p>
-              <p>Send to: <span className="font-bold">+254704202939</span></p>
-              <p>Name: <span className="font-bold">Edwin</span></p>
-              <p>Amount: <span className="font-bold">${(promotionWeeks * weeklyRate)}</span></p>
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="screenshot-upload">Step 2: Upload Screenshot</Label>
-              <Input 
-                id="screenshot-upload" 
-                type="file" 
-                accept="image/*" 
-                onChange={handleScreenshotChange}
-              />
-              {screenshotFile && (
-                <p className="text-xs text-muted-foreground">
-                  {screenshotFile.name}
-                </p>
-              )}
-            </div>
-
-            <Button 
-              onClick={handleSubmitPromotion} 
-              disabled={!screenshotFile || submitting}
-              className="w-full"
-              size="lg"
-            >
-              {submitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-              <Upload className="mr-2 h-4 w-4" />
-              Submit for Approval
-            </Button>
-
-            <p className="text-xs text-center text-muted-foreground">
-              Admin will approve and activate your promotion.
-            </p>
-          </div>
+          <Button
+            onClick={handleSubmit}
+            disabled={isSubmitting || !screenshotFile}
+            className="w-full"
+            size="lg"
+          >
+            {isSubmitting ? (
+              <><Loader2 className="h-4 w-4 mr-2 animate-spin" />Submitting...</>
+            ) : (
+              <><Upload className="h-4 w-4 mr-2" />Submit for Approval</>
+            )}
+          </Button>
         </CardContent>
       </Card>
     </div>
