@@ -22,6 +22,8 @@ export interface Property {
   featured?: boolean;
   keywords?: string;
   views?: number;
+  isPremium?: boolean;
+  featuredExpiresAt?: string;
 }
 
 export interface UserProfile {
