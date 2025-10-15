@@ -7,12 +7,14 @@ import Image from 'next/image';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { MapPin, Bed, Bath, Maximize, Phone, Mail, Share2, Heart, MessageSquare, Eye, Calendar } from 'lucide-react';
+import { MapPin, Bed, Bath, Maximize, Phone, Mail, Share2, Heart, MessageSquare, Eye, Calendar, Edit, Star, Copy, Trash2 } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
 import type { Property } from '@/lib/types';
+import { useAuth } from '@/hooks/use-auth-supabase';
+import { useRouter } from 'next/navigation';
 
 interface PropertyDetailClientProps {
   id: string;
@@ -27,6 +29,8 @@ export default function PropertyDetailClient({ id }: PropertyDetailClientProps) 
   const [callbackPhone, setCallbackPhone] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { toast } = useToast();
+  const { user } = useAuth();
+  const router = useRouter();
 
   useEffect(() => {
     fetchProperty();
@@ -71,6 +75,32 @@ export default function PropertyDetailClient({ id }: PropertyDetailClientProps) 
       console.error('Error fetching property:', error);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleDelete = async () => {
+    if (!confirm('Are you sure you want to delete this property?')) return;
+    
+    try {
+      const { error } = await supabase
+        .from('properties')
+        .delete()
+        .eq('id', property?.id);
+      
+      if (error) throw error;
+      
+      toast({ title: 'Success', description: 'Property deleted successfully.' });
+      router.push('/admin/properties');
+    } catch (error: any) {
+      toast({ variant: 'destructive', title: 'Error', description: error.message || 'Failed to delete property.' });
+    }
+  };
+
+  const handleDuplicate = () => {
+    if (property) {
+      localStorage.setItem('duplicateProperty', JSON.stringify(property));
+      router.push('/admin/properties/new');
+      toast({ title: 'Property data copied', description: 'Edit and save to create a duplicate.' });
     }
   };
 
@@ -125,6 +155,35 @@ export default function PropertyDetailClient({ id }: PropertyDetailClientProps) 
   return (
     <div className="container mx-auto px-4 py-8" itemScope itemType="https://schema.org/Accommodation">
       <SEOSchema type="property" data={property} />
+
+      {user && property.landlordId === user.uid && (
+        <Card className="mb-6 bg-muted/50">
+          <CardContent className="p-4">
+            <div className="flex flex-wrap gap-2">
+              <Button size="sm" variant="outline" asChild>
+                <Link href={`/admin/properties/edit/${property.id}`}>
+                  <Edit className="h-4 w-4 mr-2" />
+                  Edit Property
+                </Link>
+              </Button>
+              <Button size="sm" variant="outline" asChild>
+                <Link href={`/admin/properties/promote/${property.id}`}>
+                  <Star className="h-4 w-4 mr-2" />
+                  Promote Property
+                </Link>
+              </Button>
+              <Button size="sm" variant="outline" onClick={handleDuplicate}>
+                <Copy className="h-4 w-4 mr-2" />
+                Duplicate Property
+              </Button>
+              <Button size="sm" variant="destructive" onClick={handleDelete}>
+                <Trash2 className="h-4 w-4 mr-2" />
+                Delete Property
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         <div className="lg:col-span-2 space-y-6">
