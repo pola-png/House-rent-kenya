@@ -55,7 +55,9 @@ const formSchema = z.object({
   propertyType: z.enum(["Apartment", "House", "Condo", "Townhouse", "Villa", "Bedsitter"]),
   amenities: z.string().min(3),
   status: z.enum(["For Rent", "For Sale", "Short Let", "Land", "Rented", "Sold"]),
-  keywords: z.string().optional(),
+  keywords: z.string().min(3, {
+    message: "Keywords must be at least 3 characters.",
+  }),
   featured: z.boolean().default(false),
   latitude: z.coerce.number().min(-90).max(90).default(-1.286389),
   longitude: z.coerce.number().min(-180).max(180).default(36.817223),
@@ -94,7 +96,7 @@ export function PropertyForm({ property }: PropertyFormProps) {
         propertyType: property.propertyType,
         status: property.status,
         amenities: Array.isArray(property.amenities) ? property.amenities.join(", ") : property.amenities,
-        keywords: property.keywords || "",
+        keywords: property.keywords || ""
         featured: property.featured || false,
         latitude: property.latitude || -1.286389,
         longitude: property.longitude || 36.817223,
@@ -111,7 +113,7 @@ export function PropertyForm({ property }: PropertyFormProps) {
         amenities: "",
         status: "For Rent",
         propertyType: "Apartment",
-        keywords: "",
+        keywords: ""
         featured: false,
       };
 
@@ -325,7 +327,7 @@ export function PropertyForm({ property }: PropertyFormProps) {
           propertyType: data.propertyType,
           amenities: data.amenities.split(',').map(a => a.trim()),
           status: data.status,
-          keywords: data.keywords || '',
+          keywords: data.keywords,
           featured: false,
           latitude: data.latitude,
           longitude: data.longitude,
