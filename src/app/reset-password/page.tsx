@@ -38,6 +38,8 @@ export default function ResetPasswordPage() {
     setIsReady(true);
   }, []);
 
+  const [isLoading, setIsLoading] = useState(false);
+
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
@@ -45,8 +47,6 @@ export default function ResetPasswordPage() {
       confirmPassword: '',
     },
   });
-
-  const { isSubmitting } = form.formState;
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
     if (!hasToken) {
@@ -58,17 +58,13 @@ export default function ResetPasswordPage() {
       return;
     }
 
+    setIsLoading(true);
     try {
-      console.log('Attempting password update...');
-      
       const { data, error } = await supabase.auth.updateUser({
         password: values.password,
       });
 
-      console.log('Update response:', { data, error });
-
       if (error) {
-        console.error('Password reset error:', error);
         toast({
           variant: 'destructive',
           title: 'Reset Failed',
@@ -78,7 +74,6 @@ export default function ResetPasswordPage() {
       }
 
       if (!data?.user) {
-        console.error('No user data returned');
         toast({
           variant: 'destructive',
           title: 'Reset Failed',
@@ -86,8 +81,6 @@ export default function ResetPasswordPage() {
         });
         return;
       }
-
-      console.log('Password updated successfully');
       
       toast({
         title: 'Password Updated!',
@@ -97,12 +90,13 @@ export default function ResetPasswordPage() {
       await supabase.auth.signOut();
       setTimeout(() => router.push('/login'), 1500);
     } catch (error: any) {
-      console.error('Unexpected error:', error);
       toast({
         variant: 'destructive',
         title: 'Error',
         description: error.message || 'Something went wrong. Please try again.',
       });
+    } finally {
+      setIsLoading(false);
     }
   }
 
@@ -141,7 +135,7 @@ export default function ResetPasswordPage() {
                   <FormItem className="grid gap-2">
                     <FormLabel>New Password</FormLabel>
                     <FormControl>
-                      <Input type="password" placeholder="••••••••" {...field} disabled={isSubmitting} />
+                      <Input type="password" placeholder="••••••••" {...field} disabled={isLoading} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -154,14 +148,14 @@ export default function ResetPasswordPage() {
                   <FormItem className="grid gap-2">
                     <FormLabel>Confirm Password</FormLabel>
                     <FormControl>
-                      <Input type="password" placeholder="••••••••" {...field} disabled={isSubmitting} />
+                      <Input type="password" placeholder="••••••••" {...field} disabled={isLoading} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
                 )}
               />
-              <Button type="submit" className="w-full" disabled={isSubmitting}>
-                {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+              <Button type="submit" className="w-full" disabled={isLoading}>
+                {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                 <Lock className="mr-2 h-4 w-4" />
                 Update Password
               </Button>

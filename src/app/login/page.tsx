@@ -8,7 +8,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
 import * as z from 'zod';
 import { useRouter, useSearchParams } from 'next/navigation';
-import React, { Suspense } from 'react';
+import React, { Suspense, useState } from 'react';
 
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -31,6 +31,7 @@ function LoginForm() {
   const redirect = searchParams.get('redirect') || '/admin/dashboard';
   const { toast } = useToast();
   const { login, loginWithGoogle } = useAuth();
+  const [isLoading, setIsLoading] = useState(false);
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -41,19 +42,24 @@ function LoginForm() {
   });
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
-    const success = await login(values.email, values.password);
-    if (success) {
-      toast({
-        title: 'Logged In!',
-        description: 'You have successfully signed in.',
-      });
-      router.push(redirect);
-    } else {
-      toast({
-        variant: 'destructive',
-        title: 'Login Failed',
-        description: 'Invalid email or password.',
-      });
+    setIsLoading(true);
+    try {
+      const success = await login(values.email, values.password);
+      if (success) {
+        toast({
+          title: 'Logged In!',
+          description: 'You have successfully signed in.',
+        });
+        router.push(redirect);
+      } else {
+        toast({
+          variant: 'destructive',
+          title: 'Login Failed',
+          description: 'Invalid email or password.',
+        });
+      }
+    } finally {
+      setIsLoading(false);
     }
   }
   
@@ -64,9 +70,6 @@ function LoginForm() {
         description: 'Redirecting to Google sign in.',
     });
   }
-
-
-  const { isSubmitting } = form.formState;
 
   return (
     <>
@@ -86,7 +89,7 @@ function LoginForm() {
                     <FormItem className="grid gap-2">
                       <FormLabel>Email</FormLabel>
                       <FormControl>
-                        <Input type="email" placeholder="m@example.com" {...field} disabled={isSubmitting} />
+                        <Input type="email" placeholder="m@example.com" {...field} disabled={isLoading} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -104,14 +107,14 @@ function LoginForm() {
                         </Link>
                       </div>
                       <FormControl>
-                        <Input id="password" type="password" {...field} disabled={isSubmitting} />
+                        <Input id="password" type="password" {...field} disabled={isLoading} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
                   )}
                 />
-                <Button type="submit" className="w-full" disabled={isSubmitting}>
-                  {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                <Button type="submit" className="w-full" disabled={isLoading}>
+                  {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                   <LogIn className="mr-2 h-4 w-4" />
                   Login
                 </Button>
@@ -125,8 +128,8 @@ function LoginForm() {
                 <span className="bg-background px-2 text-muted-foreground">Or continue with</span>
               </div>
             </div>
-            <Button variant="outline" className="w-full" onClick={handleGoogleSignIn} disabled={isSubmitting}>
-              {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+            <Button variant="outline" className="w-full" onClick={handleGoogleSignIn} disabled={isLoading}>
+              {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
               Login with Google
             </Button>
             <div className="mt-4 text-center text-sm">
