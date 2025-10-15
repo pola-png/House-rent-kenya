@@ -96,6 +96,7 @@ export default function ProfilePage() {
         title: "Upload Failed",
         description: error.message || "Could not upload photo. Ensure storage is configured."
       });
+    } finally {
       setUploading(false);
     }
   };
