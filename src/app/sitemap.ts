@@ -71,7 +71,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   ];
 
   const locationPages = locations.map(location => ({
-    url: `${baseUrl}/search?q=${location}`,
+    url: `${baseUrl}/search?q=${encodeURIComponent(location)}`,
     lastModified: new Date(),
     changeFrequency: 'daily' as const,
     priority: 0.8,
@@ -81,7 +81,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const propertyTypes = ['apartment', 'house', 'studio', 'bedsitter', 'mansion', 'townhouse', 'villa', 'penthouse', 'condo'];
   
   const typePages = propertyTypes.map(type => ({
-    url: `${baseUrl}/search?property_type=${type}&type=rent`,
+    url: `${baseUrl}/search?property_type=${encodeURIComponent(type)}&amp;type=rent`,
     lastModified: new Date(),
     changeFrequency: 'daily' as const,
     priority: 0.8,
@@ -92,9 +92,6 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     { url: `${baseUrl}/agents`, priority: 0.8 },
     { url: `${baseUrl}/advice`, priority: 0.7 },
     { url: `${baseUrl}/blog`, priority: 0.7 },
-    { url: `${baseUrl}/search?type=rent`, priority: 0.9 },
-    { url: `${baseUrl}/search?type=buy`, priority: 0.9 },
-    { url: `${baseUrl}/search?type=short-let`, priority: 0.8 },
   ].map(page => ({
     ...page,
     lastModified: new Date(),
