@@ -9,7 +9,7 @@ interface Props {
 export default async function SlugPropertyPage({ params }: Props) {
   const { slug } = await params;
   
-  // Exclude system routes - these should never be handled by this catch-all
+  // LAYER 1: Exclude system routes by exact match
   const excludedRoutes = [
     'login', 'signup', 'admin', 'api', 'search', 'agents', 'about',
     'contact', 'blog', 'careers', 'advice', 'developments', 'privacy',
@@ -27,22 +27,26 @@ export default async function SlugPropertyPage({ params }: Props) {
     notFound();
   }
   
-  // Only process if slug looks like a property URL (contains UUID pattern)
+  // LAYER 2: Exclude routes starting with system prefixes
+  const excludedPrefixes = ['admin', 'api', 'signup'];
+  if (excludedPrefixes.some(prefix => slug.startsWith(prefix))) {
+    notFound();
+  }
+  
+  // LAYER 3: Only allow slugs with exactly 5+ dash-separated parts (property format)
   const parts = slug.split('-');
   if (parts.length < 5) {
     notFound();
   }
   
-  // Extract UUID from slug (last 5 parts)
+  // LAYER 4: Extract and validate UUID from last 5 parts
   const actualId = parts.slice(-5).join('-');
-  
-  // Quick UUID format validation
   const uuidPattern = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
   if (!uuidPattern.test(actualId)) {
     notFound();
   }
   
-  // Verify property exists
+  // LAYER 5: Verify property exists in database
   const { data: property } = await supabase
     .from('properties')
     .select('id')
