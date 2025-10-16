@@ -19,22 +19,40 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       priority: 0.9,
     },
     {
-      url: `${baseUrl}/about`,
+      url: `${baseUrl}/agents`,
       lastModified: new Date(),
-      changeFrequency: 'monthly' as const,
-      priority: 0.7,
-    },
-    {
-      url: `${baseUrl}/contact`,
-      lastModified: new Date(),
-      changeFrequency: 'monthly' as const,
-      priority: 0.6,
+      changeFrequency: 'weekly' as const,
+      priority: 0.8,
     },
     {
       url: `${baseUrl}/developments`,
       lastModified: new Date(),
       changeFrequency: 'weekly' as const,
       priority: 0.8,
+    },
+    {
+      url: `${baseUrl}/advice`,
+      lastModified: new Date(),
+      changeFrequency: 'weekly' as const,
+      priority: 0.7,
+    },
+    {
+      url: `${baseUrl}/blog`,
+      lastModified: new Date(),
+      changeFrequency: 'weekly' as const,
+      priority: 0.7,
+    },
+    {
+      url: `${baseUrl}/about`,
+      lastModified: new Date(),
+      changeFrequency: 'monthly' as const,
+      priority: 0.6,
+    },
+    {
+      url: `${baseUrl}/contact`,
+      lastModified: new Date(),
+      changeFrequency: 'monthly' as const,
+      priority: 0.6,
     },
   ];
 
@@ -88,15 +106,5 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   }));
 
   // Additional SEO pages
-  const seoPages = [
-    { url: `${baseUrl}/agents`, priority: 0.8 },
-    { url: `${baseUrl}/advice`, priority: 0.7 },
-    { url: `${baseUrl}/blog`, priority: 0.7 },
-  ].map(page => ({
-    ...page,
-    lastModified: new Date(),
-    changeFrequency: 'weekly' as const,
-  }));
-
-  return [...staticPages, ...propertyPages, ...locationPages, ...typePages, ...seoPages];
+  return [...staticPages, ...propertyPages, ...locationPages, ...typePages];
 }
