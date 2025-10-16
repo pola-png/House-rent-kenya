@@ -49,7 +49,18 @@ export function AISEOSimple({ formData, onApply }: AISEOSimpleProps) {
       const keywordsPrompt = `Generate 10-15 SEO keywords for a ${formData.bedrooms}-bedroom ${formData.propertyType} in ${formData.location}, ${formData.city}. Return as comma-separated list only.`;
 
       const callGemini = async (prompt: string) => {
-        const models = ['gemini-1.5-flash', 'gemini-pro', 'gemini-1.0-pro'];
+        const models = [
+          'gemini-1.5-flash',
+          'gemini-1.5-pro', 
+          'gemini-1.0-pro',
+          'gemini-pro',
+          'gemini-1.5-flash-001',
+          'gemini-1.5-pro-001',
+          'gemini-1.0-pro-001',
+          'gemini-pro-vision',
+          'gemini-1.5-flash-latest',
+          'gemini-1.5-pro-latest'
+        ];
         let lastError;
         
         for (const model of models) {
