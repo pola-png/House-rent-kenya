@@ -130,6 +130,7 @@ export default function RootLayout({
         <meta name="MobileOptimized" content="320" />
         <meta name="apple-mobile-web-app-capable" content="yes" />
         <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+        <meta name="google-site-verification" content="PASTE_YOUR_VERIFICATION_CODE_HERE" />
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{
