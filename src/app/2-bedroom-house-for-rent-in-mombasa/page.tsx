@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button';
 export const revalidate = 3600;
 
 async function getProperties() {
-  const { data } = await supabase.from('properties').select('*').or('location.ilike.%mombasa%,city.ilike.%mombasa%').eq('bedrooms', 2).in('status', ['Available', 'For Rent']).order('createdAt', { ascending: false }).limit(12);
+  const { data } = await supabase.from('properties').select('*').or('location.ilike.%mombasa%,city.ilike.%mombasa%').eq('bedrooms', 2).eq('status', 'For Rent').order('createdAt', { ascending: false }).limit(12);
   if (!data) return [];
   const landlordIds = [...new Set(data.map(p => p.landlordId))];
   const { data: profiles } = await supabase.from('profiles').select('*').in('id', landlordIds);

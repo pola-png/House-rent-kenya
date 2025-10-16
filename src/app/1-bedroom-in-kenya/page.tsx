@@ -13,7 +13,7 @@ export const metadata: Metadata = {
 };
 
 async function getProperties() {
-  const { data } = await supabase.from('properties').select('*').eq('bedrooms', 1).in('status', ['Available', 'For Rent', 'For Sale']).order('createdAt', { ascending: false }).limit(12);
+  const { data } = await supabase.from('properties').select('*').eq('bedrooms', 1).order('createdAt', { ascending: false }).limit(12);
   if (!data) return [];
   const landlordIds = [...new Set(data.map(p => p.landlordId))];
   const { data: profiles } = await supabase.from('profiles').select('*').in('id', landlordIds);
