@@ -279,8 +279,73 @@ export default function Home() {
           </div>
         </section>
         
+        {/* SEO Landing Pages */}
+        <section className="py-12 md:py-20 bg-secondary/50">
+          <div className="container mx-auto px-4">
+            <h2 className="text-2xl sm:text-3xl md:text-4xl font-headline font-bold text-center mb-6 sm:mb-10 px-4">Browse by Category</h2>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-8">
+              <div className="space-y-3">
+                <h3 className="font-semibold text-lg">Rental Properties</h3>
+                <div className="flex flex-col gap-2">
+                  <Button variant="outline" asChild className="justify-start h-auto p-3">
+                    <Link href="/house-rent-in-kenya">House Rent in Kenya</Link>
+                  </Button>
+                  <Button variant="outline" asChild className="justify-start h-auto p-3">
+                    <Link href="/houses-for-rent-in-kenya">Houses for Rent in Kenya</Link>
+                  </Button>
+                  <Button variant="outline" asChild className="justify-start h-auto p-3">
+                    <Link href="/house-rent-in-nairobi">House Rent in Nairobi</Link>
+                  </Button>
+                  <Button variant="outline" asChild className="justify-start h-auto p-3">
+                    <Link href="/bedsitter-for-rent-in-kasarani">Bedsitter for Rent in Kasarani</Link>
+                  </Button>
+                </div>
+              </div>
+              <div className="space-y-3">
+                <h3 className="font-semibold text-lg">By Bedroom Count</h3>
+                <div className="flex flex-col gap-2">
+                  <Button variant="outline" asChild className="justify-start h-auto p-3">
+                    <Link href="/2-bedroom-rent-in-kenya">2 Bedroom Rent in Kenya</Link>
+                  </Button>
+                  <Button variant="outline" asChild className="justify-start h-auto p-3">
+                    <Link href="/3-bedroom-rent-in-kenya">3 Bedroom Rent in Kenya</Link>
+                  </Button>
+                  <Button variant="outline" asChild className="justify-start h-auto p-3">
+                    <Link href="/1-bedroom-house-for-rent-in-kisumu">1 Bedroom in Kisumu</Link>
+                  </Button>
+                  <Button variant="outline" asChild className="justify-start h-auto p-3">
+                    <Link href="/2-bedroom-house-for-rent-in-mombasa">2 Bedroom in Mombasa</Link>
+                  </Button>
+                </div>
+              </div>
+              <div className="space-y-3">
+                <h3 className="font-semibold text-lg">Properties for Sale</h3>
+                <div className="flex flex-col gap-2">
+                  <Button variant="outline" asChild className="justify-start h-auto p-3">
+                    <Link href="/real-estate-for-sale">Real Estate for Sale</Link>
+                  </Button>
+                  <Button variant="outline" asChild className="justify-start h-auto p-3">
+                    <Link href="/homes-for-sale">Homes for Sale</Link>
+                  </Button>
+                  <Button variant="outline" asChild className="justify-start h-auto p-3">
+                    <Link href="/houses-for-sale">Houses for Sale</Link>
+                  </Button>
+                  <Button variant="outline" asChild className="justify-start h-auto p-3">
+                    <Link href="/property-for-sale">Property for Sale</Link>
+                  </Button>
+                </div>
+              </div>
+            </div>
+            <div className="text-center">
+              <Button variant="outline" asChild>
+                <Link href="/real-estate-agents-near-me">Find Real Estate Agents Near Me</Link>
+              </Button>
+            </div>
+          </div>
+        </section>
+        
         {/* Popular Searches */}
-        <section className="py-12 md:py-20 bg-secondary/50" itemScope itemType="https://schema.org/WebPage">
+        <section className="py-12 md:py-20 bg-background" itemScope itemType="https://schema.org/WebPage">
           <div className="container mx-auto px-4">
             <h2 className="text-2xl sm:text-3xl md:text-4xl font-headline font-bold text-center mb-6 sm:mb-10 px-4" itemProp="name">Popular Searches</h2>
             <div className="flex flex-wrap justify-center gap-2">
@@ -326,7 +391,7 @@ export default function Home() {
         </section>
         
         {/* Why Choose Us */}
-        <section className="py-12 md:py-20 bg-background" itemScope itemType="https://schema.org/Service">
+        <section className="py-12 md:py-20 bg-secondary/50" itemScope itemType="https://schema.org/Service">
           <div className="container mx-auto px-4">
              <div className="text-center max-w-3xl mx-auto">
               <Badge variant="outline" className="mb-4">Why House Rent Kenya</Badge>
