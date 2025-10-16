@@ -50,6 +50,7 @@ export function AISEOSimple({ formData, onApply }: AISEOSimpleProps) {
 
       const callGemini = async (prompt: string) => {
         const models = [
+          'gemini-2.5-flash',
           'gemini-1.5-flash',
           'gemini-1.5-pro',
           'gemini-pro'

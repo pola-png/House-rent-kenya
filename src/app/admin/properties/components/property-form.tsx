@@ -157,6 +157,7 @@ export function PropertyForm({ property }: PropertyFormProps) {
       const apiKey = process.env.NEXT_PUBLIC_GEMINI_API_KEY || 'AIzaSyBytiBEktDdWwh6tOF_GYZT_Ds7kCOvXvs';
       
       const models = [
+        'gemini-2.5-flash',
         'gemini-1.5-flash',
         'gemini-1.5-pro',
         'gemini-pro'
@@ -240,6 +241,7 @@ export function PropertyForm({ property }: PropertyFormProps) {
       const apiKey = process.env.NEXT_PUBLIC_GEMINI_API_KEY || 'AIzaSyBytiBEktDdWwh6tOF_GYZT_Ds7kCOvXvs';
       
       const models = [
+        'gemini-2.5-flash',
         'gemini-1.5-flash',
         'gemini-1.5-pro',
         'gemini-pro'

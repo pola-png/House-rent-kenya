@@ -15,6 +15,7 @@ export async function POST(request: NextRequest) {
     }
 
     const models = [
+      'gemini-2.5-flash',
       'gemini-1.5-flash',
       'gemini-1.5-pro',
       'gemini-pro'
