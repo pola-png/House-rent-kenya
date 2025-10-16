@@ -49,17 +49,30 @@ export function AISEOSimple({ formData, onApply }: AISEOSimpleProps) {
       const keywordsPrompt = `Generate 10-15 SEO keywords for a ${formData.bedrooms}-bedroom ${formData.propertyType} in ${formData.location}, ${formData.city}. Return as comma-separated list only.`;
 
       const callGemini = async (prompt: string) => {
-        const response = await fetch(
-          `https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key=${apiKey}`,
-          {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] })
+        const models = ['gemini-1.5-flash', 'gemini-pro', 'gemini-1.0-pro'];
+        let lastError;
+        
+        for (const model of models) {
+          try {
+            const response = await fetch(
+              `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`,
+              {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] })
+              }
+            );
+            if (response.ok) {
+              const data = await response.json();
+              return data.candidates?.[0]?.content?.parts?.[0]?.text || '';
+            }
+            lastError = await response.json();
+          } catch (error) {
+            lastError = error;
+            continue;
           }
-        );
-        if (!response.ok) throw new Error('Failed to generate');
-        const data = await response.json();
-        return data.candidates?.[0]?.content?.parts?.[0]?.text || '';
+        }
+        throw new Error(lastError?.error?.message || 'All models failed');
       };
 
       const [title, description, keywords] = await Promise.all([

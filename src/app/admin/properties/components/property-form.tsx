@@ -156,16 +156,33 @@ export function PropertyForm({ property }: PropertyFormProps) {
 
       const apiKey = process.env.NEXT_PUBLIC_GEMINI_API_KEY || 'AIzaSyBytiBEktDdWwh6tOF_GYZT_Ds7kCOvXvs';
       
-      const response = await fetch(
-        `https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key=${apiKey}`,
-        {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            contents: [{ parts: [{ text: prompt }] }]
-          })
+      const models = ['gemini-1.5-flash', 'gemini-pro', 'gemini-1.0-pro'];
+      let response;
+      let lastError;
+      
+      for (const model of models) {
+        try {
+          response = await fetch(
+            `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`,
+            {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                contents: [{ parts: [{ text: prompt }] }]
+              })
+            }
+          );
+          if (response.ok) break;
+          lastError = await response.json();
+        } catch (error) {
+          lastError = error;
+          continue;
         }
-      );
+      }
+      
+      if (!response || !response.ok) {
+        throw new Error(lastError?.error?.message || 'All models failed');
+      }
 
       if (!response.ok) {
         const error = await response.json();
@@ -218,16 +235,33 @@ export function PropertyForm({ property }: PropertyFormProps) {
 
       const apiKey = process.env.NEXT_PUBLIC_GEMINI_API_KEY || 'AIzaSyBytiBEktDdWwh6tOF_GYZT_Ds7kCOvXvs';
       
-      const response = await fetch(
-        `https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key=${apiKey}`,
-        {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            contents: [{ parts: [{ text: prompt }] }]
-          })
+      const models = ['gemini-1.5-flash', 'gemini-pro', 'gemini-1.0-pro'];
+      let response;
+      let lastError;
+      
+      for (const model of models) {
+        try {
+          response = await fetch(
+            `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`,
+            {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                contents: [{ parts: [{ text: prompt }] }]
+              })
+            }
+          );
+          if (response.ok) break;
+          lastError = await response.json();
+        } catch (error) {
+          lastError = error;
+          continue;
         }
-      );
+      }
+      
+      if (!response || !response.ok) {
+        throw new Error(lastError?.error?.message || 'All models failed');
+      }
 
       if (!response.ok) {
         const error = await response.json();
