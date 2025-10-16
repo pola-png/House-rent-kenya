@@ -32,6 +32,23 @@ const navLinks = [
   { href: '/blog', label: 'Blog' },
 ];
 
+const seoPages = [
+  { href: '/house-rent-in-kenya', label: 'House Rent in Kenya' },
+  { href: '/houses-for-rent-in-kenya', label: 'Houses for Rent in Kenya' },
+  { href: '/house-rent-in-nairobi', label: 'House Rent in Nairobi' },
+  { href: '/2-bedroom-rent-in-kenya', label: '2 Bedroom Rent in Kenya' },
+  { href: '/3-bedroom-rent-in-kenya', label: '3 Bedroom Rent in Kenya' },
+  { href: '/bedsitter-for-rent-in-kasarani', label: 'Bedsitter for Rent in Kasarani' },
+  { href: '/1-bedroom-house-for-rent-in-kisumu', label: '1 Bedroom in Kisumu' },
+  { href: '/2-bedroom-house-for-rent-in-mombasa', label: '2 Bedroom in Mombasa' },
+  { href: '/3-bedroom-house-for-rent-in-meru', label: '3 Bedroom in Meru' },
+  { href: '/real-estate-for-sale', label: 'Real Estate for Sale' },
+  { href: '/homes-for-sale', label: 'Homes for Sale' },
+  { href: '/houses-for-sale', label: 'Houses for Sale' },
+  { href: '/property-for-sale', label: 'Property for Sale' },
+  { href: '/real-estate-agents-near-me', label: 'Real Estate Agents Near Me' },
+];
+
 export function Header() {
   const { user, logout, loading: isUserLoading } = useAuth();
   const { toast } = useToast();
@@ -189,6 +206,24 @@ export function Header() {
                   {link.label}
                 </Link>
               ))}
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="ghost" className="text-sm font-medium text-black hover:text-primary">
+                    Browse Properties <ChevronDown className="ml-1 h-4 w-4" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="start" className="w-64">
+                  <DropdownMenuLabel>Popular Categories</DropdownMenuLabel>
+                  <DropdownMenuSeparator />
+                  {seoPages.map((page) => (
+                    <DropdownMenuItem key={page.href} asChild>
+                      <Link href={page.href} className="text-sm">
+                        {page.label}
+                      </Link>
+                    </DropdownMenuItem>
+                  ))}
+                </DropdownMenuContent>
+              </DropdownMenu>
             </nav>
             
             <div className="relative">
@@ -256,6 +291,18 @@ export function Header() {
                           className="text-lg font-medium transition-colors hover:text-primary py-2"
                         >
                           {link.label}
+                        </Link>
+                      </SheetClose>
+                    ))}
+                    <Separator className="my-2" />
+                    <p className="text-sm font-medium text-muted-foreground px-2 mb-2">Browse Properties</p>
+                    {seoPages.map((page) => (
+                      <SheetClose asChild key={page.href}>
+                        <Link
+                          href={page.href}
+                          className="text-sm font-medium transition-colors hover:text-primary py-1 px-2"
+                        >
+                          {page.label}
                         </Link>
                       </SheetClose>
                     ))}
