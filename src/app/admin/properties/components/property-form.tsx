@@ -133,14 +133,26 @@ export function PropertyForm({ property }: PropertyFormProps) {
       location: form.getValues('location'),
       city: form.getValues('city'),
       amenities: form.getValues('amenities') || '',
-      price: form.getValues('price')
+      price: form.getValues('price'),
+      area: form.getValues('area')
     };
 
-    if (!currentData.propertyType || !currentData.location) {
+    // Validate all Property Features are filled
+    const missingFields = [];
+    if (!currentData.propertyType) missingFields.push('Property Type');
+    if (!currentData.bedrooms || currentData.bedrooms < 1) missingFields.push('Bedrooms');
+    if (!currentData.bathrooms || currentData.bathrooms < 1) missingFields.push('Bathrooms');
+    if (!currentData.area || currentData.area <= 0) missingFields.push('Area');
+    if (!currentData.price || currentData.price <= 0) missingFields.push('Price');
+    if (!currentData.location?.trim()) missingFields.push('Location');
+    if (!currentData.city?.trim()) missingFields.push('City');
+    if (!currentData.amenities?.trim()) missingFields.push('Amenities');
+
+    if (missingFields.length > 0) {
       toast({
         variant: "destructive",
-        title: "Missing Information",
-        description: "Please fill in property type and location first.",
+        title: "Complete Property Features Required",
+        description: `Please fill in all Property Features first: ${missingFields.join(', ')}`,
       });
       return;
     }
@@ -222,14 +234,29 @@ export function PropertyForm({ property }: PropertyFormProps) {
       propertyType: form.getValues('propertyType'),
       bedrooms: form.getValues('bedrooms'),
       location: form.getValues('location'),
-      city: form.getValues('city')
+      city: form.getValues('city'),
+      bathrooms: form.getValues('bathrooms'),
+      area: form.getValues('area'),
+      price: form.getValues('price'),
+      amenities: form.getValues('amenities') || ''
     };
 
-    if (!currentData.propertyType || !currentData.location) {
+    // Validate all Property Features are filled
+    const missingFields = [];
+    if (!currentData.propertyType) missingFields.push('Property Type');
+    if (!currentData.bedrooms || currentData.bedrooms < 1) missingFields.push('Bedrooms');
+    if (!currentData.bathrooms || currentData.bathrooms < 1) missingFields.push('Bathrooms');
+    if (!currentData.area || currentData.area <= 0) missingFields.push('Area');
+    if (!currentData.price || currentData.price <= 0) missingFields.push('Price');
+    if (!currentData.location?.trim()) missingFields.push('Location');
+    if (!currentData.city?.trim()) missingFields.push('City');
+    if (!currentData.amenities?.trim()) missingFields.push('Amenities');
+
+    if (missingFields.length > 0) {
       toast({
         variant: "destructive",
-        title: "Missing Information",
-        description: "Please fill in property type and location first.",
+        title: "Complete Property Features Required",
+        description: `Please fill in all Property Features first: ${missingFields.join(', ')}`,
       });
       return;
     }
@@ -545,7 +572,7 @@ export function PropertyForm({ property }: PropertyFormProps) {
                           variant="outline"
                           size="sm"
                           onClick={() => generateAITitle(field.onChange)}
-                          disabled={isGeneratingTitle || !form.watch('propertyType') || !form.watch('location')}
+                          disabled={isGeneratingTitle}
                         >
                           {isGeneratingTitle ? <Loader2 className="h-4 w-4 mr-1 animate-spin" /> : <Sparkles className="h-4 w-4 mr-1" />}
                           {isGeneratingTitle ? 'Generating...' : 'AI Generate'}
@@ -570,7 +597,7 @@ export function PropertyForm({ property }: PropertyFormProps) {
                           variant="outline"
                           size="sm"
                           onClick={() => generateAIDescription(field.onChange)}
-                          disabled={isGeneratingDesc || !form.watch('propertyType') || !form.watch('location')}
+                          disabled={isGeneratingDesc}
                         >
                           {isGeneratingDesc ? <Loader2 className="h-4 w-4 mr-1 animate-spin" /> : <Sparkles className="h-4 w-4 mr-1" />}
                           {isGeneratingDesc ? 'Generating...' : 'AI Generate'}
