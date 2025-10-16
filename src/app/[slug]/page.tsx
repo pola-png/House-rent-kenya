@@ -1,4 +1,3 @@
-import { Metadata } from 'next';
 import { supabase } from '@/lib/supabase';
 import PropertyDetailClient from '../property/[id]/property-detail-client';
 import { notFound } from 'next/navigation';
@@ -10,28 +9,22 @@ interface Props {
 export default async function SlugPropertyPage({ params }: Props) {
   const { slug } = await params;
   
-  // Exclude non-property routes
-  const excludedRoutes = [
-    'login', 'signup', 'admin', 'api', 'search', 'agents', 'about', 
-    'contact', 'blog', 'advice', 'developments', 'careers', 'privacy', 
-    'terms', 'forgot-password', 'reset-password', 'property'
-  ];
-  
-  if (excludedRoutes.includes(slug.split('-')[0])) {
+  // Only process if slug looks like a property URL (contains UUID pattern)
+  const parts = slug.split('-');
+  if (parts.length < 5) {
     notFound();
   }
   
-  // Extract UUID from slug (last 5 parts separated by dashes)
-  let actualId = slug;
+  // Extract UUID from slug (last 5 parts)
+  const actualId = parts.slice(-5).join('-');
   
-  if (slug.includes('-')) {
-    const parts = slug.split('-');
-    if (parts.length >= 5) {
-      actualId = parts.slice(-5).join('-');
-    }
+  // Quick UUID format validation
+  const uuidPattern = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+  if (!uuidPattern.test(actualId)) {
+    notFound();
   }
   
-  // Verify this is actually a property ID before rendering
+  // Verify property exists
   const { data: property } = await supabase
     .from('properties')
     .select('id')
