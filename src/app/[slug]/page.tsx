@@ -9,6 +9,24 @@ interface Props {
 export default async function SlugPropertyPage({ params }: Props) {
   const { slug } = await params;
   
+  // Exclude system routes - these should never be handled by this catch-all
+  const excludedRoutes = [
+    'login', 'signup', 'admin', 'api', 'search', 'agents', 'about',
+    'contact', 'blog', 'careers', 'advice', 'developments', 'privacy',
+    'terms', 'forgot-password', 'reset-password', 'property',
+    'bedsitter-for-rent-in-kasarani', 'house-rent-in-kenya',
+    'houses-for-rent-in-kenya', 'house-rent-in-nairobi',
+    '2-bedroom-rent-in-kenya', '3-bedroom-rent-in-kenya',
+    '1-bedroom-house-for-rent-in-kisumu', '2-bedroom-house-for-rent-in-mombasa',
+    '3-bedroom-house-for-rent-in-meru', 'real-estate-for-sale',
+    'homes-for-sale', 'houses-for-sale', 'property-for-sale',
+    'real-estate-agents-near-me'
+  ];
+  
+  if (excludedRoutes.includes(slug)) {
+    notFound();
+  }
+  
   // Only process if slug looks like a property URL (contains UUID pattern)
   const parts = slug.split('-');
   if (parts.length < 5) {
