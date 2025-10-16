@@ -4,7 +4,7 @@
 import Link from 'next/link';
 import { Building, Menu, User, X, ChevronDown, Briefcase, UserCircle, LogOut, Home, Settings, Search } from 'lucide-react';
 import React, { useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, usePathname } from 'next/navigation';
 
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -53,7 +53,9 @@ export function Header() {
   const { user, logout, loading: isUserLoading } = useAuth();
   const { toast } = useToast();
   const router = useRouter();
+  const pathname = usePathname();
   const [searchQuery, setSearchQuery] = useState('');
+  const isHomepage = pathname === '/';
   
   const linkClasses = `text-sm font-medium transition-colors hover:text-primary text-black`;
   const buttonBorderClasses = 'border-primary text-primary hover:bg-primary hover:text-primary-foreground';
@@ -226,17 +228,19 @@ export function Header() {
               </DropdownMenu>
             </nav>
             
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-              <Input
-                type="text"
-                placeholder="Search properties..."
-                className="w-64 pl-10"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                onKeyDown={handleKeyDown}
-              />
-            </div>
+            {!isHomepage && (
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                <Input
+                  type="text"
+                  placeholder="Search properties..."
+                  className="w-64 pl-10"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  onKeyDown={handleKeyDown}
+                />
+              </div>
+            )}
           </div>
 
           <div className="hidden lg:flex items-center gap-2">
@@ -270,19 +274,21 @@ export function Header() {
                        </Button>
                     </SheetClose>
                   </div>
-                  <div className="p-4">
-                    <div className="relative mb-4">
-                      <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                      <Input
-                        type="text"
-                        placeholder="Search properties..."
-                        className="w-full pl-10"
-                        value={searchQuery}
-                        onChange={(e) => setSearchQuery(e.target.value)}
-                        onKeyDown={handleKeyDown}
-                      />
+                  {!isHomepage && (
+                    <div className="p-4">
+                      <div className="relative mb-4">
+                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                        <Input
+                          type="text"
+                          placeholder="Search properties..."
+                          className="w-full pl-10"
+                          value={searchQuery}
+                          onChange={(e) => setSearchQuery(e.target.value)}
+                          onKeyDown={handleKeyDown}
+                        />
+                      </div>
                     </div>
-                  </div>
+                  )}
                   <nav className="flex-1 flex flex-col gap-1 p-4">
                     {navLinks.map((link) => (
                       <SheetClose asChild key={`${link.href}-${link.label}`}>
