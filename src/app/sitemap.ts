@@ -111,28 +111,5 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     priority: 0.8,
   }));
 
-  // SEO landing pages
-  const seoLandingPages = [
-    'bedsitter-for-rent-in-kasarani',
-    'house-rent-in-kenya',
-    'houses-for-rent-in-kenya',
-    'house-rent-in-nairobi',
-    '2-bedroom-rent-in-kenya',
-    '3-bedroom-rent-in-kenya',
-    '1-bedroom-house-for-rent-in-kisumu',
-    '2-bedroom-house-for-rent-in-mombasa',
-    '3-bedroom-house-for-rent-in-meru',
-    'real-estate-for-sale',
-    'homes-for-sale',
-    'houses-for-sale',
-    'property-for-sale',
-    'real-estate-agents-near-me',
-  ].map(slug => ({
-    url: `${baseUrl}/${slug}`,
-    lastModified: new Date(),
-    changeFrequency: 'daily' as const,
-    priority: 0.9,
-  }));
-
-  return [...staticPages, ...propertyPages, ...locationPages, ...typePages, ...seoLandingPages];
+  return [...staticPages, ...propertyPages, ...locationPages, ...typePages];
 }
