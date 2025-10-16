@@ -215,8 +215,6 @@ export function Header() {
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="start" className="w-64">
-                  <DropdownMenuLabel>Popular Categories</DropdownMenuLabel>
-                  <DropdownMenuSeparator />
                   {seoPages.map((page) => (
                     <DropdownMenuItem key={page.href} asChild>
                       <Link href={page.href} className="text-sm">
