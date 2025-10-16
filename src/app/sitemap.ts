@@ -68,19 +68,26 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       .limit(1000);
 
     if (properties) {
-      propertyPages = properties.map((property) => {
-        const slug = property.title
-          .toLowerCase()
-          .replace(/[^a-z0-9]+/g, '-')
-          .replace(/^-+|-+$/g, '')
-          .substring(0, 60);
-        return {
-          url: `${baseUrl}/property/${slug}-${property.id}`,
+      const slug = (title: string) => title
+        .toLowerCase()
+        .replace(/[^a-z0-9]+/g, '-')
+        .replace(/^-+|-+$/g, '')
+        .substring(0, 60);
+      
+      propertyPages = properties.flatMap((property) => [
+        {
+          url: `${baseUrl}/property/${slug(property.title)}-${property.id}`,
           lastModified: new Date(property.updatedAt),
           changeFrequency: 'weekly' as const,
           priority: 0.8,
-        };
-      });
+        },
+        {
+          url: `${baseUrl}/${slug(property.title)}-${property.id}`,
+          lastModified: new Date(property.updatedAt),
+          changeFrequency: 'weekly' as const,
+          priority: 0.8,
+        },
+      ]);
     }
   } catch (error) {
     console.error('Error generating sitemap:', error);
