@@ -7,6 +7,7 @@ import { Badge } from '@/components/ui/badge';
 import type { Property } from '@/lib/types';
 import placeholderImages from '@/lib/placeholder-images.json';
 import { Avatar, AvatarFallback, AvatarImage } from './ui/avatar';
+import { createPropertyUrl } from '@/lib/utils-seo';
 
 type PropertyCardProps = {
   property: Property;
@@ -19,9 +20,11 @@ export function PropertyCard({ property }: PropertyCardProps) {
   const agentPhotoUrl = property.agent?.photoURL;
 
 
+  const propertyUrl = createPropertyUrl(property.id, property.title);
+
   return (
     <Card className="overflow-hidden group hover:shadow-xl transition-shadow duration-300 flex flex-col">
-      <Link href={`/property/${property.id}`} className="block flex flex-col h-full">
+      <Link href={propertyUrl} className="block flex flex-col h-full">
         <div className="relative h-56 w-full">
           {mainImageUrl ? (
             <Image

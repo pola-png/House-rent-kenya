@@ -62,18 +62,25 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   try {
     const { data: properties } = await supabase
       .from('properties')
-      .select('id, updatedAt, status')
-      .eq('status', 'Available')
+      .select('id, title, updatedAt, status')
+      .in('status', ['Available', 'For Rent', 'For Sale'])
       .order('updatedAt', { ascending: false })
       .limit(1000);
 
     if (properties) {
-      propertyPages = properties.map((property) => ({
-        url: `${baseUrl}/property/${property.id}`,
-        lastModified: new Date(property.updatedAt),
-        changeFrequency: 'weekly' as const,
-        priority: 0.8,
-      }));
+      propertyPages = properties.map((property) => {
+        const slug = property.title
+          .toLowerCase()
+          .replace(/[^a-z0-9]+/g, '-')
+          .replace(/^-+|-+$/g, '')
+          .substring(0, 60);
+        return {
+          url: `${baseUrl}/property/${slug}-${property.id}`,
+          lastModified: new Date(property.updatedAt),
+          changeFrequency: 'weekly' as const,
+          priority: 0.8,
+        };
+      });
     }
   } catch (error) {
     console.error('Error generating sitemap:', error);
