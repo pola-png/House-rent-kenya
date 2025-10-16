@@ -19,6 +19,6 @@ export default function robots(): MetadataRoute.Robots {
         disallow: ['/admin/', '/api/', '/_next/', '/private/'],
       },
     ],
-    sitemap: 'https://houserent.co.ke/sitemap.xml',
+    sitemap: 'https://houserentkenya.co.ke/sitemap.xml',
   };
 }
