@@ -18,34 +18,63 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUser] = useState<UserProfile | null>(null);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     let mounted = true;
     
     const initAuth = async () => {
       try {
+        setLoading(true);
         const { data: { session } } = await supabase.auth.getSession();
         if (!mounted) return;
         
         if (session?.user) {
           const userProfile = await fetchUserProfile(session.user);
           if (mounted) setUser(userProfile);
+        } else {
+          if (mounted) setUser(null);
         }
       } catch (error) {
         console.error('Error initializing auth:', error);
+        if (mounted) setUser(null);
+      } finally {
+        if (mounted) setLoading(false);
       }
     };
 
     initAuth();
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, session) => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
       if (!mounted) return;
+      
+      if (event === 'SIGNED_OUT') {
+        if (mounted) {
+          setUser(null);
+          setLoading(false);
+        }
+        return;
+      }
+      
       if (session?.user) {
-        const userProfile = await fetchUserProfile(session.user);
-        if (mounted) setUser(userProfile);
+        try {
+          const userProfile = await fetchUserProfile(session.user);
+          if (mounted) {
+            setUser(userProfile);
+            setLoading(false);
+          }
+        } catch (error) {
+          console.error('Error fetching user profile:', error);
+          if (mounted) {
+            setUser(null);
+            setLoading(false);
+          }
+        }
       } else {
-        if (mounted) setUser(null);
+        if (mounted) {
+          setUser(null);
+          setLoading(false);
+        }
       }
     });
 
