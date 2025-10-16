@@ -17,7 +17,6 @@ const nextConfig = {
   poweredByHeader: false,
   generateEtags: true,
   reactStrictMode: true,
-  swcMinify: true,
   async headers() {
     return [
       {

@@ -101,5 +101,6 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     changeFrequency: 'weekly' as const,
   }));
 
-  return [...staticPages, ...propertyPages, ...locationPages, ...typePages, ...seoPages];}
+  return [...staticPages, ...propertyPages, ...locationPages, ...typePages, ...seoPages];
+}
 }
