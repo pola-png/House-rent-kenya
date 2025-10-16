@@ -119,6 +119,17 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     priority: 0.8,
   }));
 
-  // Additional SEO pages
-  return [...staticPages, ...propertyPages, ...locationPages, ...typePages];
+  // SEO landing pages
+  const seoLandingPages = [
+    'bedsitter-for-rent-in-kasarani',
+    'house-rent-in-kenya',
+    'houses-for-rent-in-kenya',
+  ].map(slug => ({
+    url: `${baseUrl}/${slug}`,
+    lastModified: new Date(),
+    changeFrequency: 'daily' as const,
+    priority: 0.9,
+  }));
+
+  return [...staticPages, ...propertyPages, ...locationPages, ...typePages, ...seoLandingPages];
 }
