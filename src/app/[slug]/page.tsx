@@ -10,6 +10,17 @@ interface Props {
 export default async function SlugPropertyPage({ params }: Props) {
   const { slug } = await params;
   
+  // Exclude non-property routes
+  const excludedRoutes = [
+    'login', 'signup', 'admin', 'api', 'search', 'agents', 'about', 
+    'contact', 'blog', 'advice', 'developments', 'careers', 'privacy', 
+    'terms', 'forgot-password', 'reset-password', 'property'
+  ];
+  
+  if (excludedRoutes.includes(slug.split('-')[0])) {
+    notFound();
+  }
+  
   // Extract UUID from slug (last 5 parts separated by dashes)
   let actualId = slug;
   
