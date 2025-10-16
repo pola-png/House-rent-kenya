@@ -17,14 +17,14 @@ export function SEOSchema({ type, data }: SEOSchemaProps) {
           "@context": "https://schema.org",
           "@type": "WebSite",
           "name": "House Rent Kenya",
-          "alternateName": "HouseRent.co.ke",
-          "url": "https://houserent.co.ke",
+          "alternateName": "HouseRentKenya.co.ke",
+          "url": "https://houserentkenya.co.ke",
           "description": "Kenya's leading property rental platform with 10,000+ verified properties",
           "potentialAction": {
             "@type": "SearchAction",
             "target": {
               "@type": "EntryPoint",
-              "urlTemplate": "https://houserent.co.ke/search?q={search_term_string}"
+              "urlTemplate": "https://houserentkenya.co.ke/search?q={search_term_string}"
             },
             "query-input": "required name=search_term_string"
           },
@@ -33,7 +33,7 @@ export function SEOSchema({ type, data }: SEOSchemaProps) {
             "name": "House Rent Kenya",
             "logo": {
               "@type": "ImageObject",
-              "url": "https://houserent.co.ke/logo.png"
+              "url": "https://houserentkenya.co.ke/logo.png"
             }
           }
         };
@@ -46,8 +46,8 @@ export function SEOSchema({ type, data }: SEOSchemaProps) {
             "@type": "Accommodation",
             "name": data.title,
             "description": data.description,
-            "url": `https://houserent.co.ke/property/${data.id}`,
-            "image": data.images?.[0] || "https://houserent.co.ke/default-property.jpg",
+            "url": `https://houserentkenya.co.ke/property/${data.id}`,
+            "image": data.images?.[0] || "https://houserentkenya.co.ke/default-property.jpg",
             "address": {
               "@type": "PostalAddress",
               "addressLocality": data.location,
@@ -87,7 +87,7 @@ export function SEOSchema({ type, data }: SEOSchemaProps) {
           "@type": "CollectionPage",
           "name": "Property Search Results - House Rent Kenya",
           "description": "Search results for rental properties in Kenya",
-          "url": "https://houserent.co.ke/search",
+          "url": "https://houserentkenya.co.ke/search",
           "mainEntity": {
             "@type": "ItemList",
             "numberOfItems": data?.totalResults || 0,
@@ -97,7 +97,7 @@ export function SEOSchema({ type, data }: SEOSchemaProps) {
               "item": {
                 "@type": "Accommodation",
                 "name": property.title,
-                "url": `https://houserent.co.ke/property/${property.id}`
+                "url": `https://houserentkenya.co.ke/property/${property.id}`
               }
             })) || []
           }
@@ -109,9 +109,9 @@ export function SEOSchema({ type, data }: SEOSchemaProps) {
           "@context": "https://schema.org",
           "@type": "Organization",
           "name": "House Rent Kenya",
-          "alternateName": "HouseRent.co.ke",
-          "url": "https://houserent.co.ke",
-          "logo": "https://houserent.co.ke/logo.png",
+          "alternateName": "HouseRentKenya.co.ke",
+          "url": "https://houserentkenya.co.ke",
+          "logo": "https://houserentkenya.co.ke/logo.png",
           "description": "Kenya's leading property rental platform",
           "contactPoint": {
             "@type": "ContactPoint",

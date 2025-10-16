@@ -7,4 +7,13 @@ Disallow: /admin/
 Disallow: /api/
 
 # Sitemap location
-Sitemap: https://house-rent-kenya.vercel.app/sitemap.xml
+Sitemap: https://houserentkenya.co.ke/sitemap.xml
+Sitemap: https://houserentkenya.co.ke/sitemap-properties.xml
+Sitemap: https://houserentkenya.co.ke/sitemap-locations.xml
+
+# Crawl-delay for specific bots
+User-agent: Googlebot
+Crawl-delay: 0
+
+User-agent: Bingbot
+Crawl-delay: 1

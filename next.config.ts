@@ -15,7 +15,9 @@ const nextConfig = {
   },
   compress: true,
   poweredByHeader: false,
-  generateEtags: false,
+  generateEtags: true,
+  reactStrictMode: true,
+  swcMinify: true,
   async headers() {
     return [
       {
@@ -44,6 +46,15 @@ const nextConfig = {
         ],
       },
       {
+        source: '/:path*',
+        headers: [
+          {
+            key: 'Cache-Control',
+            value: 'public, max-age=31536000, immutable',
+          },
+        ],
+      },
+      {
         source: '/sitemap.xml',
         headers: [
           {
@@ -52,7 +63,7 @@ const nextConfig = {
           },
           {
             key: 'Cache-Control',
-            value: 'public, max-age=86400, s-maxage=86400',
+            value: 'public, max-age=3600, s-maxage=3600',
           },
         ],
       },
@@ -65,7 +76,7 @@ const nextConfig = {
           },
           {
             key: 'Cache-Control',
-            value: 'public, max-age=86400, s-maxage=86400',
+            value: 'public, max-age=3600, s-maxage=3600',
           },
         ],
       },

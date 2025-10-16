@@ -1,16 +1,18 @@
+/** @type {import('next-sitemap').IConfig} */
 module.exports = {
-  siteUrl: process.env.SITE_URL || 'https://house-rent-kenya.vercel.app',
-  generateRobotsTxt: true,
-  sitemapSize: 7000,
+  siteUrl: 'https://houserentkenya.co.ke',
+  generateRobotsTxt: false, // We have custom robots.txt
+  generateIndexSitemap: true,
   changefreq: 'daily',
   priority: 0.7,
-  exclude: ['/admin/*', '/api/*'],
+  sitemapSize: 5000,
+  exclude: ['/admin/*', '/api/*', '/signup/*', '/login', '/reset-password', '/forgot-password'],
   robotsTxtOptions: {
     policies: [
       {
         userAgent: '*',
         allow: '/',
-        disallow: ['/admin', '/api'],
+        disallow: ['/admin/', '/api/'],
       },
     ],
   },

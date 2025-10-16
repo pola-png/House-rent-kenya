@@ -2,7 +2,7 @@ import type { MetadataRoute } from 'next';
 import { supabase } from '@/lib/supabase';
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
-  const baseUrl = 'https://houserent.co.ke';
+  const baseUrl = 'https://houserentkenya.co.ke';
   
   // Static pages
   const staticPages = [
@@ -65,25 +65,41 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const locations = [
     'nairobi', 'westlands', 'kilimani', 'karen', 'lavington', 'kileleshwa',
     'parklands', 'upperhill', 'south-b', 'south-c', 'langata', 'kasarani',
-    'thika', 'kiambu', 'ruiru', 'kikuyu', 'limuru', 'juja'
+    'thika', 'kiambu', 'ruiru', 'kikuyu', 'limuru', 'juja', 'runda', 'muthaiga',
+    'nyari', 'spring-valley', 'gigiri', 'ridgeways', 'rosslyn', 'mombasa',
+    'diani', 'nyali', 'bamburi', 'kisumu', 'nakuru', 'eldoret'
   ];
 
   const locationPages = locations.map(location => ({
-    url: `${baseUrl}/search?location=${location}`,
+    url: `${baseUrl}/search?q=${location}`,
     lastModified: new Date(),
     changeFrequency: 'daily' as const,
-    priority: 0.7,
+    priority: 0.8,
   }));
 
   // Property type pages
-  const propertyTypes = ['apartment', 'house', 'studio', 'bedsitter', 'mansion', 'townhouse'];
+  const propertyTypes = ['apartment', 'house', 'studio', 'bedsitter', 'mansion', 'townhouse', 'villa', 'penthouse', 'condo'];
   
   const typePages = propertyTypes.map(type => ({
-    url: `${baseUrl}/search?type=${type}`,
+    url: `${baseUrl}/search?property_type=${type}&type=rent`,
     lastModified: new Date(),
     changeFrequency: 'daily' as const,
-    priority: 0.7,
+    priority: 0.8,
   }));
 
-  return [...staticPages, ...propertyPages, ...locationPages, ...typePages];
+  // Additional SEO pages
+  const seoPages = [
+    { url: `${baseUrl}/agents`, priority: 0.8 },
+    { url: `${baseUrl}/advice`, priority: 0.7 },
+    { url: `${baseUrl}/blog`, priority: 0.7 },
+    { url: `${baseUrl}/search?type=rent`, priority: 0.9 },
+    { url: `${baseUrl}/search?type=buy`, priority: 0.9 },
+    { url: `${baseUrl}/search?type=short-let`, priority: 0.8 },
+  ].map(page => ({
+    ...page,
+    lastModified: new Date(),
+    changeFrequency: 'weekly' as const,
+  }));
+
+  return [...staticPages, ...propertyPages, ...locationPages, ...typePages, ...seoPages];}
 }

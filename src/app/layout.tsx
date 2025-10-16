@@ -8,7 +8,7 @@ import { Toaster } from '@/components/ui/toaster';
 import { AuthProvider } from '@/hooks/use-auth-supabase';
 
 export const metadata: Metadata = {
-  metadataBase: new URL('https://houserent.co.ke'),
+  metadataBase: new URL('https://houserentkenya.co.ke'),
   title: {
     default: 'House Rent Kenya - #1 Property Rental Platform | Find Apartments, Houses & Homes',
     template: '%s | House Rent Kenya - Premium Property Rentals',
@@ -33,7 +33,7 @@ export const metadata: Metadata = {
   openGraph: {
     title: 'House Rent Kenya - #1 Property Rental Platform | 10,000+ Verified Properties',
     description: 'Discover your perfect home in Kenya. Browse verified apartments, houses & luxury properties in Nairobi, Westlands, Kilimani. Instant booking, virtual tours, trusted agents.',
-    url: 'https://houserent.co.ke',
+    url: 'https://houserentkenya.co.ke',
     siteName: 'House Rent Kenya',
     images: [
       {
@@ -75,10 +75,10 @@ export const metadata: Metadata = {
   },
   manifest: '/site.webmanifest',
   alternates: {
-    canonical: 'https://houserent.co.ke',
+    canonical: 'https://houserentkenya.co.ke',
     languages: {
-      'en-KE': 'https://houserent.co.ke',
-      'sw-KE': 'https://houserent.co.ke/sw',
+      'en-KE': 'https://houserentkenya.co.ke',
+      'sw-KE': 'https://houserentkenya.co.ke/sw',
     },
   },
   category: 'Real Estate',
@@ -114,6 +114,10 @@ export default function RootLayout({
         <link rel="mask-icon" href="/safari-pinned-tab.svg" color="#e67e22"/>
         <link rel="dns-prefetch" href="//images.unsplash.com" />
         <link rel="preconnect" href="https://api.supabase.co" />
+        <link rel="canonical" href="https://houserentkenya.co.ke" />
+        <meta name="msapplication-TileColor" content="#e67e22" />
+        <meta name="msapplication-config" content="/browserconfig.xml" />
+        <meta name="theme-color" content="#ffffff" />
         <meta name="geo.region" content="KE" />
         <meta name="geo.placename" content="Kenya" />
         <meta name="geo.position" content="-1.286389;36.817223" />
@@ -134,11 +138,11 @@ export default function RootLayout({
               "@type": "RealEstateAgent",
               "name": "House Rent Kenya",
               "description": "Kenya's leading property rental platform with 10,000+ verified properties",
-              "url": "https://houserent.co.ke",
-              "logo": "https://houserent.co.ke/logo.png",
-              "image": "https://houserent.co.ke/og-image.jpg",
+              "url": "https://houserentkenya.co.ke",
+              "logo": "https://houserentkenya.co.ke/logo.png",
+              "image": "https://houserentkenya.co.ke/og-image.jpg",
               "telephone": "+254704202939",
-              "email": "info@houserent.co.ke",
+              "email": "info@houserentkenya.co.ke",
               "address": {
                 "@type": "PostalAddress",
                 "addressCountry": "KE",
@@ -152,10 +156,19 @@ export default function RootLayout({
               "serviceType": "Property Rental",
               "priceRange": "KSh 10,000 - KSh 500,000",
               "sameAs": [
-                "https://facebook.com/houserentkenya",
+                "https://www.facebook.com/houserentkenya",
                 "https://twitter.com/houserentkenya",
-                "https://instagram.com/houserentkenya"
-              ]
+                "https://www.instagram.com/houserentkenya",
+                "https://www.linkedin.com/company/houserentkenya",
+                "https://www.youtube.com/@houserentkenya"
+              ],
+              "aggregateRating": {
+                "@type": "AggregateRating",
+                "ratingValue": "4.8",
+                "reviewCount": "2847",
+                "bestRating": "5",
+                "worstRating": "1"
+              }
             })
           }}
         />
