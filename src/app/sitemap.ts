@@ -198,12 +198,20 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
         .replace(/^-+|-+$/g, '')
         .substring(0, 60);
       
-      propertyPages = properties.map((property) => ({
-        url: `${baseUrl}/property/${slug(property.title)}-${property.id}`,
-        lastModified: new Date(property.updatedAt),
-        changeFrequency: 'weekly' as const,
-        priority: 0.8,
-      }));
+      propertyPages = properties.flatMap((property) => [
+        {
+          url: `${baseUrl}/property/${slug(property.title)}-${property.id}`,
+          lastModified: new Date(property.updatedAt),
+          changeFrequency: 'weekly' as const,
+          priority: 0.8,
+        },
+        {
+          url: `${baseUrl}/${slug(property.title)}-${property.id}`,
+          lastModified: new Date(property.updatedAt),
+          changeFrequency: 'weekly' as const,
+          priority: 0.8,
+        },
+      ]);
     }
   } catch (error) {
     console.error('Error generating sitemap:', error);

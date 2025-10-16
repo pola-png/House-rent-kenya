@@ -15,3 +15,8 @@ export function createPropertySlugUrl(id: string, title: string): string {
   const slug = createSlug(title);
   return `/${slug}-${id}`;
 }
+
+export function createPropertySlugUrl(id: string, title: string): string {
+  const slug = createSlug(title);
+  return `/${slug}-${id}`;
+}
