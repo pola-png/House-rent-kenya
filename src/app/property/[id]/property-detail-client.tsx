@@ -71,7 +71,11 @@ export default function PropertyDetailClient({ id }: PropertyDetailClientProps) 
         } : undefined
       });
 
-      supabase.from('properties').update({ views: (data.views || 0) + 1 }).eq('id', id);
+      // Update view count
+      await supabase
+        .from('properties')
+        .update({ views: (data.views || 0) + 1 })
+        .eq('id', id);
     } catch (error) {
       console.error('Error fetching property:', error);
     } finally {
