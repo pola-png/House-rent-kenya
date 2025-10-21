@@ -1,5 +1,4 @@
 
-import Image from 'next/image';
 import Link from 'next/link';
 import { MapPin, Bed, Bath, Car, Maximize, Star, Eye, BadgeCheck, Award } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
@@ -8,6 +7,7 @@ import type { Property } from '@/lib/types';
 import placeholderImages from '@/lib/placeholder-images.json';
 import { Avatar, AvatarFallback, AvatarImage } from './ui/avatar';
 import { createPropertyUrl } from '@/lib/utils-seo';
+import { OptimizedImage } from './optimized-image';
 
 type PropertyCardProps = {
   property: Property;
@@ -27,12 +27,11 @@ export function PropertyCard({ property }: PropertyCardProps) {
       <Link href={propertyUrl} className="block flex flex-col h-full">
         <div className="relative h-56 w-full">
           {mainImageUrl ? (
-            <Image
+            <OptimizedImage
               src={mainImageUrl}
-              alt={property.title}
+              alt={`${property.bedrooms} bedroom ${property.propertyType} for ${property.status} in ${property.location}, ${property.city} - Ksh ${property.price.toLocaleString()}`}
               fill
               className="object-cover transform group-hover:scale-105 transition-transform duration-300"
-              unoptimized
             />
           ) : (
             <div className="bg-muted h-full w-full flex items-center justify-center text-muted-foreground">
