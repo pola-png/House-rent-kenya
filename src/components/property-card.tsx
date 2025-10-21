@@ -26,18 +26,12 @@ export function PropertyCard({ property }: PropertyCardProps) {
     <Card className="overflow-hidden group hover:shadow-xl transition-shadow duration-300 flex flex-col">
       <Link href={propertyUrl} className="block flex flex-col h-full">
         <div className="relative h-56 w-full">
-          {mainImageUrl ? (
-            <OptimizedImage
-              src={mainImageUrl}
-              alt={`${property.bedrooms} bedroom ${property.propertyType} for ${property.status} in ${property.location}, ${property.city} - Ksh ${property.price.toLocaleString()}`}
-              fill
-              className="object-cover transform group-hover:scale-105 transition-transform duration-300"
-            />
-          ) : (
-            <div className="bg-muted h-full w-full flex items-center justify-center text-muted-foreground">
-              No Image
-            </div>
-          )}
+          <OptimizedImage
+            src={mainImageUrl || "https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?w=800&h=600&fit=crop&crop=center"}
+            alt={`${property.bedrooms} bedroom ${property.propertyType} for ${property.status} in ${property.location}, ${property.city}`}
+            fill
+            className="object-cover transform group-hover:scale-105 transition-transform duration-300"
+          />
           <Badge className="absolute top-3 left-3">{property.status}</Badge>
            {property.status === 'Rented' && (
               <Badge variant="destructive" className="absolute top-3 right-3">Rented</Badge>

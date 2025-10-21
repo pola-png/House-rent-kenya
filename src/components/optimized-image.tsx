@@ -66,7 +66,7 @@ export function OptimizedImage({
 
   if (fill) {
     return (
-      <div className={`relative overflow-hidden ${className}`}>
+      <>
         {isLoading && (
           <div className="absolute inset-0 bg-muted animate-pulse" />
         )}
@@ -74,14 +74,15 @@ export function OptimizedImage({
           src={imageError ? fallbackSrc : src}
           alt={optimizedAlt}
           fill
-          className={`object-cover transition-opacity duration-300 ${isLoading ? 'opacity-0' : 'opacity-100'}`}
+          className={`${className} transition-opacity duration-300 ${isLoading ? 'opacity-0' : 'opacity-100'}`}
           onError={handleError}
           onLoad={handleLoad}
           priority={priority}
           sizes={sizes}
           quality={85}
+          unoptimized
         />
-      </div>
+      </>
     );
   }
 
