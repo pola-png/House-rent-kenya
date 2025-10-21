@@ -82,56 +82,46 @@ export default function Home() {
 
   const fetchFeaturedProperties = async () => {
     try {
-      const now = new Date().toISOString();
       const { data, error } = await supabase
-        .from('properties')
+        .from('posts')
         .select('*')
-        .eq('isPremium', true)
-        .or(`featuredExpiresAt.is.null,featuredExpiresAt.gt.${now}`)
         .limit(6)
-        .order('createdAt', { ascending: false });
+        .order('created_at', { ascending: false });
 
       if (error) throw error;
 
-      const landlordIds = [...new Set((data || []).map(p => p.landlordId))];
-      const { data: profiles } = await supabase
-        .from('profiles')
-        .select('*')
-        .in('id', landlordIds);
-      
-      const profileMap = new Map(profiles?.map(p => [p.id, p]) || []);
-      
-      const propertiesWithAgents = (data || []).map(p => {
-        const profileData = profileMap.get(p.landlordId);
-        return {
-          ...p,
-          createdAt: new Date(p.createdAt),
-          updatedAt: new Date(p.updatedAt),
-          agent: profileData ? {
-            uid: profileData.id,
-            firstName: profileData.firstName || '',
-            lastName: profileData.lastName || '',
-            displayName: profileData.displayName || profileData.email?.split('@')[0] || '',
-            email: profileData.email || '',
-            role: profileData.role || 'agent',
-            agencyName: profileData.agencyName,
-            phoneNumber: profileData.phoneNumber,
-            photoURL: profileData.photoURL,
-            createdAt: new Date(profileData.createdAt)
-          } : {
-            uid: 'default-agent',
-            firstName: 'Default',
-            lastName: 'Agent',
-            displayName: 'Default Agent',
-            email: 'agent@default.com',
-            role: 'agent',
-            agencyName: 'Default Agency',
-            createdAt: new Date()
-          }
-        };
-      });
+      const postsWithMockData = (data || []).map(p => ({
+        id: p.id,
+        title: p.text || 'Post',
+        description: p.text || '',
+        price: 50000,
+        propertyType: 'Apartment' as const,
+        bedrooms: 2,
+        bathrooms: 1,
+        area: 100,
+        location: 'Nairobi',
+        city: 'Nairobi',
+        latitude: -1.286389,
+        longitude: 36.817223,
+        images: ['https://images.unsplash.com/photo-1560448204-e02f11c3d0e2'],
+        amenities: ['WiFi', 'Parking'],
+        landlordId: p.author_id,
+        status: 'For Rent' as const,
+        createdAt: new Date(p.created_at),
+        updatedAt: new Date(p.updated_at),
+        agent: {
+          uid: 'default-agent',
+          firstName: 'Default',
+          lastName: 'Agent',
+          displayName: 'Default Agent',
+          email: 'agent@default.com',
+          role: 'agent' as const,
+          agencyName: 'Default Agency',
+          createdAt: new Date()
+        }
+      }));
 
-      setFeaturedProperties(propertiesWithAgents);
+      setFeaturedProperties(postsWithMockData);
     } catch (error) {
       console.error('Error fetching featured properties:', error);
     } finally {

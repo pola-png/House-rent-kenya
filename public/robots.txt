@@ -2,18 +2,28 @@
 User-agent: *
 Allow: /
 
-# Disallow admin pages
+# Disallow admin pages and low-value URLs
 Disallow: /admin/
 Disallow: /api/
+Disallow: /_next/
+Disallow: /private/
+Disallow: /search?*page=*
+Disallow: /search?*sort=*
+Disallow: /search?*view=*
+Disallow: /search?*limit=*
+
+# Allow high-value search URLs
+Allow: /search?q=*
+Allow: /search?type=*
+Allow: /search?property_type=*
+Allow: /search?beds=*
 
 # Sitemap location
 Sitemap: https://houserentkenya.co.ke/sitemap.xml
-Sitemap: https://houserentkenya.co.ke/sitemap-properties.xml
-Sitemap: https://houserentkenya.co.ke/sitemap-locations.xml
 
 # Crawl-delay for specific bots
 User-agent: Googlebot
-Crawl-delay: 0
+Crawl-delay: 1
 
 User-agent: Bingbot
-Crawl-delay: 1
+Crawl-delay: 2

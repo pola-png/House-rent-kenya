@@ -59,6 +59,12 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   // SEO-focused landing pages
   const seoPages = [
     {
+      url: `${baseUrl}/nairobi-properties`,
+      lastModified: new Date(),
+      changeFrequency: 'daily' as const,
+      priority: 0.9,
+    },
+    {
       url: `${baseUrl}/house-rent-in-nairobi`,
       lastModified: new Date(),
       changeFrequency: 'daily' as const,
@@ -180,13 +186,13 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     },
   ];
 
-  // Dynamic property pages
+  // Dynamic property pages with images
   let propertyPages: MetadataRoute.Sitemap = [];
   
   try {
     const { data: properties } = await supabase
       .from('properties')
-      .select('id, title, updatedAt, status')
+      .select('id, title, updatedAt, status, images, location, city, bedrooms, propertyType')
       .in('status', ['Available', 'For Rent', 'For Sale'])
       .order('updatedAt', { ascending: false })
       .limit(1000);
@@ -198,20 +204,13 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
         .replace(/^-+|-+$/g, '')
         .substring(0, 60);
       
-      propertyPages = properties.flatMap((property) => [
-        {
-          url: `${baseUrl}/property/${slug(property.title)}-${property.id}`,
-          lastModified: new Date(property.updatedAt),
-          changeFrequency: 'weekly' as const,
-          priority: 0.8,
-        },
-        {
-          url: `${baseUrl}/${slug(property.title)}-${property.id}`,
-          lastModified: new Date(property.updatedAt),
-          changeFrequency: 'weekly' as const,
-          priority: 0.8,
-        },
-      ]);
+      propertyPages = properties.map((property) => ({
+        url: `${baseUrl}/property/${slug(property.title)}-${property.id}`,
+        lastModified: new Date(property.updatedAt),
+        changeFrequency: 'weekly' as const,
+        priority: 0.8,
+        images: property.images?.slice(0, 3) || [], // Include up to 3 images per property
+      }));
     }
   } catch (error) {
     console.error('Error generating sitemap:', error);
