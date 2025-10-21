@@ -888,8 +888,8 @@ export function PropertyForm({ property }: PropertyFormProps) {
                     
                     <div className="text-sm text-center bg-muted p-4 rounded-md">
                       <p className="font-semibold mb-2">1. Complete Payment via M-Pesa</p>
-                      <p>Send Money to: <span className="font-bold">+254704202939</span></p>
-                      <p>Name: <span className="font-bold">Edwin</span></p>
+                      <p>Send Money to: <span className="font-bold">+254706060684</span></p>
+                      <p>Name: <span className="font-bold">House Rent Kenya</span></p>
                       <p>Amount: <span className="font-bold">${(promotionWeeks * weeklyRate).toLocaleString()}</span></p>
                     </div>
 
