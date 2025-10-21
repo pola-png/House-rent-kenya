@@ -72,10 +72,14 @@ export default function PropertyDetailClient({ id }: PropertyDetailClientProps) 
       });
 
       // Update view count
-      await supabase
+      const { error: viewError } = await supabase
         .from('properties')
         .update({ views: (data.views || 0) + 1 })
         .eq('id', id);
+      
+      if (viewError) {
+        console.error('Error updating view count:', viewError);
+      }
     } catch (error) {
       console.error('Error fetching property:', error);
     } finally {
