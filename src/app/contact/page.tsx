@@ -79,7 +79,7 @@ export default function ContactPage() {
                         <div>
                             <h3 className="font-semibold text-lg">Call Us</h3>
                             <p className="text-muted-foreground">Mon - Fri, 9am - 5pm</p>
-                            <p className="text-muted-foreground">+254704202939</p>
+                            <p className="text-muted-foreground">+254706060684</p>
                         </div>
                     </div>
                 </div>

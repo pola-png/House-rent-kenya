@@ -168,8 +168,9 @@ export default function PromotePropertyPage() {
           <div className="space-y-4 p-4 bg-muted rounded-lg">
             <h4 className="font-semibold">Payment Instructions</h4>
             <div className="space-y-2 text-sm">
-              <p><span className="font-medium">Send Money to:</span> +254704202939</p>
-              <p><span className="font-medium">Name:</span> Edwin</p>
+              <p><span className="font-medium">Payment via M-Pesa</span></p>
+              <p><span className="font-medium">Send Money to:</span> +254706060684</p>
+              <p><span className="font-medium">Name:</span> House Rent Kenya</p>
               <p><span className="font-medium">Amount:</span> ${(promotionWeeks * weeklyRate).toLocaleString()}</p>
             </div>
           </div>

@@ -142,7 +142,7 @@ export default function RootLayout({
               "url": "https://houserentkenya.co.ke",
               "logo": "https://houserentkenya.co.ke/logo.png",
               "image": "https://houserentkenya.co.ke/og-image.jpg",
-              "telephone": "+254704202939",
+              "telephone": "+254706060684",
               "email": "info@houserentkenya.co.ke",
               "address": {
                 "@type": "PostalAddress",

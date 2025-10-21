@@ -115,7 +115,7 @@ export function SEOSchema({ type, data }: SEOSchemaProps) {
           "description": "Kenya's leading property rental platform",
           "contactPoint": {
             "@type": "ContactPoint",
-            "telephone": "+254704202939",
+            "telephone": "+254706060684",
             "contactType": "customer service",
             "areaServed": "KE",
             "availableLanguage": ["English", "Swahili"]
