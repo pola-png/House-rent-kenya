@@ -401,7 +401,7 @@ export default function Home() {
                 Join thousands of satisfied tenants and landlords who trust House Rent Kenya for verified properties, instant booking, virtual tours & expert support across Nairobi, Westlands, Kilimani & all Kenya.
               </p>
             </div>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-12">
               {features.map((feature, index) => (
                 <Card key={index} className="text-center">
                   <CardContent className="p-8">
@@ -415,6 +415,107 @@ export default function Home() {
                   </CardContent>
                 </Card>
               ))}
+            </div>
+            
+            {/* Additional Why Choose Sections */}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              <Card>
+                <CardContent className="p-6">
+                  <h3 className="font-bold text-lg mb-2">Why Choose Rental Properties in Kenya</h3>
+                  <p className="text-sm text-muted-foreground">Rental properties in Kenya are now easier to access than ever, with verified listings across Nairobi, Mombasa, Kisumu, and more. Whether you're looking for a city apartment or a quiet suburban home, find your ideal rental with trusted agents and secure bookings.</p>
+                </CardContent>
+              </Card>
+              
+              <Card>
+                <CardContent className="p-6">
+                  <h3 className="font-bold text-lg mb-2">Why Choose House Rent in Kenya</h3>
+                  <p className="text-sm text-muted-foreground">House rent in Kenya offers flexible living options for all lifestyles and budgets. From single-room units to spacious family homes, explore a wide range of rental listings in top neighborhoods nationwide—all verified and ready to move in.</p>
+                </CardContent>
+              </Card>
+              
+              <Card>
+                <CardContent className="p-6">
+                  <h3 className="font-bold text-lg mb-2">Why Choose Houses for Rent in Kenya</h3>
+                  <p className="text-sm text-muted-foreground">Houses for rent in Kenya come in various styles and sizes—from modern townhouses to standalone homes. Find secure, affordable, and well-located houses in Nairobi, Eldoret, Nakuru, and more with easy search and expert support.</p>
+                </CardContent>
+              </Card>
+              
+              <Card>
+                <CardContent className="p-6">
+                  <h3 className="font-bold text-lg mb-2">Why Choose House Rent in Nairobi</h3>
+                  <p className="text-sm text-muted-foreground">House rent in Nairobi puts you in the center of everything—schools, work, shopping, and entertainment. Discover apartments and homes in Westlands, Kilimani, Kileleshwa, and other prime areas with verified landlords and flexible terms.</p>
+                </CardContent>
+              </Card>
+              
+              <Card>
+                <CardContent className="p-6">
+                  <h3 className="font-bold text-lg mb-2">Why Choose a Bedsitter for Rent in Kasarani</h3>
+                  <p className="text-sm text-muted-foreground">Bedsitter for rent in Kasarani listings are ideal for students, young professionals, or solo renters. Enjoy affordable, clean, and well-maintained units with access to transport, markets, and essential services in this fast-growing Nairobi suburb.</p>
+                </CardContent>
+              </Card>
+              
+              <Card>
+                <CardContent className="p-6">
+                  <h3 className="font-bold text-lg mb-2">Why Choose 2 Bedroom Rent in Kenya</h3>
+                  <p className="text-sm text-muted-foreground">2 bedroom rent in Kenya is perfect for small families, couples, or roommates. Discover spacious and affordable homes in cities like Nairobi, Mombasa, Kisumu, and more—with great amenities and safe neighborhoods.</p>
+                </CardContent>
+              </Card>
+              
+              <Card>
+                <CardContent className="p-6">
+                  <h3 className="font-bold text-lg mb-2">Why Choose 3 Bedroom Rent in Kenya</h3>
+                  <p className="text-sm text-muted-foreground">3 bedroom rent in Kenya provides comfort and space for larger families or groups. Explore well-designed homes in secure communities with easy access to schools, hospitals, and shopping centers across the country.</p>
+                </CardContent>
+              </Card>
+              
+              <Card>
+                <CardContent className="p-6">
+                  <h3 className="font-bold text-lg mb-2">Why Choose a 1 Bedroom in Kisumu</h3>
+                  <p className="text-sm text-muted-foreground">1 bedroom in Kisumu is ideal for those seeking a compact and cozy home with lake city charm. Find modern units in secure neighborhoods, perfect for professionals or couples wanting convenience and affordability.</p>
+                </CardContent>
+              </Card>
+              
+              <Card>
+                <CardContent className="p-6">
+                  <h3 className="font-bold text-lg mb-2">Why Choose a 2 Bedroom in Mombasa</h3>
+                  <p className="text-sm text-muted-foreground">2 bedroom in Mombasa offers the best of coastal living with spacious rentals near beaches, business hubs, and tourist attractions. Live in comfort while enjoying the serene beauty of Kenya's coast.</p>
+                </CardContent>
+              </Card>
+              
+              <Card>
+                <CardContent className="p-6">
+                  <h3 className="font-bold text-lg mb-2">Why Choose Properties for Sale in Kenya</h3>
+                  <p className="text-sm text-muted-foreground">Properties for sale in Kenya offer unbeatable investment opportunities—from residential plots to commercial buildings. Browse verified listings with clean titles in Nairobi, Mombasa, and emerging towns across the country.</p>
+                </CardContent>
+              </Card>
+              
+              <Card>
+                <CardContent className="p-6">
+                  <h3 className="font-bold text-lg mb-2">Why Choose Real Estate for Sale in Kenya</h3>
+                  <p className="text-sm text-muted-foreground">Real estate for sale in Kenya is booming with high-return opportunities for investors and dream homes for families. Explore properties in gated communities, town centers, or up-and-coming suburbs—secure and vetted.</p>
+                </CardContent>
+              </Card>
+              
+              <Card>
+                <CardContent className="p-6">
+                  <h3 className="font-bold text-lg mb-2">Why Choose Homes for Sale in Kenya</h3>
+                  <p className="text-sm text-muted-foreground">Homes for sale in Kenya cater to every lifestyle—from affordable starter homes to luxury residences. Find your ideal property with trusted agents, flexible payment plans, and verified documentation.</p>
+                </CardContent>
+              </Card>
+              
+              <Card>
+                <CardContent className="p-6">
+                  <h3 className="font-bold text-lg mb-2">Why Choose Houses for Sale in Kenya</h3>
+                  <p className="text-sm text-muted-foreground">Houses for sale in Kenya are available in prime locations nationwide. Whether upgrading or investing, discover secure, move-in-ready homes with modern finishes and strong resale value.</p>
+                </CardContent>
+              </Card>
+              
+              <Card>
+                <CardContent className="p-6">
+                  <h3 className="font-bold text-lg mb-2">Why Choose Property for Sale in Kenya</h3>
+                  <p className="text-sm text-muted-foreground">Property for sale in Kenya includes land, apartments, and houses in growing urban and rural areas. Secure your future with verified listings, ready titles, and expert support every step of the way.</p>
+                </CardContent>
+              </Card>
             </div>
           </div>
         </section>
