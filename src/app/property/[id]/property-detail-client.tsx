@@ -39,10 +39,19 @@ export default function PropertyDetailClient({ id }: PropertyDetailClientProps) 
 
   const fetchProperty = async () => {
     try {
+      // Extract actual ID from slug-id format
+      let actualId = id;
+      if (id.includes('-')) {
+        const parts = id.split('-');
+        if (parts.length >= 5) {
+          actualId = parts.slice(-5).join('-');
+        }
+      }
+
       const { data, error } = await supabase
         .from('properties')
         .select('*')
-        .eq('id', id)
+        .eq('id', actualId)
         .single();
 
       if (error) throw error;
@@ -71,13 +80,12 @@ export default function PropertyDetailClient({ id }: PropertyDetailClientProps) 
         } : undefined
       });
 
-      // Update view count
-      const { error: viewError } = await supabase
-        .from('properties')
-        .update({ views: (data.views || 0) + 1 })
-        .eq('id', id);
-      
-      if (viewError) {
+      // Update view count using database function
+      try {
+        console.log('Incrementing views for property:', actualId);
+        const result = await supabase.rpc('increment_property_views', { property_id: actualId });
+        console.log('View increment result:', result);
+      } catch (viewError) {
         console.error('Error updating view count:', viewError);
       }
     } catch (error) {

@@ -328,7 +328,43 @@ export function PropertyForm({ property }: PropertyFormProps) {
     }
   };
 
+  const [isSubmitting, setIsSubmitting] = React.useState(false);
+
+  const uploadImagesInBackground = async (propertyId: string, files: File[]) => {
+    try {
+      const uploadedUrls: string[] = [];
+      
+      for (const file of files) {
+        const fileExt = file.name.split('.').pop();
+        const fileName = `${user?.uid}-${Date.now()}-${Math.random().toString(36).substring(7)}.${fileExt}`;
+        const filePath = `properties/${fileName}`;
+
+        const { error, data } = await supabase.storage
+          .from('user-uploads')
+          .upload(filePath, file, { upsert: true });
+
+        if (!error) {
+          const { data: { publicUrl } } = supabase.storage
+            .from('user-uploads')
+            .getPublicUrl(filePath);
+          uploadedUrls.push(publicUrl);
+        }
+      }
+      
+      if (uploadedUrls.length > 0) {
+        await supabase
+          .from('properties')
+          .update({ images: uploadedUrls })
+          .eq('id', propertyId);
+      }
+    } catch (error) {
+      console.error('Background image upload failed:', error);
+    }
+  };
+
   async function onSubmit(data: PropertyFormValues) {
+    if (isSubmitting) return;
+    
     if (!user) {
       toast({
         variant: "destructive",
@@ -349,42 +385,19 @@ export function PropertyForm({ property }: PropertyFormProps) {
       return;
     }
     
+    setIsSubmitting(true);
     toast({
         title: "Submitting...",
         description: "Your property is being saved.",
     });
 
     try {
-        const uploadedImageUrls: string[] = [];
+        // Submit property first, upload images in background
+        const defaultImages = [
+          "https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?w=800"
+        ];
         
-        for (const file of imageFiles) {
-          const fileExt = file.name.split('.').pop();
-          const fileName = `${user.uid}-${Date.now()}-${Math.random().toString(36).substring(7)}.${fileExt}`;
-          const filePath = `properties/${fileName}`;
-
-          const { error: uploadError, data: uploadData } = await supabase.storage
-            .from('user-uploads')
-            .upload(filePath, file, { upsert: true });
-
-          if (uploadError) {
-            console.error('Error uploading image:', uploadError);
-            if (uploadError.message.includes('not found')) {
-              toast({
-                variant: "destructive",
-                title: "Storage Error",
-                description: "Storage bucket not configured. Property will be posted without images.",
-              });
-              break;
-            }
-            continue;
-          }
-
-          const { data: { publicUrl } } = supabase.storage
-            .from('user-uploads')
-            .getPublicUrl(filePath);
-
-          uploadedImageUrls.push(publicUrl);
-        }
+        const uploadedImageUrls = imageFiles.length > 0 ? [] : defaultImages;
 
         const propertyData = {
           title: data.title,
@@ -403,44 +416,47 @@ export function PropertyForm({ property }: PropertyFormProps) {
           latitude: data.latitude,
           longitude: data.longitude,
           landlordId: user.uid,
-          images: uploadedImageUrls.length > 0 ? uploadedImageUrls : [
-            "https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?w=800"
-          ]
+          images: defaultImages
         };
         
+        let propertyId = property?.id;
+        
         if (property) {
-            const finalPropertyData = {
-              ...propertyData,
-              images: uploadedImageUrls.length > 0 ? uploadedImageUrls : property.images
-            };
-
             const { error } = await supabase
               .from('properties')
-              .update(finalPropertyData)
+              .update(propertyData)
               .eq('id', property.id)
               .eq('landlordId', user.uid);
             
             if (error) throw error;
-            
-            toast({
-                title: "Success!",
-                description: "Property has been updated successfully.",
-            });
         } else {
-            const { error } = await supabase
+            const { data, error } = await supabase
               .from('properties')
-              .insert([propertyData]);
+              .insert([propertyData])
+              .select('id')
+              .single();
             
             if (error) throw error;
-            
-            toast({
-                title: "Success!",
-                description: "Property has been created successfully.",
-            });
+            propertyId = data.id;
         }
         
-        router.push('/admin/properties');
-        router.refresh();
+        toast({
+            title: "Success!",
+            description: property ? "Property updated!" : "Property created!",
+        });
+        
+        // Upload images in background if any
+        if (imageFiles.length > 0 && propertyId) {
+            uploadImagesInBackground(propertyId, imageFiles);
+        }
+        
+        // Clear form and redirect
+        form.reset();
+        setImageFiles([]);
+        setImagePreviews([]);
+        
+        // Force cache refresh
+        window.location.href = '/admin/properties';
 
     } catch (e: any) {
         console.error("Error saving property: ", e);
@@ -449,6 +465,8 @@ export function PropertyForm({ property }: PropertyFormProps) {
             title: "Uh oh! Something went wrong.",
             description: e.message || "Could not save property.",
         });
+    } finally {
+        setIsSubmitting(false);
     }
   }
 
@@ -1001,8 +1019,8 @@ export function PropertyForm({ property }: PropertyFormProps) {
           </div>
         </div>
 
-        <Button type="submit" size="lg" disabled={form.formState.isSubmitting}>
-            {form.formState.isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+        <Button type="submit" size="lg" disabled={isSubmitting}>
+            {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
             {property ? "Save Changes" : "Post My Property"}
         </Button>
       </form>
