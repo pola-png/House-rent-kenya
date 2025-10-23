@@ -329,38 +329,9 @@ export function PropertyForm({ property }: PropertyFormProps) {
   };
 
   const [isSubmitting, setIsSubmitting] = React.useState(false);
+  const [isUploadingImages, setIsUploadingImages] = React.useState(false);
 
-  const uploadImagesInBackground = async (propertyId: string, files: File[]) => {
-    try {
-      const uploadedUrls: string[] = [];
-      
-      for (const file of files) {
-        const fileExt = file.name.split('.').pop();
-        const fileName = `${user?.uid}-${Date.now()}-${Math.random().toString(36).substring(7)}.${fileExt}`;
-        const filePath = `properties/${fileName}`;
 
-        const { error, data } = await supabase.storage
-          .from('user-uploads')
-          .upload(filePath, file, { upsert: true });
-
-        if (!error) {
-          const { data: { publicUrl } } = supabase.storage
-            .from('user-uploads')
-            .getPublicUrl(filePath);
-          uploadedUrls.push(publicUrl);
-        }
-      }
-      
-      if (uploadedUrls.length > 0) {
-        await supabase
-          .from('properties')
-          .update({ images: uploadedUrls })
-          .eq('id', propertyId);
-      }
-    } catch (error) {
-      console.error('Background image upload failed:', error);
-    }
-  };
 
   async function onSubmit(data: PropertyFormValues) {
     if (isSubmitting) return;
@@ -392,12 +363,43 @@ export function PropertyForm({ property }: PropertyFormProps) {
     });
 
     try {
-        // Submit property first, upload images in background
-        const defaultImages = [
+        // Upload images first, then submit property
+        const uploadedImageUrls: string[] = [];
+        
+        // Upload images synchronously if any
+        if (imageFiles.length > 0) {
+          setIsUploadingImages(true);
+          toast({
+            title: "Uploading images...",
+            description: "Please wait while we upload your images.",
+          });
+          
+          for (const file of imageFiles) {
+            if (file.size > 5 * 1024 * 1024) continue; // Skip files > 5MB
+            
+            const fileExt = file.name.split('.').pop();
+            const fileName = `${user.uid}-${Date.now()}-${Math.random().toString(36).substring(7)}.${fileExt}`;
+            const filePath = `properties/${fileName}`;
+
+            const { error: uploadError } = await supabase.storage
+              .from('user-uploads')
+              .upload(filePath, file, { upsert: true });
+
+            if (!uploadError) {
+              const { data: { publicUrl } } = supabase.storage
+                .from('user-uploads')
+                .getPublicUrl(filePath);
+              if (publicUrl) uploadedImageUrls.push(publicUrl);
+            }
+          }
+        }
+        
+        // Use default image if no uploads
+        const finalImages = uploadedImageUrls.length > 0 ? uploadedImageUrls : [
           "https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?w=800"
         ];
         
-        const uploadedImageUrls = imageFiles.length > 0 ? [] : defaultImages;
+        setIsUploadingImages(false);
 
         const propertyData = {
           title: data.title,
@@ -416,8 +418,11 @@ export function PropertyForm({ property }: PropertyFormProps) {
           latitude: data.latitude,
           longitude: data.longitude,
           landlordId: user.uid,
-          images: defaultImages
+          images: finalImages
         };
+        
+        console.log('Property data to submit:', propertyData);
+        console.log('User info:', { uid: user.uid, email: user.email, role: user.role });
         
         let propertyId = property?.id;
         
@@ -428,7 +433,10 @@ export function PropertyForm({ property }: PropertyFormProps) {
               .eq('id', property.id)
               .eq('landlordId', user.uid);
             
-            if (error) throw error;
+            if (error) {
+              console.error('Update error:', error);
+              throw new Error(`Failed to update property: ${error.message}`);
+            }
         } else {
             const { data, error } = await supabase
               .from('properties')
@@ -436,37 +444,56 @@ export function PropertyForm({ property }: PropertyFormProps) {
               .select('id')
               .single();
             
-            if (error) throw error;
-            propertyId = data.id;
+            if (error) {
+              console.error('Insert error:', error);
+              throw new Error(`Failed to create property: ${error.message}`);
+            }
+            propertyId = data?.id;
         }
         
         toast({
             title: "Success!",
-            description: property ? "Property updated!" : "Property created!",
+            description: property ? "Property updated successfully!" : "Property created successfully!",
         });
         
-        // Upload images in background if any
-        if (imageFiles.length > 0 && propertyId) {
-            uploadImagesInBackground(propertyId, imageFiles);
-        }
-        
-        // Clear form and redirect
+        // Clear form state immediately
         form.reset();
         setImageFiles([]);
         setImagePreviews([]);
         
-        // Force cache refresh
-        window.location.href = '/admin/properties';
+        // Force immediate navigation and cache clear
+        router.push('/admin/properties');
+        router.refresh();
+        
+        // Also clear any cached data
+        if (typeof window !== 'undefined') {
+          window.location.reload();
+        }
 
     } catch (e: any) {
         console.error("Error saving property: ", e);
+        
+        let errorMessage = "Could not save property.";
+        if (e.message) {
+          if (e.message.includes('duplicate key')) {
+            errorMessage = "A property with this title already exists.";
+          } else if (e.message.includes('permission')) {
+            errorMessage = "You don't have permission to perform this action.";
+          } else if (e.message.includes('network')) {
+            errorMessage = "Network error. Please check your connection.";
+          } else {
+            errorMessage = e.message;
+          }
+        }
+        
         toast({
             variant: "destructive",
-            title: "Uh oh! Something went wrong.",
-            description: e.message || "Could not save property.",
+            title: "Submission Failed",
+            description: errorMessage,
         });
     } finally {
         setIsSubmitting(false);
+        setIsUploadingImages(false);
     }
   }
 
@@ -1019,9 +1046,9 @@ export function PropertyForm({ property }: PropertyFormProps) {
           </div>
         </div>
 
-        <Button type="submit" size="lg" disabled={isSubmitting}>
-            {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-            {property ? "Save Changes" : "Post My Property"}
+        <Button type="submit" size="lg" disabled={isSubmitting || isUploadingImages}>
+            {(isSubmitting || isUploadingImages) && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+            {isUploadingImages ? "Uploading Images..." : isSubmitting ? "Submitting..." : property ? "Save Changes" : "Post My Property"}
         </Button>
       </form>
     </Form>
