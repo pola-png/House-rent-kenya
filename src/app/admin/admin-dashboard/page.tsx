@@ -243,11 +243,14 @@ export default function AdminDashboard() {
       </div>
 
       <Tabs defaultValue="overview" className="space-y-4">
-        <TabsList className="grid w-full grid-cols-4">
-          <TabsTrigger value="overview">Overview</TabsTrigger>
-          <TabsTrigger value="users">Users</TabsTrigger>
-          <TabsTrigger value="properties">Properties</TabsTrigger>
-          <TabsTrigger value="activity">Activity</TabsTrigger>
+        <TabsList className="grid w-full grid-cols-7">
+          <TabsTrigger value="overview" className="text-xs sm:text-sm">Overview</TabsTrigger>
+          <TabsTrigger value="users" className="text-xs sm:text-sm">Users</TabsTrigger>
+          <TabsTrigger value="properties" className="text-xs sm:text-sm">Properties</TabsTrigger>
+          <TabsTrigger value="promotions" className="text-xs sm:text-sm">Promotions</TabsTrigger>
+          <TabsTrigger value="analytics" className="text-xs sm:text-sm">Analytics</TabsTrigger>
+          <TabsTrigger value="bulk" className="text-xs sm:text-sm">Bulk</TabsTrigger>
+          <TabsTrigger value="settings" className="text-xs sm:text-sm">Settings</TabsTrigger>
         </TabsList>
 
         <TabsContent value="overview" className="space-y-4">
@@ -313,127 +316,54 @@ export default function AdminDashboard() {
           </div>
         </TabsContent>
 
+
+
         <TabsContent value="users" className="space-y-4">
-          <div className="grid gap-4 grid-cols-1 md:grid-cols-3">
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-lg">User Distribution</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="flex justify-between items-center">
-                  <span className="text-sm">Regular Users</span>
-                  <div className="flex items-center gap-2">
-                    <Progress value={70} className="w-20 h-2" />
-                    <span className="text-sm font-medium">{stats.totalUsers - stats.totalAgents}</span>
-                  </div>
-                </div>
-                <div className="flex justify-between items-center">
-                  <span className="text-sm">Agents</span>
-                  <div className="flex items-center gap-2">
-                    <Progress value={30} className="w-20 h-2" />
-                    <span className="text-sm font-medium">{stats.totalAgents}</span>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-lg">Growth Metrics</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold text-green-600">+{stats.monthlyGrowth}%</div>
-                <div className="text-sm text-muted-foreground">Monthly user growth</div>
-                <div className="mt-2 text-lg font-semibold">{stats.todaySignups}</div>
-                <div className="text-sm text-muted-foreground">New signups today</div>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-lg">Engagement</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold text-blue-600">{stats.conversionRate}%</div>
-                <div className="text-sm text-muted-foreground">Conversion rate</div>
-                <div className="mt-2 text-lg font-semibold">85%</div>
-                <div className="text-sm text-muted-foreground">Active users</div>
-              </CardContent>
-            </Card>
-          </div>
+          <iframe 
+            src="/admin/users" 
+            className="w-full h-[800px] border rounded-lg"
+            title="Users Management"
+          />
         </TabsContent>
 
         <TabsContent value="properties" className="space-y-4">
-          <div className="grid gap-4 grid-cols-1 md:grid-cols-2">
-            <Card>
-              <CardHeader>
-                <CardTitle>Property Status</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-3">
-                <div className="flex justify-between items-center">
-                  <span className="text-sm">Active Listings</span>
-                  <Badge variant="default">{stats.activeListings}</Badge>
-                </div>
-                <div className="flex justify-between items-center">
-                  <span className="text-sm">Featured Properties</span>
-                  <Badge variant="secondary">12</Badge>
-                </div>
-                <div className="flex justify-between items-center">
-                  <span className="text-sm">Rented/Sold</span>
-                  <Badge variant="outline">{stats.totalProperties - stats.activeListings}</Badge>
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader>
-                <CardTitle>Performance</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-3">
-                <div className="flex justify-between items-center">
-                  <span className="text-sm">Total Views</span>
-                  <span className="font-medium">{stats.totalViews.toLocaleString()}</span>
-                </div>
-                <div className="flex justify-between items-center">
-                  <span className="text-sm">Avg Views/Property</span>
-                  <span className="font-medium">{Math.round(stats.totalViews / stats.totalProperties)}</span>
-                </div>
-                <div className="flex justify-between items-center">
-                  <span className="text-sm">Success Rate</span>
-                  <span className="font-medium text-green-600">{stats.conversionRate}%</span>
-                </div>
-              </CardContent>
-            </Card>
-          </div>
+          <iframe 
+            src="/admin/all-properties" 
+            className="w-full h-[800px] border rounded-lg"
+            title="Properties Management"
+          />
         </TabsContent>
 
-        <TabsContent value="activity" className="space-y-4">
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Activity className="h-5 w-5" />
-                Recent Platform Activity
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                {stats.recentActivity.map((activity, index) => (
-                  <div key={index} className="flex items-center gap-4 p-3 rounded-lg border">
-                    <div className={`w-2 h-2 rounded-full ${
-                      activity.type === 'user' ? 'bg-blue-500' :
-                      activity.type === 'property' ? 'bg-green-500' :
-                      'bg-purple-500'
-                    }`} />
-                    <div className="flex-1">
-                      <div className="font-medium">{activity.description}</div>
-                      <div className="text-sm text-muted-foreground">by {activity.user}</div>
-                    </div>
-                    <div className="text-xs text-muted-foreground">{activity.time}</div>
-                  </div>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
+        <TabsContent value="promotions" className="space-y-4">
+          <iframe 
+            src="/admin/payment-approvals" 
+            className="w-full h-[800px] border rounded-lg"
+            title="Promotions Management"
+          />
+        </TabsContent>
+
+        <TabsContent value="analytics" className="space-y-4">
+          <iframe 
+            src="/admin/analytics" 
+            className="w-full h-[800px] border rounded-lg"
+            title="Analytics"
+          />
+        </TabsContent>
+
+        <TabsContent value="bulk" className="space-y-4">
+          <iframe 
+            src="/admin/bulk-actions" 
+            className="w-full h-[800px] border rounded-lg"
+            title="Bulk Actions"
+          />
+        </TabsContent>
+
+        <TabsContent value="settings" className="space-y-4">
+          <iframe 
+            src="/admin/system-settings" 
+            className="w-full h-[800px] border rounded-lg"
+            title="System Settings"
+          />
         </TabsContent>
       </Tabs>
     </div>

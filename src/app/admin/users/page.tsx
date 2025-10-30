@@ -26,7 +26,7 @@ interface User {
   isPro?: boolean;
   proExpiresAt?: string;
   isBanned?: boolean;
-  properties?: { count: number }[];
+  propertyCount?: number;
 }
 
 export default function AdminUsersPage() {
@@ -60,14 +60,27 @@ export default function AdminUsersPage() {
     try {
       const { data, error } = await supabase
         .from('profiles')
-        .select(`
-          *,
-          properties:properties!landlordId(count)
-        `)
+        .select('*')
         .order('createdAt', { ascending: false });
 
+      // Get property counts for agents
+      const { data: propertyCounts } = await supabase
+        .from('properties')
+        .select('landlordId')
+        .not('landlordId', 'is', null);
+
+      const propertyCountMap = propertyCounts?.reduce((acc: any, prop) => {
+        acc[prop.landlordId] = (acc[prop.landlordId] || 0) + 1;
+        return acc;
+      }, {}) || {};
+
+      const usersWithCounts = (data || []).map(user => ({
+        ...user,
+        propertyCount: propertyCountMap[user.id] || 0
+      }));
+
       if (error) throw error;
-      setUsers(data || []);
+      setUsers(usersWithCounts);
     } catch (error) {
       console.error('Error fetching users:', error);
     } finally {
@@ -344,7 +357,7 @@ export default function AdminUsersPage() {
                   <div className="flex items-center gap-4 text-xs text-muted-foreground mt-1">
                     <span>Joined: {new Date(u.createdAt).toLocaleDateString()}</span>
                     {u.role === 'agent' && (
-                      <span>Properties: {u.properties?.[0]?.count || 0}</span>
+                      <span>Properties: {u.propertyCount || 0}</span>
                     )}
                     {u.isPro && u.proExpiresAt && (
                       <span>Pro expires: {new Date(u.proExpiresAt).toLocaleDateString()}</span>

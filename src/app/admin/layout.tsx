@@ -153,64 +153,14 @@ export default function AdminLayout({
             
             {/* Admin Only Features */}
             {user.role === 'admin' && (
-              <>
-                <SidebarMenuItem>
-                  <SidebarMenuButton asChild tooltip="Admin Dashboard">
-                    <Link href="/admin/admin-dashboard" onClick={() => setOpen(false)}>
-                      <Shield className="h-5 w-5" />
-                      <span>Admin Dashboard</span>
-                    </Link>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
-                <SidebarMenuItem>
-                  <SidebarMenuButton asChild tooltip="Users & Agents">
-                    <Link href="/admin/users" onClick={() => setOpen(false)}>
-                      <Users className="h-5 w-5" />
-                      <span>Users & Agents</span>
-                    </Link>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
-                <SidebarMenuItem>
-                  <SidebarMenuButton asChild tooltip="All Properties">
-                    <Link href="/admin/all-properties" onClick={() => setOpen(false)}>
-                      <Building className="h-5 w-5" />
-                      <span>All Properties</span>
-                    </Link>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
-                <SidebarMenuItem>
-                  <SidebarMenuButton asChild tooltip="Promotions & Payments">
-                    <Link href="/admin/payment-approvals" onClick={() => setOpen(false)}>
-                      <Star className="h-5 w-5" />
-                      <span>Promotions</span>
-                    </Link>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
-                <SidebarMenuItem>
-                  <SidebarMenuButton asChild tooltip="Analytics">
-                    <Link href="/admin/analytics" onClick={() => setOpen(false)}>
-                      <AreaChart className="h-5 w-5" />
-                      <span>Analytics</span>
-                    </Link>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
-                <SidebarMenuItem>
-                  <SidebarMenuButton asChild tooltip="Bulk Actions">
-                    <Link href="/admin/bulk-actions" onClick={() => setOpen(false)}>
-                      <Zap className="h-5 w-5" />
-                      <span>Bulk Actions</span>
-                    </Link>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
-                <SidebarMenuItem>
-                  <SidebarMenuButton asChild tooltip="System Settings">
-                    <Link href="/admin/system-settings" onClick={() => setOpen(false)}>
-                      <Settings className="h-5 w-5" />
-                      <span>System Settings</span>
-                    </Link>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
-              </>
+              <SidebarMenuItem>
+                <SidebarMenuButton asChild tooltip="Admin Dashboard">
+                  <Link href="/admin/admin-dashboard" onClick={() => setOpen(false)}>
+                    <Shield className="h-5 w-5" />
+                    <span>Admin Dashboard</span>
+                  </Link>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
             )}
             
             {/* Common Features */}

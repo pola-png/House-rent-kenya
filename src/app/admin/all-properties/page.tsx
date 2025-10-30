@@ -65,22 +65,31 @@ export default function AllPropertiesPage() {
     try {
       const { data: propertiesData, error: propsError } = await supabase
         .from('properties')
-        .select(`
-          *,
-          profiles:landlordId (
-            displayName,
-            email
-          )
-        `)
+        .select('*')
         .order('createdAt', { ascending: false });
 
       if (propsError) throw propsError;
 
-      const formattedProperties: Property[] = (propertiesData || []).map(p => ({
-        ...p,
-        landlordName: p.profiles?.displayName || 'Unknown',
-        landlordEmail: p.profiles?.email || 'Unknown'
-      }));
+      // Get landlord info separately
+      const landlordIds = [...new Set(propertiesData?.map(p => p.landlordId).filter(Boolean))];
+      const { data: landlordsData } = await supabase
+        .from('profiles')
+        .select('id, displayName, email, firstName, lastName')
+        .in('id', landlordIds);
+
+      const landlordsMap = landlordsData?.reduce((acc: any, landlord) => {
+        acc[landlord.id] = landlord;
+        return acc;
+      }, {}) || {};
+
+      const formattedProperties: Property[] = (propertiesData || []).map(p => {
+        const landlord = landlordsMap[p.landlordId];
+        return {
+          ...p,
+          landlordName: landlord?.displayName || landlord?.firstName + ' ' + landlord?.lastName || 'Unknown',
+          landlordEmail: landlord?.email || 'Unknown'
+        };
+      });
 
       setProperties(formattedProperties);
     } catch (error) {
