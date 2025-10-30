@@ -319,51 +319,87 @@ export default function AdminDashboard() {
 
 
         <TabsContent value="users" className="space-y-4">
-          <iframe 
-            src="/admin/users" 
-            className="w-full h-[800px] border rounded-lg"
-            title="Users Management"
-          />
+          <Card>
+            <CardHeader>
+              <CardTitle>User Management</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p className="text-muted-foreground mb-4">Manage platform users, agents, and administrators.</p>
+              <a href="/admin/users" className="inline-flex items-center px-4 py-2 bg-primary text-primary-foreground rounded-md hover:bg-primary/90">
+                Open User Management
+              </a>
+            </CardContent>
+          </Card>
         </TabsContent>
 
         <TabsContent value="properties" className="space-y-4">
-          <iframe 
-            src="/admin/all-properties" 
-            className="w-full h-[800px] border rounded-lg"
-            title="Properties Management"
-          />
+          <Card>
+            <CardHeader>
+              <CardTitle>Property Management</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p className="text-muted-foreground mb-4">View and manage all properties on the platform.</p>
+              <a href="/admin/all-properties" className="inline-flex items-center px-4 py-2 bg-primary text-primary-foreground rounded-md hover:bg-primary/90">
+                Open Property Management
+              </a>
+            </CardContent>
+          </Card>
         </TabsContent>
 
         <TabsContent value="promotions" className="space-y-4">
-          <iframe 
-            src="/admin/payment-approvals" 
-            className="w-full h-[800px] border rounded-lg"
-            title="Promotions Management"
-          />
+          <Card>
+            <CardHeader>
+              <CardTitle>Promotion Management</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p className="text-muted-foreground mb-4">Review and approve property promotion payments.</p>
+              <a href="/admin/payment-approvals" className="inline-flex items-center px-4 py-2 bg-primary text-primary-foreground rounded-md hover:bg-primary/90">
+                Open Promotion Management
+              </a>
+            </CardContent>
+          </Card>
         </TabsContent>
 
         <TabsContent value="analytics" className="space-y-4">
-          <iframe 
-            src="/admin/analytics" 
-            className="w-full h-[800px] border rounded-lg"
-            title="Analytics"
-          />
+          <Card>
+            <CardHeader>
+              <CardTitle>Analytics & Reports</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p className="text-muted-foreground mb-4">View detailed analytics and generate reports.</p>
+              <a href="/admin/analytics" className="inline-flex items-center px-4 py-2 bg-primary text-primary-foreground rounded-md hover:bg-primary/90">
+                Open Analytics
+              </a>
+            </CardContent>
+          </Card>
         </TabsContent>
 
         <TabsContent value="bulk" className="space-y-4">
-          <iframe 
-            src="/admin/bulk-actions" 
-            className="w-full h-[800px] border rounded-lg"
-            title="Bulk Actions"
-          />
+          <Card>
+            <CardHeader>
+              <CardTitle>Bulk Actions</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p className="text-muted-foreground mb-4">Perform bulk operations on users and properties.</p>
+              <a href="/admin/bulk-actions" className="inline-flex items-center px-4 py-2 bg-primary text-primary-foreground rounded-md hover:bg-primary/90">
+                Open Bulk Actions
+              </a>
+            </CardContent>
+          </Card>
         </TabsContent>
 
         <TabsContent value="settings" className="space-y-4">
-          <iframe 
-            src="/admin/system-settings" 
-            className="w-full h-[800px] border rounded-lg"
-            title="System Settings"
-          />
+          <Card>
+            <CardHeader>
+              <CardTitle>System Settings</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p className="text-muted-foreground mb-4">Configure platform settings and preferences.</p>
+              <a href="/admin/system-settings" className="inline-flex items-center px-4 py-2 bg-primary text-primary-foreground rounded-md hover:bg-primary/90">
+                Open System Settings
+              </a>
+            </CardContent>
+          </Card>
         </TabsContent>
       </Tabs>
     </div>
