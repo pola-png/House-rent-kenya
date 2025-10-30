@@ -7,7 +7,9 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { CheckCircle, XCircle, Clock, Image as ImageIcon, ExternalLink } from "lucide-react";
+import { CheckCircle, XCircle, Clock, Image as ImageIcon, ExternalLink, Activity, Search, DollarSign } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
@@ -33,6 +35,8 @@ export default function PaymentApprovalsPage() {
   const [requests, setRequests] = useState<PaymentRequest[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [statusFilter, setStatusFilter] = useState('all');
 
   useEffect(() => {
     if (user?.role !== "admin") {
@@ -40,6 +44,10 @@ export default function PaymentApprovalsPage() {
       return;
     }
     fetchPaymentRequests();
+    
+    // Real-time updates every 30 seconds
+    const interval = setInterval(fetchPaymentRequests, 30000);
+    return () => clearInterval(interval);
   }, [user, router]);
 
   const fetchPaymentRequests = async () => {
@@ -135,42 +143,107 @@ export default function PaymentApprovalsPage() {
 
   if (user?.role !== "admin") return null;
 
+  const filteredRequests = requests.filter(request => {
+    const matchesSearch = searchTerm === '' || 
+      request.propertyTitle.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      request.userName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      request.userEmail.toLowerCase().includes(searchTerm.toLowerCase());
+    
+    const matchesStatus = statusFilter === 'all' || request.status === statusFilter;
+    
+    return matchesSearch && matchesStatus;
+  });
+
+  if (user?.role !== "admin") return null;
+
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-3xl font-bold">Payment Approvals</h1>
-        <p className="text-muted-foreground">Review and approve property promotion payments</p>
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-3xl font-bold">Promotions & Payments</h1>
+          <p className="text-muted-foreground">Manage property promotions and payment approvals</p>
+        </div>
+        <div className="flex items-center gap-2">
+          <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">
+            <Activity className="h-3 w-3 mr-1" />
+            Live Updates
+          </Badge>
+        </div>
       </div>
 
-      <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 md:grid-cols-3">
-        <Card>
+      {/* Enhanced Stats */}
+      <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 md:grid-cols-4">
+        <Card className="border-l-4 border-l-yellow-500">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Pending</CardTitle>
             <Clock className="h-4 w-4 text-yellow-500" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{pendingRequests.length}</div>
+            <div className="text-xs text-muted-foreground">Awaiting approval</div>
           </CardContent>
         </Card>
-        <Card>
+        <Card className="border-l-4 border-l-green-500">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Approved</CardTitle>
             <CheckCircle className="h-4 w-4 text-green-500" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{approvedRequests.length}</div>
+            <div className="text-xs text-muted-foreground">Successfully processed</div>
           </CardContent>
         </Card>
-        <Card>
+        <Card className="border-l-4 border-l-red-500">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Rejected</CardTitle>
             <XCircle className="h-4 w-4 text-red-500" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{rejectedRequests.length}</div>
+            <div className="text-xs text-muted-foreground">Declined requests</div>
+          </CardContent>
+        </Card>
+        <Card className="border-l-4 border-l-blue-500">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Total Revenue</CardTitle>
+            <DollarSign className="h-4 w-4 text-blue-500" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">
+              Ksh {approvedRequests.reduce((sum, r) => sum + r.amount, 0).toLocaleString()}
+            </div>
+            <div className="text-xs text-muted-foreground">From approved payments</div>
           </CardContent>
         </Card>
       </div>
+
+      {/* Filters */}
+      <Card>
+        <CardContent className="pt-6">
+          <div className="flex flex-col sm:flex-row gap-4">
+            <div className="relative flex-1">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <Input
+                placeholder="Search by property, user, or email..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="pl-10"
+              />
+            </div>
+            <Select value={statusFilter} onValueChange={setStatusFilter}>
+              <SelectTrigger className="w-full sm:w-48">
+                <SelectValue placeholder="Filter by status" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Status</SelectItem>
+                <SelectItem value="pending">Pending</SelectItem>
+                <SelectItem value="approved">Approved</SelectItem>
+                <SelectItem value="rejected">Rejected</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+        </CardContent>
+      </Card>
 
       <Tabs defaultValue="pending" className="space-y-4">
         <TabsList className="grid w-full grid-cols-3">
@@ -189,14 +262,14 @@ export default function PaymentApprovalsPage() {
         </TabsList>
 
         <TabsContent value="pending" className="space-y-4">
-          {pendingRequests.length === 0 ? (
+          {filteredRequests.filter(r => r.status === 'pending').length === 0 ? (
             <Card>
               <CardContent className="py-8 text-center text-muted-foreground">
                 No pending payment requests
               </CardContent>
             </Card>
           ) : (
-            pendingRequests.map((request) => (
+            filteredRequests.filter(r => r.status === 'pending').map((request) => (
               <Card key={request.id}>
                 <CardContent className="pt-6">
                   <div className="flex flex-col md:flex-row gap-6">

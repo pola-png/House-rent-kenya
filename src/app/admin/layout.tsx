@@ -24,7 +24,8 @@ import {
   LifeBuoy,
   LogOut,
   Loader2,
-  CheckCircle
+  CheckCircle,
+  Zap
 } from "lucide-react";
 import {
   SidebarProvider,
@@ -55,6 +56,7 @@ import { useAuth } from "@/hooks/use-auth-supabase";
 import { useRouter } from "next/navigation";
 import { useEffect } from "react";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Shield } from "lucide-react";
 
 export default function AdminLayout({
   children,
@@ -101,6 +103,7 @@ export default function AdminLayout({
             </Link>
           </SidebarHeader>
           <SidebarMenu className="flex-1 p-4">
+            {/* Agent/User Dashboard */}
             <SidebarMenuItem>
               <SidebarMenuButton asChild tooltip="Dashboard">
                 <Link href="/admin/dashboard" onClick={() => setOpen(false)}>
@@ -109,98 +112,80 @@ export default function AdminLayout({
                 </Link>
               </SidebarMenuButton>
             </SidebarMenuItem>
-            <SidebarMenuItem>
-              <SidebarMenuButton asChild tooltip="Post a Property">
-                <Link href="/admin/properties/new" onClick={() => setOpen(false)}>
-                  <PlusCircle className="h-5 w-5" />
-                  <span>Post a Property</span>
-                </Link>
-              </SidebarMenuButton>
-            </SidebarMenuItem>
-            <SidebarMenuItem>
-              <SidebarMenuButton asChild tooltip="My Listings">
-                <Link href="/admin/properties" onClick={() => setOpen(false)}>
-                  <List className="h-5 w-5" />
-                  <span>My Listings</span>
-                </Link>
-              </SidebarMenuButton>
-            </SidebarMenuItem>
-            <SidebarMenuItem>
-              <SidebarMenuButton asChild tooltip="Promotions">
-                <Link href="/admin/promotions" onClick={() => setOpen(false)}>
-                  <Star className="h-5 w-5" />
-                  <span>Promotions</span>
-                </Link>
-              </SidebarMenuButton>
-            </SidebarMenuItem>
-             <SidebarMenuItem>
-              <SidebarMenuButton asChild tooltip="Leads">
-                <Link href="/admin/leads" onClick={() => setOpen(false)}>
-                  <Star className="h-5 w-5" />
-                  <span>Leads</span>
-                </Link>
-              </SidebarMenuButton>
-            </SidebarMenuItem>
-             <SidebarMenuItem>
-              <SidebarMenuButton asChild tooltip="Property Requests">
-                <Link href="/admin/property-requests" onClick={() => setOpen(false)}>
-                  <Heart className="h-5 w-5" />
-                  <span>Property Requests</span>
-                </Link>
-              </SidebarMenuButton>
-            </SidebarMenuItem>
-            <SidebarMenuItem>
-              <SidebarMenuButton asChild tooltip="Callback Requests">
-                <Link href="/admin/callback-requests" onClick={() => setOpen(false)}>
-                  <PhoneCall className="h-5 w-5" />
-                  <span>Callback Requests</span>
-                </Link>
-              </SidebarMenuButton>
-            </SidebarMenuItem>
-             <SidebarMenuItem>
-              <SidebarMenuButton asChild tooltip="Subscription">
-                <Link href="/admin/subscription" onClick={() => setOpen(false)}>
-                  <Package className="h-5 w-5" />
-                  <span>Subscription</span>
-                </Link>
-              </SidebarMenuButton>
-            </SidebarMenuItem>
-             {!isAdmin && (
-               <SidebarMenuItem>
-                <SidebarMenuButton asChild tooltip="Performance">
-                  <Link href="/admin/performance" onClick={() => setOpen(false)}>
-                    <AreaChart className="h-5 w-5" />
-                    <span>Performance</span>
-                  </Link>
-                </SidebarMenuButton>
-              </SidebarMenuItem>
-             )}
-             <SidebarMenuItem>
-              <SidebarMenuButton asChild tooltip="Profile">
-                <Link href="/admin/profile" onClick={() => setOpen(false)}>
-                  <User className="h-5 w-5" />
-                  <span>Profile</span>
-                </Link>
-              </SidebarMenuButton>
-            </SidebarMenuItem>
-             <SidebarMenuItem>
-              <SidebarMenuButton asChild tooltip="My Team">
-                <Link href="/admin/my-team" onClick={() => setOpen(false)}>
-                  <Users2 className="h-5 w-5" />
-                  <span>My Team</span>
-                </Link>
-              </SidebarMenuButton>
-            </SidebarMenuItem>
-            <SidebarMenuItem>
-              <SidebarMenuButton asChild tooltip="Messages">
-                <Link href="/admin/messages" onClick={() => setOpen(false)}>
-                  <MessageSquare className="h-5 w-5" />
-                  <span>Messages</span>
-                </Link>
-              </SidebarMenuButton>
-            </SidebarMenuItem>
+            
+            {/* Agent Features */}
+            {(user.role === 'agent' || user.role === 'admin') && (
+              <>
+                <SidebarMenuItem>
+                  <SidebarMenuButton asChild tooltip="Post a Property">
+                    <Link href="/admin/properties/new" onClick={() => setOpen(false)}>
+                      <PlusCircle className="h-5 w-5" />
+                      <span>Post a Property</span>
+                    </Link>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+                <SidebarMenuItem>
+                  <SidebarMenuButton asChild tooltip="My Listings">
+                    <Link href="/admin/properties" onClick={() => setOpen(false)}>
+                      <List className="h-5 w-5" />
+                      <span>My Listings</span>
+                    </Link>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+                <SidebarMenuItem>
+                  <SidebarMenuButton asChild tooltip="Callback Requests">
+                    <Link href="/admin/callback-requests" onClick={() => setOpen(false)}>
+                      <PhoneCall className="h-5 w-5" />
+                      <span>Callback Requests</span>
+                    </Link>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+                <SidebarMenuItem>
+                  <SidebarMenuButton asChild tooltip="Performance">
+                    <Link href="/admin/performance" onClick={() => setOpen(false)}>
+                      <AreaChart className="h-5 w-5" />
+                      <span>Performance</span>
+                    </Link>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+              </>
+            )}
+            
+            {/* Admin Only Features */}
             {user.role === 'admin' && (
               <>
+                <SidebarMenuItem>
+                  <SidebarMenuButton asChild tooltip="Admin Dashboard">
+                    <Link href="/admin/admin-dashboard" onClick={() => setOpen(false)}>
+                      <Shield className="h-5 w-5" />
+                      <span>Admin Dashboard</span>
+                    </Link>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+                <SidebarMenuItem>
+                  <SidebarMenuButton asChild tooltip="Users & Agents">
+                    <Link href="/admin/users" onClick={() => setOpen(false)}>
+                      <Users className="h-5 w-5" />
+                      <span>Users & Agents</span>
+                    </Link>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+                <SidebarMenuItem>
+                  <SidebarMenuButton asChild tooltip="All Properties">
+                    <Link href="/admin/all-properties" onClick={() => setOpen(false)}>
+                      <Building className="h-5 w-5" />
+                      <span>All Properties</span>
+                    </Link>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+                <SidebarMenuItem>
+                  <SidebarMenuButton asChild tooltip="Promotions & Payments">
+                    <Link href="/admin/payment-approvals" onClick={() => setOpen(false)}>
+                      <Star className="h-5 w-5" />
+                      <span>Promotions</span>
+                    </Link>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
                 <SidebarMenuItem>
                   <SidebarMenuButton asChild tooltip="Analytics">
                     <Link href="/admin/analytics" onClick={() => setOpen(false)}>
@@ -212,24 +197,8 @@ export default function AdminLayout({
                 <SidebarMenuItem>
                   <SidebarMenuButton asChild tooltip="Bulk Actions">
                     <Link href="/admin/bulk-actions" onClick={() => setOpen(false)}>
-                      <Star className="h-5 w-5" />
+                      <Zap className="h-5 w-5" />
                       <span>Bulk Actions</span>
-                    </Link>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
-                <SidebarMenuItem>
-                  <SidebarMenuButton asChild tooltip="Payment Approvals">
-                    <Link href="/admin/payment-approvals" onClick={() => setOpen(false)}>
-                      <CheckCircle className="h-5 w-5" />
-                      <span>Payment Approvals</span>
-                    </Link>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
-                <SidebarMenuItem>
-                  <SidebarMenuButton asChild tooltip="All Users">
-                    <Link href="/admin/users" onClick={() => setOpen(false)}>
-                      <Users className="h-5 w-5" />
-                      <span>All Users</span>
                     </Link>
                   </SidebarMenuButton>
                 </SidebarMenuItem>
@@ -243,6 +212,24 @@ export default function AdminLayout({
                 </SidebarMenuItem>
               </>
             )}
+            
+            {/* Common Features */}
+            <SidebarMenuItem>
+              <SidebarMenuButton asChild tooltip="Profile">
+                <Link href="/admin/profile" onClick={() => setOpen(false)}>
+                  <User className="h-5 w-5" />
+                  <span>Profile</span>
+                </Link>
+              </SidebarMenuButton>
+            </SidebarMenuItem>
+            <SidebarMenuItem>
+              <SidebarMenuButton asChild tooltip="Messages">
+                <Link href="/admin/messages" onClick={() => setOpen(false)}>
+                  <MessageSquare className="h-5 w-5" />
+                  <span>Messages</span>
+                </Link>
+              </SidebarMenuButton>
+            </SidebarMenuItem>
           </SidebarMenu>
           <SidebarFooter className="p-4 border-t">
              <Button variant="ghost" className="w-full justify-start" asChild>
@@ -262,6 +249,51 @@ export default function AdminLayout({
           <div className="relative ml-auto flex-1 md:grow-0">
             {/* Search can be added here if needed */}
           </div>
+          
+          {user?.role === 'admin' && (
+            <>
+              {/* Desktop Switch Button */}
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => {
+                  const currentPath = window.location.pathname;
+                  if (currentPath === '/admin/dashboard') {
+                    router.push('/admin/admin-dashboard');
+                  } else if (currentPath === '/admin/admin-dashboard') {
+                    router.push('/admin/dashboard');
+                  } else {
+                    router.push('/admin/admin-dashboard');
+                  }
+                }}
+                className="hidden sm:flex items-center gap-2 bg-gradient-to-r from-blue-50 to-purple-50 border-blue-200 text-blue-700 hover:from-blue-100 hover:to-purple-100 transition-all duration-200"
+              >
+                <Shield className="h-4 w-4" />
+                <span className="text-xs font-medium">
+                  {typeof window !== 'undefined' && window.location.pathname === '/admin/admin-dashboard' ? 'Agent View' : 'Admin View'}
+                </span>
+              </Button>
+              
+              {/* Mobile Switch Button */}
+              <Button
+                variant="outline"
+                size="icon"
+                onClick={() => {
+                  const currentPath = window.location.pathname;
+                  if (currentPath === '/admin/dashboard') {
+                    router.push('/admin/admin-dashboard');
+                  } else if (currentPath === '/admin/admin-dashboard') {
+                    router.push('/admin/dashboard');
+                  } else {
+                    router.push('/admin/admin-dashboard');
+                  }
+                }}
+                className="sm:hidden bg-gradient-to-r from-blue-50 to-purple-50 border-blue-200 text-blue-700 hover:from-blue-100 hover:to-purple-100"
+              >
+                <Shield className="h-4 w-4" />
+              </Button>
+            </>
+          )}
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button

@@ -37,6 +37,7 @@ import { Separator } from "@/components/ui/separator";
 import { useAuth } from "@/hooks/use-auth-supabase";
 import { supabase } from "@/lib/supabase";
 import { AISEOSimple } from "@/components/ai-seo-simple";
+import { generateWithAI } from "@/lib/ai-service";
 
 
 const formSchema = z.object({
@@ -166,51 +167,7 @@ export function PropertyForm({ property }: PropertyFormProps) {
     try {
       const prompt = `Write a compelling, professional property description for a ${currentData.bedrooms}-bedroom, ${currentData.bathrooms}-bathroom ${currentData.propertyType} in ${currentData.location}, ${currentData.city}. Price: Ksh ${currentData.price.toLocaleString()}. Amenities: ${currentData.amenities || 'standard amenities'}. Make it engaging, highlight key features, and include a call to action. Format with paragraphs and bullet points for key features.`;
 
-      const apiKey = process.env.NEXT_PUBLIC_GEMINI_API_KEY || 'AIzaSyBytiBEktDdWwh6tOF_GYZT_Ds7kCOvXvs';
-      
-      const models = [
-        'gemini-2.5-flash',
-        'gemini-1.5-flash',
-        'gemini-1.5-pro',
-        'gemini-pro'
-      ];
-      let response;
-      let lastError;
-      
-      for (const model of models) {
-        try {
-          response = await fetch(
-            `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`,
-            {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({
-                contents: [{ parts: [{ text: prompt }] }]
-              })
-            }
-          );
-          if (response.ok) break;
-          lastError = await response.json();
-        } catch (error) {
-          lastError = error;
-          continue;
-        }
-      }
-      
-      if (!response || !response.ok) {
-        throw new Error(lastError?.error?.message || 'All models failed');
-      }
-
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.error?.message || 'Failed to generate');
-      }
-
-      const data = await response.json();
-      const text = data.candidates?.[0]?.content?.parts?.[0]?.text || '';
-      
-      if (!text) throw new Error('No content generated');
-      
+      const text = await generateWithAI(prompt);
       onChange(text);
       
       toast({
@@ -219,10 +176,13 @@ export function PropertyForm({ property }: PropertyFormProps) {
       });
     } catch (error: any) {
       console.error('AI Description Error:', error);
+      const errorMessage = error.message === 'AI service not configured' 
+        ? 'AI service is not available. Please contact support.'
+        : error.message || 'Could not generate description. Please try again.';
       toast({
         variant: "destructive",
         title: "Generation Failed",
-        description: error.message || "Could not generate description. Please try again.",
+        description: errorMessage,
       });
     } finally {
       setIsGeneratingDesc(false);
@@ -265,51 +225,7 @@ export function PropertyForm({ property }: PropertyFormProps) {
     try {
       const prompt = `Generate a catchy, SEO-optimized property listing title for a ${currentData.bedrooms}-bedroom ${currentData.propertyType} in ${currentData.location}, ${currentData.city}. Keep it under 80 characters, professional, and attention-grabbing. Only return the title, nothing else.`;
 
-      const apiKey = process.env.NEXT_PUBLIC_GEMINI_API_KEY || 'AIzaSyBytiBEktDdWwh6tOF_GYZT_Ds7kCOvXvs';
-      
-      const models = [
-        'gemini-2.5-flash',
-        'gemini-1.5-flash',
-        'gemini-1.5-pro',
-        'gemini-pro'
-      ];
-      let response;
-      let lastError;
-      
-      for (const model of models) {
-        try {
-          response = await fetch(
-            `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`,
-            {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({
-                contents: [{ parts: [{ text: prompt }] }]
-              })
-            }
-          );
-          if (response.ok) break;
-          lastError = await response.json();
-        } catch (error) {
-          lastError = error;
-          continue;
-        }
-      }
-      
-      if (!response || !response.ok) {
-        throw new Error(lastError?.error?.message || 'All models failed');
-      }
-
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.error?.message || 'Failed to generate');
-      }
-
-      const data = await response.json();
-      const text = data.candidates?.[0]?.content?.parts?.[0]?.text || '';
-      
-      if (!text) throw new Error('No content generated');
-      
+      const text = await generateWithAI(prompt);
       onChange(text.trim());
       
       toast({
@@ -318,10 +234,13 @@ export function PropertyForm({ property }: PropertyFormProps) {
       });
     } catch (error: any) {
       console.error('AI Title Error:', error);
+      const errorMessage = error.message === 'AI service not configured' 
+        ? 'AI service is not available. Please contact support.'
+        : error.message || 'Could not generate title. Please try again.';
       toast({
         variant: "destructive",
         title: "Generation Failed",
-        description: error.message || "Could not generate title. Please try again.",
+        description: errorMessage,
       });
     } finally {
       setIsGeneratingTitle(false);
@@ -553,7 +472,10 @@ export function PropertyForm({ property }: PropertyFormProps) {
           .from('user-uploads')
           .upload(filePath, screenshotFile, { upsert: true });
 
-        if (uploadError) throw uploadError;
+        if (uploadError) {
+          console.error('Upload error:', uploadError);
+          throw new Error(`Upload failed: ${uploadError.message}`);
+        }
 
         const { data: { publicUrl } } = supabase.storage
           .from('user-uploads')
@@ -574,7 +496,10 @@ export function PropertyForm({ property }: PropertyFormProps) {
             createdAt: new Date().toISOString()
           }]);
 
-        if (insertError) throw insertError;
+        if (insertError) {
+          console.error('Database error:', insertError);
+          throw new Error(`Database operation failed: ${insertError.message}`);
+        }
 
         toast({
             title: "Request Submitted!",

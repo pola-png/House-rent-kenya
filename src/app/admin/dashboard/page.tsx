@@ -131,8 +131,12 @@ export default function Dashboard() {
     <div className="flex flex-col gap-6">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl sm:text-3xl font-bold font-headline tracking-tight">Agent Dashboard</h1>
-          <p className="text-muted-foreground text-sm sm:text-base">Welcome back! Here's your property performance overview.</p>
+          <h1 className="text-2xl sm:text-3xl font-bold font-headline tracking-tight">
+            {user?.role === 'admin' ? 'Agent View Dashboard' : 'Agent Dashboard'}
+          </h1>
+          <p className="text-muted-foreground text-sm sm:text-base">
+            {user?.role === 'admin' ? 'Agent perspective of the platform' : 'Welcome back! Here\'s your property performance overview.'}
+          </p>
         </div>
         <div className="flex flex-wrap items-center gap-2">
           <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200 text-xs">
@@ -143,9 +147,15 @@ export default function Dashboard() {
             <Zap className="h-3 w-3 mr-1" />
             AI Powered
           </Badge>
-          <Badge variant="outline" className="bg-purple-50 text-purple-700 border-purple-200 text-xs hidden sm:inline-flex">
-            Real-time Analytics
-          </Badge>
+          {user?.role === 'admin' ? (
+            <Badge variant="outline" className="bg-orange-50 text-orange-700 border-orange-200 text-xs">
+              Agent Mode
+            </Badge>
+          ) : (
+            <Badge variant="outline" className="bg-purple-50 text-purple-700 border-purple-200 text-xs hidden sm:inline-flex">
+              Real-time Analytics
+            </Badge>
+          )}
         </div>
       </div>
       

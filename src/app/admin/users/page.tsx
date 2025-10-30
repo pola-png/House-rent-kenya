@@ -8,7 +8,8 @@ import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
-import { Users, Shield, UserCog, Ban, CheckCircle, Crown } from 'lucide-react';
+import { Users, Shield, UserCog, Ban, CheckCircle, Crown, Activity, Search, Trash2 } from 'lucide-react';
+import { Input } from '@/components/ui/input';
 import { useRouter } from 'next/navigation';
 import { useToast } from '@/hooks/use-toast';
 
@@ -24,6 +25,8 @@ interface User {
   isActive?: boolean;
   isPro?: boolean;
   proExpiresAt?: string;
+  isBanned?: boolean;
+  properties?: { count: number }[];
 }
 
 export default function AdminUsersPage() {
@@ -31,7 +34,11 @@ export default function AdminUsersPage() {
   const router = useRouter();
   const { toast } = useToast();
   const [users, setUsers] = useState<User[]>([]);
+  const [filteredUsers, setFilteredUsers] = useState<User[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [roleFilter, setRoleFilter] = useState('all');
+  const [statusFilter, setStatusFilter] = useState('all');
 
   useEffect(() => {
     if (user?.role !== 'admin') {
@@ -39,13 +46,24 @@ export default function AdminUsersPage() {
       return;
     }
     fetchUsers();
+    
+    // Real-time updates every 30 seconds
+    const interval = setInterval(fetchUsers, 30000);
+    return () => clearInterval(interval);
   }, [user]);
+
+  useEffect(() => {
+    filterUsers();
+  }, [users, searchTerm, roleFilter, statusFilter]);
 
   const fetchUsers = async () => {
     try {
       const { data, error } = await supabase
         .from('profiles')
-        .select('*')
+        .select(`
+          *,
+          properties:properties!landlordId(count)
+        `)
         .order('createdAt', { ascending: false });
 
       if (error) throw error;
@@ -55,6 +73,35 @@ export default function AdminUsersPage() {
     } finally {
       setIsLoading(false);
     }
+  };
+
+  const filterUsers = () => {
+    let filtered = users;
+
+    if (searchTerm) {
+      filtered = filtered.filter(u => 
+        u.displayName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        u.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        u.firstName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        u.lastName?.toLowerCase().includes(searchTerm.toLowerCase())
+      );
+    }
+
+    if (roleFilter !== 'all') {
+      filtered = filtered.filter(u => u.role === roleFilter);
+    }
+
+    if (statusFilter !== 'all') {
+      if (statusFilter === 'active') {
+        filtered = filtered.filter(u => u.isActive !== false);
+      } else if (statusFilter === 'inactive') {
+        filtered = filtered.filter(u => u.isActive === false);
+      } else if (statusFilter === 'pro') {
+        filtered = filtered.filter(u => u.isPro === true);
+      }
+    }
+
+    setFilteredUsers(filtered);
   };
 
   const updateUserRole = async (userId: string, newRole: string) => {
@@ -116,85 +163,226 @@ export default function AdminUsersPage() {
 
   if (user?.role !== 'admin') return null;
 
+  const banUser = async (userId: string, currentStatus: boolean) => {
+    try {
+      const { error } = await supabase
+        .from('profiles')
+        .update({ isBanned: !currentStatus })
+        .eq('id', userId);
+
+      if (error) throw error;
+      toast({ 
+        title: currentStatus ? 'User Unbanned' : 'User Banned', 
+        description: 'User status updated successfully.' 
+      });
+      fetchUsers();
+    } catch (error) {
+      console.error('Error updating ban status:', error);
+      toast({ title: 'Error', description: 'Failed to update ban status.', variant: 'destructive' });
+    }
+  };
+
+  const deleteUser = async (userId: string) => {
+    if (!confirm('Are you sure you want to permanently delete this user?')) return;
+    
+    try {
+      const { error } = await supabase
+        .from('profiles')
+        .delete()
+        .eq('id', userId);
+
+      if (error) throw error;
+      toast({ title: 'User Deleted', description: 'User has been permanently deleted.' });
+      fetchUsers();
+    } catch (error) {
+      console.error('Error deleting user:', error);
+      toast({ title: 'Error', description: 'Failed to delete user.', variant: 'destructive' });
+    }
+  };
+
+  const stats = {
+    total: users.length,
+    agents: users.filter(u => u.role === 'agent').length,
+    admins: users.filter(u => u.role === 'admin').length,
+    pro: users.filter(u => u.isPro).length,
+    active: users.filter(u => u.isActive !== false).length,
+    banned: users.filter(u => u.isBanned).length
+  };
+
+  if (user?.role !== 'admin') return null;
+
   return (
-    <div className="container mx-auto px-4 py-8">
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold mb-2">User Management</h1>
-        <p className="text-muted-foreground">Manage user roles and permissions</p>
+    <div className="space-y-6">
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-3xl font-bold">Users & Agents</h1>
+          <p className="text-muted-foreground">Comprehensive user management and control</p>
+        </div>
+        <div className="flex items-center gap-2">
+          <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">
+            <Activity className="h-3 w-3 mr-1" />
+            Live Data
+          </Badge>
+        </div>
       </div>
 
-      <div className="grid gap-4 md:grid-cols-3 mb-8">
+      {/* Enhanced Stats */}
+      <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-6">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Total Users</CardTitle>
-            <Users className="h-4 w-4 text-muted-foreground" />
+            <Users className="h-4 w-4 text-blue-500" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{users.length}</div>
+            <div className="text-2xl font-bold">{stats.total}</div>
           </CardContent>
         </Card>
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Agents</CardTitle>
-            <UserCog className="h-4 w-4 text-muted-foreground" />
+            <UserCog className="h-4 w-4 text-green-500" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{users.filter(u => u.role === 'agent').length}</div>
+            <div className="text-2xl font-bold">{stats.agents}</div>
           </CardContent>
         </Card>
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Admins</CardTitle>
-            <Shield className="h-4 w-4 text-muted-foreground" />
+            <Shield className="h-4 w-4 text-purple-500" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{users.filter(u => u.role === 'admin').length}</div>
+            <div className="text-2xl font-bold">{stats.admins}</div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Pro Users</CardTitle>
+            <Crown className="h-4 w-4 text-yellow-500" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{stats.pro}</div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Active</CardTitle>
+            <CheckCircle className="h-4 w-4 text-green-500" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{stats.active}</div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Banned</CardTitle>
+            <Ban className="h-4 w-4 text-red-500" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{stats.banned}</div>
           </CardContent>
         </Card>
       </div>
 
+      {/* Filters */}
+      <Card>
+        <CardContent className="pt-6">
+          <div className="flex flex-col sm:flex-row gap-4">
+            <div className="relative flex-1">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <Input
+                placeholder="Search users by name or email..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="pl-10"
+              />
+            </div>
+            <Select value={roleFilter} onValueChange={setRoleFilter}>
+              <SelectTrigger className="w-full sm:w-40">
+                <SelectValue placeholder="Filter by role" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Roles</SelectItem>
+                <SelectItem value="user">Users</SelectItem>
+                <SelectItem value="agent">Agents</SelectItem>
+                <SelectItem value="admin">Admins</SelectItem>
+              </SelectContent>
+            </Select>
+            <Select value={statusFilter} onValueChange={setStatusFilter}>
+              <SelectTrigger className="w-full sm:w-40">
+                <SelectValue placeholder="Filter by status" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Status</SelectItem>
+                <SelectItem value="active">Active</SelectItem>
+                <SelectItem value="inactive">Inactive</SelectItem>
+                <SelectItem value="pro">Pro Users</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Users List */}
       <Card>
         <CardHeader>
-          <CardTitle>All Users</CardTitle>
+          <CardTitle>Users & Agents ({filteredUsers.length})</CardTitle>
         </CardHeader>
         <CardContent>
           <div className="space-y-4">
-            {users.map((u) => (
-              <div key={u.id} className="flex items-center justify-between p-4 border rounded-lg">
+            {filteredUsers.map((u) => (
+              <div key={u.id} className="flex items-center gap-4 p-4 border rounded-lg">
                 <div className="flex-1">
                   <div className="flex items-center gap-2">
                     <div className="font-semibold">{u.displayName || `${u.firstName} ${u.lastName}`}</div>
                     {u.isPro && <Crown className="h-4 w-4 text-yellow-500" />}
                     {u.isActive === false && <Ban className="h-4 w-4 text-red-500" />}
+                    {u.isBanned && <Ban className="h-4 w-4 text-red-600" />}
                   </div>
                   <div className="text-sm text-muted-foreground">{u.email}</div>
                   {u.phoneNumber && <div className="text-sm text-muted-foreground">{u.phoneNumber}</div>}
-                  {u.isPro && u.proExpiresAt && (
-                    <div className="text-xs text-muted-foreground">Pro expires: {new Date(u.proExpiresAt).toLocaleDateString()}</div>
-                  )}
-                </div>
-                <div className="flex items-center gap-3">
-                  <div className="flex flex-col gap-2">
-                    <div className="flex items-center gap-2">
-                      <span className="text-xs">Active</span>
-                      <Switch
-                        checked={u.isActive !== false}
-                        onCheckedChange={() => toggleUserStatus(u.id, u.isActive !== false)}
-                      />
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <span className="text-xs">Pro</span>
-                      <Switch
-                        checked={u.isPro || false}
-                        onCheckedChange={() => toggleProStatus(u.id, u.isPro || false)}
-                      />
-                    </div>
+                  <div className="flex items-center gap-4 text-xs text-muted-foreground mt-1">
+                    <span>Joined: {new Date(u.createdAt).toLocaleDateString()}</span>
+                    {u.role === 'agent' && (
+                      <span>Properties: {u.properties?.[0]?.count || 0}</span>
+                    )}
+                    {u.isPro && u.proExpiresAt && (
+                      <span>Pro expires: {new Date(u.proExpiresAt).toLocaleDateString()}</span>
+                    )}
                   </div>
+                </div>
+
+                {/* Real-time Controls */}
+                <div className="flex flex-col gap-2">
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs w-12">Active</span>
+                    <Switch
+                      checked={u.isActive !== false}
+                      onCheckedChange={() => toggleUserStatus(u.id, u.isActive !== false)}
+                    />
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs w-12">Pro</span>
+                    <Switch
+                      checked={u.isPro || false}
+                      onCheckedChange={() => toggleProStatus(u.id, u.isPro || false)}
+                    />
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs w-12">Ban</span>
+                    <Switch
+                      checked={u.isBanned || false}
+                      onCheckedChange={() => banUser(u.id, u.isBanned || false)}
+                    />
+                  </div>
+                </div>
+
+                <div className="flex flex-col gap-2">
                   <Badge variant={u.role === 'admin' ? 'default' : u.role === 'agent' ? 'secondary' : 'outline'}>
                     {u.role}
                   </Badge>
                   <Select value={u.role} onValueChange={(value) => updateUserRole(u.id, value)}>
-                    <SelectTrigger className="w-32">
+                    <SelectTrigger className="w-24 h-8 text-xs">
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
@@ -203,6 +391,14 @@ export default function AdminUsersPage() {
                       <SelectItem value="admin">Admin</SelectItem>
                     </SelectContent>
                   </Select>
+                  <Button
+                    size="sm"
+                    variant="destructive"
+                    onClick={() => deleteUser(u.id)}
+                    className="h-8 text-xs"
+                  >
+                    <Trash2 className="h-3 w-3" />
+                  </Button>
                 </div>
               </div>
             ))}
