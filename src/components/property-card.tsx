@@ -1,3 +1,4 @@
+'use client';
 
 import Link from 'next/link';
 import { MapPin, Bed, Bath, Car, Maximize, Star, Eye, BadgeCheck, Award } from 'lucide-react';
