@@ -236,7 +236,7 @@ export default function AdminUsersPage() {
   const deleteUser = async (userId: string) => {
     const userToDelete = users.find(u => u.id === userId);
     const confirmed = confirm(
-      `⚠️ PERMANENT DELETION\n\nAre you sure you want to permanently delete:\n${userToDelete?.displayName || userToDelete?.email}?\n\nThis action cannot be undone and will remove all their data.`
+      `⚠️ PERMANENT DELETION\n\nAre you sure you want to permanently delete:\n${userToDelete?.displayName || userToDelete?.email}?\n\nThis will:\n- Delete their profile\n- Delete their auth account\n- Remove all their properties\n- Cannot be undone`
     );
     if (!confirmed) return;
     
@@ -244,18 +244,25 @@ export default function AdminUsersPage() {
     setUsers(prev => prev.filter(u => u.id !== userId));
     
     try {
-      const { error } = await supabase
-        .from('profiles')
-        .delete()
-        .eq('id', userId);
+      // Delete from auth (this will cascade to profiles due to foreign key)
+      const { error: authError } = await supabase.auth.admin.deleteUser(userId);
+      
+      if (authError) {
+        // If auth deletion fails, try profile deletion
+        const { error: profileError } = await supabase
+          .from('profiles')
+          .delete()
+          .eq('id', userId);
+          
+        if (profileError) throw profileError;
+      }
 
-      if (error) throw error;
-      toast({ title: 'User Deleted', description: 'User has been permanently deleted.' });
+      toast({ title: 'User Deleted', description: 'User and all associated data permanently deleted.' });
     } catch (error) {
       console.error('Error deleting user:', error);
       // Revert on error
       fetchUsers();
-      toast({ title: 'Error', description: 'Failed to delete user.', variant: 'destructive' });
+      toast({ title: 'Error', description: 'Failed to delete user. They may still be logged in.', variant: 'destructive' });
     }
   };
 

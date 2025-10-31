@@ -95,8 +95,12 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       console.error('Error fetching profile:', error);
     }
 
-    console.log('Profile from DB:', profile);
-    console.log('User metadata:', supabaseUser.user_metadata);
+    // Check if user is banned
+    if (profile?.isBanned) {
+      await supabase.auth.signOut();
+      window.location.href = '/banned';
+      throw new Error('User is banned');
+    }
 
     const metadata = supabaseUser.user_metadata;
     const userProfile = {
@@ -112,7 +116,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       createdAt: new Date(supabaseUser.created_at)
     };
 
-    console.log('Final user profile with role:', userProfile.role);
     return userProfile;
   };
 
@@ -120,6 +123,22 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     try {
       const { data, error } = await supabase.auth.signInWithPassword({ email, password });
       if (error) throw error;
+      
+      // Check if user is banned after login
+      if (data.user) {
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('isBanned')
+          .eq('id', data.user.id)
+          .single();
+          
+        if (profile?.isBanned) {
+          await supabase.auth.signOut();
+          window.location.href = '/banned';
+          return false;
+        }
+      }
+      
       return !!data.user;
     } catch (error) {
       console.error('Login error:', error);
@@ -143,6 +162,18 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   const signup = async (email: string, password: string, additionalData: Record<string, any>): Promise<boolean> => {
     try {
+      // Check if email is banned before signup
+      const { data: existingProfile } = await supabase
+        .from('profiles')
+        .select('isBanned')
+        .eq('email', email)
+        .single();
+        
+      if (existingProfile?.isBanned) {
+        window.location.href = '/banned';
+        return false;
+      }
+      
       const { data, error } = await supabase.auth.signUp({
         email,
         password,
