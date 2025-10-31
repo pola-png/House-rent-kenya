@@ -29,6 +29,10 @@ export const ensureValidSession = async () => {
     
     // Check if session is about to expire (within 5 minutes)
     const expiresAt = session.expires_at;
+    if (!expiresAt) {
+      return await refreshSession();
+    }
+    
     const now = Math.floor(Date.now() / 1000);
     const timeUntilExpiry = expiresAt - now;
     
