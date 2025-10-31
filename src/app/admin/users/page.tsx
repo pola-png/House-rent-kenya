@@ -24,7 +24,7 @@ interface User {
   createdAt: string;
   isActive?: boolean;
   isPro?: boolean;
-  proExpiresAt?: string;
+  proExpiresAt?: string | null;
   isBanned?: boolean;
   propertyCount?: number;
 }
