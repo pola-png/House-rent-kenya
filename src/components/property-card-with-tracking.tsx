@@ -17,8 +17,8 @@ export function PropertyCardWithTracking({ property, className }: PropertyCardWi
   });
 
   return (
-    <div ref={impressionRef as any}>
-      <PropertyCard property={property} className={className} />
+    <div ref={impressionRef as any} className={className}>
+      <PropertyCard property={property} />
     </div>
   );
 }
