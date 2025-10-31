@@ -6,6 +6,7 @@ import { Header } from '@/components/header';
 import { Footer } from '@/components/footer';
 import { Toaster } from '@/components/ui/toaster';
 import { AuthProvider } from '@/hooks/use-auth-supabase';
+import { SessionMonitor } from '@/components/session-monitor';
 
 export const metadata: Metadata = {
   metadataBase: new URL('https://houserentkenya.co.ke'),
@@ -176,6 +177,7 @@ export default function RootLayout({
       </head>
       <body className={cn('min-h-screen bg-background font-body antialiased')}>
         <AuthProvider>
+          <SessionMonitor />
           <div className="relative flex min-h-screen flex-col">
               <Header />
               <main className="flex-1">{children}</main>

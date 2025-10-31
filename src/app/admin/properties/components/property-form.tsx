@@ -38,6 +38,7 @@ import { useAuth } from "@/hooks/use-auth-supabase";
 import { supabase } from "@/lib/supabase";
 import { AISEOSimple } from "@/components/ai-seo-simple";
 import { generateWithAI } from "@/lib/ai-service";
+import { withValidSession } from "@/lib/session-utils";
 
 
 const formSchema = z.object({
@@ -264,6 +265,22 @@ export function PropertyForm({ property }: PropertyFormProps) {
       router.push("/login");
       return;
     }
+    
+    // Validate session before proceeding
+    try {
+      await withValidSession(async () => {
+        const { data: { session } } = await supabase.auth.getSession();
+        if (!session) throw new Error('No valid session');
+        return session;
+      });
+    } catch (error) {
+      toast({
+        variant: "destructive",
+        title: "Session Expired",
+        description: "Please refresh the page and try again.",
+      });
+      return;
+    }
 
     if (!user.phoneNumber) {
       toast({
@@ -345,30 +362,33 @@ export function PropertyForm({ property }: PropertyFormProps) {
         
         let propertyId = property?.id;
         
-        if (property) {
-            const { error } = await supabase
-              .from('properties')
-              .update(propertyData)
-              .eq('id', property.id)
-              .eq('landlordId', user.uid);
-            
-            if (error) {
-              console.error('Update error:', error);
-              throw new Error(`Failed to update property: ${error.message}`);
-            }
-        } else {
-            const { data, error } = await supabase
-              .from('properties')
-              .insert([propertyData])
-              .select('id')
-              .single();
-            
-            if (error) {
-              console.error('Insert error:', error);
-              throw new Error(`Failed to create property: ${error.message}`);
-            }
-            propertyId = data?.id;
-        }
+        // Wrap database operations with session validation
+        await withValidSession(async () => {
+          if (property) {
+              const { error } = await supabase
+                .from('properties')
+                .update(propertyData)
+                .eq('id', property.id)
+                .eq('landlordId', user.uid);
+              
+              if (error) {
+                console.error('Update error:', error);
+                throw new Error(`Failed to update property: ${error.message}`);
+              }
+          } else {
+              const { data, error } = await supabase
+                .from('properties')
+                .insert([propertyData])
+                .select('id')
+                .single();
+              
+              if (error) {
+                console.error('Insert error:', error);
+                throw new Error(`Failed to create property: ${error.message}`);
+              }
+              propertyId = data?.id;
+          }
+        });
         
         toast({
             title: "Success!",

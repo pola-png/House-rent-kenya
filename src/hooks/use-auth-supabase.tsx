@@ -19,14 +19,30 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUser] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
+  
+  // Session validation function
+  const validateSession = async () => {
+    try {
+      const { data: { session }, error } = await supabase.auth.getSession();
+      if (error) {
+        console.error('Session validation error:', error);
+        return null;
+      }
+      return session;
+    } catch (error) {
+      console.error('Session validation failed:', error);
+      return null;
+    }
+  };
 
   useEffect(() => {
     let mounted = true;
+    let sessionCheckInterval: NodeJS.Timeout;
     
     const initAuth = async () => {
       try {
         setLoading(true);
-        const { data: { session } } = await supabase.auth.getSession();
+        const session = await validateSession();
         if (!mounted) return;
         
         if (session?.user) {
@@ -44,6 +60,16 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     };
 
     initAuth();
+    
+    // Check session every 30 seconds to prevent stale sessions
+    sessionCheckInterval = setInterval(async () => {
+      if (!mounted) return;
+      const session = await validateSession();
+      if (!session && user) {
+        // Session expired, clear user
+        setUser(null);
+      }
+    }, 30000);
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
       if (!mounted) return;
@@ -81,6 +107,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     return () => {
       mounted = false;
       subscription.unsubscribe();
+      if (sessionCheckInterval) {
+        clearInterval(sessionCheckInterval);
+      }
     };
   }, []);
 
