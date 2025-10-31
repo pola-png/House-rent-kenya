@@ -118,6 +118,18 @@ export default function AdminUsersPage() {
   };
 
   const updateUserRole = async (userId: string, newRole: string) => {
+    // Admin confirmation
+    if (newRole === 'admin') {
+      const userToPromote = users.find(u => u.id === userId);
+      const confirmed = confirm(
+        `Are you sure you want to make ${userToPromote?.displayName || userToPromote?.email} an ADMIN?\n\nThis will give them full administrative access to the platform.`
+      );
+      if (!confirmed) return;
+    }
+
+    // Instant state update
+    setUsers(prev => prev.map(u => u.id === userId ? { ...u, role: newRole } : u));
+    
     try {
       const { error } = await supabase
         .from('profiles')
@@ -125,37 +137,52 @@ export default function AdminUsersPage() {
         .eq('id', userId);
 
       if (error) throw error;
-      toast({ title: 'Role Updated', description: 'User role has been updated successfully.' });
-      fetchUsers();
+      toast({ title: 'Role Updated', description: `User role changed to ${newRole}.` });
     } catch (error) {
       console.error('Error updating role:', error);
+      // Revert on error
+      fetchUsers();
       toast({ title: 'Error', description: 'Failed to update user role.', variant: 'destructive' });
     }
   };
 
   const toggleUserStatus = async (userId: string, isActive: boolean) => {
+    const newStatus = !isActive;
+    
+    // Instant state update
+    setUsers(prev => prev.map(u => u.id === userId ? { ...u, isActive: newStatus } : u));
+    
     try {
       const { error } = await supabase
         .from('profiles')
-        .update({ isActive: !isActive })
+        .update({ isActive: newStatus })
         .eq('id', userId);
 
       if (error) throw error;
-      toast({ title: isActive ? 'User Deactivated' : 'User Activated', description: 'User status updated.' });
-      fetchUsers();
+      toast({ title: newStatus ? 'User Activated' : 'User Deactivated', description: 'User status updated.' });
     } catch (error) {
       console.error('Error toggling status:', error);
+      // Revert on error
+      setUsers(prev => prev.map(u => u.id === userId ? { ...u, isActive: isActive } : u));
       toast({ title: 'Error', description: 'Failed to update user status.', variant: 'destructive' });
     }
   };
 
   const toggleProStatus = async (userId: string, isPro: boolean) => {
+    const newProStatus = !isPro;
+    const expiryDate = newProStatus ? new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString() : null;
+    
+    // Instant state update
+    setUsers(prev => prev.map(u => u.id === userId ? { 
+      ...u, 
+      isPro: newProStatus,
+      proExpiresAt: expiryDate 
+    } : u));
+    
     try {
-      const updates: any = { isPro: !isPro };
-      if (!isPro) {
-        const expiryDate = new Date();
-        expiryDate.setMonth(expiryDate.getMonth() + 1);
-        updates.proExpiresAt = expiryDate.toISOString();
+      const updates: any = { isPro: newProStatus };
+      if (newProStatus) {
+        updates.proExpiresAt = expiryDate;
       } else {
         updates.proExpiresAt = null;
       }
@@ -166,10 +193,15 @@ export default function AdminUsersPage() {
         .eq('id', userId);
 
       if (error) throw error;
-      toast({ title: isPro ? 'Pro Removed' : 'Pro Activated', description: 'Pro status updated.' });
-      fetchUsers();
+      toast({ title: newProStatus ? 'Pro Activated' : 'Pro Removed', description: 'Pro status updated.' });
     } catch (error) {
       console.error('Error toggling pro:', error);
+      // Revert on error
+      setUsers(prev => prev.map(u => u.id === userId ? { 
+        ...u, 
+        isPro: isPro,
+        proExpiresAt: u.proExpiresAt 
+      } : u));
       toast({ title: 'Error', description: 'Failed to update Pro status.', variant: 'destructive' });
     }
   };
@@ -177,26 +209,39 @@ export default function AdminUsersPage() {
   if (user?.role !== 'admin') return null;
 
   const banUser = async (userId: string, currentStatus: boolean) => {
+    const newBanStatus = !currentStatus;
+    
+    // Instant state update
+    setUsers(prev => prev.map(u => u.id === userId ? { ...u, isBanned: newBanStatus } : u));
+    
     try {
       const { error } = await supabase
         .from('profiles')
-        .update({ isBanned: !currentStatus })
+        .update({ isBanned: newBanStatus })
         .eq('id', userId);
 
       if (error) throw error;
       toast({ 
-        title: currentStatus ? 'User Unbanned' : 'User Banned', 
+        title: newBanStatus ? 'User Banned' : 'User Unbanned', 
         description: 'User status updated successfully.' 
       });
-      fetchUsers();
     } catch (error) {
       console.error('Error updating ban status:', error);
+      // Revert on error
+      setUsers(prev => prev.map(u => u.id === userId ? { ...u, isBanned: currentStatus } : u));
       toast({ title: 'Error', description: 'Failed to update ban status.', variant: 'destructive' });
     }
   };
 
   const deleteUser = async (userId: string) => {
-    if (!confirm('Are you sure you want to permanently delete this user?')) return;
+    const userToDelete = users.find(u => u.id === userId);
+    const confirmed = confirm(
+      `⚠️ PERMANENT DELETION\n\nAre you sure you want to permanently delete:\n${userToDelete?.displayName || userToDelete?.email}?\n\nThis action cannot be undone and will remove all their data.`
+    );
+    if (!confirmed) return;
+    
+    // Instant state update
+    setUsers(prev => prev.filter(u => u.id !== userId));
     
     try {
       const { error } = await supabase
@@ -206,9 +251,10 @@ export default function AdminUsersPage() {
 
       if (error) throw error;
       toast({ title: 'User Deleted', description: 'User has been permanently deleted.' });
-      fetchUsers();
     } catch (error) {
       console.error('Error deleting user:', error);
+      // Revert on error
+      fetchUsers();
       toast({ title: 'Error', description: 'Failed to delete user.', variant: 'destructive' });
     }
   };
