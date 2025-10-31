@@ -16,6 +16,7 @@ import { useToast } from '@/hooks/use-toast';
 import type { Property } from '@/lib/types';
 import { useAuth } from '@/hooks/use-auth-supabase';
 import { useRouter } from 'next/navigation';
+import { trackPropertyView } from '@/lib/view-tracking';
 
 interface PropertyDetailClientProps {
   id: string;
@@ -80,13 +81,17 @@ export default function PropertyDetailClient({ id }: PropertyDetailClientProps) 
         } : undefined
       });
 
-      // Update view count using database function
+      // Track property view (works for all users including anonymous)
       try {
-        console.log('Incrementing views for property:', actualId);
-        const result = await supabase.rpc('increment_property_views', { property_id: actualId });
-        console.log('View increment result:', result);
+        const newViewCount = await trackPropertyView(actualId);
+        console.log('Property view tracked, new count:', newViewCount);
+        
+        // Update local state with new view count
+        if (data && newViewCount > 0) {
+          data.views = newViewCount;
+        }
       } catch (viewError) {
-        console.error('Error updating view count:', viewError);
+        console.error('Error tracking property view:', viewError);
       }
     } catch (error) {
       console.error('Error fetching property:', error);

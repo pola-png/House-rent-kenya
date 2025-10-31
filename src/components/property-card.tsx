@@ -8,6 +8,7 @@ import placeholderImages from '@/lib/placeholder-images.json';
 import { Avatar, AvatarFallback, AvatarImage } from './ui/avatar';
 import { createPropertyUrl } from '@/lib/utils-seo';
 import { OptimizedImage } from './optimized-image';
+import { useImpressionTracking } from '@/hooks/use-impression-tracking';
 
 type PropertyCardProps = {
   property: Property;
@@ -18,12 +19,18 @@ export function PropertyCard({ property }: PropertyCardProps) {
   const images = Array.isArray(property.images) ? property.images : [];
   const mainImageUrl = images.length > 0 ? images[0] : null;
   const agentPhotoUrl = property.agent?.photoURL;
-
+  
+  // Track impressions when card is viewed
+  const impressionRef = useImpressionTracking({
+    propertyId: property.id,
+    threshold: 0.6, // Track when 60% of card is visible
+    delay: 2000 // Wait 2 seconds before tracking
+  });
 
   const propertyUrl = createPropertyUrl(property.id, property.title);
 
   return (
-    <Card className="overflow-hidden group hover:shadow-xl transition-shadow duration-300 flex flex-col">
+    <Card ref={impressionRef as any} className="overflow-hidden group hover:shadow-xl transition-shadow duration-300 flex flex-col">
       <Link href={propertyUrl} className="block flex flex-col h-full">
         <div className="relative h-56 w-full">
           <OptimizedImage
