@@ -49,11 +49,44 @@ export const ensureValidSession = async () => {
 
 // Wrapper for API calls that ensures valid session
 export const withValidSession = async <T>(apiCall: () => Promise<T>): Promise<T> => {
+  // Force session refresh before critical operations
+  await refreshSession();
+  
   const isValid = await ensureValidSession();
   
   if (!isValid) {
-    throw new Error('Invalid or expired session');
+    // Try one more refresh before failing
+    const refreshed = await refreshSession();
+    if (!refreshed) {
+      throw new Error('Invalid or expired session');
+    }
   }
   
   return apiCall();
+};
+
+// Force session validation and refresh - use when returning from background
+export const forceSessionRefresh = async (): Promise<boolean> => {
+  try {
+    // First check if we have a session at all
+    const { data: { session }, error } = await supabase.auth.getSession();
+    
+    if (error || !session) {
+      console.error('No valid session found:', error);
+      return false;
+    }
+    
+    // Force refresh the session
+    const { data: refreshData, error: refreshError } = await supabase.auth.refreshSession();
+    
+    if (refreshError || !refreshData.session) {
+      console.error('Session refresh failed:', refreshError);
+      return false;
+    }
+    
+    return true;
+  } catch (error) {
+    console.error('Force session refresh failed:', error);
+    return false;
+  }
 };
