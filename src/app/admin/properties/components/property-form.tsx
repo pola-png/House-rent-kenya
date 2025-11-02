@@ -991,7 +991,17 @@ export function PropertyForm({ property }: PropertyFormProps) {
           </div>
         </div>
 
-        <Button type="submit" size="lg" disabled={isSubmitting || isUploadingImages}>
+        <Button 
+          type="submit" 
+          size="lg" 
+          disabled={isSubmitting || isUploadingImages}
+          onClick={(e) => {
+            console.log('Submit button clicked!');
+            console.log('Form errors:', form.formState.errors);
+            console.log('Form values:', form.getValues());
+            console.log('Form valid:', form.formState.isValid);
+          }}
+        >
             {(isSubmitting || isUploadingImages) && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
             {isUploadingImages ? "Uploading Images..." : isSubmitting ? "Submitting..." : property ? "Save Changes" : "Post My Property"}
         </Button>
