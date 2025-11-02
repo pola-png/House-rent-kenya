@@ -335,8 +335,7 @@ export function PropertyForm({ property }: PropertyFormProps) {
         
         if (property) {
             console.log('Updating existing property');
-            const updateData = { ...propertyData };
-            delete updateData.createdAt; // Don't update createdAt
+            const { createdAt, ...updateData } = propertyData;
             updateData.updatedAt = new Date().toISOString();
             
             const { error } = await supabase
