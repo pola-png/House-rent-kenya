@@ -283,9 +283,19 @@ export function PropertyForm({ property }: PropertyFormProps) {
               const fileName = `${user.uid}-${Date.now()}.${fileExt}`;
               const filePath = `properties/${fileName}`;
 
-              const { data, error: uploadError } = await supabase.storage
+              // Add timeout to prevent hanging
+              const uploadPromise = supabase.storage
                 .from('user-uploads')
                 .upload(filePath, file);
+                
+              const timeoutPromise = new Promise((_, reject) => 
+                setTimeout(() => reject(new Error('Upload timeout')), 10000)
+              );
+
+              const { data, error: uploadError } = await Promise.race([
+                uploadPromise,
+                timeoutPromise
+              ]);
 
               if (uploadError) {
                 console.error('Upload error:', uploadError);
