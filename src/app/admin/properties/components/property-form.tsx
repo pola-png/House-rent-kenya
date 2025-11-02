@@ -991,18 +991,27 @@ export function PropertyForm({ property }: PropertyFormProps) {
           </div>
         </div>
 
-        <Button 
-          type="button"
-          size="lg" 
-          disabled={isSubmitting || isUploadingImages}
-          onClick={async () => {
-            const formData = form.getValues();
-            await onSubmit(formData);
-          }}
-        >
-            {(isSubmitting || isUploadingImages) && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-            {isUploadingImages ? "Uploading Images..." : isSubmitting ? "Submitting..." : property ? "Save Changes" : "Post My Property"}
-        </Button>
+        <div className="flex gap-4">
+          <button 
+            onClick={() => alert('Test button works!')}
+            className="px-4 py-2 bg-blue-500 text-white rounded"
+          >
+            Test Button
+          </button>
+          <Button 
+            type="button"
+            size="lg" 
+            disabled={isSubmitting || isUploadingImages}
+            onClick={() => {
+              alert('Submit button clicked!');
+              const formData = form.getValues();
+              onSubmit(formData);
+            }}
+          >
+              {(isSubmitting || isUploadingImages) && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+              {isUploadingImages ? "Uploading Images..." : isSubmitting ? "Submitting..." : property ? "Save Changes" : "Post My Property"}
+          </Button>
+        </div>
       </form>
     </Form>
   );
