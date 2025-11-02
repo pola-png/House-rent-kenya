@@ -272,53 +272,10 @@ export function PropertyForm({ property }: PropertyFormProps) {
         // Handle image upload
         let finalImages = ["https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?w=800"];
         
+        // Skip image upload temporarily to test form submission
+        console.log('Skipping image upload for now');
         if (imageFiles.length > 0) {
-          setIsUploadingImages(true);
-          const uploadedUrls = [];
-          
-          for (const file of imageFiles.slice(0, 3)) {
-            try {
-              console.log('Uploading file:', file.name);
-              const fileExt = file.name.split('.').pop();
-              const fileName = `${user.uid}-${Date.now()}.${fileExt}`;
-              const filePath = `properties/${fileName}`;
-
-              // Add timeout to prevent hanging
-              const uploadPromise = supabase.storage
-                .from('user-uploads')
-                .upload(filePath, file);
-                
-              const timeoutPromise = new Promise((_, reject) => 
-                setTimeout(() => reject(new Error('Upload timeout')), 10000)
-              );
-
-              const { data, error: uploadError } = await Promise.race([
-                uploadPromise,
-                timeoutPromise
-              ]);
-
-              if (uploadError) {
-                console.error('Upload error:', uploadError);
-                continue;
-              }
-
-              const { data: { publicUrl } } = supabase.storage
-                .from('user-uploads')
-                .getPublicUrl(filePath);
-                
-              if (publicUrl) {
-                uploadedUrls.push(publicUrl);
-                console.log('Upload success:', publicUrl);
-              }
-            } catch (err) {
-              console.error('Upload exception:', err);
-            }
-          }
-          
-          if (uploadedUrls.length > 0) {
-            finalImages = uploadedUrls;
-          }
-          setIsUploadingImages(false);
+          console.log(`Would upload ${imageFiles.length} images`);
         }
 
         const propertyData = {
