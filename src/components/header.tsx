@@ -244,14 +244,11 @@ export function Header() {
 
           <div className="hidden lg:flex items-center gap-2">
             {user && (user.role === 'agent' || user.role === 'admin') && (
-              <Button 
-                variant="outline" 
-                className={buttonBorderClasses} 
-                asChild
-                onClick={() => console.log('List Property button clicked')}
-              >
-                <Link href="/admin/properties/new">List your property</Link>
-              </Button>
+              <Link href="/admin/properties/new">
+                <Button variant="outline" className={buttonBorderClasses}>
+                  List your property
+                </Button>
+              </Link>
             )}
             {renderUserAuth()}
           </div>
@@ -333,14 +330,11 @@ export function Header() {
                 <div className="p-4 border-t flex flex-col gap-4 flex-shrink-0">
                   {user && (user.role === 'agent' || user.role === 'admin') && (
                     <SheetClose asChild>
-                      <Button 
-                        variant="outline" 
-                        className='border-primary text-primary' 
-                        asChild
-                        onClick={() => console.log('Mobile List Property button clicked')}
-                      >
-                        <Link href="/admin/properties/new">List your property</Link>
-                      </Button>
+                      <Link href="/admin/properties/new">
+                        <Button variant="outline" className='border-primary text-primary'>
+                          List your property
+                        </Button>
+                      </Link>
                     </SheetClose>
                   )}
                    <Separator />
