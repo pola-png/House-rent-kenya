@@ -269,6 +269,40 @@ export function PropertyForm({ property }: PropertyFormProps) {
     setIsSubmitting(true);
 
     try {
+        // Handle image upload
+        let finalImages = ["https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?w=800"];
+        
+        if (imageFiles.length > 0) {
+          setIsUploadingImages(true);
+          const uploadedUrls = [];
+          
+          for (const file of imageFiles.slice(0, 5)) { // Limit to 5 images
+            try {
+              const fileExt = file.name.split('.').pop();
+              const fileName = `${user.uid}-${Date.now()}-${Math.random().toString(36).substring(7)}.${fileExt}`;
+              const filePath = `properties/${fileName}`;
+
+              const { error: uploadError } = await supabase.storage
+                .from('user-uploads')
+                .upload(filePath, file, { upsert: true });
+
+              if (!uploadError) {
+                const { data: { publicUrl } } = supabase.storage
+                  .from('user-uploads')
+                  .getPublicUrl(filePath);
+                if (publicUrl) uploadedUrls.push(publicUrl);
+              }
+            } catch (err) {
+              console.error('Image upload error:', err);
+            }
+          }
+          
+          if (uploadedUrls.length > 0) {
+            finalImages = uploadedUrls;
+          }
+          setIsUploadingImages(false);
+        }
+
         const propertyData = {
           title: data.title,
           description: data.description,
@@ -288,7 +322,7 @@ export function PropertyForm({ property }: PropertyFormProps) {
           latitude: data.latitude,
           longitude: data.longitude,
           landlordId: user.uid,
-          images: ["https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?w=800"]
+          images: finalImages
         };
         
         const { data: insertData, error } = await supabase
