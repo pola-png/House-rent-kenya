@@ -254,9 +254,11 @@ export function PropertyForm({ property }: PropertyFormProps) {
 
 
   async function onSubmit(data: PropertyFormValues) {
+    console.log('onSubmit called');
     if (isSubmitting) return;
     
     if (!user) {
+      console.log('No user found');
       toast({
         variant: "destructive",
         title: "Auth Error",
@@ -267,6 +269,7 @@ export function PropertyForm({ property }: PropertyFormProps) {
     }
 
     if (!user.phoneNumber) {
+      console.log('No phone number');
       toast({
         variant: "destructive",
         title: "Phone Number Required",
@@ -276,6 +279,7 @@ export function PropertyForm({ property }: PropertyFormProps) {
       return;
     }
     
+    console.log('Starting submission');
     setIsSubmitting(true);
     toast({
         title: "Submitting...",
@@ -286,33 +290,8 @@ export function PropertyForm({ property }: PropertyFormProps) {
         // Upload images first, then submit property
         const uploadedImageUrls: string[] = [];
         
-        // Upload images synchronously if any
-        if (imageFiles.length > 0) {
-          setIsUploadingImages(true);
-          toast({
-            title: "Uploading images...",
-            description: "Please wait while we upload your images.",
-          });
-          
-          for (const file of imageFiles) {
-            if (file.size > 5 * 1024 * 1024) continue; // Skip files > 5MB
-            
-            const fileExt = file.name.split('.').pop();
-            const fileName = `${user.uid}-${Date.now()}-${Math.random().toString(36).substring(7)}.${fileExt}`;
-            const filePath = `properties/${fileName}`;
-
-            const { error: uploadError } = await supabase.storage
-              .from('user-uploads')
-              .upload(filePath, file, { upsert: true });
-
-            if (!uploadError) {
-              const { data: { publicUrl } } = supabase.storage
-                .from('user-uploads')
-                .getPublicUrl(filePath);
-              if (publicUrl) uploadedImageUrls.push(publicUrl);
-            }
-          }
-        }
+        // Skip image upload for now to test
+        console.log('Skipping image upload');
         
         // Use default image if no uploads
         const finalImages = uploadedImageUrls.length > 0 ? uploadedImageUrls : [
@@ -347,7 +326,9 @@ export function PropertyForm({ property }: PropertyFormProps) {
         let propertyId = property?.id;
         
         // Database operations
+        console.log('About to save to database');
         if (property) {
+            console.log('Updating existing property');
             const { error } = await supabase
               .from('properties')
               .update(propertyData)
@@ -359,6 +340,7 @@ export function PropertyForm({ property }: PropertyFormProps) {
               throw new Error(`Failed to update property: ${error.message}`);
             }
         } else {
+            console.log('Creating new property');
             const { data, error } = await supabase
               .from('properties')
               .insert([propertyData])
@@ -371,25 +353,20 @@ export function PropertyForm({ property }: PropertyFormProps) {
             }
             propertyId = data?.id;
         }
+        console.log('Database operation completed');
         
         toast({
             title: "Success!",
             description: property ? "Property updated successfully!" : "Property created successfully!",
         });
         
-        // Clear form state immediately
+        // Clear form state
         form.reset();
         setImageFiles([]);
         setImagePreviews([]);
         
-        // Force immediate navigation and cache clear
+        // Navigate to properties page
         router.push('/admin/properties');
-        router.refresh();
-        
-        // Also clear any cached data
-        if (typeof window !== 'undefined') {
-          window.location.reload();
-        }
 
     } catch (e: any) {
         console.error("Error saving property: ", e);
