@@ -310,7 +310,7 @@ export function PropertyForm({ property }: PropertyFormProps) {
               const filePath = `properties/${fileName}`;
 
               const { data, error: uploadError } = await supabase.storage
-                .from('user-uploads')
+                .from('property-images')
                 .upload(filePath, file);
 
               if (uploadError) {
@@ -319,7 +319,7 @@ export function PropertyForm({ property }: PropertyFormProps) {
               }
 
               const { data: { publicUrl } } = supabase.storage
-                .from('user-uploads')
+                .from('property-images')
                 .getPublicUrl(filePath);
                 
               if (publicUrl) {
