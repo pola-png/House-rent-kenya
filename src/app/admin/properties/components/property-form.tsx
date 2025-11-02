@@ -366,6 +366,10 @@ export function PropertyForm({ property }: PropertyFormProps) {
         }
         console.log('Database operation completed');
         
+        // Reset loading state immediately
+        setIsSubmitting(false);
+        setIsUploadingImages(false);
+        
         toast({
             title: "Success!",
             description: property ? "Property updated successfully!" : "Property created successfully!",
@@ -377,9 +381,7 @@ export function PropertyForm({ property }: PropertyFormProps) {
         setImagePreviews([]);
         
         // Navigate to properties page
-        setTimeout(() => {
-          router.push('/admin/properties');
-        }, 1000);
+        router.push('/admin/properties');
 
     } catch (e: any) {
         console.error("Error saving property: ", e);
