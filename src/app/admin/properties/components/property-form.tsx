@@ -276,24 +276,32 @@ export function PropertyForm({ property }: PropertyFormProps) {
           setIsUploadingImages(true);
           const uploadedUrls = [];
           
-          for (const file of imageFiles.slice(0, 5)) { // Limit to 5 images
+          for (const file of imageFiles.slice(0, 3)) {
             try {
+              console.log('Uploading file:', file.name);
               const fileExt = file.name.split('.').pop();
-              const fileName = `${user.uid}-${Date.now()}-${Math.random().toString(36).substring(7)}.${fileExt}`;
+              const fileName = `${user.uid}-${Date.now()}.${fileExt}`;
               const filePath = `properties/${fileName}`;
 
-              const { error: uploadError } = await supabase.storage
+              const { data, error: uploadError } = await supabase.storage
                 .from('user-uploads')
-                .upload(filePath, file, { upsert: true });
+                .upload(filePath, file);
 
-              if (!uploadError) {
-                const { data: { publicUrl } } = supabase.storage
-                  .from('user-uploads')
-                  .getPublicUrl(filePath);
-                if (publicUrl) uploadedUrls.push(publicUrl);
+              if (uploadError) {
+                console.error('Upload error:', uploadError);
+                continue;
+              }
+
+              const { data: { publicUrl } } = supabase.storage
+                .from('user-uploads')
+                .getPublicUrl(filePath);
+                
+              if (publicUrl) {
+                uploadedUrls.push(publicUrl);
+                console.log('Upload success:', publicUrl);
               }
             } catch (err) {
-              console.error('Image upload error:', err);
+              console.error('Upload exception:', err);
             }
           }
           

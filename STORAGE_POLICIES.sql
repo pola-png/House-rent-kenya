@@ -1,31 +1,32 @@
--- Storage Bucket Policies for user-uploads
--- Run this in Supabase SQL Editor after creating the 'user-uploads' bucket
+-- Storage Policies for user-uploads bucket
+-- Run these in Supabase SQL Editor
 
--- Allow public access to view all files
-CREATE POLICY "Public Access"
-ON storage.objects FOR SELECT
-USING ( bucket_id = 'user-uploads' );
+-- 1. Create storage bucket if it doesn't exist
+INSERT INTO storage.buckets (id, name, public)
+VALUES ('user-uploads', 'user-uploads', true)
+ON CONFLICT (id) DO NOTHING;
 
--- Allow authenticated users to upload files
-CREATE POLICY "Authenticated users can upload"
-ON storage.objects FOR INSERT
-WITH CHECK (
+-- 2. Allow authenticated users to upload files
+CREATE POLICY "Allow authenticated uploads" ON storage.objects
+FOR INSERT WITH CHECK (
   bucket_id = 'user-uploads' 
   AND auth.role() = 'authenticated'
 );
 
--- Allow users to update their own files
-CREATE POLICY "Users can update own files"
-ON storage.objects FOR UPDATE
-USING (
+-- 3. Allow public read access to uploaded files
+CREATE POLICY "Allow public downloads" ON storage.objects
+FOR SELECT USING (bucket_id = 'user-uploads');
+
+-- 4. Allow users to update their own files
+CREATE POLICY "Allow users to update own files" ON storage.objects
+FOR UPDATE USING (
   bucket_id = 'user-uploads' 
   AND auth.uid()::text = (storage.foldername(name))[1]
 );
 
--- Allow users to delete their own files
-CREATE POLICY "Users can delete own files"
-ON storage.objects FOR DELETE
-USING (
+-- 5. Allow users to delete their own files
+CREATE POLICY "Allow users to delete own files" ON storage.objects
+FOR DELETE USING (
   bucket_id = 'user-uploads' 
   AND auth.uid()::text = (storage.foldername(name))[1]
 );
