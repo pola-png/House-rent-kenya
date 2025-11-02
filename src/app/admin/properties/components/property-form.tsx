@@ -992,14 +992,12 @@ export function PropertyForm({ property }: PropertyFormProps) {
         </div>
 
         <Button 
-          type="submit" 
+          type="button"
           size="lg" 
           disabled={isSubmitting || isUploadingImages}
-          onClick={(e) => {
-            console.log('Submit button clicked!');
-            console.log('Form errors:', form.formState.errors);
-            console.log('Form values:', form.getValues());
-            console.log('Form valid:', form.formState.isValid);
+          onClick={async () => {
+            const formData = form.getValues();
+            await onSubmit(formData);
           }}
         >
             {(isSubmitting || isUploadingImages) && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
