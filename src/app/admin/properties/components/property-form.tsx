@@ -265,6 +265,32 @@ export function PropertyForm({ property }: PropertyFormProps) {
       toast({ variant: "destructive", title: "Phone Required", description: "Add phone number first." });
       return;
     }
+
+    // Validate all required fields
+    if (!data.title?.trim()) {
+      toast({ variant: "destructive", title: "Title Required", description: "Please enter a property title." });
+      return;
+    }
+    if (!data.description?.trim()) {
+      toast({ variant: "destructive", title: "Description Required", description: "Please enter a property description." });
+      return;
+    }
+    if (!data.price || data.price <= 0) {
+      toast({ variant: "destructive", title: "Price Required", description: "Please enter a valid price." });
+      return;
+    }
+    if (!data.location?.trim()) {
+      toast({ variant: "destructive", title: "Location Required", description: "Please enter the property location." });
+      return;
+    }
+    if (!data.amenities?.trim()) {
+      toast({ variant: "destructive", title: "Amenities Required", description: "Please enter property amenities." });
+      return;
+    }
+    if (!data.keywords?.trim()) {
+      toast({ variant: "destructive", title: "Keywords Required", description: "Please enter property keywords." });
+      return;
+    }
     
     setIsSubmitting(true);
 
@@ -272,10 +298,43 @@ export function PropertyForm({ property }: PropertyFormProps) {
         // Handle image upload
         let finalImages = ["https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?w=800"];
         
-        // Skip image upload temporarily to test form submission
-        console.log('Skipping image upload for now');
         if (imageFiles.length > 0) {
-          console.log(`Would upload ${imageFiles.length} images`);
+          setIsUploadingImages(true);
+          const uploadedUrls = [];
+          
+          for (const file of imageFiles.slice(0, 3)) {
+            try {
+              console.log('Uploading file:', file.name);
+              const fileExt = file.name.split('.').pop();
+              const fileName = `${user.uid}-${Date.now()}.${fileExt}`;
+              const filePath = `properties/${fileName}`;
+
+              const { data, error: uploadError } = await supabase.storage
+                .from('user-uploads')
+                .upload(filePath, file);
+
+              if (uploadError) {
+                console.error('Upload error:', uploadError);
+                continue;
+              }
+
+              const { data: { publicUrl } } = supabase.storage
+                .from('user-uploads')
+                .getPublicUrl(filePath);
+                
+              if (publicUrl) {
+                uploadedUrls.push(publicUrl);
+                console.log('Upload success:', publicUrl);
+              }
+            } catch (err) {
+              console.error('Upload exception:', err);
+            }
+          }
+          
+          if (uploadedUrls.length > 0) {
+            finalImages = uploadedUrls;
+          }
+          setIsUploadingImages(false);
         }
 
         const propertyData = {
