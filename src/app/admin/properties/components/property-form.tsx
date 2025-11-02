@@ -377,7 +377,9 @@ export function PropertyForm({ property }: PropertyFormProps) {
         setImagePreviews([]);
         
         // Navigate to properties page
-        router.push('/admin/properties');
+        setTimeout(() => {
+          router.push('/admin/properties');
+        }, 1000);
 
     } catch (e: any) {
         console.error("Error saving property: ", e);
