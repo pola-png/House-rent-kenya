@@ -254,159 +254,59 @@ export function PropertyForm({ property }: PropertyFormProps) {
 
 
   async function onSubmit(data: PropertyFormValues) {
-    console.log('onSubmit called');
     if (isSubmitting) return;
     
     if (!user) {
-      console.log('No user found');
-      toast({
-        variant: "destructive",
-        title: "Auth Error",
-        description: "You must be logged in to post a property.",
-      });
-      router.push("/login");
+      toast({ variant: "destructive", title: "Auth Error", description: "You must be logged in." });
       return;
     }
 
     if (!user.phoneNumber) {
-      console.log('No phone number');
-      toast({
-        variant: "destructive",
-        title: "Phone Number Required",
-        description: "Please add your phone number in your profile before posting properties.",
-      });
-      router.push("/admin/profile");
+      toast({ variant: "destructive", title: "Phone Required", description: "Add phone number first." });
       return;
     }
     
-    console.log('Starting submission');
     setIsSubmitting(true);
-    toast({
-        title: "Submitting...",
-        description: "Your property is being saved.",
-    });
 
     try {
-        // Upload images first, then submit property
-        const uploadedImageUrls: string[] = [];
-        
-        // Skip image upload for now to test
-        console.log('Skipping image upload');
-        
-        // Use default image if no uploads
-        const finalImages = uploadedImageUrls.length > 0 ? uploadedImageUrls : [
-          "https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?w=800"
-        ];
-        
-        setIsUploadingImages(false);
-
         const propertyData = {
-          title: data.title.trim(),
-          description: data.description.trim(),
-          price: Number(data.price),
-          location: data.location.trim(),
-          city: data.city.trim(),
-          bedrooms: Number(data.bedrooms),
-          bathrooms: Number(data.bathrooms),
-          area: Number(data.area),
+          title: data.title,
+          description: data.description,
+          price: data.price,
+          location: data.location,
+          city: data.city,
+          bedrooms: data.bedrooms,
+          bathrooms: data.bathrooms,
+          area: data.area,
           propertyType: data.propertyType,
-          amenities: data.amenities.split(',').map(a => a.trim()).filter(a => a.length > 0),
+          amenities: data.amenities.split(',').map(a => a.trim()),
           status: data.status,
-          keywords: data.keywords.trim(),
+          keywords: data.keywords,
           featured: false,
           isPremium: false,
           views: 0,
-          latitude: Number(data.latitude) || -1.286389,
-          longitude: Number(data.longitude) || 36.817223,
+          latitude: data.latitude,
+          longitude: data.longitude,
           landlordId: user.uid,
-          images: finalImages,
-          createdAt: new Date().toISOString(),
-          updatedAt: new Date().toISOString()
+          images: ["https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?w=800"]
         };
         
-        console.log('Property data to submit:', propertyData);
-        console.log('User info:', { uid: user.uid, email: user.email, role: user.role });
+        const { data: insertData, error } = await supabase
+          .from('properties')
+          .insert([propertyData])
+          .select('id')
+          .single();
         
-        let propertyId = property?.id;
+        if (error) throw error;
         
-        // Database operations
-        console.log('About to save to database');
-        console.log('Property data:', propertyData);
-        
-        if (property) {
-            console.log('Updating existing property');
-            const { createdAt, ...updateData } = propertyData;
-            updateData.updatedAt = new Date().toISOString();
-            
-            const { error } = await supabase
-              .from('properties')
-              .update(updateData)
-              .eq('id', property.id)
-              .eq('landlordId', user.uid);
-            
-            if (error) {
-              console.error('Update error:', error);
-              throw new Error(`Failed to update property: ${error.message}`);
-            }
-        } else {
-            console.log('Creating new property');
-            const { data: insertData, error } = await supabase
-              .from('properties')
-              .insert([propertyData])
-              .select('id')
-              .single();
-            
-            if (error) {
-              console.error('Insert error:', error);
-              console.error('Property data that failed:', propertyData);
-              throw new Error(`Failed to create property: ${error.message}`);
-            }
-            propertyId = insertData?.id;
-            console.log('Property created with ID:', propertyId);
-        }
-        console.log('Database operation completed');
-        
-        // Reset loading state immediately
-        setIsSubmitting(false);
-        setIsUploadingImages(false);
-        
-        toast({
-            title: "Success!",
-            description: property ? "Property updated successfully!" : "Property created successfully!",
-        });
-        
-        // Clear form state
+        toast({ title: "Success!", description: "Property created successfully!" });
         form.reset();
-        setImageFiles([]);
-        setImagePreviews([]);
-        
-        // Navigate to properties page
         router.push('/admin/properties');
 
     } catch (e: any) {
-        console.error("Error saving property: ", e);
-        
-        let errorMessage = "Could not save property.";
-        if (e.message) {
-          if (e.message.includes('duplicate key')) {
-            errorMessage = "A property with this title already exists.";
-          } else if (e.message.includes('permission')) {
-            errorMessage = "You don't have permission to perform this action.";
-          } else if (e.message.includes('network')) {
-            errorMessage = "Network error. Please check your connection.";
-          } else {
-            errorMessage = e.message;
-          }
-        }
-        
-        toast({
-            variant: "destructive",
-            title: "Submission Failed",
-            description: errorMessage,
-        });
+        toast({ variant: "destructive", title: "Failed", description: e.message });
     } finally {
         setIsSubmitting(false);
-        setIsUploadingImages(false);
     }
   }
 
