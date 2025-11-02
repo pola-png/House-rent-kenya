@@ -301,23 +301,27 @@ export function PropertyForm({ property }: PropertyFormProps) {
         setIsUploadingImages(false);
 
         const propertyData = {
-          title: data.title,
-          description: data.description,
-          price: data.price,
-          location: data.location,
-          city: data.city,
-          bedrooms: data.bedrooms,
-          bathrooms: data.bathrooms,
-          area: data.area,
+          title: data.title.trim(),
+          description: data.description.trim(),
+          price: Number(data.price),
+          location: data.location.trim(),
+          city: data.city.trim(),
+          bedrooms: Number(data.bedrooms),
+          bathrooms: Number(data.bathrooms),
+          area: Number(data.area),
           propertyType: data.propertyType,
-          amenities: data.amenities.split(',').map(a => a.trim()),
+          amenities: data.amenities.split(',').map(a => a.trim()).filter(a => a.length > 0),
           status: data.status,
-          keywords: data.keywords,
+          keywords: data.keywords.trim(),
           featured: false,
-          latitude: data.latitude,
-          longitude: data.longitude,
+          isPremium: false,
+          views: 0,
+          latitude: Number(data.latitude) || -1.286389,
+          longitude: Number(data.longitude) || 36.817223,
           landlordId: user.uid,
-          images: finalImages
+          images: finalImages,
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString()
         };
         
         console.log('Property data to submit:', propertyData);
@@ -327,11 +331,17 @@ export function PropertyForm({ property }: PropertyFormProps) {
         
         // Database operations
         console.log('About to save to database');
+        console.log('Property data:', propertyData);
+        
         if (property) {
             console.log('Updating existing property');
+            const updateData = { ...propertyData };
+            delete updateData.createdAt; // Don't update createdAt
+            updateData.updatedAt = new Date().toISOString();
+            
             const { error } = await supabase
               .from('properties')
-              .update(propertyData)
+              .update(updateData)
               .eq('id', property.id)
               .eq('landlordId', user.uid);
             
@@ -341,7 +351,7 @@ export function PropertyForm({ property }: PropertyFormProps) {
             }
         } else {
             console.log('Creating new property');
-            const { data, error } = await supabase
+            const { data: insertData, error } = await supabase
               .from('properties')
               .insert([propertyData])
               .select('id')
@@ -349,9 +359,11 @@ export function PropertyForm({ property }: PropertyFormProps) {
             
             if (error) {
               console.error('Insert error:', error);
+              console.error('Property data that failed:', propertyData);
               throw new Error(`Failed to create property: ${error.message}`);
             }
-            propertyId = data?.id;
+            propertyId = insertData?.id;
+            console.log('Property created with ID:', propertyId);
         }
         console.log('Database operation completed');
         
