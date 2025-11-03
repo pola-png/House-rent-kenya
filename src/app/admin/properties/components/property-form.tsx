@@ -296,11 +296,10 @@ export function PropertyForm({ property }: PropertyFormProps) {
 
     try {
         // Handle image upload
-        let finalImages = ["https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?w=800"];
+        let finalImages = [];
         
         if (imageFiles.length > 0) {
           setIsUploadingImages(true);
-          const uploadedUrls = [];
           
           for (const file of imageFiles.slice(0, 3)) {
             try {
@@ -310,7 +309,7 @@ export function PropertyForm({ property }: PropertyFormProps) {
               const filePath = `properties/${fileName}`;
 
               const { data, error: uploadError } = await supabase.storage
-                .from('property-images')
+                .from('user-uploads')
                 .upload(filePath, file);
 
               if (uploadError) {
@@ -319,11 +318,11 @@ export function PropertyForm({ property }: PropertyFormProps) {
               }
 
               const { data: { publicUrl } } = supabase.storage
-                .from('property-images')
+                .from('user-uploads')
                 .getPublicUrl(filePath);
                 
               if (publicUrl) {
-                uploadedUrls.push(publicUrl);
+                finalImages.push(publicUrl);
                 console.log('Upload success:', publicUrl);
               }
             } catch (err) {
@@ -331,9 +330,6 @@ export function PropertyForm({ property }: PropertyFormProps) {
             }
           }
           
-          if (uploadedUrls.length > 0) {
-            finalImages = uploadedUrls;
-          }
           setIsUploadingImages(false);
         }
 
