@@ -12,19 +12,7 @@ export function RealAgentRating() {
 
   useEffect(() => {
     if (user) {
-      console.log('RealAgentRating: User detected, calculating rating for:', user.uid);
       calculateRating();
-    }
-  }, [user]);
-
-  // Force refresh every 30 seconds
-  useEffect(() => {
-    if (user) {
-      const interval = setInterval(() => {
-        console.log('RealAgentRating: Auto-refreshing rating');
-        calculateRating();
-      }, 30000);
-      return () => clearInterval(interval);
     }
   }, [user]);
 
@@ -33,8 +21,6 @@ export function RealAgentRating() {
     setIsLoading(true);
 
     try {
-      console.log('Calculating rating for user:', user.uid);
-      
       // Get agent's properties
       const { data: properties, error } = await supabase
         .from('properties')
@@ -46,15 +32,11 @@ export function RealAgentRating() {
         throw error;
       }
 
-      console.log('Properties found:', properties?.length || 0);
-
       if (properties && properties.length > 0) {
         // Calculate rating based on performance metrics
         const totalViews = properties.reduce((sum, p) => sum + (p.views || 0), 0);
         const rentedCount = properties.filter(p => p.status === 'Rented').length;
         const totalProperties = properties.length;
-        
-        console.log('Total views:', totalViews, 'Rented:', rentedCount, 'Total:', totalProperties);
         
         // Only show rating if there's actual activity
         if (totalViews > 0 || rentedCount > 0) {
