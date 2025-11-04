@@ -331,9 +331,9 @@ export function PropertyForm({ property }: PropertyFormProps) {
     if (files.length === 0) return [];
 
     const uploadPromises = files.map(async (file) => {
-      const fileName = `${user?.uid}/${Date.now()}-${file.name}`;
+      const fileName = `properties/${user?.uid}/${Date.now()}-${file.name}`;
       const { data: uploadData, error: uploadError } = await supabase.storage
-        .from("property-images")
+        .from("user-uploads")
         .upload(fileName, file);
 
       if (uploadError) {
@@ -341,7 +341,7 @@ export function PropertyForm({ property }: PropertyFormProps) {
       }
 
       const { data: publicUrlData } = supabase.storage
-        .from("property-images")
+        .from("user-uploads")
         .getPublicUrl(uploadData.path);
       return publicUrlData.publicUrl;
     });
