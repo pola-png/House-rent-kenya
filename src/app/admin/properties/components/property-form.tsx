@@ -255,75 +255,70 @@ export function PropertyForm({ property }: PropertyFormProps) {
 
   async function onSubmit(data: PropertyFormValues) {
     if (isSubmitting) return;
+    
+    if (!user) {
+      toast({ variant: "destructive", title: "Auth Error", description: "You must be logged in." });
+      return;
+    }
+
+    if (!user.phoneNumber) {
+      toast({
+        variant: "destructive",
+        title: "Profile Incomplete",
+        description: "Please add your phone number to your profile before creating a property.",
+      });
+      router.push('/admin/profile');
+      return;
+    }
+
     setIsSubmitting(true);
     setIsUploadingImages(true);
     toast({ title: "Saving property...", description: "Please wait." });
 
     try {
-        await withValidSession(async () => {
-            if (!user) {
-                throw new Error("You must be logged in.");
-            }
+      const uploadedImageUrls = await uploadImages(imageFiles);
+      const existingImageUrls = property?.images || [];
+      const allImageUrls = [...existingImageUrls, ...uploadedImageUrls];
+      setIsUploadingImages(false);
 
-            if (!user.phoneNumber) {
-                router.push('/admin/profile');
-                throw new Error("Please add your phone number to your profile before creating a property.");
-            }
+      const propertyData = {
+        ...data,
+        amenities: data.amenities.split(",").map((s) => s.trim()),
+        images: allImageUrls,
+        landlordId: user.uid,
+        updatedAt: new Date().toISOString(),
+      };
 
-            const uploadedImageUrls = await uploadImages(imageFiles);
-            const existingImageUrls = property?.images || [];
-            const allImageUrls = [...existingImageUrls, ...uploadedImageUrls];
-            setIsUploadingImages(false); // Set this to false after image upload
+      let result;
+      if (property) {
+        result = await supabase.from("properties").update(propertyData).eq("id", property.id).select().single();
+      } else {
+        result = await supabase.from("properties").insert({ ...propertyData, createdAt: new Date().toISOString() }).select().single();
+      }
 
-            const propertyData = {
-                ...data,
-                amenities: data.amenities.split(",").map((s) => s.trim()),
-                images: allImageUrls,
-                landlordId: user.uid,
-                updatedAt: new Date().toISOString(),
-            };
+      const { data: resultData, error } = result;
 
-            let result;
-            if (property) {
-                result = await supabase.from("properties").update(propertyData).eq("id", property.id).select().single();
-            } else {
-                result = await supabase.from("properties").insert({ ...propertyData, createdAt: new Date().toISOString() }).select().single();
-            }
+      if (error) throw error;
 
-            const { data: resultData, error } = result;
+      if (isPromotionOpen && promotionWeeks > 0 && resultData) {
+        await handlePromotion(resultData.id);
+      }
 
-            if (error) throw error;
-
-            if (isPromotionOpen && promotionWeeks > 0 && resultData) {
-                await handlePromotion(resultData.id);
-            }
-
-            toast({
-                title: `Property ${property ? "Updated" : "Created"}`,
-                description: `Your property has been successfully ${property ? "updated" : "saved"}.`,
-            });
-            router.push(`/admin/properties`);
-        });
+      toast({
+        title: `Property ${property ? "Updated" : "Created"}`,
+        description: `Your property has been successfully ${property ? "updated" : "saved"}.`,
+      });
+      router.push(`/admin/properties`);
     } catch (error: any) {
-        console.error("Error saving property:", error);
-        let description = "Could not save the property. Please try again.";
-        if (error.message === 'Invalid or expired session') {
-            description = "Your session has expired. Please log in again.";
-            router.push('/login');
-        } else if (error.message === "Please add your phone number to your profile before creating a property.") {
-            description = error.message;
-        } else if (error.message === "You must be logged in.") {
-            description = error.message;
-        }
-        
-        toast({
-            variant: "destructive",
-            title: "Operation Failed",
-            description: description,
-        });
+      console.error("Error saving property:", error);
+      toast({
+        variant: "destructive",
+        title: "Operation Failed",
+        description: error.message || "Could not save the property. Please try again.",
+      });
     } finally {
-        setIsSubmitting(false);
-        setIsUploadingImages(false);
+      setIsSubmitting(false);
+      setIsUploadingImages(false);
     }
   }
 
