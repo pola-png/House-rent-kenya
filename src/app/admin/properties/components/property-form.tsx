@@ -303,17 +303,17 @@ export function PropertyForm({ property }: PropertyFormProps) {
                 description: `Your property has been successfully ${property ? "updated" : "saved"}.`,
             });
             router.push(`/admin/properties`);
-            router.refresh();
         });
     } catch (error: any) {
         console.error("Error saving property:", error);
         let description = "Could not save the property. Please try again.";
-        if (error.message === "Please add your phone number to your profile before creating a property.") {
+        if (error.message === 'Invalid or expired session') {
+            description = "Your session has expired. Please log in again.";
+            router.push('/login');
+        } else if (error.message === "Please add your phone number to your profile before creating a property.") {
             description = error.message;
         } else if (error.message === "You must be logged in.") {
             description = error.message;
-        } else if (error.message === 'Invalid or expired session') {
-            description = "Your session has expired. Please log in again.";
         }
         
         toast({
