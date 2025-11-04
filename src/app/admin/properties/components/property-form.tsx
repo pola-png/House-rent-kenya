@@ -985,17 +985,9 @@ export function PropertyForm({ property }: PropertyFormProps) {
         </div>
 
         <Button 
-          type="button"
+          type="submit"
           size="lg" 
           disabled={isSubmitting || isUploadingImages}
-          onClick={async () => {
-            try {
-              const formData = form.getValues();
-              await onSubmit(formData);
-            } catch (error) {
-              console.error('Submit error:', error);
-            }
-          }}
         >
             {(isSubmitting || isUploadingImages) && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
             {isUploadingImages ? "Uploading Images..." : isSubmitting ? "Submitting..." : property ? "Save Changes" : "Post My Property"}
