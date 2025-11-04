@@ -279,98 +279,83 @@ export function PropertyForm({ property }: PropertyFormProps) {
       toast({ variant: "destructive", title: "Price Required", description: "Please enter a valid price." });
       return;
     }
-    if (!data.location?.trim()) {
-      toast({ variant: "destructive", title: "Location Required", description: "Please enter the property location." });
-      return;
-    }
-    if (!data.amenities?.trim()) {
-      toast({ variant: "destructive", title: "Amenities Required", description: "Please enter property amenities." });
-      return;
-    }
-    if (!data.keywords?.trim()) {
-      toast({ variant: "destructive", title: "Keywords Required", description: "Please enter property keywords." });
-      return;
-    }
     
     setIsSubmitting(true);
-
     try {
-        // Handle image upload
-        let finalImages = [];
-        
-        if (imageFiles.length > 0) {
-          setIsUploadingImages(true);
-          
-          for (const file of imageFiles.slice(0, 3)) {
-            try {
-              console.log('Uploading file:', file.name);
-              const fileExt = file.name.split('.').pop();
-              const fileName = `${user.uid}-${Date.now()}.${fileExt}`;
-              const filePath = `properties/${fileName}`;
+      let imageUrls: string[] = property?.images || [];
+      if (imageFiles.length > 0) {
+        setIsUploadingImages(true);
+        const uploadPromises = imageFiles.map(async (file) => {
+          const fileName = `${user.id}/${Date.now()}-${file.name}`;
+          const { data: uploadData, error: uploadError } = await supabase.storage
+            .from("property-images")
+            .upload(fileName, file);
 
-              const { data, error: uploadError } = await supabase.storage
-                .from('user-uploads')
-                .upload(filePath, file);
-
-              if (uploadError) {
-                console.error('Upload error:', uploadError);
-                continue;
-              }
-
-              const { data: { publicUrl } } = supabase.storage
-                .from('user-uploads')
-                .getPublicUrl(filePath);
-                
-              if (publicUrl) {
-                finalImages.push(publicUrl);
-                console.log('Upload success:', publicUrl);
-              }
-            } catch (err) {
-              console.error('Upload exception:', err);
-            }
+          if (uploadError) {
+            throw new Error(`Image upload failed: ${uploadError.message}`);
           }
-          
-          setIsUploadingImages(false);
-        }
 
-        const propertyData = {
-          title: data.title,
-          description: data.description,
-          price: data.price,
-          location: data.location,
-          city: data.city,
-          bedrooms: data.bedrooms,
-          bathrooms: data.bathrooms,
-          area: data.area,
-          propertyType: data.propertyType,
-          amenities: data.amenities.split(',').map(a => a.trim()),
-          status: data.status,
-          keywords: data.keywords,
-          featured: false,
-          isPremium: false,
-          views: 0,
-          latitude: data.latitude,
-          longitude: data.longitude,
-          landlordId: user.uid,
-          images: finalImages
-        };
-        
-        const { data: insertData, error } = await supabase
-          .from('properties')
-          .insert([propertyData])
-          .select('id')
+          const { data: publicUrlData } = supabase.storage
+            .from("property-images")
+            .getPublicUrl(uploadData.path);
+          return publicUrlData.publicUrl;
+        });
+
+        const uploadedUrls = await Promise.all(uploadPromises);
+        imageUrls = [...imageUrls, ...uploadedUrls];
+        setIsUploadingImages(false);
+      }
+
+      const propertyData = {
+        ...data,
+        amenities: data.amenities.split(",").map((s) => s.trim()),
+        images: imageUrls,
+        user_id: user.id,
+        user_phone: user.phoneNumber,
+        user_name: user.name,
+        user_avatar: user.avatarUrl,
+      };
+
+      let result;
+      if (property) {
+        result = await supabase
+          .from("properties")
+          .update(propertyData)
+          .eq("id", property.id)
+          .select()
           .single();
-        
-        if (error) throw error;
-        
-        toast({ title: "Success!", description: "Property created successfully!" });
-        form.reset();
-        router.push('/admin/properties');
+      } else {
+        result = await supabase
+          .from("properties")
+          .insert(propertyData)
+          .select()
+          .single();
+      }
 
-    } catch (e: any) {
-        toast({ variant: "destructive", title: "Failed", description: e.message });
+      const { data: resultData, error } = result;
+
+      if (error) {
+        throw new Error(error.message);
+      }
+
+      toast({
+        title: `Property ${property ? "Updated" : "Created"}`,
+        description: `Your property has been successfully ${property ? "updated" : "listed"}.`,
+      });
+
+      router.push(`/admin/properties`);
+      router.refresh();
+
+    } catch (error: any) {
+      console.error("Submission Error:", error);
+      toast({
+        variant: "destructive",
+        title: "Submission Failed",
+        description: error.message || "An unexpected error occurred. Please try again.",
+      });
     } finally {
-        setIsSubmitting(false);
+      setIsSubmitting(false);
+      setIsUploadingImages(false);
     }
   }
 
