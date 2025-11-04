@@ -256,68 +256,49 @@ export function PropertyForm({ property }: PropertyFormProps) {
   async function onSubmit(data: PropertyFormValues) {
     if (isSubmitting) return;
     
-    if (!user) {
+    if (!user) { // user is now from withValidSession
       toast({ variant: "destructive", title: "Auth Error", description: "You must be logged in." });
       return;
     }
 
     if (!user.phoneNumber) {
-      toast({ variant: "destructive", title: "Phone Required", description: "Add phone number first." });
+      toast({
+        variant: "destructive",
+        title: "Profile Incomplete",
+        description: "Please add your phone number to your profile before creating a property.",
+      });
+      router.push('/admin/profile');
       return;
     }
 
-    // Validate all required fields
-    if (!data.title?.trim()) {
-      toast({ variant: "destructive", title: "Title Required", description: "Please enter a property title." });
-      return;
-    }
-    if (!data.description?.trim()) {
-      toast({ variant: "destructive", title: "Description Required", description: "Please enter a property description." });
-      return;
-    }
-    if (!data.price || data.price <= 0) {
-      toast({ variant: "destructive", title: "Price Required", description: "Please enter a valid price." });
-      return;
-    }
-    
     setIsSubmitting(true);
+    setIsUploadingImages(true);
+    toast({ title: "Saving property...", description: "Please wait." });
+
     try {
-      let imageUrls: string[] = property?.images || [];
-      if (imageFiles.length > 0) {
-        setIsUploadingImages(true);
-        const uploadPromises = imageFiles.map(async (file) => {
-          const fileName = `${user.id}/${Date.now()}-${file.name}`;
-          const { data: uploadData, error: uploadError } = await supabase.storage
-            .from("property-images")
-            .upload(fileName, file);
-
-          if (uploadError) {
-            throw new Error(`Image upload failed: ${uploadError.message}`);
-          }
-
-          const { data: publicUrlData } = supabase.storage
-            .from("property-images")
-            .getPublicUrl(uploadData.path);
-          return publicUrlData.publicUrl;
-        });
-
-        const uploadedUrls = await Promise.all(uploadPromises);
-        imageUrls = [...imageUrls, ...uploadedUrls];
-        setIsUploadingImages(false);
-      }
+      const uploadedImageUrls = await uploadImages(imageFiles);
+      const existingImageUrls = property?.images || [];
+      const allImageUrls = [...existingImageUrls, ...uploadedImageUrls];
+      setIsUploadingImages(false);
 
       const propertyData = {
         ...data,
         amenities: data.amenities.split(",").map((s) => s.trim()),
-        images: imageUrls,
-        user_id: user.id,
-        user_phone: user.phoneNumber,
-        user_name: user.name,
-        user_avatar: user.avatarUrl,
+        images: allImageUrls,
+        landlordId: user.uid,
+        agent: {
+          uid: user.uid,
+          displayName: user.displayName || 'Agent',
+          photoURL: user.photoURL || '',
+          phoneNumber: user.phoneNumber,
+          email: user.email,
+        },
+        updatedAt: new Date().toISOString(),
       };
 
       let result;
       if (property) {
+        // Update existing property
         result = await supabase
           .from("properties")
           .update(propertyData)
@@ -325,39 +306,62 @@ export function PropertyForm({ property }: PropertyFormProps) {
           .select()
           .single();
       } else {
+        // Create new property
         result = await supabase
           .from("properties")
-          .insert(propertyData)
+          .insert({ ...propertyData, createdAt: new Date().toISOString() })
           .select()
           .single();
       }
 
       const { data: resultData, error } = result;
 
-      if (error) {
-        throw new Error(error.message);
+      if (error) throw error;
+
+      if (isPromotionOpen && promotionWeeks > 0 && resultData) {
+        await handlePromotion(resultData.id);
       }
 
       toast({
         title: `Property ${property ? "Updated" : "Created"}`,
-        description: `Your property has been successfully ${property ? "updated" : "listed"}.`,
+        description: `Your property has been successfully ${property ? "updated" : "saved"}.`,
       });
-
       router.push(`/admin/properties`);
       router.refresh();
-
     } catch (error: any) {
-      console.error("Submission Error:", error);
+      console.error("Error saving property:", error);
       toast({
         variant: "destructive",
-        title: "Submission Failed",
-        description: error.message || "An unexpected error occurred. Please try again.",
+        title: "Operation Failed",
+        description: error.message || "Could not save the property. Please try again.",
       });
     } finally {
       setIsSubmitting(false);
       setIsUploadingImages(false);
     }
   }
+
+  const uploadImages = async (files: File[]) => {
+    if (files.length === 0) return [];
+
+    const uploadPromises = files.map(async (file) => {
+      const fileName = `${user?.uid}/${Date.now()}-${file.name}`;
+      const { data: uploadData, error: uploadError } = await supabase.storage
+        .from("property-images")
+        .upload(fileName, file);
+
+      if (uploadError) {
+        throw new Error(`Image upload failed: ${uploadError.message}`);
+      }
+
+      const { data: publicUrlData } = supabase.storage
+        .from("property-images")
+        .getPublicUrl(uploadData.path);
+      return publicUrlData.publicUrl;
+    });
+
+    return Promise.all(uploadPromises);
+  };
 
   const handleImageChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const files = event.target.files;
@@ -459,6 +463,72 @@ export function PropertyForm({ property }: PropertyFormProps) {
         });
     }
   }
+
+  const handlePromotion = async (propertyId: string) => {
+    if (!screenshotFile) {
+      toast({
+        variant: "destructive",
+        title: "No Screenshot",
+        description: "Please upload a screenshot of your payment to proceed.",
+      });
+      return;
+    }
+
+    try {
+      toast({ title: "Uploading...", description: "Sending payment screenshot to admin." });
+
+      const fileExt = screenshotFile.name.split('.').pop();
+      const fileName = `payment-${user?.uid}-${Date.now()}.${fileExt}`;
+      const filePath = `payment-screenshots/${fileName}`;
+
+      const { error: uploadError } = await supabase.storage
+        .from('user-uploads')
+        .upload(filePath, screenshotFile, { upsert: true });
+
+      if (uploadError) {
+        console.error('Upload error:', uploadError);
+        throw new Error(`Upload failed: ${uploadError.message}`);
+      }
+
+      const { data: { publicUrl } } = supabase.storage
+        .from('user-uploads')
+        .getPublicUrl(filePath);
+
+      const { error: insertError } = await supabase
+        .from('payment_requests')
+        .insert([{
+          propertyId: propertyId,
+          propertyTitle: form.getValues('title'),
+          userId: user?.uid,
+          userName: user?.displayName || user?.email,
+          userEmail: user?.email,
+          amount: promotionWeeks * weeklyRate,
+          paymentScreenshot: publicUrl,
+          status: 'pending',
+          promotionType: `Featured - ${promotionWeeks} week${promotionWeeks > 1 ? 's' : ''}`,
+          createdAt: new Date().toISOString()
+        }]);
+
+      if (insertError) {
+        console.error('Database error:', insertError);
+        throw new Error(`Database operation failed: ${insertError.message}`);
+      }
+
+      toast({
+        title: "Request Submitted!",
+        description: "Admin will review your payment and approve your promotion soon.",
+      });
+      
+      router.push('/admin/promotions');
+    } catch (error: any) {
+      console.error('Promotion request error:', error);
+      toast({
+        variant: "destructive",
+        title: "Submission Failed",
+        description: error.message || "Could not submit promotion request.",
+      });
+    }
+  };
 
   return (
     <Form {...form}>
