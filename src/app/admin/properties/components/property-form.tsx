@@ -280,13 +280,6 @@ export function PropertyForm({ property }: PropertyFormProps) {
                 amenities: data.amenities.split(",").map((s) => s.trim()),
                 images: allImageUrls,
                 landlordId: user.uid,
-                agent: {
-                    uid: user.uid,
-                    displayName: user.displayName || 'Agent',
-                    photoURL: user.photoURL || '',
-                    phoneNumber: user.phoneNumber,
-                    email: user.email,
-                },
                 updatedAt: new Date().toISOString(),
             };
 
