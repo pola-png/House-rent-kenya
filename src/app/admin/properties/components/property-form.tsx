@@ -300,21 +300,30 @@ export function PropertyForm({ property }: PropertyFormProps) {
 
         console.log('Property data to save:', propertyData);
         console.log('User ID:', user.uid);
-        console.log('Making database call...');
         
-        // Create timeout promise
-        const timeoutPromise = new Promise((_, reject) => {
-            setTimeout(() => reject(new Error('Database operation timed out after 30 seconds')), 30000);
-        });
+        // Create fresh Supabase client with current session
+        const { data: { session } } = await supabase.auth.getSession();
+        if (!session) {
+            throw new Error('No active session. Please refresh and try again.');
+        }
         
-        // Create insert promise
-        const insertPromise = property
-            ? supabase.from("properties").update(propertyData).eq("id", property.id).select()
-            : supabase.from("properties").insert(propertyData).select();
+        const freshClient = createClient(
+            process.env.NEXT_PUBLIC_SUPABASE_URL!,
+            process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+            {
+                global: {
+                    headers: {
+                        Authorization: `Bearer ${session.access_token}`
+                    }
+                }
+            }
+        );
         
-        console.log('Awaiting database response...');
-        const result: any = await Promise.race([insertPromise, timeoutPromise]);
-        const { data: resultData, error } = result;
+        console.log('Making database call with fresh client...');
+        
+        const { data: resultData, error } = property
+            ? await freshClient.from("properties").update(propertyData).eq("id", property.id).select()
+            : await freshClient.from("properties").insert(propertyData).select();
         
         console.log('Database response received:', { hasData: !!resultData, hasError: !!error });
 
