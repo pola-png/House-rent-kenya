@@ -28,11 +28,12 @@ export async function POST(request: NextRequest) {
       Key: path,
       Body: buffer,
       ContentType: file.type,
+      ACL: 'public-read',
     });
 
     await s3Client.send(command);
 
-    const publicUrl = `https://${process.env.NEXT_PUBLIC_WASABI_BUCKET}.s3.${process.env.NEXT_PUBLIC_WASABI_REGION}.wasabisys.com/${path}`;
+    const publicUrl = `https://${process.env.NEXT_PUBLIC_WASABI_BUCKET}.s3.${process.env.NEXT_PUBLIC_WASABI_REGION}.wasabisys.com/${encodeURIComponent(path)}`;
     return NextResponse.json({ url: publicUrl });
 
   } catch (error: any) {

@@ -26,6 +26,9 @@ export function OptimizedImage({
 }: OptimizedImageProps) {
   const [imageError, setImageError] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
+  
+  // Check if image is from Wasabi
+  const isWasabiImage = src.includes('wasabisys.com');
 
   // Fallback image for properties
   const fallbackSrc = "https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?w=800&h=600&fit=crop&crop=center";
@@ -80,7 +83,7 @@ export function OptimizedImage({
           priority={priority}
           sizes={sizes}
           quality={85}
-          unoptimized
+          unoptimized={isWasabiImage}
         />
       </>
     );
@@ -105,6 +108,7 @@ export function OptimizedImage({
         priority={priority}
         sizes={sizes}
         quality={85}
+        unoptimized={isWasabiImage}
       />
     </div>
   );
