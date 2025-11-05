@@ -38,7 +38,7 @@ import { useAuth } from "@/hooks/use-auth-supabase";
 import { supabase } from "@/lib/supabase";
 import { AISEOSimple } from "@/components/ai-seo-simple";
 import { generateWithAI } from "@/lib/ai-service";
-import { withValidSession } from "@/lib/session-utils";
+
 import { uploadToWasabi } from "@/lib/wasabi";
 
 
@@ -261,50 +261,48 @@ export function PropertyForm({ property }: PropertyFormProps) {
     toast({ title: "Saving property...", description: "Please wait." });
 
     try {
-        await withValidSession(async () => {
-            if (!user) {
-                throw new Error("You must be logged in.");
-            }
+        if (!user) {
+            throw new Error("You must be logged in.");
+        }
 
-            if (!user.phoneNumber) {
-                router.push('/admin/profile');
-                throw new Error("Please add your phone number to your profile before creating a property.");
-            }
+        if (!user.phoneNumber) {
+            router.push('/admin/profile');
+            throw new Error("Please add your phone number to your profile before creating a property.");
+        }
 
-            const uploadedImageUrls = await uploadImages(imageFiles);
-            const existingImageUrls = property?.images || [];
-            const allImageUrls = [...existingImageUrls, ...uploadedImageUrls];
-            setIsUploadingImages(false); // Set this to false after image upload
+        const uploadedImageUrls = await uploadImages(imageFiles);
+        const existingImageUrls = property?.images || [];
+        const allImageUrls = [...existingImageUrls, ...uploadedImageUrls];
+        setIsUploadingImages(false);
 
-            const propertyData = {
-                ...data,
-                amenities: data.amenities.split(",").map((s) => s.trim()),
-                images: allImageUrls,
-                landlordId: user.uid,
-                updatedAt: new Date().toISOString(),
-            };
+        const propertyData = {
+            ...data,
+            amenities: data.amenities.split(",").map((s) => s.trim()),
+            images: allImageUrls,
+            landlordId: user.uid,
+            updatedAt: new Date().toISOString(),
+        };
 
-            let result;
-            if (property) {
-                result = await supabase.from("properties").update(propertyData).eq("id", property.id).select().single();
-            } else {
-                result = await supabase.from("properties").insert({ ...propertyData, createdAt: new Date().toISOString() }).select().single();
-            }
+        let result;
+        if (property) {
+            result = await supabase.from("properties").update(propertyData).eq("id", property.id).select().single();
+        } else {
+            result = await supabase.from("properties").insert({ ...propertyData, createdAt: new Date().toISOString() }).select().single();
+        }
 
-            const { data: resultData, error } = result;
+        const { data: resultData, error } = result;
 
-            if (error) throw error;
+        if (error) throw error;
 
-            if (isPromotionOpen && promotionWeeks > 0 && resultData) {
-                await handlePromotion(resultData.id);
-            }
+        if (isPromotionOpen && promotionWeeks > 0 && resultData) {
+            await handlePromotion(resultData.id);
+        }
 
-            toast({
-                title: `Property ${property ? "Updated" : "Created"}`,
-                description: `Your property has been successfully ${property ? "updated" : "saved"}.`,
-            });
-            router.push(`/admin/properties`);
+        toast({
+            title: `Property ${property ? "Updated" : "Created"}`,
+            description: `Your property has been successfully ${property ? "updated" : "saved"}.`,
         });
+        router.push(`/admin/properties`);
     } catch (error: any) {
         console.error("Error saving property:", error);
         let description = "Could not save the property. Please try again.";
