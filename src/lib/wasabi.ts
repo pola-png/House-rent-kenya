@@ -1,32 +1,38 @@
 export const uploadToWasabi = async (file: File, path: string): Promise<string> => {
-  try {
-    console.log('Starting Wasabi upload:', { path, fileSize: file.size, fileType: file.type });
-    
-    const bucket = process.env.NEXT_PUBLIC_WASABI_BUCKET;
-    const region = process.env.NEXT_PUBLIC_WASABI_REGION;
-    const endpoint = `https://${bucket}.s3.${region}.wasabisys.com/${path}`;
-    
-    const response = await fetch(endpoint, {
-      method: 'PUT',
-      headers: {
-        'Content-Type': file.type,
-        'x-amz-acl': 'public-read'
-      },
-      body: file
-    });
-
-    if (!response.ok) {
-      throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+  return new Promise((resolve, reject) => {
+    try {
+      console.log('Starting Wasabi upload:', { path, fileSize: file.size, fileType: file.type });
+      
+      const bucket = process.env.NEXT_PUBLIC_WASABI_BUCKET;
+      const region = process.env.NEXT_PUBLIC_WASABI_REGION;
+      const endpoint = `https://${bucket}.s3.${region}.wasabisys.com/${path}`;
+      
+      const xhr = new XMLHttpRequest();
+      
+      xhr.onload = function() {
+        if (xhr.status >= 200 && xhr.status < 300) {
+          const publicUrl = `https://${bucket}.s3.${region}.wasabisys.com/${path}`;
+          console.log('Wasabi upload successful:', publicUrl);
+          resolve(publicUrl);
+        } else {
+          reject(new Error(`HTTP ${xhr.status}: ${xhr.statusText}`));
+        }
+      };
+      
+      xhr.onerror = function() {
+        reject(new Error('Network error during upload'));
+      };
+      
+      xhr.open('PUT', endpoint);
+      xhr.setRequestHeader('Content-Type', file.type);
+      xhr.setRequestHeader('x-amz-acl', 'public-read');
+      xhr.send(file);
+      
+    } catch (error: any) {
+      console.error('Wasabi upload failed:', error);
+      reject(new Error(`Wasabi upload failed: ${error.message}`));
     }
-
-    const publicUrl = `https://${bucket}.s3.${region}.wasabisys.com/${path}`;
-    console.log('Wasabi upload successful:', publicUrl);
-    
-    return publicUrl;
-  } catch (error: any) {
-    console.error('Wasabi upload failed:', error);
-    throw new Error(`Wasabi upload failed: ${error.message}`);
-  }
+  });
 };
 
 export const deleteFromWasabi = async (path: string): Promise<void> => {
