@@ -18,34 +18,24 @@ export const uploadToWasabi = async (file: File, path: string): Promise<string> 
   try {
     console.log('Starting Wasabi upload:', { path, fileSize: file.size, fileType: file.type });
     
-    // Add timeout wrapper
-    const uploadPromise = new Promise<string>(async (resolve, reject) => {
-      try {
-        const command = new PutObjectCommand({
-          Bucket: BUCKET_NAME,
-          Key: path,
-          Body: file,
-          ContentType: file.type,
-          ACL: 'public-read',
-        });
-
-        const result = await wasabiClient.send(command);
-        console.log('Wasabi upload successful:', result);
-        
-        const publicUrl = `${process.env.NEXT_PUBLIC_WASABI_ENDPOINT}/${BUCKET_NAME}/${path}`;
-        console.log('Generated public URL:', publicUrl);
-        
-        resolve(publicUrl);
-      } catch (error) {
-        reject(error);
-      }
+    // Convert File to ArrayBuffer to avoid getReader issues
+    const fileBuffer = await file.arrayBuffer();
+    
+    const command = new PutObjectCommand({
+      Bucket: BUCKET_NAME,
+      Key: path,
+      Body: new Uint8Array(fileBuffer),
+      ContentType: file.type,
+      ACL: 'public-read',
     });
 
-    const timeoutPromise = new Promise<never>((_, reject) => {
-      setTimeout(() => reject(new Error('Upload timeout after 30 seconds')), 30000);
-    });
-
-    return await Promise.race([uploadPromise, timeoutPromise]);
+    const result = await wasabiClient.send(command);
+    console.log('Wasabi upload successful:', result);
+    
+    const publicUrl = `${process.env.NEXT_PUBLIC_WASABI_ENDPOINT}/${BUCKET_NAME}/${path}`;
+    console.log('Generated public URL:', publicUrl);
+    
+    return publicUrl;
   } catch (error: any) {
     console.error('Wasabi upload failed:', error);
     throw new Error(`Wasabi upload failed: ${error.message || 'Unknown error'}`);

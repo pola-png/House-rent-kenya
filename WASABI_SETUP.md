@@ -40,7 +40,6 @@ For public read access, you can set a bucket policy:
     {
       "Sid": "PublicReadGetObject",
       "Effect": "Allow",
-      "Principal": "*",
       "Action": "s3:GetObject",
       "Resource": "arn:aws:s3:::house-rent-kenya/*"
     }
