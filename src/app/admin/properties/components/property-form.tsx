@@ -270,49 +270,91 @@ export function PropertyForm({ property }: PropertyFormProps) {
             throw new Error("Please add your phone number to your profile before creating a property.");
         }
 
+        console.log('Starting image upload...');
         const uploadedImageUrls = await uploadImages(imageFiles);
         const existingImageUrls = property?.images || [];
         const allImageUrls = [...existingImageUrls, ...uploadedImageUrls];
         setIsUploadingImages(false);
+        console.log('Images uploaded successfully:', allImageUrls);
 
         const propertyData = {
-            ...data,
+            title: data.title,
+            description: data.description,
+            price: data.price,
+            location: data.location,
+            city: data.city,
+            bedrooms: data.bedrooms,
+            bathrooms: data.bathrooms,
+            area: data.area,
+            propertyType: data.propertyType,
+            status: data.status,
             amenities: data.amenities.split(",").map((s) => s.trim()),
+            keywords: data.keywords || '',
+            featured: data.featured || false,
+            latitude: data.latitude || -1.286389,
+            longitude: data.longitude || 36.817223,
             images: allImageUrls,
             landlordId: user.uid,
             updatedAt: new Date().toISOString(),
         };
 
+        console.log('Property data to save:', propertyData);
+
         let result;
         if (property) {
             result = await supabase.from("properties").update(propertyData).eq("id", property.id).select().single();
         } else {
-            result = await supabase.from("properties").insert({ ...propertyData, createdAt: new Date().toISOString() }).select().single();
+            // For new properties, let the database handle createdAt with its default value
+            result = await supabase.from("properties").insert(propertyData).select().single();
         }
 
         const { data: resultData, error } = result;
+        console.log('Database result:', { resultData, error });
 
-        if (error) throw error;
-
-        if (isPromotionOpen && promotionWeeks > 0 && resultData) {
-            await handlePromotion(resultData.id);
+        if (error) {
+            console.error('Database error details:', error);
+            throw error;
         }
 
+        console.log('Property saved successfully, checking promotion...');
+        
+        if (isPromotionOpen && promotionWeeks > 0 && resultData) {
+            console.log('Processing promotion...');
+            try {
+                await handlePromotion(resultData.id);
+                console.log('Promotion processed successfully');
+            } catch (promotionError: any) {
+                console.error('Promotion error:', promotionError);
+                // Don't fail the entire submission for promotion errors
+                toast({
+                    variant: "destructive",
+                    title: "Property Saved, Promotion Failed",
+                    description: "Property was saved but promotion request failed. You can try again later.",
+                });
+            }
+        }
+
+        console.log('Showing success message and redirecting...');
         toast({
             title: `Property ${property ? "Updated" : "Created"}`,
             description: `Your property has been successfully ${property ? "updated" : "saved"}.`,
         });
-        router.push(`/admin/properties`);
+        
+        setTimeout(() => {
+            router.push(`/admin/properties`);
+        }, 1000);
     } catch (error: any) {
         console.error("Error saving property:", error);
         let description = "Could not save the property. Please try again.";
-        if (error.message === 'Invalid or expired session') {
+        if (error.message?.includes('Invalid or expired session')) {
             description = "Your session has expired. Please log in again.";
             router.push('/login');
         } else if (error.message === "Please add your phone number to your profile before creating a property.") {
             description = error.message;
         } else if (error.message === "You must be logged in.") {
             description = error.message;
+        } else if (error.message) {
+            description = `Database error: ${error.message}`;
         }
         
         toast({
@@ -331,12 +373,16 @@ export function PropertyForm({ property }: PropertyFormProps) {
   const uploadImages = async (files: File[]) => {
     if (files.length === 0) return [];
 
-    const uploadPromises = files.map(async (file) => {
+    console.log(`Uploading ${files.length} images...`);
+    const uploadPromises = files.map(async (file, index) => {
       const fileName = `properties/${user?.uid}/${Date.now()}-${file.name}`;
       try {
+        console.log(`Uploading image ${index + 1}:`, fileName);
         const publicUrl = await uploadToWasabi(file, fileName);
+        console.log(`Image ${index + 1} uploaded:`, publicUrl);
         return publicUrl;
       } catch (error: any) {
+        console.error(`Image ${index + 1} upload failed:`, error);
         throw new Error(`Image upload failed: ${error.message}`);
       }
     });
@@ -441,18 +487,15 @@ export function PropertyForm({ property }: PropertyFormProps) {
   }
 
   const handlePromotion = async (propertyId: string) => {
+    console.log('handlePromotion called with:', { propertyId, screenshotFile, promotionWeeks });
+    
     if (!screenshotFile) {
-      toast({
-        variant: "destructive",
-        title: "No Screenshot",
-        description: "Please upload a screenshot of your payment to proceed.",
-      });
-      return;
+      console.log('No screenshot file, skipping promotion');
+      return; // Don't throw error, just skip promotion
     }
 
     try {
-      toast({ title: "Uploading...", description: "Sending payment screenshot to admin." });
-
+      console.log('Starting promotion upload...');
       const fileExt = screenshotFile.name.split('.').pop();
       const fileName = `payment-${user?.uid}-${Date.now()}.${fileExt}`;
       const filePath = `payment-screenshots/${fileName}`;
@@ -460,44 +503,40 @@ export function PropertyForm({ property }: PropertyFormProps) {
       let publicUrl;
       try {
         publicUrl = await uploadToWasabi(screenshotFile, filePath);
+        console.log('Screenshot uploaded:', publicUrl);
       } catch (error: any) {
-        console.error('Upload error:', error);
+        console.error('Screenshot upload error:', error);
         throw new Error(`Upload failed: ${error.message}`);
       }
 
+      const promotionData = {
+        propertyId: propertyId,
+        propertyTitle: form.getValues('title'),
+        userId: user?.uid,
+        userName: user?.displayName || user?.email,
+        userEmail: user?.email,
+        amount: promotionWeeks * weeklyRate,
+        paymentScreenshot: publicUrl,
+        status: 'pending',
+        promotionType: `Featured - ${promotionWeeks} week${promotionWeeks > 1 ? 's' : ''}`,
+        createdAt: new Date().toISOString()
+      };
+      
+      console.log('Inserting promotion data:', promotionData);
+
       const { error: insertError } = await supabase
         .from('payment_requests')
-        .insert([{
-          propertyId: propertyId,
-          propertyTitle: form.getValues('title'),
-          userId: user?.uid,
-          userName: user?.displayName || user?.email,
-          userEmail: user?.email,
-          amount: promotionWeeks * weeklyRate,
-          paymentScreenshot: publicUrl,
-          status: 'pending',
-          promotionType: `Featured - ${promotionWeeks} week${promotionWeeks > 1 ? 's' : ''}`,
-          createdAt: new Date().toISOString()
-        }]);
+        .insert([promotionData]);
 
       if (insertError) {
-        console.error('Database error:', insertError);
+        console.error('Promotion database error:', insertError);
         throw new Error(`Database operation failed: ${insertError.message}`);
       }
 
-      toast({
-        title: "Request Submitted!",
-        description: "Admin will review your payment and approve your promotion soon.",
-      });
-      
-      router.push('/admin/promotions');
+      console.log('Promotion request saved successfully');
     } catch (error: any) {
       console.error('Promotion request error:', error);
-      toast({
-        variant: "destructive",
-        title: "Submission Failed",
-        description: error.message || "Could not submit promotion request.",
-      });
+      throw error; // Re-throw to be caught by caller
     }
   };
 
@@ -961,7 +1000,7 @@ export function PropertyForm({ property }: PropertyFormProps) {
           disabled={isSubmitting || isUploadingImages}
         >
             {(isSubmitting || isUploadingImages) && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-            {isUploadingImages ? "Uploading Images..." : isSubmitting ? "Submitting..." : property ? "Save Changes" : "Post My Property"}
+            {isUploadingImages ? "Uploading Images..." : isSubmitting ? "Saving Property..." : property ? "Save Changes" : "Post My Property"}
         </Button>
       </form>
     </Form>
