@@ -83,7 +83,7 @@ export function OptimizedImage({
           priority={priority}
           sizes={sizes}
           quality={85}
-          unoptimized={isWasabiImage}
+          unoptimized
         />
       </>
     );
@@ -108,7 +108,7 @@ export function OptimizedImage({
         priority={priority}
         sizes={sizes}
         quality={85}
-        unoptimized={isWasabiImage}
+        unoptimized
       />
     </div>
   );
