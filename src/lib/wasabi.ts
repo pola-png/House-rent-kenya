@@ -1,19 +1,31 @@
-// Temporary fallback to a simple mock upload until Wasabi is properly configured
 export const uploadToWasabi = async (file: File, path: string): Promise<string> => {
   try {
-    console.log('Mock upload:', { path, fileSize: file.size, fileType: file.type });
+    console.log('Starting Wasabi upload:', { path, fileSize: file.size, fileType: file.type });
     
-    // Simulate upload delay
-    await new Promise(resolve => setTimeout(resolve, 1000));
+    const bucket = process.env.NEXT_PUBLIC_WASABI_BUCKET;
+    const region = process.env.NEXT_PUBLIC_WASABI_REGION;
+    const endpoint = `https://${bucket}.s3.${region}.wasabisys.com/${path}`;
     
-    // Return a mock URL for now
-    const mockUrl = `https://mock-storage.example.com/${path}`;
-    console.log('Mock upload successful:', mockUrl);
+    const response = await fetch(endpoint, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': file.type,
+        'x-amz-acl': 'public-read'
+      },
+      body: file
+    });
+
+    if (!response.ok) {
+      throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+    }
+
+    const publicUrl = `https://${bucket}.s3.${region}.wasabisys.com/${path}`;
+    console.log('Wasabi upload successful:', publicUrl);
     
-    return mockUrl;
+    return publicUrl;
   } catch (error: any) {
-    console.error('Mock upload failed:', error);
-    throw new Error(`Upload failed: ${error.message || 'Unknown error'}`);
+    console.error('Wasabi upload failed:', error);
+    throw new Error(`Wasabi upload failed: ${error.message}`);
   }
 };
 
