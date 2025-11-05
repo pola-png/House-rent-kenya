@@ -20,7 +20,7 @@ import mockMessagesData from "@/lib/docs/messages.json";
 
 export default function MessagesPage() {
   const searchParams = useSearchParams();
-  const initialTicketId = searchParams.get('ticket');
+  const initialTicketId = searchParams?.get('ticket') ?? null;
   
   const [selectedTicketId, setSelectedTicketId] = React.useState<string | null>(null);
   const [newMessage, setNewMessage] = React.useState("");
