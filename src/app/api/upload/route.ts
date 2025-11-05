@@ -1,4 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { S3Client, PutObjectCommand } from '@aws-sdk/client-s3';
+
+const s3Client = new S3Client({
+  region: process.env.NEXT_PUBLIC_WASABI_REGION!,
+  endpoint: `https://s3.${process.env.NEXT_PUBLIC_WASABI_REGION}.wasabisys.com`,
+  credentials: {
+    accessKeyId: process.env.WASABI_ACCESS_KEY_ID!,
+    secretAccessKey: process.env.WASABI_SECRET_ACCESS_KEY!,
+  },
+});
 
 export async function POST(request: NextRequest) {
   try {
@@ -10,30 +20,19 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'File and path are required' }, { status: 400 });
     }
 
-    // Convert file to buffer for server-side upload
     const bytes = await file.arrayBuffer();
     const buffer = Buffer.from(bytes);
 
-    // Create the Wasabi URL
-    const bucket = process.env.NEXT_PUBLIC_WASABI_BUCKET;
-    const region = process.env.NEXT_PUBLIC_WASABI_REGION;
-    const endpoint = `https://${bucket}.s3.${region}.wasabisys.com/${path}`;
-
-    // Upload to Wasabi using fetch with proper headers
-    const response = await fetch(endpoint, {
-      method: 'PUT',
-      headers: {
-        'Content-Type': file.type,
-        'Content-Length': buffer.length.toString(),
-      },
-      body: buffer,
+    const command = new PutObjectCommand({
+      Bucket: process.env.NEXT_PUBLIC_WASABI_BUCKET!,
+      Key: path,
+      Body: buffer,
+      ContentType: file.type,
     });
 
-    if (!response.ok) {
-      throw new Error(`Wasabi upload failed: ${response.status} ${response.statusText}`);
-    }
+    await s3Client.send(command);
 
-    const publicUrl = `https://${bucket}.s3.${region}.wasabisys.com/${path}`;
+    const publicUrl = `https://${process.env.NEXT_PUBLIC_WASABI_BUCKET}.s3.${process.env.NEXT_PUBLIC_WASABI_REGION}.wasabisys.com/${path}`;
     return NextResponse.json({ url: publicUrl });
 
   } catch (error: any) {
