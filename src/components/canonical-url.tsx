@@ -15,7 +15,7 @@ export function CanonicalUrl() {
     }
 
     // Create canonical URL by removing low-value parameters
-    const params = new URLSearchParams(searchParams);
+    const params = new URLSearchParams(searchParams ?? '');
     
     // Keep only high-value parameters for canonical URL
     const keepParams = ['q', 'type', 'property_type', 'beds', 'city'];
