@@ -277,7 +277,7 @@ export function PropertyForm({ property }: PropertyFormProps) {
         setIsUploadingImages(false);
         console.log('Images uploaded successfully:', allImageUrls);
 
-        const propertyData = {
+        const propertyData: any = {
             title: data.title,
             description: data.description,
             price: data.price,
@@ -295,7 +295,6 @@ export function PropertyForm({ property }: PropertyFormProps) {
             longitude: data.longitude || 36.817223,
             images: allImageUrls,
             landlordId: user.uid,
-            updatedAt: new Date().toISOString(),
         };
 
         console.log('Property data to save:', propertyData);
