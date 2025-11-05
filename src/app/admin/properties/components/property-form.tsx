@@ -301,10 +301,13 @@ export function PropertyForm({ property }: PropertyFormProps) {
 
         let result;
         try {
+            console.log('Making Supabase call...');
             if (property) {
-                result = await supabase.from("properties").update(propertyData).eq("id", property.id).select().single();
+                console.log('Updating property:', property.id);
+                result = await supabase.from("properties").update(propertyData).eq("id", property.id).select();
             } else {
-                result = await supabase.from("properties").insert(propertyData).select().single();
+                console.log('Inserting new property...');
+                result = await supabase.from("properties").insert([propertyData]).select();
             }
             console.log('Supabase call completed:', result);
         } catch (dbError: any) {
@@ -314,23 +317,30 @@ export function PropertyForm({ property }: PropertyFormProps) {
 
         const { data: resultData, error } = result;
         console.log('Database result:', { resultData, error });
+        
+        if (!result) {
+            console.error('No result from Supabase');
+            throw new Error('Database connection failed. Please check your internet connection.');
+        }
 
         if (error) {
             console.error('Database error details:', JSON.stringify(error, null, 2));
             throw new Error(`Database error: ${error.message || JSON.stringify(error)}`);
         }
 
-        if (!resultData) {
+        const savedProperty = Array.isArray(resultData) ? resultData[0] : resultData;
+        
+        if (!savedProperty) {
             console.error('No data returned from database');
             throw new Error('Property was not saved. Please try again.');
         }
 
-        console.log('Property saved successfully, checking promotion...');
+        console.log('Property saved successfully:', savedProperty);
         
-        if (isPromotionOpen && promotionWeeks > 0 && resultData) {
+        if (isPromotionOpen && promotionWeeks > 0 && savedProperty) {
             console.log('Processing promotion...');
             try {
-                await handlePromotion(resultData.id);
+                await handlePromotion(savedProperty.id);
                 console.log('Promotion processed successfully');
             } catch (promotionError: any) {
                 console.error('Promotion error:', promotionError);
