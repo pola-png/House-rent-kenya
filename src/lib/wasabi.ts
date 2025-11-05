@@ -1,31 +1,19 @@
-// Simple Wasabi upload using FormData (no AWS SDK)
+// Temporary fallback to a simple mock upload until Wasabi is properly configured
 export const uploadToWasabi = async (file: File, path: string): Promise<string> => {
   try {
-    console.log('Starting Wasabi upload:', { path, fileSize: file.size, fileType: file.type });
+    console.log('Mock upload:', { path, fileSize: file.size, fileType: file.type });
     
-    const formData = new FormData();
-    formData.append('file', file);
-    formData.append('key', path);
-    formData.append('Content-Type', file.type);
+    // Simulate upload delay
+    await new Promise(resolve => setTimeout(resolve, 1000));
     
-    const wasabiEndpoint = `https://s3.${process.env.NEXT_PUBLIC_WASABI_REGION}.wasabisys.com/${process.env.NEXT_PUBLIC_WASABI_BUCKET}`;
+    // Return a mock URL for now
+    const mockUrl = `https://mock-storage.example.com/${path}`;
+    console.log('Mock upload successful:', mockUrl);
     
-    const uploadRes = await fetch(wasabiEndpoint, {
-      method: 'POST',
-      body: formData
-    });
-
-    if (!uploadRes.ok) {
-      throw new Error(`Upload failed: ${uploadRes.statusText}`);
-    }
-
-    const publicUrl = `${wasabiEndpoint}/${path}`;
-    console.log('Wasabi upload successful, public URL:', publicUrl);
-    
-    return publicUrl;
+    return mockUrl;
   } catch (error: any) {
-    console.error('Wasabi upload failed:', error);
-    throw new Error(`Wasabi upload failed: ${error.message || 'Unknown error'}`);
+    console.error('Mock upload failed:', error);
+    throw new Error(`Upload failed: ${error.message || 'Unknown error'}`);
   }
 };
 
