@@ -300,32 +300,16 @@ export function PropertyForm({ property }: PropertyFormProps) {
 
         console.log('Property data to save:', propertyData);
         console.log('User ID:', user.uid);
+        console.log('Attempting database insert...');
         
-        // Create fresh Supabase client with current session
-        const { data: { session } } = await supabase.auth.getSession();
-        if (!session) {
-            throw new Error('No active session. Please refresh and try again.');
-        }
+        // Direct insert using existing supabase client
+        const result = property
+            ? await supabase.from("properties").update(propertyData).eq("id", property.id).select().throwOnError()
+            : await supabase.from("properties").insert(propertyData).select().throwOnError();
         
-        const freshClient = createClient(
-            process.env.NEXT_PUBLIC_SUPABASE_URL!,
-            process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-            {
-                global: {
-                    headers: {
-                        Authorization: `Bearer ${session.access_token}`
-                    }
-                }
-            }
-        );
-        
-        console.log('Making database call with fresh client...');
-        
-        const { data: resultData, error } = property
-            ? await freshClient.from("properties").update(propertyData).eq("id", property.id).select()
-            : await freshClient.from("properties").insert(propertyData).select();
-        
-        console.log('Database response received:', { hasData: !!resultData, hasError: !!error });
+        console.log('Raw result:', result);
+        const { data: resultData, error } = result;
+        console.log('Database response:', { hasData: !!resultData, hasError: !!error });
 
         if (error) {
             console.error('Database error:', error);
