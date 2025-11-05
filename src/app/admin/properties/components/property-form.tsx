@@ -277,57 +277,38 @@ export function PropertyForm({ property }: PropertyFormProps) {
         setIsUploadingImages(false);
         console.log('Images uploaded successfully:', allImageUrls);
 
-        const propertyData: any = {
+        const propertyData = {
             title: data.title,
             description: data.description,
             price: data.price,
-            location: data.location,
-            city: data.city,
+            propertyType: data.propertyType,
             bedrooms: data.bedrooms,
             bathrooms: data.bathrooms,
             area: data.area,
-            status: data.status,
-            amenities: data.amenities.split(",").map((s) => s.trim()),
-            keywords: data.keywords || '',
-            featured: data.featured || false,
+            location: data.location,
+            city: data.city,
             latitude: data.latitude || -1.286389,
             longitude: data.longitude || 36.817223,
             images: allImageUrls,
+            amenities: data.amenities.split(",").map((s) => s.trim()),
+            landlordId: user.uid,
+            status: data.status,
+            featured: data.featured || false,
+            keywords: data.keywords || '',
         };
-        
-        // Add quoted column names for case-sensitive PostgreSQL columns
-        propertyData['propertyType'] = data.propertyType;
-        propertyData['landlordId'] = user.uid;
 
         console.log('Property data to save:', propertyData);
+        console.log('Making Supabase call...');
 
-        let result;
-        try {
-            console.log('Making Supabase call...');
-            if (property) {
-                console.log('Updating property:', property.id);
-                result = await supabase.from("properties").update(propertyData).eq("id", property.id).select();
-            } else {
-                console.log('Inserting new property...');
-                result = await supabase.from("properties").insert([propertyData]).select();
-            }
-            console.log('Supabase call completed:', result);
-        } catch (dbError: any) {
-            console.error('Supabase call failed:', dbError);
-            throw new Error(`Database call failed: ${dbError.message}`);
-        }
+        const { data: resultData, error } = property
+            ? await supabase.from("properties").update(propertyData).eq("id", property.id).select()
+            : await supabase.from("properties").insert([propertyData]).select();
 
-        const { data: resultData, error } = result;
-        console.log('Database result:', { resultData, error });
-        
-        if (!result) {
-            console.error('No result from Supabase');
-            throw new Error('Database connection failed. Please check your internet connection.');
-        }
+        console.log('Supabase call completed:', { resultData, error });
 
         if (error) {
-            console.error('Database error details:', JSON.stringify(error, null, 2));
-            throw new Error(`Database error: ${error.message || JSON.stringify(error)}`);
+            console.error('Database error:', error);
+            throw new Error(`Database error: ${error.message || error.details || 'Unknown error'}`);
         }
 
         const savedProperty = Array.isArray(resultData) ? resultData[0] : resultData;
