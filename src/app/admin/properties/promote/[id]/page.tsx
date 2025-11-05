@@ -27,17 +27,17 @@ export default function PromotePropertyPage() {
   const weeklyRate = 5;
 
   useEffect(() => {
-    if (user && params.id) {
+    if (user && params?.id) {
       fetchProperty();
     }
-  }, [user, params.id]);
+  }, [user, params?.id]);
 
   const fetchProperty = async () => {
     try {
       const { data, error } = await supabase
         .from('properties')
         .select('*')
-        .eq('id', params.id)
+        .eq('id', params?.id)
         .eq('landlordId', user?.uid)
         .single();
 
