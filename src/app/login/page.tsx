@@ -28,7 +28,7 @@ function LoginForm() {
   const bgImage = placeholderImages.placeholderImages.find(img => img.id === 'auth_bg');
   const router = useRouter();
   const searchParams = useSearchParams();
-  const redirect = searchParams.get('redirect') || '/admin/dashboard';
+  const redirect = searchParams?.get('redirect') || '/admin/dashboard';
   const { toast } = useToast();
   const { login, loginWithGoogle } = useAuth();
   const [isLoading, setIsLoading] = useState(false);
