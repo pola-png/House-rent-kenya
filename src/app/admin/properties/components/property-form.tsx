@@ -299,14 +299,21 @@ export function PropertyForm({ property }: PropertyFormProps) {
 
         console.log('Property data to save:', propertyData);
         console.log('User ID:', user.uid);
-        console.log('Making Supabase call...', property ? 'UPDATE' : 'INSERT');
-
-        const query = property
-            ? supabase.from("properties").update(propertyData).eq("id", property.id).select()
-            : supabase.from("properties").insert([propertyData]).select();
         
-        console.log('Query created, awaiting response...');
-        const { data: resultData, error } = await query;
+        // Get current session to ensure authenticated request
+        const { data: { session } } = await supabase.auth.getSession();
+        console.log('Session check:', session ? 'Active' : 'No session');
+        
+        if (!session) {
+            throw new Error('No active session. Please log in again.');
+        }
+        
+        console.log('Making Supabase call...', property ? 'UPDATE' : 'INSERT');
+        
+        const { data: resultData, error } = property
+            ? await supabase.from("properties").update(propertyData).eq("id", property.id).select()
+            : await supabase.from("properties").insert([propertyData]).select();
+        
         console.log('Supabase call completed:', { resultData, error });
 
         if (error) {
