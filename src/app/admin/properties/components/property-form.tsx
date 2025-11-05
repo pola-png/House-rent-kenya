@@ -418,7 +418,8 @@ export function PropertyForm({ property }: PropertyFormProps) {
 
     console.log(`Uploading ${files.length} images...`);
     const uploadPromises = files.map(async (file, index) => {
-      const fileName = `properties/${user?.uid}/${Date.now()}-${file.name}`;
+      const sanitizedName = file.name.replace(/[^a-zA-Z0-9.-]/g, '-');
+      const fileName = `properties/${user?.uid}/${Date.now()}-${sanitizedName}`;
       try {
         console.log(`Uploading image ${index + 1}:`, fileName);
         const publicUrl = await uploadToWasabi(file, fileName);
