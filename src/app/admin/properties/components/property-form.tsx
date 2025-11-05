@@ -300,19 +300,29 @@ export function PropertyForm({ property }: PropertyFormProps) {
         console.log('Property data to save:', propertyData);
 
         let result;
-        if (property) {
-            result = await supabase.from("properties").update(propertyData).eq("id", property.id).select().single();
-        } else {
-            // For new properties, let the database handle createdAt with its default value
-            result = await supabase.from("properties").insert(propertyData).select().single();
+        try {
+            if (property) {
+                result = await supabase.from("properties").update(propertyData).eq("id", property.id).select().single();
+            } else {
+                result = await supabase.from("properties").insert(propertyData).select().single();
+            }
+            console.log('Supabase call completed:', result);
+        } catch (dbError: any) {
+            console.error('Supabase call failed:', dbError);
+            throw new Error(`Database call failed: ${dbError.message}`);
         }
 
         const { data: resultData, error } = result;
         console.log('Database result:', { resultData, error });
 
         if (error) {
-            console.error('Database error details:', error);
-            throw error;
+            console.error('Database error details:', JSON.stringify(error, null, 2));
+            throw new Error(`Database error: ${error.message || JSON.stringify(error)}`);
+        }
+
+        if (!resultData) {
+            console.error('No data returned from database');
+            throw new Error('Property was not saved. Please try again.');
         }
 
         console.log('Property saved successfully, checking promotion...');
