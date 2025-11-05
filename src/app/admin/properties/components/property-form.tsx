@@ -303,18 +303,11 @@ export function PropertyForm({ property }: PropertyFormProps) {
         console.log('Attempting database insert...');
         
         // Direct insert using existing supabase client
-        const result = property
+        const { data: resultData } = property
             ? await supabase.from("properties").update(propertyData).eq("id", property.id).select().throwOnError()
             : await supabase.from("properties").insert(propertyData).select().throwOnError();
         
-        console.log('Raw result:', result);
-        const { data: resultData, error } = result;
-        console.log('Database response:', { hasData: !!resultData, hasError: !!error });
-
-        if (error) {
-            console.error('Database error:', error);
-            throw new Error(`Database error: ${error.message || error.details || 'Unknown error'}`);
-        }
+        console.log('Database response received:', { hasData: !!resultData });
 
         const savedProperty = Array.isArray(resultData) ? resultData[0] : resultData;
         
