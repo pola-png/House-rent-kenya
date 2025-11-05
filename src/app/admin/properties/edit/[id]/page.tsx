@@ -23,17 +23,17 @@ export default function EditPropertyPage() {
       return;
     }
 
-    if (user && params.id) {
+    if (user && params?.id) {
       fetchProperty();
     }
-  }, [user, authLoading, params.id, router]);
+  }, [user, authLoading, params?.id, router]);
 
   const fetchProperty = async () => {
     try {
       const { data, error } = await supabase
         .from('properties')
         .select('*')
-        .eq('id', params.id)
+        .eq('id', params?.id)
         .eq('landlordId', user?.uid)
         .single();
 
