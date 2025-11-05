@@ -27,7 +27,7 @@ export function OptimizedImage({
   const [imageError, setImageError] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   
-  // Check if image is from Wasabi
+  // Check if image is from Wasabi - use regular img tag
   const isWasabiImage = src.includes('wasabisys.com');
 
   // Fallback image for properties
@@ -68,6 +68,22 @@ export function OptimizedImage({
   const optimizedAlt = generateAltText(alt, src);
 
   if (fill) {
+    if (isWasabiImage) {
+      return (
+        <>
+          {isLoading && (
+            <div className="absolute inset-0 bg-muted animate-pulse" />
+          )}
+          <img
+            src={imageError ? fallbackSrc : src}
+            alt={optimizedAlt}
+            className={`${className} transition-opacity duration-300 ${isLoading ? 'opacity-0' : 'opacity-100'} absolute inset-0 w-full h-full object-cover`}
+            onError={handleError}
+            onLoad={handleLoad}
+          />
+        </>
+      );
+    }
     return (
       <>
         {isLoading && (
@@ -89,6 +105,28 @@ export function OptimizedImage({
     );
   }
 
+  if (isWasabiImage) {
+    return (
+      <div className={`relative overflow-hidden ${className}`} style={{ width, height }}>
+        {isLoading && (
+          <div 
+            className="absolute inset-0 bg-muted animate-pulse" 
+            style={{ width, height }}
+          />
+        )}
+        <img
+          src={imageError ? fallbackSrc : src}
+          alt={optimizedAlt}
+          width={width}
+          height={height}
+          className={`transition-opacity duration-300 ${isLoading ? 'opacity-0' : 'opacity-100'}`}
+          onError={handleError}
+          onLoad={handleLoad}
+        />
+      </div>
+    );
+  }
+  
   return (
     <div className={`relative overflow-hidden ${className}`} style={{ width, height }}>
       {isLoading && (
