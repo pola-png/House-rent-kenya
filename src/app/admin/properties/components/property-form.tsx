@@ -300,13 +300,32 @@ export function PropertyForm({ property }: PropertyFormProps) {
 
         console.log('Property data to save:', propertyData);
         console.log('User ID:', user.uid);
-        console.log('Attempting database insert...');
+        console.log('Using REST API for insert...');
         
-        // Direct insert using existing supabase client
-        const { data: resultData } = property
-            ? await supabase.from("properties").update(propertyData).eq("id", property.id).select().throwOnError()
-            : await supabase.from("properties").insert(propertyData).select().throwOnError();
+        // Use REST API directly to bypass hanging Supabase client
+        const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+        const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
         
+        const response = await fetch(`${supabaseUrl}/rest/v1/properties`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'apikey': supabaseKey!,
+                'Authorization': `Bearer ${supabaseKey}`,
+                'Prefer': 'return=representation'
+            },
+            body: JSON.stringify(propertyData)
+        });
+        
+        console.log('REST API response status:', response.status);
+        
+        if (!response.ok) {
+            const errorText = await response.text();
+            console.error('REST API error:', errorText);
+            throw new Error(`Database error: ${errorText}`);
+        }
+        
+        const resultData = await response.json();
         console.log('Database response received:', { hasData: !!resultData });
 
         const savedProperty = Array.isArray(resultData) ? resultData[0] : resultData;
