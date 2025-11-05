@@ -7,9 +7,7 @@ const wasabiClient = new S3Client({
     accessKeyId: process.env.NEXT_PUBLIC_WASABI_ACCESS_KEY || '',
     secretAccessKey: process.env.NEXT_PUBLIC_WASABI_SECRET_KEY || '',
   },
-  requestHandler: {
-    requestTimeout: 30000, // 30 seconds timeout
-  },
+  forcePathStyle: true,
 });
 
 const BUCKET_NAME = process.env.NEXT_PUBLIC_WASABI_BUCKET || 'house-rent-kenya';
@@ -18,21 +16,20 @@ export const uploadToWasabi = async (file: File, path: string): Promise<string> 
   try {
     console.log('Starting Wasabi upload:', { path, fileSize: file.size, fileType: file.type });
     
-    // Convert File to Buffer for compatibility
-    const arrayBuffer = await file.arrayBuffer();
-    const buffer = Buffer.from(arrayBuffer);
-    
     const command = new PutObjectCommand({
       Bucket: BUCKET_NAME,
       Key: path,
-      Body: buffer,
+      Body: file,
       ContentType: file.type,
+      Metadata: {
+        'Content-Type': file.type,
+      },
     });
 
     const result = await wasabiClient.send(command);
     console.log('Wasabi upload successful:', result);
     
-    const publicUrl = `https://${BUCKET_NAME}.s3.wasabisys.com/${path}`;
+    const publicUrl = `https://s3.wasabisys.com/${BUCKET_NAME}/${path}`;
     console.log('Generated public URL:', publicUrl);
     
     return publicUrl;
