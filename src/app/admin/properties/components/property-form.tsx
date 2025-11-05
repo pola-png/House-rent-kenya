@@ -328,16 +328,7 @@ export function PropertyForm({ property }: PropertyFormProps) {
     }
   }
 
-  const { user, loading: isAuthLoading } = useAuth();
 
-        <Button 
-          type="submit"
-          size="lg" 
-          disabled={isAuthLoading || isSubmitting || isUploadingImages}
-        >
-            {(isSubmitting || isUploadingImages) && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-            {isAuthLoading ? "Loading user..." : isUploadingImages ? "Uploading Images..." : isSubmitting ? "Submitting..." : property ? "Save Changes" : "Post My Property"}
-        </Button>
 
   const uploadImages = async (files: File[]) => {
     if (files.length === 0) return [];
