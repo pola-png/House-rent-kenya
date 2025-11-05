@@ -10,8 +10,12 @@ import { Button } from "@/components/ui/button";
 import { ArrowLeft } from "lucide-react";
 import Link from "next/link";
 
+interface PageProps {
+  params: { id: string };
+}
+
 export default function EditPropertyPage() {
-  const params = useParams();
+  const params = useParams<{ id: string }>();
   const router = useRouter();
   const { user, loading: authLoading } = useAuth();
   const [property, setProperty] = useState<any>(null);
