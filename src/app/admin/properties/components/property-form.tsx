@@ -286,7 +286,6 @@ export function PropertyForm({ property }: PropertyFormProps) {
             bedrooms: data.bedrooms,
             bathrooms: data.bathrooms,
             area: data.area,
-            propertyType: data.propertyType,
             status: data.status,
             amenities: data.amenities.split(",").map((s) => s.trim()),
             keywords: data.keywords || '',
@@ -294,8 +293,11 @@ export function PropertyForm({ property }: PropertyFormProps) {
             latitude: data.latitude || -1.286389,
             longitude: data.longitude || 36.817223,
             images: allImageUrls,
-            landlordId: user.uid,
         };
+        
+        // Add quoted column names for case-sensitive PostgreSQL columns
+        propertyData['propertyType'] = data.propertyType;
+        propertyData['landlordId'] = user.uid;
 
         console.log('Property data to save:', propertyData);
 
