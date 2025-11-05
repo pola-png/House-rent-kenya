@@ -33,17 +33,17 @@ function SearchContent() {
   const fetchProperties = async () => {
     setIsLoading(true);
     try {
-      const q = searchParams.get('q')?.toLowerCase();
-      const listingType = searchParams.get('type');
-      const propertyTypes = searchParams.getAll('property_type');
-      const homePropertyType = searchParams.get('property_type');
+      const q = searchParams?.get('q')?.toLowerCase();
+      const listingType = searchParams?.get('type');
+      const propertyTypes = searchParams?.getAll('property_type') ?? [];
+      const homePropertyType = searchParams?.get('property_type');
       const allPropertyTypes = [...propertyTypes];
       if (homePropertyType) allPropertyTypes.push(homePropertyType);
-      const minPrice = searchParams.get('min_price');
-      const maxPrice = searchParams.get('max_price');
-      const beds = searchParams.get('beds');
-      const baths = searchParams.get('baths');
-      const amenities = searchParams.getAll('amenities');
+      const minPrice = searchParams?.get('min_price');
+      const maxPrice = searchParams?.get('max_price');
+      const beds = searchParams?.get('beds');
+      const baths = searchParams?.get('baths');
+      const amenities = searchParams?.getAll('amenities') ?? [];
 
       let query = supabase.from('properties').select('*');
 
