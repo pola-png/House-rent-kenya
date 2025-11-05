@@ -1,36 +1,20 @@
-import { S3Client, PutObjectCommand, DeleteObjectCommand } from '@aws-sdk/client-s3';
-
-const wasabiClient = new S3Client({
-  endpoint: process.env.NEXT_PUBLIC_WASABI_ENDPOINT || 'https://s3.wasabisys.com',
-  region: process.env.NEXT_PUBLIC_WASABI_REGION || 'us-east-1',
-  credentials: {
-    accessKeyId: process.env.NEXT_PUBLIC_WASABI_ACCESS_KEY || '',
-    secretAccessKey: process.env.NEXT_PUBLIC_WASABI_SECRET_KEY || '',
-  },
-  forcePathStyle: true,
-});
-
-const BUCKET_NAME = process.env.NEXT_PUBLIC_WASABI_BUCKET || 'house-rent-kenya';
-
 export const uploadToWasabi = async (file: File, path: string): Promise<string> => {
   try {
     console.log('Starting Wasabi upload:', { path, fileSize: file.size, fileType: file.type });
     
-    const command = new PutObjectCommand({
-      Bucket: BUCKET_NAME,
-      Key: path,
-      Body: file,
-      ContentType: file.type,
-      Metadata: {
-        'Content-Type': file.type,
-      },
+    // Get signed URL from API
+    const res = await fetch(`/api/sign-upload?fileName=${path}&fileType=${file.type}`);
+    const { uploadURL } = await res.json();
+
+    // Upload directly to Wasabi
+    await fetch(uploadURL, {
+      method: 'PUT',
+      headers: { 'Content-Type': file.type },
+      body: file
     });
 
-    const result = await wasabiClient.send(command);
-    console.log('Wasabi upload successful:', result);
-    
-    const publicUrl = `https://s3.wasabisys.com/${BUCKET_NAME}/${path}`;
-    console.log('Generated public URL:', publicUrl);
+    const publicUrl = uploadURL.split('?')[0]; // Remove query params
+    console.log('Wasabi upload successful, public URL:', publicUrl);
     
     return publicUrl;
   } catch (error: any) {
@@ -40,10 +24,6 @@ export const uploadToWasabi = async (file: File, path: string): Promise<string> 
 };
 
 export const deleteFromWasabi = async (path: string): Promise<void> => {
-  const command = new DeleteObjectCommand({
-    Bucket: BUCKET_NAME,
-    Key: path,
-  });
-
-  await wasabiClient.send(command);
+  // Implement delete if needed
+  console.log('Delete not implemented yet for:', path);
 };
