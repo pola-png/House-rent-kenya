@@ -27,8 +27,18 @@ export function OptimizedImage({
   const [imageError, setImageError] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   
-  // Check if image is from Wasabi - use regular img tag
+  // Check if image is from Wasabi - use proxy
   const isWasabiImage = src.includes('wasabisys.com');
+  
+  // Convert Wasabi URL to proxy URL
+  const getProxiedUrl = (url: string) => {
+    if (!isWasabiImage) return url;
+    const path = url.split('.com/')[1];
+    return `/api/image-proxy?path=${encodeURIComponent(path)}`;
+  };
+  
+  const displaySrc = getProxiedUrl(src);
+  const displayFallback = fallbackSrc;
 
   // Fallback image for properties
   const fallbackSrc = "https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?w=800&h=600&fit=crop&crop=center";
@@ -75,7 +85,7 @@ export function OptimizedImage({
             <div className="absolute inset-0 bg-muted animate-pulse" />
           )}
           <img
-            src={imageError ? fallbackSrc : src}
+            src={imageError ? displayFallback : displaySrc}
             alt={optimizedAlt}
             className={`${className} transition-opacity duration-300 ${isLoading ? 'opacity-0' : 'opacity-100'} absolute inset-0 w-full h-full object-cover`}
             onError={handleError}
@@ -90,7 +100,7 @@ export function OptimizedImage({
           <div className="absolute inset-0 bg-muted animate-pulse" />
         )}
         <Image
-          src={imageError ? fallbackSrc : src}
+          src={imageError ? displayFallback : displaySrc}
           alt={optimizedAlt}
           fill
           className={`${className} transition-opacity duration-300 ${isLoading ? 'opacity-0' : 'opacity-100'}`}
@@ -115,7 +125,7 @@ export function OptimizedImage({
           />
         )}
         <img
-          src={imageError ? fallbackSrc : src}
+          src={imageError ? displayFallback : displaySrc}
           alt={optimizedAlt}
           width={width}
           height={height}
@@ -136,7 +146,7 @@ export function OptimizedImage({
         />
       )}
       <Image
-        src={imageError ? fallbackSrc : src}
+        src={imageError ? displayFallback : displaySrc}
         alt={optimizedAlt}
         width={width}
         height={height}
