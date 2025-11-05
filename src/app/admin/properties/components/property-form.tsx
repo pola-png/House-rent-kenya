@@ -36,6 +36,7 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/component
 import { Separator } from "@/components/ui/separator";
 import { useAuth } from "@/hooks/use-auth-supabase";
 import { supabase } from "@/lib/supabase";
+import { createClient } from '@supabase/supabase-js';
 import { AISEOSimple } from "@/components/ai-seo-simple";
 import { generateWithAI } from "@/lib/ai-service";
 
@@ -299,22 +300,28 @@ export function PropertyForm({ property }: PropertyFormProps) {
 
         console.log('Property data to save:', propertyData);
         console.log('User ID:', user.uid);
+        console.log('Making direct insert call...');
         
-        // Get current session to ensure authenticated request
-        const { data: { session } } = await supabase.auth.getSession();
-        console.log('Session check:', session ? 'Active' : 'No session');
+        // Use direct insert without session check to avoid hanging
+        let resultData, error;
         
-        if (!session) {
-            throw new Error('No active session. Please log in again.');
+        try {
+            if (property) {
+                const result = await supabase.from("properties").update(propertyData).eq("id", property.id).select();
+                resultData = result.data;
+                error = result.error;
+            } else {
+                const result = await supabase.from("properties").insert([propertyData]).select();
+                resultData = result.data;
+                error = result.error;
+            }
+            console.log('Database operation completed');
+        } catch (dbErr: any) {
+            console.error('Database operation threw error:', dbErr);
+            throw new Error(`Database operation failed: ${dbErr.message}`);
         }
         
-        console.log('Making Supabase call...', property ? 'UPDATE' : 'INSERT');
-        
-        const { data: resultData, error } = property
-            ? await supabase.from("properties").update(propertyData).eq("id", property.id).select()
-            : await supabase.from("properties").insert([propertyData]).select();
-        
-        console.log('Supabase call completed:', { resultData, error });
+        console.log('Result:', { resultData, error });
 
         if (error) {
             console.error('Database error:', error);
