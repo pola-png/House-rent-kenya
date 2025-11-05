@@ -302,19 +302,29 @@ export function PropertyForm({ property }: PropertyFormProps) {
         console.log('User ID:', user.uid);
         console.log('Getting user session token...');
         
-        // Get user session token from localStorage
-        const sessionData = localStorage.getItem('sb-mntibbsrnylgsuaeekmr-auth-token');
+        // Get all localStorage keys to find the auth token
         let accessToken = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
         
-        if (sessionData) {
-            try {
-                const session = JSON.parse(sessionData);
-                accessToken = session.access_token || accessToken;
-                console.log('Using user access token');
-            } catch (e) {
-                console.log('Using anon key');
+        for (let i = 0; i < localStorage.length; i++) {
+            const key = localStorage.key(i);
+            if (key && key.includes('auth-token')) {
+                try {
+                    const sessionData = localStorage.getItem(key);
+                    if (sessionData) {
+                        const session = JSON.parse(sessionData);
+                        if (session.access_token) {
+                            accessToken = session.access_token;
+                            console.log('Found user access token in:', key);
+                            break;
+                        }
+                    }
+                } catch (e) {
+                    console.log('Failed to parse:', key);
+                }
             }
         }
+        
+        console.log('Token found:', accessToken !== process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY);
         
         console.log('Using REST API for insert...');
         const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
