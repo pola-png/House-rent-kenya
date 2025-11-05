@@ -5,6 +5,8 @@ const nextConfig = {
       { protocol: 'https', hostname: 'images.unsplash.com' },
       { protocol: 'https', hostname: 'plus.unsplash.com' },
       { protocol: 'https', hostname: '*.supabase.co' },
+      { protocol: 'https', hostname: '*.wasabisys.com' },
+      { protocol: 'https', hostname: 'house-rent-kenya.s3.us-east-1.wasabisys.com' },
     ],
     formats: ['image/webp', 'image/avif'],
     deviceSizes: [640, 750, 828, 1080, 1200, 1920],
