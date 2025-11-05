@@ -24,16 +24,16 @@ export function SearchFilters() {
   const searchParams = useSearchParams();
 
   // Read current values from URL
-  const urlKeyword = searchParams.get('q') || '';
-  const urlMinPrice = searchParams.get('min_price');
-  const urlMaxPrice = searchParams.get('max_price');
-  const propertyTypeParam = searchParams.get('property_type');
-  const propertyTypeParams = searchParams.getAll('property_type');
+  const urlKeyword = searchParams?.get('q') || '';
+  const urlMinPrice = searchParams?.get('min_price');
+  const urlMaxPrice = searchParams?.get('max_price');
+  const propertyTypeParam = searchParams?.get('property_type');
+  const propertyTypeParams = searchParams?.getAll('property_type') ?? [];
   const allSelectedTypes = propertyTypeParam ? [propertyTypeParam, ...propertyTypeParams.filter(p => p !== propertyTypeParam)] : propertyTypeParams;
   const selectedTypes = allSelectedTypes.map(type => type.charAt(0).toUpperCase() + type.slice(1).toLowerCase());
-  const selectedBeds = searchParams.get('beds');
-  const selectedBaths = searchParams.get('baths');
-  const selectedAmenities = searchParams.getAll('amenities');
+  const selectedBeds = searchParams?.get('beds');
+  const selectedBaths = searchParams?.get('baths');
+  const selectedAmenities = searchParams?.getAll('amenities') ?? [];
   
   // State for immediate input, initialized from URL
   const [keyword, setKeyword] = useState(urlKeyword);
@@ -58,7 +58,7 @@ export function SearchFilters() {
   }, [urlMinPrice, urlMaxPrice]);
   
   const createQueryString = useCallback((paramsToUpdate: Record<string, string | string[] | null>) => {
-    const params = new URLSearchParams(searchParams.toString());
+    const params = new URLSearchParams(searchParams?.toString() ?? '');
     Object.entries(paramsToUpdate).forEach(([key, value]) => {
       if (value === null || (Array.isArray(value) && value.length === 0)) {
         params.delete(key);
@@ -90,7 +90,7 @@ export function SearchFilters() {
   }, [debouncedPriceRange, urlMinPrice, urlMaxPrice, pathname, router, createQueryString]);
 
   const handleCheckboxChange = (key: string, value: string, checked: boolean) => {
-    const currentValues = searchParams.getAll(key);
+    const currentValues = searchParams?.getAll(key) ?? [];
     let newValues: string[];
     if (checked) {
       newValues = [...currentValues, value];
@@ -106,7 +106,7 @@ export function SearchFilters() {
 
   const clearFilters = () => {
     // Preserve listing type (rent/buy) from home page when clearing filters
-    const listingType = searchParams.get('type');
+    const listingType = searchParams?.get('type');
     const preservedParams = listingType ? `?type=${listingType}` : '';
     router.push(pathname + preservedParams, { scroll: false });
     setKeyword('');
@@ -130,13 +130,13 @@ export function SearchFilters() {
       </CardHeader>
       <CardContent className="space-y-6">
         {/* Show active filters from home page */}
-        {(searchParams.get('q') || searchParams.get('beds') || searchParams.get('min_price') || searchParams.get('max_price') || selectedTypes.length > 0) && (
+        {(searchParams?.get('q') || searchParams?.get('beds') || searchParams?.get('min_price') || searchParams?.get('max_price') || selectedTypes.length > 0) && (
           <div className="p-3 bg-blue-50 rounded-lg border border-blue-200">
             <div className="text-xs font-medium text-blue-800 mb-2">Active Filters:</div>
             <div className="flex flex-wrap gap-1">
-              {searchParams.get('q') && (
+              {searchParams?.get('q') && (
                 <span className="px-2 py-1 bg-blue-100 text-blue-800 text-xs rounded">
-                  "{searchParams.get('q')}"
+                  "{searchParams?.get('q')}"
                 </span>
               )}
               {selectedTypes.map(type => (
@@ -144,14 +144,14 @@ export function SearchFilters() {
                   {type.charAt(0).toUpperCase() + type.slice(1)}
                 </span>
               ))}
-              {searchParams.get('beds') && (
+              {searchParams?.get('beds') && (
                 <span className="px-2 py-1 bg-blue-100 text-blue-800 text-xs rounded">
-                  {searchParams.get('beds')}+ beds
+                  {searchParams?.get('beds')}+ beds
                 </span>
               )}
-              {(searchParams.get('min_price') || searchParams.get('max_price')) && (
+              {(searchParams?.get('min_price') || searchParams?.get('max_price')) && (
                 <span className="px-2 py-1 bg-blue-100 text-blue-800 text-xs rounded">
-                  Ksh {searchParams.get('min_price') || '0'} - {searchParams.get('max_price') || '1M+'}
+                  Ksh {searchParams?.get('min_price') || '0'} - {searchParams?.get('max_price') || '1M+'}
                 </span>
               )}
             </div>
