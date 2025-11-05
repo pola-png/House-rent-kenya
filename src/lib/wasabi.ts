@@ -18,21 +18,21 @@ export const uploadToWasabi = async (file: File, path: string): Promise<string> 
   try {
     console.log('Starting Wasabi upload:', { path, fileSize: file.size, fileType: file.type });
     
-    // Convert File to ArrayBuffer to avoid getReader issues
-    const fileBuffer = await file.arrayBuffer();
+    // Convert File to Buffer for compatibility
+    const arrayBuffer = await file.arrayBuffer();
+    const buffer = Buffer.from(arrayBuffer);
     
     const command = new PutObjectCommand({
       Bucket: BUCKET_NAME,
       Key: path,
-      Body: new Uint8Array(fileBuffer),
+      Body: buffer,
       ContentType: file.type,
-      ACL: 'public-read',
     });
 
     const result = await wasabiClient.send(command);
     console.log('Wasabi upload successful:', result);
     
-    const publicUrl = `${process.env.NEXT_PUBLIC_WASABI_ENDPOINT}/${BUCKET_NAME}/${path}`;
+    const publicUrl = `https://${BUCKET_NAME}.s3.wasabisys.com/${path}`;
     console.log('Generated public URL:', publicUrl);
     
     return publicUrl;
