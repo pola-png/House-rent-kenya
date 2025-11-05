@@ -300,28 +300,23 @@ export function PropertyForm({ property }: PropertyFormProps) {
 
         console.log('Property data to save:', propertyData);
         console.log('User ID:', user.uid);
-        console.log('Making direct insert call...');
+        console.log('Making database call...');
         
-        // Use direct insert without session check to avoid hanging
-        let resultData, error;
+        // Create timeout promise
+        const timeoutPromise = new Promise((_, reject) => {
+            setTimeout(() => reject(new Error('Database operation timed out after 30 seconds')), 30000);
+        });
         
-        try {
-            if (property) {
-                const result = await supabase.from("properties").update(propertyData).eq("id", property.id).select();
-                resultData = result.data;
-                error = result.error;
-            } else {
-                const result = await supabase.from("properties").insert([propertyData]).select();
-                resultData = result.data;
-                error = result.error;
-            }
-            console.log('Database operation completed');
-        } catch (dbErr: any) {
-            console.error('Database operation threw error:', dbErr);
-            throw new Error(`Database operation failed: ${dbErr.message}`);
-        }
+        // Create insert promise
+        const insertPromise = property
+            ? supabase.from("properties").update(propertyData).eq("id", property.id).select()
+            : supabase.from("properties").insert(propertyData).select();
         
-        console.log('Result:', { resultData, error });
+        console.log('Awaiting database response...');
+        const result: any = await Promise.race([insertPromise, timeoutPromise]);
+        const { data: resultData, error } = result;
+        
+        console.log('Database response received:', { hasData: !!resultData, hasError: !!error });
 
         if (error) {
             console.error('Database error:', error);
