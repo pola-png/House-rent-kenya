@@ -300,9 +300,23 @@ export function PropertyForm({ property }: PropertyFormProps) {
 
         console.log('Property data to save:', propertyData);
         console.log('User ID:', user.uid);
-        console.log('Using REST API for insert...');
+        console.log('Getting user session token...');
         
-        // Use REST API directly to bypass hanging Supabase client
+        // Get user session token from localStorage
+        const sessionData = localStorage.getItem('sb-mntibbsrnylgsuaeekmr-auth-token');
+        let accessToken = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+        
+        if (sessionData) {
+            try {
+                const session = JSON.parse(sessionData);
+                accessToken = session.access_token || accessToken;
+                console.log('Using user access token');
+            } catch (e) {
+                console.log('Using anon key');
+            }
+        }
+        
+        console.log('Using REST API for insert...');
         const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
         const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
         
@@ -311,7 +325,7 @@ export function PropertyForm({ property }: PropertyFormProps) {
             headers: {
                 'Content-Type': 'application/json',
                 'apikey': supabaseKey!,
-                'Authorization': `Bearer ${supabaseKey}`,
+                'Authorization': `Bearer ${accessToken}`,
                 'Prefer': 'return=representation'
             },
             body: JSON.stringify(propertyData)
