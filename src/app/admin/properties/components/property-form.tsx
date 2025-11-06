@@ -150,7 +150,7 @@ export function PropertyForm({ property }: PropertyFormProps) {
     if (!currentData.bedrooms || currentData.bedrooms < 1) missingFields.push('Bedrooms');
     if (!currentData.bathrooms || currentData.bathrooms < 1) missingFields.push('Bathrooms');
     if (!currentData.area || currentData.area <= 0) missingFields.push('Area');
-    if (!currentData.price || currentData.price <= 0) missingFields.push('Price');
+    if (!currentData.price || currentData.price <= 0) missingFields.push('ice');
     if (!currentData.location?.trim()) missingFields.push('Location');
     if (!currentData.city?.trim()) missingFields.push('City');
     if (!currentData.amenities?.trim()) missingFields.push('Amenities');
@@ -213,7 +213,7 @@ export function PropertyForm({ property }: PropertyFormProps) {
     if (!currentData.bedrooms || currentData.bedrooms < 1) missingFields.push('Bedrooms');
     if (!currentData.bathrooms || currentData.bathrooms < 1) missingFields.push('Bathrooms');
     if (!currentData.area || currentData.area <= 0) missingFields.push('Area');
-    if (!currentData.price || currentData.price <= 0) missingFields.push('Price');
+    if (!currentData.price || currentData.price <= 0) missingFields.push('ice');
     if (!currentData.location?.trim()) missingFields.push('Location');
     if (!currentData.city?.trim()) missingFields.push('City');
     if (!currentData.amenities?.trim()) missingFields.push('Amenities');
@@ -314,6 +314,10 @@ export function PropertyForm({ property }: PropertyFormProps) {
       const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL as string;
       const supabaseAnon = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY as string;
 
+      if (!accessToken) {
+        throw new Error('Invalid or expired session');
+      }
+
       if (property?.id) {
         // REST-only update (matches your original working approach)
         const rest = await fetch(`${supabaseUrl}/rest/v1/properties?id=eq.${property.id}`, {
@@ -321,8 +325,9 @@ export function PropertyForm({ property }: PropertyFormProps) {
           headers: {
             'Content-Type': 'application/json',
             'apikey': supabaseAnon,
-            ...(accessToken ? { 'Authorization': `Bearer ${accessToken}` } : {}),
-            'Prefer': 'return=representation'
+            'Authorization': `Bearer ${accessToken}`,
+            'Prefer': 'return=representation',
+            'Accept': 'application/json'
           },
           body: JSON.stringify({ ...propertyPayload, updatedAt: new Date().toISOString() })
         });
@@ -340,8 +345,9 @@ export function PropertyForm({ property }: PropertyFormProps) {
           headers: {
             'Content-Type': 'application/json',
             'apikey': supabaseAnon,
-            ...(accessToken ? { 'Authorization': `Bearer ${accessToken}` } : {}),
-            'Prefer': 'return=representation'
+            'Authorization': `Bearer ${accessToken}`,
+            'Prefer': 'return=representation',
+            'Accept': 'application/json'
           },
           body: JSON.stringify({ ...propertyPayload, createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() })
         });
@@ -519,7 +525,7 @@ export function PropertyForm({ property }: PropertyFormProps) {
         
         router.push('/admin/promotions');
     } catch (error: any) {
-        console.error('Promotion request error:', error);
+        console.error('promotion request error:', error);
         toast({
             variant: "destructive",
             title: "Submission Failed",
@@ -571,13 +577,13 @@ export function PropertyForm({ property }: PropertyFormProps) {
         .insert([promotionData]);
 
       if (insertError) {
-        console.error('Promotion database error:', insertError);
+        console.error('promotion database error:', insertError);
         throw new Error(`Database operation failed: ${insertError.message}`);
       }
 
-      console.log('Promotion request saved successfully');
+      console.log('promotion request saved successfully');
     } catch (error: any) {
-      console.error('Promotion request error:', error);
+      console.error('promotion request error:', error);
       throw error; // Re-throw to be caught by caller
     }
   };
@@ -1067,6 +1073,22 @@ export function PropertyForm({ property }: PropertyFormProps) {
     } catch {}
     try {
       if (typeof window !== 'undefined' && window.localStorage) {
+        // Try specific Supabase key: sb-{projectRef}-auth-token
+        try {
+          const baseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
+          const m = baseUrl.match(/^https:\/\/([a-z0-9-]+)\.supabase\.co/i);
+          const ref = m?.[1];
+          if (ref) {
+            const key = `sb-${ref}-auth-token`;
+            const raw = window.localStorage.getItem(key);
+            if (raw) {
+              const json = JSON.parse(raw);
+              if (json?.access_token) return json.access_token as string;
+              if (json?.currentSession?.access_token) return json.currentSession.access_token as string;
+              if (json?.state?.currentSession?.access_token) return json.state.currentSession.access_token as string;
+            }
+          }
+        } catch {}
         for (let i = 0; i < window.localStorage.length; i++) {
           const k = window.localStorage.key(i);
           if (!k) continue;
@@ -1085,3 +1107,8 @@ export function PropertyForm({ property }: PropertyFormProps) {
     } catch {}
     return null;
   };
+
+
+
+
+
