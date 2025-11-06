@@ -1,42 +1,37 @@
-import { NextRequest, NextResponse } from 'next/server';
-import { S3Client, PutObjectCommand } from '@aws-sdk/client-s3';
+import { NextResponse } from 'next/server';
+import { getPresignedPutUrl, buildPublicishPath, extractWasabiKey } from '@/lib/wasabi';
 
-const s3Client = new S3Client({
-  region: process.env.NEXT_PUBLIC_WASABI_REGION!,
-  endpoint: `https://s3.${process.env.NEXT_PUBLIC_WASABI_REGION}.wasabisys.com`,
-  credentials: {
-    accessKeyId: process.env.WASABI_ACCESS_KEY_ID!,
-    secretAccessKey: process.env.WASABI_SECRET_ACCESS_KEY!,
-  },
-});
-
-export async function POST(request: NextRequest) {
+export async function POST(request: Request) {
   try {
-    const formData = await request.formData();
-    const file = formData.get('file') as File;
-    const path = formData.get('path') as string;
+    const body = await request.json().catch(() => ({}));
+    const { key, contentType } = body as { key?: string; contentType?: string };
 
-    if (!file || !path) {
-      return NextResponse.json({ error: 'File and path are required' }, { status: 400 });
+    if (!key) {
+      return NextResponse.json({ error: 'Missing key' }, { status: 400 });
     }
 
-    const bytes = await file.arrayBuffer();
-    const buffer = Buffer.from(bytes);
+    // Prevent directory traversal or odd keys
+    const sanitized = extractWasabiKey(String(key)).replace(/\.\.+/g, '.');
+    if (/^\s*$/.test(sanitized)) {
+      return NextResponse.json({ error: 'Invalid key' }, { status: 400 });
+    }
 
-    const command = new PutObjectCommand({
-      Bucket: process.env.NEXT_PUBLIC_WASABI_BUCKET!,
-      Key: path,
-      Body: buffer,
-      ContentType: file.type,
+    const { url, headers } = await getPresignedPutUrl(sanitized, {
+      contentType,
+      expiresIn: 300,
     });
 
-    await s3Client.send(command);
+    const getPath = buildPublicishPath(sanitized);
 
-    const publicUrl = `https://${process.env.NEXT_PUBLIC_WASABI_BUCKET}.s3.${process.env.NEXT_PUBLIC_WASABI_REGION}.wasabisys.com/${encodeURIComponent(path)}`;
-    return NextResponse.json({ url: publicUrl });
-
+    return NextResponse.json({
+      uploadUrl: url,
+      uploadHeaders: headers,
+      // Store getPath in DB; convert to presigned on read
+      objectPath: getPath,
+      expiresIn: 300,
+    });
   } catch (error: any) {
-    console.error('Upload error:', error);
-    return NextResponse.json({ error: error.message || 'Upload failed' }, { status: 500 });
+    return NextResponse.json({ error: error.message || 'Upload URL error' }, { status: 500 });
   }
 }
+

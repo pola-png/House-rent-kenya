@@ -6,6 +6,8 @@ const nextConfig = {
       { protocol: 'https', hostname: 'plus.unsplash.com' },
       { protocol: 'https', hostname: '*.supabase.co' },
       { protocol: 'https', hostname: 's3.us-east-1.wasabisys.com', pathname: '/house-rent-kenya/**' },
+      { protocol: 'https', hostname: 's3.wasabisys.com' },
+      { protocol: 'https', hostname: '*.wasabisys.com' },
       { protocol: 'https', hostname: 'mntibbsrnylgsuaeekmr.supabase.co' },
     ],
     formats: ['image/webp', 'image/avif'],
