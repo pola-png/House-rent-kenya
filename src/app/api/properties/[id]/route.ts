@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { supabase } from '@/lib/supabase';
-import { extractWasabiKey, getPresignedGetUrl } from '@/lib/wasabi';
+import { presignImageUrls } from '@/lib/image-presign';
 
 const PRESIGN_TTL = 900; // 15 minutes
 
@@ -19,20 +19,7 @@ export async function GET(
 
     if (error) throw error;
 
-    if (data.images && data.images.length > 0) {
-      const presignedImages = await Promise.all(
-        data.images.map(async (imageUrl: string) => {
-          try {
-            const key = extractWasabiKey(imageUrl);
-            return await getPresignedGetUrl(key, PRESIGN_TTL);
-          } catch (e) {
-            console.error('Error generating presigned URL:', e);
-            return imageUrl; // Fallback to original URL on error
-          }
-        })
-      );
-      data.images = presignedImages;
-    }
+    data.images = await presignImageUrls(data.images, PRESIGN_TTL);
 
     return NextResponse.json(data);
   } catch (error: any) {
