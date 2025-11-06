@@ -12,6 +12,7 @@ interface OptimizedImageProps {
   priority?: boolean;
   fill?: boolean;
   sizes?: string;
+  fit?: 'cover' | 'contain' | 'fill' | 'none' | 'scale-down';
 }
 
 export function OptimizedImage({ 
@@ -22,7 +23,8 @@ export function OptimizedImage({
   className, 
   priority = false, 
   fill = false,
-  sizes = "(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+  sizes = "(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw",
+  fit = 'cover',
 }: OptimizedImageProps) {
   const [imageError, setImageError] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
@@ -87,7 +89,7 @@ export function OptimizedImage({
           <img
             src={imageError ? displayFallback : displaySrc}
             alt={optimizedAlt}
-            className={`${className} transition-opacity duration-300 ${isLoading ? 'opacity-0' : 'opacity-100'} absolute inset-0 w-full h-full object-cover`}
+            className={`${className} transition-opacity duration-300 ${isLoading ? 'opacity-0' : 'opacity-100'} absolute inset-0 w-full h-full object-${fit} object-center`}
             onError={handleError}
             onLoad={handleLoad}
           />
@@ -103,7 +105,7 @@ export function OptimizedImage({
           src={imageError ? displayFallback : displaySrc}
           alt={optimizedAlt}
           fill
-          className={`${className} transition-opacity duration-300 ${isLoading ? 'opacity-0' : 'opacity-100'}`}
+          className={`${className} transition-opacity duration-300 ${isLoading ? 'opacity-0' : 'opacity-100'} object-${fit} object-center`}
           onError={handleError}
           onLoad={handleLoad}
           priority={priority}
@@ -129,7 +131,7 @@ export function OptimizedImage({
           alt={optimizedAlt}
           width={width}
           height={height}
-          className={`transition-opacity duration-300 ${isLoading ? 'opacity-0' : 'opacity-100'}`}
+          className={`transition-opacity duration-300 ${isLoading ? 'opacity-0' : 'opacity-100'} object-${fit} object-center`}
           onError={handleError}
           onLoad={handleLoad}
         />
@@ -150,7 +152,7 @@ export function OptimizedImage({
         alt={optimizedAlt}
         width={width}
         height={height}
-        className={`transition-opacity duration-300 ${isLoading ? 'opacity-0' : 'opacity-100'}`}
+        className={`transition-opacity duration-300 ${isLoading ? 'opacity-0' : 'opacity-100'} object-${fit} object-center`}
         onError={handleError}
         onLoad={handleLoad}
         priority={priority}
