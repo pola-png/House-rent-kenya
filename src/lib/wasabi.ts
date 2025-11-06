@@ -34,6 +34,8 @@ function extractKeyBestEffort(urlOrKey: string): string {
 export function toWasabiProxyPath(urlOrKey: string): string {
   if (!urlOrKey) return urlOrKey;
   if (urlOrKey.startsWith('/api/image-proxy')) return urlOrKey;
+  // If it's an already-presigned Wasabi URL, keep it as-is
+  if (/X-Amz-Signature=|X-Amz-Algorithm=/.test(urlOrKey)) return urlOrKey;
   if (!isWasabiUrlOrKey(urlOrKey)) return urlOrKey;
   const key = extractKeyBestEffort(urlOrKey);
   return `/api/image-proxy?path=${encodeURIComponent(key)}`;

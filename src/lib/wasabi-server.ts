@@ -58,11 +58,27 @@ export function extractWasabiKey(urlOrKey: string): string {
     const hostParts = u.hostname.split('.');
     let key = u.pathname.replace(/^\//, '');
     if (hostParts.length > 3 && hostParts[0] !== 's3') {
+      // decode over-encoded keys like properties%252F...
+      try {
+        for (let i = 0; i < 3; i++) {
+          const dec = decodeURIComponent(key);
+          if (dec === key) break;
+          key = dec;
+        }
+      } catch {}
       return key;
     }
     const { bucket } = getConfig();
     const [maybeBucket, ...rest] = key.split('/');
     if (bucket && maybeBucket === bucket && rest.length) return rest.join('/');
+    // decode over-encoded keys like properties%252F...
+    try {
+      for (let i = 0; i < 3; i++) {
+        const dec = decodeURIComponent(key);
+        if (dec === key) break;
+        key = dec;
+      }
+    } catch {}
     return key;
   } catch {
     const idx = urlOrKey.indexOf('.com/');
