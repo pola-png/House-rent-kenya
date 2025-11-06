@@ -18,7 +18,8 @@ function createClient() {
     region,
     endpoint: `https://${endpoint}`,
     credentials: { accessKeyId, secretAccessKey },
-    forcePathStyle: false,
+    // Path-style is more reliable with Wasabi across regions and browsers
+    forcePathStyle: true,
   });
 }
 
