@@ -1,6 +1,20 @@
 // CLIENT-SAFE Wasabi helpers (no server env access or private keys)
 const PUBLIC_BUCKET = process.env.NEXT_PUBLIC_WASABI_BUCKET;
 
+const isHttpUrl = (s: string) => /^https?:\/\//i.test(s);
+const isWasabiHost = (h: string) => h.endsWith('.wasabisys.com');
+
+function isWasabiUrlOrKey(urlOrKey: string): boolean {
+  if (!urlOrKey) return false;
+  if (!isHttpUrl(urlOrKey)) return true; // plain keys correspond to Wasabi objects
+  try {
+    const u = new URL(urlOrKey);
+    return isWasabiHost(u.hostname);
+  } catch {
+    return false;
+  }
+}
+
 function extractKeyBestEffort(urlOrKey: string): string {
   if (!urlOrKey) return urlOrKey;
   if (!/^https?:\/\//i.test(urlOrKey)) return urlOrKey.replace(/^\/+/, '');
@@ -20,6 +34,7 @@ function extractKeyBestEffort(urlOrKey: string): string {
 export function toWasabiProxyPath(urlOrKey: string): string {
   if (!urlOrKey) return urlOrKey;
   if (urlOrKey.startsWith('/api/image-proxy')) return urlOrKey;
+  if (!isWasabiUrlOrKey(urlOrKey)) return urlOrKey;
   const key = extractKeyBestEffort(urlOrKey);
   return `/api/image-proxy?path=${encodeURIComponent(key)}`;
 }
