@@ -1,5 +1,4 @@
 import { NextResponse } from 'next/server';
-import type { AppRouteHandlerFn } from 'next/dist/server/route-modules/app-route/module';
 import { getPresignedPutUrl, buildPublicishPath, extractWasabiKey } from '@/lib/wasabi';
 import { supabase } from '@/lib/supabase';
 
@@ -18,7 +17,7 @@ function enforceContentType(ct?: string) {
   }
 }
 
-export const POST: AppRouteHandlerFn = async (request, _context) => {
+export async function POST(request: Request) {
   try {
     // AuthN: require a valid Supabase session
     const { data: { session } } = await supabase.auth.getSession();
@@ -69,4 +68,4 @@ export const POST: AppRouteHandlerFn = async (request, _context) => {
   } catch (error: any) {
     return NextResponse.json({ error: error.message || 'Upload URL error' }, { status: 500 });
   }
-};
+}

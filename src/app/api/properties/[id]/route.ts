@@ -1,11 +1,13 @@
 import { NextResponse } from 'next/server';
-import type { AppRouteHandlerFn } from 'next/dist/server/route-modules/app-route/module';
 import { supabase } from '@/lib/supabase';
 import { presignImageUrls } from '@/lib/image-presign';
 
 const PRESIGN_TTL = 900; // 15 minutes
 
-export const GET: AppRouteHandlerFn = async (_request, context) => {
+export async function GET(
+  _request: Request,
+  context: any
+) {
   const rawParams = context?.params ? await context.params : undefined;
   const idParam = rawParams?.id;
   const id = Array.isArray(idParam) ? idParam[0] : idParam;
@@ -44,4 +46,4 @@ export const GET: AppRouteHandlerFn = async (_request, context) => {
       headers: { 'Content-Type': 'application/json' },
     });
   }
-};
+}
