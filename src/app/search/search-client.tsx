@@ -16,6 +16,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { useSearchParams } from "next/navigation";
 import { useState, useEffect, Suspense } from "react";
 import { supabase } from "@/lib/supabase";
+import { normalizeWasabiImageArray } from "@/lib/wasabi";
 
 function SearchContent() {
   const searchParams = useSearchParams();
@@ -113,6 +114,7 @@ function SearchContent() {
         const profileData = profileMap.get(p.landlordId);
         return {
           ...p,
+          images: normalizeWasabiImageArray(p.images),
           createdAt: new Date(p.createdAt),
           updatedAt: new Date(p.updatedAt),
           agent: profileData ? {
