@@ -14,6 +14,7 @@ import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import type { Property } from '@/lib/types';
+import { normalizeWasabiImageArray } from '@/lib/wasabi';
 import { Skeleton } from '@/components/ui/skeleton';
 import { supabase } from '@/lib/supabase';
 import { SEOSchema } from '@/components/seo-schema';
@@ -106,6 +107,7 @@ export default function Home() {
         const profileData = profileMap.get(p.landlordId);
         return {
           ...p,
+          images: normalizeWasabiImageArray(p.images),
           createdAt: new Date(p.createdAt),
           updatedAt: new Date(p.updatedAt),
           agent: profileData ? {

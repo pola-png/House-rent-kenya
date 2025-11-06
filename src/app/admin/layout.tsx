@@ -277,7 +277,7 @@ export default function AdminLayout({
             </DropdownMenuContent>
           </DropdownMenu>
         </header>
-        <main className="flex-1 p-4 sm:px-6 sm:py-0">{children}</main>
+        <main className="flex-1 w-full max-w-7xl mx-auto px-3 sm:px-6 py-0">{children}</main>
       </SidebarInset>
     </SidebarProvider>
   );

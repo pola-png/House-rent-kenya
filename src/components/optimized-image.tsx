@@ -92,6 +92,8 @@ export function OptimizedImage({
             className={`${className} transition-opacity duration-300 ${isLoading ? 'opacity-0' : 'opacity-100'} absolute inset-0 w-full h-full object-${fit} object-center`}
             onError={handleError}
             onLoad={handleLoad}
+            loading={priority ? 'eager' : 'lazy'}
+            decoding="async"
           />
         </>
       );
@@ -134,6 +136,8 @@ export function OptimizedImage({
           className={`transition-opacity duration-300 ${isLoading ? 'opacity-0' : 'opacity-100'} object-${fit} object-center`}
           onError={handleError}
           onLoad={handleLoad}
+          loading={priority ? 'eager' : 'lazy'}
+          decoding="async"
         />
       </div>
     );

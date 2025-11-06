@@ -24,6 +24,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/use-auth-supabase";
 import { supabase } from "@/lib/supabase";
+import { normalizeWasabiImageArray } from "@/lib/wasabi";
 
 export default function Dashboard() {
   const { user } = useAuth();
@@ -59,6 +60,7 @@ export default function Dashboard() {
 
       const typedProperties: Property[] = (propertiesData || []).map(p => ({
         ...p,
+        images: normalizeWasabiImageArray(p.images),
         createdAt: new Date(p.createdAt),
         updatedAt: new Date(p.updatedAt),
         agent: {
