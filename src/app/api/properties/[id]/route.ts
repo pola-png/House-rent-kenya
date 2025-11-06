@@ -23,11 +23,11 @@ export async function GET(
   try {
     const fetchProperty = unstable_cache(
       async () => {
-        const { data, error } = await supabase
-          .from('properties')
-          .select('*')
-          .eq('id', id)
-          .single();
+    const { data, error } = await supabase
+      .from('properties')
+      .select('*, landlord:profiles(*)')
+      .eq('id', id)
+      .single();
 
         if (error) throw error;
         if (!data) return null;

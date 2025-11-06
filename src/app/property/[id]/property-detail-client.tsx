@@ -97,23 +97,38 @@ export default function PropertyDetailClient({ id }: PropertyDetailClientProps) 
       // API returns presigned Wasabi URLs (keep as-is) and legacy Supabase URLs
       const images = coerceImages(data.images);
 
+      // Ensure agent contact is present; fetch profile if missing
+      let agentProfile = data?.landlord;
+      if (!agentProfile || !agentProfile.email || !agentProfile.phoneNumber) {
+        try {
+          const { data: prof } = await supabase
+            .from('profiles')
+            .select('*')
+            .eq('id', data.landlordId)
+            .single();
+          if (prof) agentProfile = { ...agentProfile, ...prof };
+        } catch {}
+      }
+
+      const agent = agentProfile ? {
+        uid: agentProfile.id,
+        firstName: agentProfile.firstName || '',
+        lastName: agentProfile.lastName || '',
+        displayName: agentProfile.displayName || agentProfile.email?.split('@')[0] || '',
+        email: agentProfile.email || '',
+        role: (agentProfile.role as any) || 'agent',
+        agencyName: agentProfile.agencyName,
+        phoneNumber: agentProfile.phoneNumber,
+        photoURL: agentProfile.photoURL,
+        createdAt: agentProfile.createdAt ? new Date(agentProfile.createdAt) : new Date()
+      } : undefined;
+
       setProperty({
         ...data,
         images,
         createdAt: new Date(data.createdAt),
         updatedAt: new Date(data.updatedAt),
-        agent: data?.landlord ? {
-          uid: data.landlord.id,
-          firstName: data.landlord.firstName || '',
-          lastName: data.landlord.lastName || '',
-          displayName: data.landlord.displayName || data.landlord.email?.split('@')[0] || '',
-          email: data.landlord.email || '',
-          role: (data.landlord.role as any) || 'agent',
-          agencyName: data.landlord.agencyName,
-          phoneNumber: data.landlord.phoneNumber,
-          photoURL: data.landlord.photoURL,
-          createdAt: new Date(data.landlord.createdAt)
-        } : undefined
+        agent,
       });
 
       setCurrentImageIndex(0);

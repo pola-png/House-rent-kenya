@@ -1,4 +1,4 @@
-// CLIENT-SAFE Wasabi helpers (no server env access or private keys)
+// CLIENT-SAFE Wasabi upload helpers (no server env access or private keys)
 const PUBLIC_BUCKET = process.env.NEXT_PUBLIC_WASABI_BUCKET;
 
 const isHttpUrl = (s: string) => /^https?:\/\//i.test(s);
