@@ -50,13 +50,13 @@ export default function PropertyDetailClient({ id }: PropertyDetailClientProps) 
         }
       }
 
-      const { data, error } = await supabase
-        .from('properties')
-        .select('*')
-        .eq('id', actualId)
-        .single();
-
-      if (error) throw error;
+      // Prefer server API (presigns Wasabi URLs, consistent on mobile)
+      const controller = new AbortController();
+      const timeout = setTimeout(() => controller.abort(), 10000);
+      const res = await fetch(`/api/properties/${actualId}`, { cache: 'no-store', signal: controller.signal });
+      clearTimeout(timeout);
+      if (!res.ok) throw new Error(`Failed to load property (${res.status})`);
+      const data = await res.json();
 
       console.log('Fetched property data:', data);
 
@@ -66,6 +66,7 @@ export default function PropertyDetailClient({ id }: PropertyDetailClientProps) 
         .eq('id', data.landlordId)
         .single();
 
+      // API returns presigned Wasabi URLs; normalize still handles legacy Supabase URLs
       const images = normalizeWasabiImageArray(data.images);
 
       setProperty({

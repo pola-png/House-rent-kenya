@@ -62,7 +62,7 @@ export function PropertyCard({ property }: PropertyCardProps) {
             <div className="text-xl font-bold text-primary">
               Ksh {property.price.toLocaleString()}{property.status === 'For Rent' && <span className="text-sm font-normal text-muted-foreground">/month</span>}
             </div>
-            <h3 className="text-lg font-bold font-headline truncate" title={property.title}>{property.title}</h3>
+            <h3 className="text-lg font-bold font-headline line-clamp-2 break-words hyphens-auto leading-snug" title={property.title}>{property.title}</h3>
             <div className="flex items-center text-muted-foreground text-sm">
               <MapPin className="h-4 w-4 mr-1.5 flex-shrink-0" />
               <span className="truncate">{property.location}</span>

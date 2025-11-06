@@ -2,6 +2,22 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Mobile-friendly text clamping without plugin */
+.line-clamp-1 { display: -webkit-box; -webkit-line-clamp: 1; -webkit-box-orient: vertical; overflow: hidden; }
+.line-clamp-2 { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.line-clamp-3 { display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
+
+/* Strong wrapping for long unbroken strings on mobile */
+.hyphens-auto { hyphens: auto; }
+.break-anywhere { overflow-wrap: anywhere; word-break: break-word; }
+
+/* Ensure headings using the headline font never overflow on mobile */
+.font-headline {
+  overflow-wrap: anywhere;
+  word-break: break-word;
+  hyphens: auto;
+}
+
 @layer base {
   :root {
     --background: 60 56% 91%; /* #F5F5DC */
