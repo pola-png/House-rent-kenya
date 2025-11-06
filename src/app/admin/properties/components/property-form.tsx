@@ -264,152 +264,104 @@ export function PropertyForm({ property }: PropertyFormProps) {
     toast({ title: "Saving property...", description: "Please wait." });
 
     try {
-        if (!user) {
-            throw new Error("You must be logged in.");
+      if (!user) {
+        throw new Error("You must be logged in.");
+      }
+
+      if (!user.phoneNumber) {
+        router.push('/admin/profile');
+        throw new Error("Please add your phone number to your profile before creating a property.");
+      }
+
+      // Upload any newly added images (keep existing on edit)
+      const uploadedImageUrls = await uploadImages(imageFiles);
+      const existingImageUrls = Array.isArray(property?.images) ? (property!.images as string[]) : [];
+      // De-duplicate while preserving order
+      const allImageUrls = Array.from(new Set([...(existingImageUrls || []), ...uploadedImageUrls]));
+      setIsUploadingImages(false);
+
+      const propertyPayload = {
+        title: data.title,
+        description: data.description,
+        price: data.price,
+        propertyType: data.propertyType,
+        bedrooms: data.bedrooms,
+        bathrooms: data.bathrooms,
+        area: data.area,
+        location: data.location,
+        city: data.city,
+        latitude: data.latitude || -1.286389,
+        longitude: data.longitude || 36.817223,
+        images: allImageUrls,
+        amenities: data.amenities.split(",").map((s) => s.trim()),
+        landlordId: user.uid,
+        status: data.status,
+        featured: data.featured || false,
+        keywords: data.keywords || '',
+      } as any;
+
+      let savedId: string | null = null;
+      if (property?.id) {
+        // Update existing row
+        const { data: updated, error: upErr } = await supabase
+          .from('properties')
+          .update({ ...propertyPayload, updatedAt: new Date().toISOString() })
+          .eq('id', property.id)
+          .eq('landlordId', user.uid)
+          .select('id')
+          .single();
+        if (upErr) throw upErr;
+        savedId = updated?.id || property.id;
+      } else {
+        // Insert new
+        const { data: inserted, error: insErr } = await supabase
+          .from('properties')
+          .insert([{ ...propertyPayload, createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() }])
+          .select('id')
+          .single();
+        if (insErr) throw insErr;
+        savedId = inserted?.id || null;
+      }
+
+      // Optional: create promotion request if screenshot provided
+      if (isPromotionOpen && promotionWeeks > 0 && savedId) {
+        try {
+          await handlePromotion(savedId);
+        } catch (promotionError: any) {
+          // Don't fail the save for promotion issues
+          toast({
+            variant: 'destructive',
+            title: 'Property Saved, Promotion Failed',
+            description: 'Property was saved but promotion request failed. You can try again later.',
+          });
         }
+      }
 
-        if (!user.phoneNumber) {
-            router.push('/admin/profile');
-            throw new Error("Please add your phone number to your profile before creating a property.");
-        }
+      toast({
+        title: `Property ${property?.id ? 'Updated' : 'Created'}`,
+        description: `Your property has been successfully ${property?.id ? 'updated' : 'saved'}.`,
+      });
 
-        console.log('Starting image upload...');
-        const uploadedImageUrls = await uploadImages(imageFiles);
-        const existingImageUrls = property?.images || [];
-        const allImageUrls = [...existingImageUrls, ...uploadedImageUrls];
-        setIsUploadingImages(false);
-        console.log('Images uploaded successfully:', allImageUrls);
-
-        const propertyData = {
-            title: data.title,
-            description: data.description,
-            price: data.price,
-            propertyType: data.propertyType,
-            bedrooms: data.bedrooms,
-            bathrooms: data.bathrooms,
-            area: data.area,
-            location: data.location,
-            city: data.city,
-            latitude: data.latitude || -1.286389,
-            longitude: data.longitude || 36.817223,
-            images: allImageUrls,
-            amenities: data.amenities.split(",").map((s) => s.trim()),
-            landlordId: user.uid,
-            status: data.status,
-            featured: data.featured || false,
-            keywords: data.keywords || '',
-        };
-
-        console.log('Property data to save:', propertyData);
-        console.log('User ID:', user.uid);
-        console.log('Getting user session token...');
-        
-        // Get all localStorage keys to find the auth token
-        let accessToken = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
-        
-        for (let i = 0; i < localStorage.length; i++) {
-            const key = localStorage.key(i);
-            if (key && key.includes('auth-token')) {
-                try {
-                    const sessionData = localStorage.getItem(key);
-                    if (sessionData) {
-                        const session = JSON.parse(sessionData);
-                        if (session.access_token) {
-                            accessToken = session.access_token;
-                            console.log('Found user access token in:', key);
-                            break;
-                        }
-                    }
-                } catch (e) {
-                    console.log('Failed to parse:', key);
-                }
-            }
-        }
-        
-        console.log('Token found:', accessToken !== process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY);
-        
-        console.log('Using REST API for insert...');
-        const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-        const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
-        
-        const response = await fetch(`${supabaseUrl}/rest/v1/properties`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'apikey': supabaseKey!,
-                'Authorization': `Bearer ${accessToken}`,
-                'Prefer': 'return=representation'
-            },
-            body: JSON.stringify(propertyData)
-        });
-        
-        console.log('REST API response status:', response.status);
-        
-        if (!response.ok) {
-            const errorText = await response.text();
-            console.error('REST API error:', errorText);
-            throw new Error(`Database error: ${errorText}`);
-        }
-        
-        const resultData = await response.json();
-        console.log('Database response received:', { hasData: !!resultData });
-
-        const savedProperty = Array.isArray(resultData) ? resultData[0] : resultData;
-        
-        if (!savedProperty) {
-            console.error('No data returned from database');
-            throw new Error('Property was not saved. Please try again.');
-        }
-
-        console.log('Property saved successfully:', savedProperty);
-        
-        if (isPromotionOpen && promotionWeeks > 0 && savedProperty) {
-            console.log('Processing promotion...');
-            try {
-                await handlePromotion(savedProperty.id);
-                console.log('Promotion processed successfully');
-            } catch (promotionError: any) {
-                console.error('Promotion error:', promotionError);
-                // Don't fail the entire submission for promotion errors
-                toast({
-                    variant: "destructive",
-                    title: "Property Saved, Promotion Failed",
-                    description: "Property was saved but promotion request failed. You can try again later.",
-                });
-            }
-        }
-
-        console.log('Showing success message and redirecting...');
-        toast({
-            title: `Property ${property ? "Updated" : "Created"}`,
-            description: `Your property has been successfully ${property ? "updated" : "saved"}.`,
-        });
-        
-        setTimeout(() => {
-            router.push(`/admin/properties`);
-        }, 1000);
+      setTimeout(() => {
+        router.push(`/admin/properties`);
+      }, 800);
     } catch (error: any) {
-        console.error("Error saving property:", error);
-        let description = "Could not save the property. Please try again.";
-        if (error.message?.includes('Invalid or expired session')) {
-            description = "Your session has expired. Please log in again.";
-            router.push('/login');
-        } else if (error.message === "Please add your phone number to your profile before creating a property.") {
-            description = error.message;
-        } else if (error.message === "You must be logged in.") {
-            description = error.message;
-        } else if (error.message) {
-            description = `Database error: ${error.message}`;
-        }
-        
-        toast({
-            variant: "destructive",
-            title: "Operation Failed",
-            description: description,
-        });
+      console.error('Error saving property:', error);
+      let description = 'Could not save the property. Please try again.';
+      if (error.message?.includes('Invalid or expired session')) {
+        description = 'Your session has expired. Please log in again.';
+        router.push('/login');
+      } else if (error.message === 'Please add your phone number to your profile before creating a property.') {
+        description = error.message;
+      } else if (error.message === 'You must be logged in.') {
+        description = error.message;
+      } else if (error.message) {
+        description = `Database error: ${error.message}`;
+      }
+      toast({ variant: 'destructive', title: 'Operation Failed', description });
     } finally {
-        setIsSubmitting(false);
-        setIsUploadingImages(false);
+      setIsSubmitting(false);
+      setIsUploadingImages(false);
     }
   }
 

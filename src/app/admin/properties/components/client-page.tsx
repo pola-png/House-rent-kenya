@@ -48,26 +48,35 @@ interface PropertiesClientProps {
 export function PropertiesClient({ data: initialData }: PropertiesClientProps) {
   const { toast } = useToast();
   const [properties, setProperties] = React.useState<Property[]>(initialData);
+  const [deletingIds, setDeletingIds] = React.useState<Set<string>>(new Set());
   
   React.useEffect(() => {
     setProperties(initialData);
   }, [initialData]);
 
   const handleDelete = async (propertyId: string) => {
+    if (deletingIds.has(propertyId)) return;
     if (!confirm('Are you sure you want to delete this property?')) return;
-    
+    setDeletingIds(prev => new Set(prev).add(propertyId));
+
     try {
       const { error } = await supabase
         .from('properties')
         .delete()
         .eq('id', propertyId);
-      
+
       if (error) throw error;
-      
+
       setProperties(prev => prev.filter(p => p.id !== propertyId));
-      toast({ title: 'Success', description: 'Property deleted successfully.' });
+      toast({ title: 'Deleted', description: 'Property deleted successfully.' });
     } catch (error: any) {
-      toast({ variant: 'destructive', title: 'Error', description: error.message || 'Failed to delete property.' });
+      toast({ variant: 'destructive', title: 'Delete failed', description: error.message || 'Failed to delete property.' });
+    } finally {
+      setDeletingIds(prev => {
+        const next = new Set(prev);
+        next.delete(propertyId);
+        return next;
+      });
     }
   };
 

@@ -148,6 +148,14 @@ export default function AdminLayout({
                   </SidebarMenuButton>
                 </SidebarMenuItem>
                 <SidebarMenuItem>
+                  <SidebarMenuButton asChild tooltip="Post a Development">
+                    <Link href="/admin/developments/new" onClick={() => setOpen(false)}>
+                      <PlusCircle className="h-5 w-5" />
+                      <span>Post a Development</span>
+                    </Link>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+                <SidebarMenuItem>
                   <SidebarMenuButton asChild tooltip="My Listings">
                     <Link href="/admin/properties" onClick={() => setOpen(false)}>
                       <List className="h-5 w-5" />
@@ -212,6 +220,22 @@ export default function AdminLayout({
                     <Link href="/admin/analytics" onClick={() => setOpen(false)}>
                       <LineChart className="h-5 w-5" />
                       <span>Analytics</span>
+                    </Link>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+                <SidebarMenuItem>
+                  <SidebarMenuButton asChild tooltip="Blog Posts">
+                    <Link href="/admin/blog" onClick={() => setOpen(false)}>
+                      <List className="h-5 w-5" />
+                      <span>Blog</span>
+                    </Link>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+                <SidebarMenuItem>
+                  <SidebarMenuButton asChild tooltip="New Blog Post">
+                    <Link href="/admin/blog/new" onClick={() => setOpen(false)}>
+                      <PlusCircle className="h-5 w-5" />
+                      <span>New Blog Post</span>
                     </Link>
                   </SidebarMenuButton>
                 </SidebarMenuItem>
