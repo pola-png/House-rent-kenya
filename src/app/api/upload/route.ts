@@ -19,11 +19,8 @@ function enforceContentType(ct?: string) {
 
 export async function POST(request: Request) {
   try {
-    // AuthN: require a valid Supabase session
-    const { data: { session } } = await supabase.auth.getSession();
-    if (!session?.user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
+    // Try to read session, but do not block uploads if missing
+    const { data: { session } } = await supabase.auth.getSession().catch(() => ({ data: { session: null } } as any));
 
     const body = await request.json().catch(() => ({}));
     const { key, contentType, contentLength } = body as { key?: string; contentType?: string; contentLength?: number };
@@ -44,10 +41,14 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Invalid key' }, { status: 400 });
     }
 
-    // AuthZ: enforce user-specific prefix (e.g., user/{uid}/...)
-    const uid = session.user.id;
-    const requiredPrefix = `user/${uid}/`;
-    if (!sanitized.startsWith(requiredPrefix)) {
+    // Authorization / key policy
+    // Allow either:
+    // - user/{uid}/... when logged in
+    // - properties/{propertyId}/... always (used by admin listing form)
+    const uid = session?.user?.id;
+    const allowProperties = sanitized.startsWith('properties/');
+    const allowUserPrefix = uid ? sanitized.startsWith(`user/${uid}/`) : false;
+    if (!allowProperties && !allowUserPrefix) {
       return NextResponse.json({ error: 'Invalid key prefix' }, { status: 403 });
     }
 

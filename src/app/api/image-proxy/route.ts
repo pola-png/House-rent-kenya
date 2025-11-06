@@ -1,34 +1,35 @@
 import { NextResponse } from 'next/server';
-import { S3Client, GetObjectCommand } from '@aws-sdk/client-s3';
-import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
+import { extractWasabiKey, getPresignedGetUrl } from '@/lib/wasabi-server';
 
-const s3Client = new S3Client({
-  region: process.env.NEXT_PUBLIC_WASABI_REGION!,
-  endpoint: `https://s3.${process.env.NEXT_PUBLIC_WASABI_REGION}.wasabisys.com`,
-  credentials: {
-    accessKeyId: process.env.WASABI_ACCESS_KEY_ID!,
-    secretAccessKey: process.env.WASABI_SECRET_ACCESS_KEY!,
-  },
-});
+function decodePath(p: string | null): string | null {
+  if (!p) return p;
+  try {
+    let prev = p;
+    for (let i = 0; i < 3; i++) {
+      const dec = decodeURIComponent(prev);
+      if (dec === prev) break;
+      prev = dec;
+    }
+    return prev;
+  } catch {
+    return p;
+  }
+}
 
 export async function GET(request: Request) {
   try {
     const { searchParams } = new URL(request.url);
-    const path = searchParams.get('path');
-
-    if (!path) {
+    const raw = searchParams.get('path');
+    const decoded = decodePath(raw);
+    if (!decoded) {
       return NextResponse.json({ error: 'Path is required' }, { status: 400 });
     }
 
-    const command = new GetObjectCommand({
-      Bucket: process.env.NEXT_PUBLIC_WASABI_BUCKET!,
-      Key: path,
-    });
-
-    const signedUrl = await getSignedUrl(s3Client, command, { expiresIn: 3600 });
-    return NextResponse.redirect(signedUrl);
+    const key = decoded.startsWith('http') ? extractWasabiKey(decoded) : decoded;
+    const signedUrl = await getPresignedGetUrl(key, 900);
+    return NextResponse.redirect(signedUrl, 307);
   } catch (error: any) {
     console.error('Image proxy error:', error);
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    return NextResponse.json({ error: error.message || 'Proxy error' }, { status: 500 });
   }
 }
