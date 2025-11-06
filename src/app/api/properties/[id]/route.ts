@@ -2,11 +2,11 @@ import { NextResponse } from 'next/server';
 import { supabase } from '@/lib/supabase';
 import { presignImageUrls } from '@/lib/image-presign';
 import type { NextRequest } from 'next/server';
-import type { RouteContext } from 'next';
 
 const PRESIGN_TTL = 900; // 15 minutes
 
-export async function GET(_request: NextRequest, { params }: RouteContext<{ id: string }>) {
+export async function GET(_request: NextRequest, context: { params: { id: string } }) {
+  const { params } = context;
   const { id } = params;
   
   try {
