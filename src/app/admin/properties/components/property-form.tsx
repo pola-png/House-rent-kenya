@@ -41,6 +41,7 @@ import { AISEOSimple } from "@/components/ai-seo-simple";
 import { generateWithAI } from "@/lib/ai-service";
 
 import { uploadToWasabi } from "@/lib/wasabi";
+import { getSystemSettings } from "@/lib/system-settings";
 
 
 const formSchema = z.object({
@@ -81,7 +82,8 @@ export function PropertyForm({ property }: PropertyFormProps) {
   const fileInputRef = React.useRef<HTMLInputElement>(null);
   const [isPromotionOpen, setIsPromotionOpen] = React.useState(false);
   const [promotionWeeks, setPromotionWeeks] = React.useState(1);
-  const weeklyRate = 5;
+  const sys = getSystemSettings();
+  const weeklyRate = sys.payment?.weeklyPromoRate ?? 5;
   const [screenshotFile, setScreenshotFile] = React.useState<File | null>(null);
   const [isGeneratingTitle, setIsGeneratingTitle] = React.useState(false);
   const [isGeneratingDesc, setIsGeneratingDesc] = React.useState(false);
@@ -925,9 +927,15 @@ export function PropertyForm({ property }: PropertyFormProps) {
                     
                     <div className="text-sm text-center bg-muted p-4 rounded-md">
                       <p className="font-semibold mb-2">1. Complete Payment via M-Pesa</p>
-                      <p>Send Money to: <span className="font-bold">+254706060684</span></p>
-                      <p>Name: <span className="font-bold">House Rent Kenya</span></p>
-                      <p>Amount: <span className="font-bold">${(promotionWeeks * weeklyRate).toLocaleString()}</span></p>
+                      <p>Send Money to: <span className="font-bold">{sys.payment?.mpesaNumber || '+2547xxxxxxx'}</span></p>
+                      <p>Name: <span className="font-bold">{sys.payment?.accountName || 'Account Name'}</span></p>
+                      {sys.payment?.paybill && (
+                        <p>Paybill: <span className="font-bold">{sys.payment.paybill}</span></p>
+                      )}
+                      <p>Amount: <span className="font-bold">{sys.payment?.currency || 'KES'} {(promotionWeeks * weeklyRate).toLocaleString()}</span></p>
+                      {sys.payment?.instructions && (
+                        <p className="text-xs text-muted-foreground mt-1">{sys.payment.instructions}</p>
+                      )}
                     </div>
 
                      <div className="space-y-2">

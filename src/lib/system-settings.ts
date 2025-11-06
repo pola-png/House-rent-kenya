@@ -1,4 +1,15 @@
 export interface SystemSettings {
+  payment: {
+    enablePromotion: boolean;
+    currency: string;
+    mpesaNumber: string;
+    accountName: string;
+    paybill?: string;
+    bankName?: string;
+    bankAccount?: string;
+    weeklyPromoRate: number; // amount per week for featured/promotion
+    instructions?: string;
+  };
   features: {
     enablePropertyListing: boolean;
     enableCallbackRequests: boolean;
@@ -38,6 +49,17 @@ export interface SystemSettings {
 }
 
 const defaultSettings: SystemSettings = {
+  payment: {
+    enablePromotion: true,
+    currency: 'KES',
+    mpesaNumber: '+254706060684',
+    accountName: 'House Rent Kenya',
+    paybill: undefined,
+    bankName: undefined,
+    bankAccount: undefined,
+    weeklyPromoRate: 5,
+    instructions: 'Send payment and attach screenshot to activate promotion.',
+  },
   features: {
     enablePropertyListing: true,
     enableCallbackRequests: true,

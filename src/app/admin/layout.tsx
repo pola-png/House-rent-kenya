@@ -54,6 +54,8 @@ import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useAuth } from "@/hooks/use-auth-supabase";
 import { useRouter } from "next/navigation";
+import { supabase } from "@/lib/supabase";
+import { useToast } from "@/hooks/use-toast";
 import { useEffect } from "react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Shield } from "lucide-react";
@@ -66,6 +68,10 @@ export default function AdminLayout({
   const { user, loading, logout } = useAuth();
   const router = useRouter();
   const [open, setOpen] = useState(false);
+  const { toast } = useToast();
+  const [reauthOpen, setReauthOpen] = useState(false);
+  const [reauthLoading, setReauthLoading] = useState(false);
+  const [password, setPassword] = useState("");
 
   useEffect(() => {
     if (!loading && !user) {
@@ -93,6 +99,7 @@ export default function AdminLayout({
   }
 
   return (
+    <div className="dark bg-black text-white min-h-screen">
     <SidebarProvider open={open} onOpenChange={setOpen}>
       <Sidebar collapsible="icon">
         <SidebarContent className="flex flex-col">
@@ -193,7 +200,7 @@ export default function AdminLayout({
         <SidebarRail />
       </Sidebar>
       <SidebarInset>
-        <header className="sticky top-0 z-30 flex h-14 items-center gap-4 border-b bg-background px-4 sm:static sm:h-auto sm:border-0 sm:bg-transparent sm:px-6">
+        <header className="sticky top-0 z-30 flex h-14 items-center gap-4 border-b bg-black/70 px-4 sm:static sm:h-auto sm:border-0 sm:bg-black sm:px-6">
           <SidebarTrigger />
           
           <div className="relative ml-auto flex-1 md:grow-0">
@@ -206,17 +213,8 @@ export default function AdminLayout({
               <Button
                 variant="outline"
                 size="sm"
-                onClick={() => {
-                  const currentPath = window.location.pathname;
-                  if (currentPath === '/admin/dashboard') {
-                    router.push('/admin/admin-dashboard');
-                  } else if (currentPath === '/admin/admin-dashboard') {
-                    router.push('/admin/dashboard');
-                  } else {
-                    router.push('/admin/admin-dashboard');
-                  }
-                }}
-                className="hidden sm:flex items-center gap-2 bg-gradient-to-r from-blue-50 to-purple-50 border-blue-200 text-blue-700 hover:from-blue-100 hover:to-purple-100 transition-all duration-200"
+                onClick={() => setReauthOpen(true)}
+                className="hidden sm:flex items-center gap-2 bg-zinc-900 border-zinc-700 text-white hover:bg-zinc-800 transition-all duration-200"
               >
                 <Shield className="h-4 w-4" />
                 <span className="text-xs font-medium">
@@ -228,17 +226,8 @@ export default function AdminLayout({
               <Button
                 variant="outline"
                 size="icon"
-                onClick={() => {
-                  const currentPath = window.location.pathname;
-                  if (currentPath === '/admin/dashboard') {
-                    router.push('/admin/admin-dashboard');
-                  } else if (currentPath === '/admin/admin-dashboard') {
-                    router.push('/admin/dashboard');
-                  } else {
-                    router.push('/admin/admin-dashboard');
-                  }
-                }}
-                className="sm:hidden bg-gradient-to-r from-blue-50 to-purple-50 border-blue-200 text-blue-700 hover:from-blue-100 hover:to-purple-100"
+                onClick={() => setReauthOpen(true)}
+                className="sm:hidden bg-zinc-900 border-zinc-700 text-white hover:bg-zinc-800"
               >
                 <Shield className="h-4 w-4" />
               </Button>
@@ -280,5 +269,56 @@ export default function AdminLayout({
         <main className="flex-1 w-full max-w-7xl mx-auto px-3 sm:px-6 py-0">{children}</main>
       </SidebarInset>
     </SidebarProvider>
+    {/* Re-auth overlay */}
+    {reauthOpen && (
+      <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4">
+        <div className="w-full max-w-sm rounded-lg border border-zinc-700 bg-zinc-900 p-4 text-white shadow-lg">
+          <div className="mb-3 text-lg font-semibold">Confirm Admin Access</div>
+          <p className="mb-3 text-sm text-zinc-300">For security, please re-enter your password to switch admin views.</p>
+          <div className="mb-3">
+            <input
+              type="password"
+              placeholder="Password"
+              className="w-full rounded-md border border-zinc-700 bg-zinc-800 px-3 py-2 text-sm outline-none focus:border-zinc-500"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              disabled={reauthLoading}
+            />
+          </div>
+          <div className="flex items-center justify-end gap-2">
+            <Button variant="outline" onClick={() => { setReauthOpen(false); setPassword(""); }} disabled={reauthLoading} className="border-zinc-700 text-white hover:bg-zinc-800">Cancel</Button>
+            <Button
+              onClick={async () => {
+                if (!user?.email) {
+                  router.push('/login?redirect=/admin/admin-dashboard');
+                  return;
+                }
+                try {
+                  setReauthLoading(true);
+                  const { error } = await supabase.auth.signInWithPassword({ email: user.email, password });
+                  if (error) throw error;
+                  // toggle between dashboards
+                  const currentPath = window.location.pathname;
+                  if (currentPath === '/admin/admin-dashboard') {
+                    router.push('/admin/dashboard');
+                  } else {
+                    router.push('/admin/admin-dashboard');
+                  }
+                  setReauthOpen(false); setPassword("");
+                } catch (e: any) {
+                  toast({ variant: 'destructive', title: 'Re-auth failed', description: e?.message || 'Invalid password' });
+                } finally {
+                  setReauthLoading(false);
+                }
+              }}
+              disabled={reauthLoading || password.length < 4}
+            >
+              {reauthLoading ? 'Checking…' : 'Confirm'}
+            </Button>
+          </div>
+        </div>
+      </div>
+    )}
+    </div>
   );
 }

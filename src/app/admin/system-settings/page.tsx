@@ -7,7 +7,7 @@ import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Settings, Shield, Zap, DollarSign, Bell, CheckCircle } from "lucide-react";
+import { Settings, Shield, Zap, DollarSign, Bell, CheckCircle, CreditCard } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { SystemSettings, getSystemSettings, saveSystemSettings } from "@/lib/system-settings";
 import { useAuth } from "@/hooks/use-auth-supabase";
@@ -66,7 +66,7 @@ export default function SystemSettingsPage() {
       </div>
 
       <Tabs defaultValue="features" className="space-y-4">
-        <TabsList className="grid w-full grid-cols-3 sm:grid-cols-6">
+        <TabsList className="grid w-full grid-cols-3 sm:grid-cols-7">
           <TabsTrigger value="features" className="text-xs sm:text-sm">
             <Settings className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2" />
             <span className="hidden sm:inline">Features</span>
@@ -96,6 +96,11 @@ export default function SystemSettingsPage() {
             <CheckCircle className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2" />
             <span className="hidden sm:inline">Moderation</span>
             <span className="sm:hidden">Mod</span>
+          </TabsTrigger>
+          <TabsTrigger value="payments" className="text-xs sm:text-sm">
+            <CreditCard className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2" />
+            <span className="hidden sm:inline">Payments</span>
+            <span className="sm:hidden">Pay</span>
           </TabsTrigger>
         </TabsList>
 
@@ -181,6 +186,82 @@ export default function SystemSettingsPage() {
                   checked={settings.features.enableAIRecommendations}
                   onCheckedChange={(v) => updateFeature("enableAIRecommendations", v)}
                 />
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="payments" className="space-y-4">
+          <Card>
+            <CardHeader>
+              <CardTitle>Payment & Promotions</CardTitle>
+              <CardDescription>Configure M-Pesa and promotion details shown in the listing form</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="flex items-center justify-between">
+                <div className="space-y-0.5">
+                  <Label>Enable Promotions</Label>
+                  <p className="text-sm text-muted-foreground">Allow agents to promote a listing via payment</p>
+                </div>
+                <Switch
+                  checked={settings.payment.enablePromotion}
+                  onCheckedChange={(v) => setSettings(prev => ({ ...prev, payment: { ...prev.payment, enablePromotion: v } }))}
+                />
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <Label>Currency</Label>
+                  <Input value={settings.payment.currency}
+                         onChange={(e) => setSettings(prev => ({ ...prev, payment: { ...prev.payment, currency: e.target.value } }))}
+                         placeholder="KES" />
+                </div>
+                <div>
+                  <Label>Weekly Promotion Rate</Label>
+                  <Input type="number" value={settings.payment.weeklyPromoRate}
+                         onChange={(e) => setSettings(prev => ({ ...prev, payment: { ...prev.payment, weeklyPromoRate: Number(e.target.value || 0) } }))}
+                         placeholder="5" />
+                </div>
+                <div>
+                  <Label>M-Pesa Number</Label>
+                  <Input value={settings.payment.mpesaNumber}
+                         onChange={(e) => setSettings(prev => ({ ...prev, payment: { ...prev.payment, mpesaNumber: e.target.value } }))}
+                         placeholder="+2547..." />
+                </div>
+                <div>
+                  <Label>Account/Name</Label>
+                  <Input value={settings.payment.accountName}
+                         onChange={(e) => setSettings(prev => ({ ...prev, payment: { ...prev.payment, accountName: e.target.value } }))}
+                         placeholder="House Rent Kenya" />
+                </div>
+                <div>
+                  <Label>Paybill (optional)</Label>
+                  <Input value={settings.payment.paybill || ''}
+                         onChange={(e) => setSettings(prev => ({ ...prev, payment: { ...prev.payment, paybill: e.target.value || undefined } }))}
+                         placeholder="Paybill" />
+                </div>
+                <div>
+                  <Label>Bank Name (optional)</Label>
+                  <Input value={settings.payment.bankName || ''}
+                         onChange={(e) => setSettings(prev => ({ ...prev, payment: { ...prev.payment, bankName: e.target.value || undefined } }))}
+                         placeholder="Bank" />
+                </div>
+                <div>
+                  <Label>Bank Account (optional)</Label>
+                  <Input value={settings.payment.bankAccount || ''}
+                         onChange={(e) => setSettings(prev => ({ ...prev, payment: { ...prev.payment, bankAccount: e.target.value || undefined } }))}
+                         placeholder="Account" />
+                </div>
+                <div className="sm:col-span-2">
+                  <Label>Instructions</Label>
+                  <Input value={settings.payment.instructions || ''}
+                         onChange={(e) => setSettings(prev => ({ ...prev, payment: { ...prev.payment, instructions: e.target.value || undefined } }))}
+                         placeholder="Send payment and attach screenshot to activate promotion." />
+                </div>
+              </div>
+
+              <div className="pt-4">
+                <Button onClick={handleSave}>Save</Button>
               </div>
             </CardContent>
           </Card>
