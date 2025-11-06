@@ -39,7 +39,9 @@ export async function GET(request: Request) {
           status: 200,
           headers: {
             'Content-Type': resp.ContentType || 'application/octet-stream',
+            // Browser cache (short), CDN cache (long)
             'Cache-Control': 'public, max-age=300',
+            'CDN-Cache-Control': 'public, max-age=0, s-maxage=86400, stale-while-revalidate=604800',
           },
         });
       } catch (e) {
@@ -51,7 +53,9 @@ export async function GET(request: Request) {
     try {
       const signedUrl = await getPresignedGetUrl(key, 900);
       const res = NextResponse.redirect(signedUrl, 307);
+      // Allow CDN to cache the redirect briefly while keeping browsers no-store
       res.headers.set('Cache-Control', 'no-store, max-age=0');
+      res.headers.set('CDN-Cache-Control', 'public, max-age=0, s-maxage=600');
       return res;
     } catch (e: any) {
       if (decoded.startsWith('http')) {

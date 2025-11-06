@@ -142,6 +142,23 @@ export default function Dashboard() {
           </p>
         </div>
         <div className="flex flex-wrap items-center gap-2">
+          {/* Switch to Admin in-line button for admins in agent mode */}
+          {user?.role === 'admin' && (
+            <button
+              type="button"
+              onClick={() => {
+                try {
+                  // Open the reauth overlay in admin layout
+                  // @ts-ignore
+                  window.dispatchEvent(new CustomEvent('open-admin-reauth', { detail: { to: 'admin' } }));
+                } catch {}
+              }}
+              className="text-sm font-bold underline text-primary mr-2"
+              aria-label="Switch to Admin Dashboard"
+            >
+              Switch to Admin
+            </button>
+          )}
           <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200 text-xs">
             <Activity className="h-3 w-3 mr-1" />
             Live Data

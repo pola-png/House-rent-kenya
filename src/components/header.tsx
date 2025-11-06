@@ -30,6 +30,7 @@ const navLinks = [
   { href: '/advice', label: 'Property Advice' },
   { href: '/agents', label: 'Find Agents' },
   { href: '/blog', label: 'Blog' },
+  { href: '/support', label: 'Support' },
 ];
 
 const seoPages = [

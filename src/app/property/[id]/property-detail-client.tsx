@@ -48,6 +48,27 @@ export default function PropertyDetailClient({ id }: PropertyDetailClientProps) 
   const { user } = useAuth();
   const router = useRouter();
 
+  const handleShare = async () => {
+    try {
+      const shareUrl = typeof window !== 'undefined' ? window.location.href : '';
+      const title = property?.title || 'Property';
+      const text = `${title} – ${property?.location || ''}, ${property?.city || ''}`.trim();
+      if (navigator.share) {
+        await navigator.share({ title, text, url: shareUrl });
+        toast({ title: 'Shared', description: 'Link shared successfully.' });
+      } else {
+        await navigator.clipboard.writeText(shareUrl);
+        toast({ title: 'Link Copied', description: 'Property link copied to clipboard.' });
+      }
+    } catch (e: any) {
+      try {
+        const shareUrl = typeof window !== 'undefined' ? window.location.href : '';
+        await navigator.clipboard.writeText(shareUrl);
+        toast({ title: 'Link Copied', description: 'Property link copied to clipboard.' });
+      } catch {}
+    }
+  };
+
   useEffect(() => {
     fetchProperty();
   }, [id]);
@@ -345,74 +366,83 @@ export default function PropertyDetailClient({ id }: PropertyDetailClientProps) 
           <Card className="sticky top-24">
             <CardContent className="p-6 space-y-4">
               <h3 className="text-lg font-bold">Contact Agent</h3>
-              {property.agent && (
-                <div className="space-y-3">
-                  <div>
-                    <div className="font-semibold">{property.agent.displayName}</div>
-                    {property.agent.agencyName && (
-                      <div className="text-sm text-muted-foreground">{property.agent.agencyName}</div>
-                    )}
-                    {property.agent.phoneNumber && (
-                      <div className="text-sm text-muted-foreground flex items-center gap-1">
-                        <Phone className="h-3 w-3" />
-                        {property.agent.phoneNumber}
-                      </div>
-                    )}
-                  </div>
-                  {property.agent.phoneNumber && (
-                    <Button className="w-full" asChild>
-                      <a href={`tel:${property.agent.phoneNumber}`}>
-                        <Phone className="h-4 w-4 mr-2" />
-                        Call Agent
-                      </a>
-                    </Button>
+              <div className="space-y-3">
+                <div>
+                  {property.agent ? (
+                    <>
+                      <div className="font-semibold">{property.agent.displayName}</div>
+                      {property.agent.agencyName && (
+                        <div className="text-sm text-muted-foreground">{property.agent.agencyName}</div>
+                      )}
+                      {property.agent.phoneNumber && (
+                        <div className="text-sm text-muted-foreground flex items-center gap-1">
+                          <Phone className="h-3 w-3" />
+                          {property.agent.phoneNumber}
+                        </div>
+                      )}
+                    </>
+                  ) : (
+                    <div className="text-sm text-muted-foreground">Agent details unavailable. You can request a callback and we’ll notify the listing owner.</div>
                   )}
-                  <Button 
-                    variant="outline" 
-                    className="w-full" 
-                    onClick={() => setShowCallbackForm(!showCallbackForm)}
-                    type="button"
-                  >
-                    <MessageSquare className="h-4 w-4 mr-2" />
-                    {showCallbackForm ? 'Cancel' : 'Request Callback'}
+                </div>
+
+                {property.agent?.phoneNumber && (
+                  <Button className="w-full" asChild>
+                    <a href={`tel:${property.agent.phoneNumber}`}>
+                      <Phone className="h-4 w-4 mr-2" />
+                      Call Agent
+                    </a>
                   </Button>
-                  {showCallbackForm && (
-                    <div className="space-y-3 p-4 border rounded-lg">
-                      <div className="space-y-2">
-                        <Label>Your Name</Label>
-                        <Input
-                          value={callbackName}
-                          onChange={(e) => setCallbackName(e.target.value)}
-                          placeholder="Enter your name"
-                        />
-                      </div>
-                      <div className="space-y-2">
-                        <Label>Phone Number</Label>
-                        <Input
-                          value={callbackPhone}
-                          onChange={(e) => setCallbackPhone(e.target.value)}
-                          placeholder="Enter your phone"
-                        />
-                      </div>
-                      <Button onClick={handleCallbackRequest} disabled={isSubmitting} className="w-full">
-                        {isSubmitting ? 'Sending...' : 'Send Request'}
-                      </Button>
+                )}
+
+                <Button 
+                  variant="outline" 
+                  className="w-full" 
+                  onClick={() => setShowCallbackForm(!showCallbackForm)}
+                  type="button"
+                >
+                  <MessageSquare className="h-4 w-4 mr-2" />
+                  {showCallbackForm ? 'Cancel' : 'Request Callback'}
+                </Button>
+                {showCallbackForm && (
+                  <div className="space-y-3 p-4 border rounded-lg">
+                    <div className="space-y-2">
+                      <Label>Your Name</Label>
+                      <Input
+                        value={callbackName}
+                        onChange={(e) => setCallbackName(e.target.value)}
+                        placeholder="Enter your name"
+                      />
                     </div>
-                  )}
+                    <div className="space-y-2">
+                      <Label>Phone Number</Label>
+                      <Input
+                        value={callbackPhone}
+                        onChange={(e) => setCallbackPhone(e.target.value)}
+                        placeholder="Enter your phone"
+                      />
+                    </div>
+                    <Button onClick={handleCallbackRequest} disabled={isSubmitting} className="w-full">
+                      {isSubmitting ? 'Sending...' : 'Send Request'}
+                    </Button>
+                  </div>
+                )}
+
+                {property.agent?.email && (
                   <Button variant="outline" className="w-full" asChild>
                     <a href={`mailto:${property.agent.email}`}>
                       <Mail className="h-4 w-4 mr-2" />
                       Email Agent
                     </a>
                   </Button>
-                </div>
-              )}
+                )}
+              </div>
               <div className="flex gap-2 pt-4 border-t">
                 <Button variant="outline" className="flex-1">
                   <Heart className="h-4 w-4 mr-2" />
                   Save
                 </Button>
-                <Button variant="outline" className="flex-1">
+                <Button variant="outline" className="flex-1" onClick={handleShare} aria-label="Share property">
                   <Share2 className="h-4 w-4 mr-2" />
                   Share
                 </Button>

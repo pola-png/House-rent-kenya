@@ -26,6 +26,8 @@ import * as z from 'zod';
 import { Form, FormControl, FormField, FormItem, FormMessage } from '@/components/ui/form';
 import { useToast } from '@/hooks/use-toast';
 import { useRouter } from 'next/navigation';
+import { useAuth } from '@/hooks/use-auth-supabase';
+import { supabase } from '@/lib/supabase';
 
 const faqs = [
   {
@@ -58,6 +60,7 @@ const supportFormSchema = z.object({
 export default function SupportPage() {
   const { toast } = useToast();
   const router = useRouter();
+  const { user } = useAuth();
 
   const form = useForm<z.infer<typeof supportFormSchema>>({
     resolver: zodResolver(supportFormSchema),
@@ -70,18 +73,36 @@ export default function SupportPage() {
   const { isSubmitting } = form.formState;
 
   const onSubmit = async (values: z.infer<typeof supportFormSchema>) => {
-    // Mock creating a support ticket
-    const ticketId = `ticket_${Date.now()}`;
-    console.log("Creating ticket:", { ...values, ticketId });
-    
-    toast({
-      title: 'Message Sent!',
-      description: 'Our support team will get back to you shortly. You can view your ticket in the Messages tab.',
-    });
+    try {
+      if (!user) {
+        router.push('/login?redirect=/admin/support');
+        return;
+      }
 
-    form.reset();
-    // Navigate to the messages page with the new (mock) ticket ID
-    router.push(`/admin/messages?ticket=${ticketId}`);
+      // Create or find an open ticket for this user with same subject
+      const now = new Date().toISOString();
+      const { data: tInsert, error: tErr } = await supabase
+        .from('support_tickets')
+        .insert([{ userId: user.uid, subject: values.subject, status: 'open', createdAt: now, updatedAt: now, lastMessage: values.message }])
+        .select('id')
+        .single();
+      if (tErr) throw tErr;
+
+      // Insert first message
+      const { error: mErr } = await supabase
+        .from('messages')
+        .insert([{ ticketId: tInsert.id, text: values.message, senderId: user.uid, timestamp: now }]);
+      if (mErr) throw mErr;
+
+      toast({
+        title: 'Message Sent!',
+        description: 'Our support team will get back to you shortly. You can view your ticket in the Messages tab.',
+      });
+      form.reset();
+      router.push(`/admin/messages?ticket=${tInsert.id}`);
+    } catch (e: any) {
+      toast({ variant: 'destructive', title: 'Failed to send', description: e?.message || 'Please try again' });
+    }
   };
 
 

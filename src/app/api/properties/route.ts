@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { supabase } from '@/lib/supabase';
 import { presignImageUrls } from '@/lib/image-presign';
+import { unstable_cache } from 'next/cache';
 
 function toArray(value: any): string[] {
   if (!value) return [];
@@ -29,56 +30,62 @@ export async function GET(request: Request) {
     const status = searchParams.get('status');
     const q = (searchParams.get('q') || '').trim();
 
-    let query = supabase
-      .from('properties')
-      .select('*', { count: 'exact' })
-      .order('createdAt', { ascending: false })
-      .range(from, to);
+    const cacheKey = `properties:list:${searchParams.toString()}`;
+    const loadList = unstable_cache(
+      async () => {
+        let query = supabase
+          .from('properties')
+          .select('*', { count: 'exact' })
+          .order('createdAt', { ascending: false })
+          .range(from, to);
 
-    if (featured != null) {
-      query = query.eq('featured', featured === 'true' || featured === '1');
-    }
-    if (landlordId) {
-      query = query.eq('landlordId', landlordId);
-    }
-    if (status) {
-      query = query.eq('status', status);
-    }
-    if (q) {
-      // Basic text filter on title/location/city
-      query = query.or(
-        `title.ilike.%${q}%,location.ilike.%${q}%,city.ilike.%${q}%`
-      );
-    }
-
-    const { data, error, count } = await query;
-    if (error) throw error;
-
-    const items = data || [];
-
-    // Presign only the first image per property for listing performance
-    const TTL = 900;
-    await Promise.all(
-      items.map(async (item: any) => {
-        const imgs = toArray(item.images);
-        if (imgs.length > 0) {
-          try {
-            const signedArr = await presignImageUrls([imgs[0]], TTL);
-            const signed = signedArr?.[0];
-            if (signed) imgs[0] = signed;
-          } catch {}
+        if (featured != null) {
+          query = query.eq('featured', featured === 'true' || featured === '1');
         }
-        item.images = imgs;
-      })
+        if (landlordId) {
+          query = query.eq('landlordId', landlordId);
+        }
+        if (status) {
+          query = query.eq('status', status);
+        }
+        if (q) {
+          query = query.or(
+            `title.ilike.%${q}%,location.ilike.%${q}%,city.ilike.%${q}%`
+          );
+        }
+
+        const { data, error, count } = await query;
+        if (error) throw error;
+
+        const items = data || [];
+        const TTL = 900;
+        await Promise.all(
+          items.map(async (item: any) => {
+            const imgs = toArray(item.images);
+            if (imgs.length > 0) {
+              try {
+                const signedArr = await presignImageUrls([imgs[0]], TTL);
+                const signed = signedArr?.[0];
+                if (signed) imgs[0] = signed;
+              } catch {}
+            }
+            item.images = imgs;
+          })
+        );
+
+        return { page, limit, total: count || 0, items };
+      },
+      [cacheKey],
+      { tags: ['properties:list'] }
     );
 
-    const res = NextResponse.json({
-      page,
-      limit,
-      total: count || 0,
-      items,
-    });
+    const payload = await loadList();
+
+    const res = NextResponse.json(payload);
+    // Short browser cache, a bit longer on CDN for list data
     res.headers.set('Cache-Control', 'public, max-age=30, s-maxage=60, stale-while-revalidate=120');
+    res.headers.set('CDN-Cache-Control', 'public, max-age=0, s-maxage=300, stale-while-revalidate=600');
+    res.headers.set('x-next-cache-tags', 'properties:list');
     return res;
   } catch (error: any) {
     return new NextResponse(

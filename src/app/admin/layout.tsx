@@ -345,7 +345,15 @@ export default function AdminLayout({
               <Button
                 variant="outline"
                 size="sm"
-                onClick={() => setReauthOpen(true)}
+                onClick={() => {
+                  if (viewMode === 'admin') {
+                    try { window.localStorage.setItem('adminViewMode', 'agent'); } catch {}
+                    router.push('/admin/dashboard');
+                  } else {
+                    setReauthOpen(true);
+                    setReauthTarget('admin');
+                  }
+                }}
                 className="hidden sm:flex items-center gap-2 bg-zinc-900 border-zinc-700 text-white hover:bg-zinc-800 transition-all duration-200"
               >
                 <Shield className="h-4 w-4" />
@@ -356,7 +364,15 @@ export default function AdminLayout({
               <Button
                 variant="outline"
                 size="icon"
-                onClick={() => setReauthOpen(true)}
+                onClick={() => {
+                  if (viewMode === 'admin') {
+                    try { window.localStorage.setItem('adminViewMode', 'agent'); } catch {}
+                    router.push('/admin/dashboard');
+                  } else {
+                    setReauthOpen(true);
+                    setReauthTarget('admin');
+                  }
+                }}
                 className="sm:hidden bg-zinc-900 border-zinc-700 text-white hover:bg-zinc-800"
               >
                 <Shield className="h-4 w-4" />

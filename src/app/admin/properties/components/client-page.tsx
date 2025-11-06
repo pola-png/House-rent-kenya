@@ -68,6 +68,16 @@ export function PropertiesClient({ data: initialData }: PropertiesClientProps) {
       if (error) throw error;
 
       setProperties(prev => prev.filter(p => p.id !== propertyId));
+      try {
+        await fetch('/api/revalidate', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'x-revalidate-token': process.env.NEXT_PUBLIC_REVALIDATE_TOKEN || '',
+          },
+          body: JSON.stringify({ tags: ['properties:list', `property:${propertyId}`] }),
+        });
+      } catch {}
       toast({ title: 'Deleted', description: 'Property deleted successfully.' });
     } catch (error: any) {
       toast({ variant: 'destructive', title: 'Delete failed', description: error.message || 'Failed to delete property.' });

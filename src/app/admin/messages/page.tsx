@@ -13,14 +13,13 @@ import { formatDistanceToNow } from 'date-fns';
 import { cn } from "@/lib/utils";
 import { Send, MessageSquare, Loader2, User as UserIcon } from "lucide-react";
 import placeholderImages from "@/lib/placeholder-images.json";
-
-// Mock data imports
-import mockTicketsData from "@/lib/docs/support-tickets.json";
-import mockMessagesData from "@/lib/docs/messages.json";
+import { useAuth } from "@/hooks/use-auth-supabase";
+import { supabase } from "@/lib/supabase";
 
 export default function MessagesPage() {
   const searchParams = useSearchParams();
   const initialTicketId = searchParams?.get('ticket') ?? null;
+  const { user } = useAuth();
   
   const [selectedTicketId, setSelectedTicketId] = React.useState<string | null>(null);
   const [newMessage, setNewMessage] = React.useState("");
@@ -32,11 +31,30 @@ export default function MessagesPage() {
   const [isLoadingMessages, setIsLoadingMessages] = React.useState(false);
 
   React.useEffect(() => {
-    // Simulate fetching tickets
-    const typedTickets: SupportTicket[] = mockTicketsData.map(t => ({...t, id: String(t.id), createdAt: new Date(t.createdAt), updatedAt: new Date(t.updatedAt), status: t.status as "open" | "closed" }));
-    setTickets(typedTickets.sort((a,b) => b.updatedAt.getTime() - a.updatedAt.getTime()));
-    setIsLoadingTickets(false);
-  }, []);
+    const loadTickets = async () => {
+      if (!user) return;
+      setIsLoadingTickets(true);
+      try {
+        let q = supabase.from('support_tickets').select('*').order('updatedAt', { ascending: false });
+        if (user.role !== 'admin') {
+          q = q.eq('userId', user.uid);
+        }
+        const { data, error } = await q;
+        if (error) throw error;
+        const typed: SupportTicket[] = (data || []).map((t: any) => ({
+          ...t,
+          createdAt: t.createdAt ? new Date(t.createdAt) : undefined,
+          updatedAt: t.updatedAt ? new Date(t.updatedAt) : undefined,
+        }));
+        setTickets(typed);
+      } catch (e) {
+        setTickets([]);
+      } finally {
+        setIsLoadingTickets(false);
+      }
+    };
+    loadTickets();
+  }, [user]);
 
   React.useEffect(() => {
     if (initialTicketId) {
@@ -47,45 +65,51 @@ export default function MessagesPage() {
   }, [tickets, initialTicketId, selectedTicketId]);
   
   React.useEffect(() => {
-    if (selectedTicketId) {
-        setIsLoadingMessages(true);
-        // Simulate fetching messages for the selected ticket
-        const typedMessages: Message[] = mockMessagesData
-            .filter(m => String(m.ticketId) === selectedTicketId)
-            .map(m => ({...m, id: String(m.id), timestamp: new Date(m.timestamp) }))
-            .sort((a, b) => a.timestamp.getTime() - b.timestamp.getTime());
-        setMessages(typedMessages);
-        setIsLoadingMessages(false);
-    } else {
+    const loadMessages = async () => {
+      if (!selectedTicketId) { setMessages([]); return; }
+      setIsLoadingMessages(true);
+      try {
+        const { data, error } = await supabase
+          .from('messages')
+          .select('*')
+          .eq('ticketId', selectedTicketId)
+          .order('timestamp', { ascending: true });
+        if (error) throw error;
+        const typed: Message[] = (data || []).map((m: any) => ({
+          ...m,
+          timestamp: m.timestamp ? new Date(m.timestamp) : undefined,
+        }));
+        setMessages(typed);
+      } catch (e) {
         setMessages([]);
-    }
+      } finally {
+        setIsLoadingMessages(false);
+      }
+    };
+    loadMessages();
   }, [selectedTicketId]);
   
   const handleSendMessage = async () => {
-    if (!newMessage.trim() || !selectedTicketId) return;
+    if (!newMessage.trim() || !selectedTicketId || !user) return;
     setIsSending(true);
-
-    const messageData: Message = {
-      id: String(Date.now()),
-      text: newMessage,
-      senderId: 'agent1', // Mock current user as an agent
-      timestamp: new Date(),
-    };
-    
-    // Simulate sending message
-    setTimeout(() => {
-      setMessages(prev => [...prev, messageData]);
-      
-      // Update ticket's last message and timestamp
-      setTickets(prev => prev.map(ticket => 
-        ticket.id === selectedTicketId 
-          ? { ...ticket, lastMessage: newMessage, updatedAt: new Date() } 
-          : ticket
-      ).sort((a,b) => b.updatedAt.getTime() - a.updatedAt.getTime()));
-      
-      setNewMessage("");
+    try {
+      const now = new Date().toISOString();
+      const { error } = await supabase
+        .from('messages')
+        .insert([{ ticketId: selectedTicketId, text: newMessage, senderId: user.uid, timestamp: now }]);
+      if (error) throw error;
+      setMessages(prev => [...prev, { id: String(Date.now()), text: newMessage, senderId: user.uid, timestamp: new Date() } as Message]);
+      await supabase
+        .from('support_tickets')
+        .update({ lastMessage: newMessage, updatedAt: now })
+        .eq('id', selectedTicketId);
+      setTickets(prev => prev.map(t => t.id === selectedTicketId ? { ...t, lastMessage: newMessage, updatedAt: new Date() } : t).sort((a,b) => (b.updatedAt?.getTime() || 0) - (a.updatedAt?.getTime() || 0)));
+      setNewMessage('');
+    } catch (e) {
+      // ignore
+    } finally {
       setIsSending(false);
-    }, 500);
+    }
   };
 
   const adminAvatar = placeholderImages.placeholderImages.find(img => img.id === 'agent_1');
@@ -153,22 +177,22 @@ export default function MessagesPage() {
                         ) : messages && messages.length > 0 ? (
                             <div className="space-y-4">
                             {messages.map(message => {
-                                const isUserAgent = message.senderId === 'agent1';
+                                const isMine = user && message.senderId === user.uid;
                                 return (
-                                <div key={message.id} className={cn("flex items-end gap-2", isUserAgent ? "justify-end" : "justify-start")}>
-                                    {!isUserAgent && (
+                                <div key={message.id} className={cn("flex items-end gap-2", isMine ? "justify-end" : "justify-start")}>
+                                    {!isMine && (
                                          <Avatar className="h-8 w-8">
                                             <AvatarImage src={userAvatar?.imageUrl} />
                                             <AvatarFallback>U</AvatarFallback>
                                         </Avatar>
                                     )}
-                                    <div className={cn("max-w-xs md:max-w-md lg:max-w-lg rounded-lg px-4 py-2", isUserAgent ? "bg-primary text-primary-foreground" : "bg-muted")}>
+                                    <div className={cn("max-w-xs md:max-w-md lg:max-w-lg rounded-lg px-4 py-2", isMine ? "bg-primary text-primary-foreground" : "bg-muted")}>
                                         <p className="text-sm">{message.text}</p>
-                                        <p className={cn("text-xs mt-1", isUserAgent ? "text-primary-foreground/70" : "text-muted-foreground")}>
+                                        <p className={cn("text-xs mt-1", isMine ? "text-primary-foreground/70" : "text-muted-foreground")}>
                                              {message.timestamp ? formatDistanceToNow(message.timestamp, { addSuffix: true }) : 'sending...'}
                                         </p>
                                     </div>
-                                     {isUserAgent && (
+                                     {isMine && (
                                          <Avatar className="h-8 w-8">
                                             <AvatarImage src={adminAvatar?.imageUrl} />
                                             <AvatarFallback><UserIcon className="h-4 w-4"/></AvatarFallback>

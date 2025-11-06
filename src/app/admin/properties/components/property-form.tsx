@@ -337,6 +337,18 @@ export function PropertyForm({ property }: PropertyFormProps) {
         }
       }
 
+      try {
+        // Trigger CDN + tag revalidation so lists refresh instantly
+        await fetch('/api/revalidate', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'x-revalidate-token': process.env.NEXT_PUBLIC_REVALIDATE_TOKEN || '',
+          },
+          body: JSON.stringify({ tags: ['properties:list', savedId ? `property:${savedId}` : undefined].filter(Boolean) }),
+        }).catch(() => {});
+      } catch {}
+
       toast({
         title: `Property ${property?.id ? 'Updated' : 'Created'}`,
         description: `Your property has been successfully ${property?.id ? 'updated' : 'saved'}.`,
