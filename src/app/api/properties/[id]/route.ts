@@ -5,9 +5,12 @@ import { presignImageUrls } from '@/lib/image-presign';
 const PRESIGN_TTL = 900; // 15 minutes
 
 export async function GET(
-  request: Request,
-  { params }: { params: { id: string } }
+  _request: Request,
+  context: { params: Promise<{ id: string }> } | { params: { id: string } }
 ) {
+  const params = 'params' in context && typeof (context as any).params?.then === 'function'
+    ? await (context as { params: Promise<{ id: string }> }).params
+    : (context as { params: { id: string } }).params;
   const { id } = params;
   
   try {

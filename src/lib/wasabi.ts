@@ -91,3 +91,33 @@ export function buildPublicishPath(key: string): string {
   return `https://${BUCKET}.${ENDPOINT}/${key.replace(/^\/+/, '')}`;
 }
 
+// Backwards-compatible helper for client forms that previously imported uploadToWasabi
+// This performs the standard two-step flow via our API route.
+export async function uploadToWasabi(file: File, params: { key: string; contentType?: string }): Promise<{ objectPath: string }>{
+  const body = {
+    key: params.key,
+    contentType: params.contentType || file.type,
+    contentLength: file.size,
+  };
+  const res = await fetch('/api/upload', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(body),
+    cache: 'no-store',
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.error || `Failed to create upload URL (${res.status})`);
+  }
+  const { uploadUrl, uploadHeaders, objectPath } = await res.json();
+
+  const put = await fetch(uploadUrl, {
+    method: 'PUT',
+    headers: uploadHeaders || {},
+    body: file,
+  });
+  if (!put.ok) {
+    throw new Error(`Upload failed (${put.status})`);
+  }
+  return { objectPath };
+}
