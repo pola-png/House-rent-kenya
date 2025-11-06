@@ -1,14 +1,11 @@
 import { NextResponse } from 'next/server';
 import { supabase } from '@/lib/supabase';
 import { presignImageUrls } from '@/lib/image-presign';
-import type { NextRequest } from 'next/server';
-// Infer the context type without importing unstable RouteContext
-type Params = { id: string };
-type HandlerContext = { params: Params };
+// Use standard Fetch API Request type and inline context typing
 
 const PRESIGN_TTL = 900; // 15 minutes
 
-export async function GET(_request: NextRequest, { params }: HandlerContext) {
+export async function GET(_request: Request, { params }: { params: { id: string } }) {
   const { id } = params;
   
   try {
