@@ -27,6 +27,9 @@ export function OptimizedImage({
   const [imageError, setImageError] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   
+  // Fallback image for properties
+  const fallbackSrc = "https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?w=800&h=600&fit=crop&crop=center";
+
   // Check if image is from Wasabi - use proxy
   const isWasabiImage = src.includes('wasabisys.com');
   
@@ -39,9 +42,6 @@ export function OptimizedImage({
   
   const displaySrc = getProxiedUrl(src);
   const displayFallback = fallbackSrc;
-
-  // Fallback image for properties
-  const fallbackSrc = "https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?w=800&h=600&fit=crop&crop=center";
 
   const handleError = () => {
     setImageError(true);
