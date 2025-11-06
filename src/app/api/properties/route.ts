@@ -63,7 +63,8 @@ export async function GET(request: Request) {
         const imgs = toArray(item.images);
         if (imgs.length > 0) {
           try {
-            const [signed] = await presignImageUrls([imgs[0]], TTL);
+            const signedArr = await presignImageUrls([imgs[0]], TTL);
+            const signed = signedArr?.[0];
             if (signed) imgs[0] = signed;
           } catch {}
         }
@@ -86,4 +87,3 @@ export async function GET(request: Request) {
     );
   }
 }
-
