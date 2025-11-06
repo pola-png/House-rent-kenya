@@ -17,6 +17,7 @@ import type { Property } from '@/lib/types';
 import { useAuth } from '@/hooks/use-auth-supabase';
 import { useRouter } from 'next/navigation';
 import { trackPropertyView } from '@/lib/view-tracking';
+import { normalizeWasabiImageArray } from '@/lib/wasabi';
 
 interface PropertyDetailClientProps {
   id: string;
@@ -65,8 +66,11 @@ export default function PropertyDetailClient({ id }: PropertyDetailClientProps) 
         .eq('id', data.landlordId)
         .single();
 
+      const images = normalizeWasabiImageArray(data.images);
+
       setProperty({
         ...data,
+        images,
         createdAt: new Date(data.createdAt),
         updatedAt: new Date(data.updatedAt),
         agent: profileData ? {
@@ -82,6 +86,8 @@ export default function PropertyDetailClient({ id }: PropertyDetailClientProps) 
           createdAt: new Date(profileData.createdAt)
         } : undefined
       });
+
+      setCurrentImageIndex(0);
 
       // Track property view (works for all users including anonymous)
       try {

@@ -2,7 +2,7 @@ import { Metadata } from 'next';
 import { supabase } from '@/lib/supabase';
 import PropertyDetailClient from './property-detail-client';
 import { PropertySchema } from '@/components/property-schema';
-import { redirect } from 'next/navigation';
+import { toWasabiProxyAbsolute } from '@/lib/wasabi';
 
 interface Props {
   params: Promise<{ id: string }>;
@@ -36,7 +36,15 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
     const title = `${property.title} - ${property.bedrooms} Bed ${property.propertyType} in ${property.location} | House Rent Kenya`;
     const description = `${property.bedrooms} bedroom ${property.propertyType.toLowerCase()} for ${property.status.toLowerCase()} in ${property.location}, ${property.city}. Ksh ${property.price.toLocaleString()}/month. ${property.description?.substring(0, 120)}...`;
-    const images = property.images?.[0] ? [property.images[0]] : [];
+    const images = Array.isArray(property.images)
+      ? property.images
+          .map((img: string) => toWasabiProxyAbsolute(img))
+          .filter((img: string) => typeof img === 'string' && img.length > 0)
+      : [];
+    const primaryImage = images[0];
+    const ogImages = (primaryImage ? [primaryImage] : images).length
+      ? (primaryImage ? [primaryImage] : images)
+      : ['https://houserentkenya.co.ke/default-property.jpg'];
 
     return {
       title,
@@ -54,7 +62,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
       openGraph: {
         title,
         description,
-        images,
+        images: ogImages,
         url: `https://houserentkenya.co.ke/property/${id}`,
         type: 'article',
         siteName: 'House Rent Kenya'
@@ -63,7 +71,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
         card: 'summary_large_image',
         title,
         description,
-        images
+        images: ogImages
       },
       alternates: {
         canonical: `https://houserentkenya.co.ke/property/${id}`

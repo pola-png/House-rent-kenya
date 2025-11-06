@@ -34,13 +34,21 @@ export const allowedWasabiHosts = new Set<string>([
   's3.ap-southeast-1.wasabisys.com',
 ]);
 
+const isAllowedWasabiHost = (hostname: string): boolean => {
+  if (allowedWasabiHosts.has(hostname)) return true;
+  if (hostname === `${BUCKET}.${ENDPOINT}`) return true;
+  if (hostname.endsWith(`.${ENDPOINT}`)) return true;
+  if (hostname.endsWith('.wasabisys.com')) return true;
+  return false;
+};
+
 export function extractWasabiKey(urlOrKey: string): string {
   // If the caller already passed a key, return as-is
   if (!/^https?:\/\//i.test(urlOrKey)) return urlOrKey.replace(/^\/+/, '');
 
   try {
     const u = new URL(urlOrKey);
-    if (!allowedWasabiHosts.has(u.hostname)) {
+    if (!isAllowedWasabiHost(u.hostname)) {
       throw new Error(`Disallowed host: ${u.hostname}`);
     }
     // Handle both virtual-hosted–style and path-style URLs
@@ -89,6 +97,49 @@ export async function getPresignedPutUrl(key: string, opts: PutUrlOptions = {}):
 export function buildPublicishPath(key: string): string {
   // Non-signed canonical path (useful to store in DB); will be converted to presigned on read
   return `https://${BUCKET}.${ENDPOINT}/${key.replace(/^\/+/, '')}`;
+}
+
+export function toWasabiProxyPath(urlOrKey: string): string {
+  if (!urlOrKey) return urlOrKey;
+  if (urlOrKey.startsWith('/api/image-proxy')) return urlOrKey;
+  try {
+    const key = extractWasabiKey(urlOrKey);
+    return `/api/image-proxy?path=${encodeURIComponent(key)}`;
+  } catch {
+    return urlOrKey;
+  }
+}
+
+export function toWasabiProxyAbsolute(urlOrKey: string, origin?: string): string {
+  const proxied = toWasabiProxyPath(urlOrKey);
+  if (!proxied) return proxied;
+  if (proxied.startsWith('http://') || proxied.startsWith('https://')) return proxied;
+  const base = origin || process.env.NEXT_PUBLIC_SITE_URL || 'https://houserentkenya.co.ke';
+  if (proxied.startsWith('/')) return `${base}${proxied}`;
+  return `${base}/${proxied}`;
+}
+
+export function normalizeWasabiImageArray(images: unknown): string[] {
+  if (!images) return [];
+  if (typeof images === 'string') {
+    try {
+      const parsed = JSON.parse(images);
+      return normalizeWasabiImageArray(parsed);
+    } catch {
+      const proxied = toWasabiProxyPath(images);
+      return proxied ? [proxied] : [];
+    }
+  }
+
+  if (!Array.isArray(images)) return [];
+
+  return (images as unknown[])
+    .map((value) => {
+      if (typeof value !== 'string') return null;
+      const proxied = toWasabiProxyPath(value);
+      return proxied || null;
+    })
+    .filter((value): value is string => Boolean(value));
 }
 
 // Backwards-compatible helper for client forms that previously imported uploadToWasabi

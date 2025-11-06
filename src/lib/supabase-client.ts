@@ -1,5 +1,22 @@
 import { supabase } from './supabase';
 import type { Property, UserProfile } from './types';
+import { normalizeWasabiImageArray } from './wasabi';
+
+const mapPropertyRecords = <T extends { images?: unknown }>(records: T[] | null | undefined): T[] => {
+  if (!records) return [];
+  return records.map((record) => ({
+    ...record,
+    images: normalizeWasabiImageArray(record.images),
+  }));
+};
+
+const mapPropertyRecord = <T extends { images?: unknown }>(record: T | null): T | null => {
+  if (!record) return record;
+  return {
+    ...record,
+    images: normalizeWasabiImageArray(record.images),
+  };
+};
 
 // Properties
 export const getProperties = async () => {
@@ -8,7 +25,7 @@ export const getProperties = async () => {
     .select('*, landlord:profiles(*)');
   
   if (error) throw error;
-  return data;
+  return mapPropertyRecords(data);
 };
 
 export const getFeaturedProperties = async () => {
@@ -19,7 +36,7 @@ export const getFeaturedProperties = async () => {
     .limit(6);
   
   if (error) throw error;
-  return data;
+  return mapPropertyRecords(data);
 };
 
 export const getPropertyById = async (id: string) => {
@@ -30,7 +47,7 @@ export const getPropertyById = async (id: string) => {
     .single();
   
   if (error) throw error;
-  return data;
+  return mapPropertyRecord(data as Property | null);
 };
 
 export const createProperty = async (property: any) => {
@@ -41,7 +58,7 @@ export const createProperty = async (property: any) => {
     .single();
   
   if (error) throw error;
-  return data;
+  return mapPropertyRecord(data as Property | null);
 };
 
 export const updateProperty = async (id: string, updates: any) => {
@@ -53,7 +70,7 @@ export const updateProperty = async (id: string, updates: any) => {
     .single();
   
   if (error) throw error;
-  return data;
+  return mapPropertyRecord(data as Property | null);
 };
 
 export const deleteProperty = async (id: string) => {
