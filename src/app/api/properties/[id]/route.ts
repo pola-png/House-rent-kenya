@@ -1,13 +1,11 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { NextResponse } from 'next/server';
 import type { AppRouteHandlerFn } from 'next/dist/server/route-modules/app-route/module';
 import { supabase } from '@/lib/supabase';
 import { presignImageUrls } from '@/lib/image-presign';
 
 const PRESIGN_TTL = 900; // 15 minutes
 
-type RouteContext = Parameters<AppRouteHandlerFn>[1];
-
-export async function GET(_request: NextRequest, context: RouteContext) {
+export const GET: AppRouteHandlerFn = async (_request, context) => {
   const rawParams = context?.params ? await context.params : undefined;
   const idParam = rawParams?.id;
   const id = Array.isArray(idParam) ? idParam[0] : idParam;
@@ -18,7 +16,7 @@ export async function GET(_request: NextRequest, context: RouteContext) {
       headers: { 'Content-Type': 'application/json' },
     });
   }
-  
+
   try {
     const { data, error } = await supabase
       .from('properties')
@@ -36,7 +34,7 @@ export async function GET(_request: NextRequest, context: RouteContext) {
     }
 
     if ('images' in data) {
-      data.images = await presignImageUrls((data as any).images, PRESIGN_TTL);
+      (data as any).images = await presignImageUrls((data as any).images, PRESIGN_TTL);
     }
 
     return NextResponse.json(data);
@@ -46,4 +44,4 @@ export async function GET(_request: NextRequest, context: RouteContext) {
       headers: { 'Content-Type': 'application/json' },
     });
   }
-}
+};
