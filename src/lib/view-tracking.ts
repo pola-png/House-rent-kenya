@@ -3,31 +3,22 @@ import { supabase } from './supabase';
 // Track single property view (for property detail pages)
 export const trackPropertyView = async (propertyId: string): Promise<number> => {
   try {
-    const { data, error } = await supabase.rpc('increment_property_views', {
-      property_id: propertyId
-    });
-    
-    if (error) {
-      console.error('View tracking error:', error);
-      // Fallback: directly increment views if RPC is missing
-      const { data: current } = await supabase
-        .from('properties')
-        .select('views')
-        .eq('id', propertyId)
-        .single();
-      const next = (current?.views || 0) + 1;
-      const { error: upErr } = await supabase
-        .from('properties')
-        .update({ views: next })
-        .eq('id', propertyId);
-      if (upErr) {
-        console.error('Views fallback update failed:', upErr);
-        return 0;
-      }
-      return next;
+    // Avoid RPCs; directly update to eliminate 404s on missing functions
+    const { data: current } = await supabase
+      .from('properties')
+      .select('views')
+      .eq('id', propertyId)
+      .single();
+    const next = (current?.views || 0) + 1;
+    const { error: upErr } = await supabase
+      .from('properties')
+      .update({ views: next })
+      .eq('id', propertyId);
+    if (upErr) {
+      console.error('View update failed:', upErr);
+      return current?.views || 0;
     }
-    
-    return data || 0;
+    return next;
   } catch (error) {
     console.error('View tracking failed:', error);
     return 0;
@@ -37,30 +28,21 @@ export const trackPropertyView = async (propertyId: string): Promise<number> => 
 // Track multiple property views (for homepage impressions)
 export const trackMultiplePropertyViews = async (propertyIds: string[]): Promise<void> => {
   if (propertyIds.length === 0) return;
-  
   try {
-    const { error } = await supabase.rpc('increment_multiple_property_views', {
-      property_ids: propertyIds
-    });
-    
-    if (error) {
-      console.error('Bulk view tracking error:', error);
-      // Fallback: increment each property sequentially to avoid RPC dependency
-      for (const id of propertyIds) {
-        try {
-          const { data: current } = await supabase
-            .from('properties')
-            .select('views')
-            .eq('id', id)
-            .single();
-          const next = (current?.views || 0) + 1;
-          await supabase
-            .from('properties')
-            .update({ views: next })
-            .eq('id', id);
-        } catch (e) {
-          console.error('Views fallback (multiple) failed for', id, e);
-        }
+    for (const id of propertyIds) {
+      try {
+        const { data: current } = await supabase
+          .from('properties')
+          .select('views')
+          .eq('id', id)
+          .single();
+        const next = (current?.views || 0) + 1;
+        await supabase
+          .from('properties')
+          .update({ views: next })
+          .eq('id', id);
+      } catch (e) {
+        console.error('Views update failed for', id, e);
       }
     }
   } catch (error) {
