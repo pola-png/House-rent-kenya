@@ -57,6 +57,8 @@ export default function PropertyDetailClient({ id }: PropertyDetailClientProps) 
 
       if (error) throw error;
 
+      console.log('Fetched property data:', data);
+
       const { data: profileData } = await supabase
         .from('profiles')
         .select('*')
