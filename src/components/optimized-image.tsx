@@ -32,8 +32,8 @@ export function OptimizedImage({
   // Fallback image for properties
   const fallbackSrc = "https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?w=800&h=600&fit=crop&crop=center";
 
-  // Check if image is from Wasabi - use proxy
-  const isWasabiImage = src.includes('wasabisys.com');
+  // Check if image is from Wasabi (direct) or via our proxy
+  const isWasabiImage = src.includes('wasabisys.com') || src.startsWith('/api/image-proxy');
   
   // Convert Wasabi URL to proxy URL
   const getProxiedUrl = (url: string) => {
