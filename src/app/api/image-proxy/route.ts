@@ -26,8 +26,16 @@ export async function GET(request: Request) {
     }
 
     const key = decoded.startsWith('http') ? extractWasabiKey(decoded) : decoded;
-    const signedUrl = await getPresignedGetUrl(key, 900);
-    return NextResponse.redirect(signedUrl, 307);
+    try {
+      const signedUrl = await getPresignedGetUrl(key, 900);
+      return NextResponse.redirect(signedUrl, 307);
+    } catch (e: any) {
+      // Fallback: if the original was a full URL, attempt a direct redirect
+      if (decoded.startsWith('http')) {
+        return NextResponse.redirect(decoded, 302);
+      }
+      throw e;
+    }
   } catch (error: any) {
     console.error('Image proxy error:', error);
     return NextResponse.json({ error: error.message || 'Proxy error' }, { status: 500 });

@@ -22,7 +22,7 @@ export async function GET(
   try {
     const { data, error } = await supabase
       .from('properties')
-      .select('*, landlord:profiles(*)')
+      .select('*')
       .eq('id', id)
       .single();
 
