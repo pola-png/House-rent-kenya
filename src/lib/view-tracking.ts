@@ -9,7 +9,22 @@ export const trackPropertyView = async (propertyId: string): Promise<number> => 
     
     if (error) {
       console.error('View tracking error:', error);
-      return 0;
+      // Fallback: directly increment views if RPC is missing
+      const { data: current } = await supabase
+        .from('properties')
+        .select('views')
+        .eq('id', propertyId)
+        .single();
+      const next = (current?.views || 0) + 1;
+      const { error: upErr } = await supabase
+        .from('properties')
+        .update({ views: next })
+        .eq('id', propertyId);
+      if (upErr) {
+        console.error('Views fallback update failed:', upErr);
+        return 0;
+      }
+      return next;
     }
     
     return data || 0;
@@ -30,6 +45,23 @@ export const trackMultiplePropertyViews = async (propertyIds: string[]): Promise
     
     if (error) {
       console.error('Bulk view tracking error:', error);
+      // Fallback: increment each property sequentially to avoid RPC dependency
+      for (const id of propertyIds) {
+        try {
+          const { data: current } = await supabase
+            .from('properties')
+            .select('views')
+            .eq('id', id)
+            .single();
+          const next = (current?.views || 0) + 1;
+          await supabase
+            .from('properties')
+            .update({ views: next })
+            .eq('id', id);
+        } catch (e) {
+          console.error('Views fallback (multiple) failed for', id, e);
+        }
+      }
     }
   } catch (error) {
     console.error('Bulk view tracking failed:', error);

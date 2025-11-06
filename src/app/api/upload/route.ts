@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { getPresignedPutUrl, buildPublicishPath, extractWasabiKey } from '@/lib/wasabi';
+import { getPresignedPutUrl, buildPublicishPath, extractWasabiKey } from '@/lib/wasabi-server';
 import { supabase } from '@/lib/supabase';
 
 // Basic server-side limits
