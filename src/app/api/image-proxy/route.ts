@@ -28,11 +28,15 @@ export async function GET(request: Request) {
     const key = decoded.startsWith('http') ? extractWasabiKey(decoded) : decoded;
     try {
       const signedUrl = await getPresignedGetUrl(key, 900);
-      return NextResponse.redirect(signedUrl, 307);
+      const res = NextResponse.redirect(signedUrl, 307);
+      res.headers.set('Cache-Control', 'no-store, max-age=0');
+      return res;
     } catch (e: any) {
       // Fallback: if the original was a full URL, attempt a direct redirect
       if (decoded.startsWith('http')) {
-        return NextResponse.redirect(decoded, 302);
+        const res = NextResponse.redirect(decoded, 302);
+        res.headers.set('Cache-Control', 'no-store, max-age=0');
+        return res;
       }
       throw e;
     }

@@ -25,6 +25,12 @@ const nextConfig = {
   async headers() {
     return [
       {
+        source: '/api/:path*',
+        headers: [
+          { key: 'Cache-Control', value: 'no-store, max-age=0' },
+        ],
+      },
+      {
         source: '/(.*)',
         headers: [
           {
@@ -49,13 +55,11 @@ const nextConfig = {
           },
         ],
       },
+      // Long-cache only Next static assets, not API
       {
-        source: '/:path*',
+        source: '/_next/static/:path*',
         headers: [
-          {
-            key: 'Cache-Control',
-            value: 'public, max-age=31536000, immutable',
-          },
+          { key: 'Cache-Control', value: 'public, max-age=31536000, immutable' },
         ],
       },
       {
