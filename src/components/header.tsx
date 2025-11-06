@@ -82,8 +82,36 @@ export function Header() {
     }
   };
 
-  const renderUserAuth = () => {
+  const renderUserAuth = ({ mobile = false }) => {
+    if (isUserLoading) {
+      return <Skeleton className="h-10 w-24" />;
+    }
+
     if (user) {
+      if (mobile) {
+        return (
+          <div className="flex flex-col gap-2">
+              <p className="text-sm font-medium text-muted-foreground px-4">My Account</p>
+              {(user.role === 'agent' || user.role === 'admin') && (
+                <SheetClose asChild>
+                    <Link href="/admin/dashboard" className="flex items-center gap-2 p-4 text-lg font-medium transition-colors hover:text-primary"><Home className="h-5 w-5"/> Dashboard</Link>
+                </SheetClose>
+              )}
+              <SheetClose asChild>
+                  <Link href="/admin/profile" className="flex items-center gap-2 p-4 text-lg font-medium transition-colors hover:text-primary"><UserCircle className="h-5 w-5"/> Profile</Link>
+              </SheetClose>
+              <SheetClose asChild>
+                  <Link href="/admin/settings" className="flex items-center gap-2 p-4 text-lg font-medium transition-colors hover:text-primary"><Settings className="h-5 w-5"/> Settings</Link>
+              </SheetClose>
+              <Separator className="my-2"/>
+              <SheetClose asChild>
+                  <Button onClick={handleLogout} variant="ghost">
+                      <LogOut className="mr-2 h-4 w-4" /> Logout
+                  </Button>
+              </SheetClose>
+          </div>
+        );
+      }
       return (
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
@@ -117,8 +145,25 @@ export function Header() {
         </DropdownMenu>
       );
     }
+    
+    if (mobile) {
+      return (
+          <div className="flex flex-col gap-2">
+              <SheetClose asChild>
+                  <Button asChild>
+                      <Link href="/login"><UserCircle className="mr-2 h-4 w-4" /> Sign In as User</Link>
+                  </Button>
+              </SheetClose>
+              <SheetClose asChild>
+                  <Button asChild variant="secondary">
+                      <Link href="/signup/agent"><Briefcase className="mr-2 h-4 w-4" /> Register as Agent</Link>
+                  </Button>
+              </SheetClose>
+          </div>
+      );
+    }
     return (
-        <DropdownMenu>
+      <DropdownMenu>
         <DropdownMenuTrigger asChild>
             <Button>
             <User className="mr-2 h-4 w-4" /> Sign In <ChevronDown className="ml-2 h-4 w-4" />
@@ -140,50 +185,9 @@ export function Header() {
             </Link>
             </DropdownMenuItem>
         </DropdownMenuContent>
-        </DropdownMenu>
+      </DropdownMenu>
     );
   };
-  
-  const MobileUserAuth = () => {
-    if (user) {
-      return (
-        <div className="flex flex-col gap-2">
-            <p className="text-sm font-medium text-muted-foreground px-4">My Account</p>
-            {(user.role === 'agent' || user.role === 'admin') && (
-              <SheetClose asChild>
-                  <Link href="/admin/dashboard" className="flex items-center gap-2 p-4 text-lg font-medium transition-colors hover:text-primary"><Home className="h-5 w-5"/> Dashboard</Link>
-              </SheetClose>
-            )}
-            <SheetClose asChild>
-                <Link href="/admin/profile" className="flex items-center gap-2 p-4 text-lg font-medium transition-colors hover:text-primary"><UserCircle className="h-5 w-5"/> Profile</Link>
-            </SheetClose>
-             <SheetClose asChild>
-                <Link href="/admin/settings" className="flex items-center gap-2 p-4 text-lg font-medium transition-colors hover:text-primary"><Settings className="h-5 w-5"/> Settings</Link>
-            </SheetClose>
-             <Separator className="my-2"/>
-            <SheetClose asChild>
-                <Button onClick={handleLogout} variant="ghost">
-                    <LogOut className="mr-2 h-4 w-4" /> Logout
-                </Button>
-            </SheetClose>
-        </div>
-      );
-    }
-    return (
-        <div className="flex flex-col gap-2">
-            <SheetClose asChild>
-                <Button asChild>
-                    <Link href="/login"><UserCircle className="mr-2 h-4 w-4" /> Sign In as User</Link>
-                </Button>
-            </SheetClose>
-            <SheetClose asChild>
-                <Button asChild variant="secondary">
-                    <Link href="/signup/agent"><Briefcase className="mr-2 h-4 w-4" /> Register as Agent</Link>
-                </Button>
-            </SheetClose>
-        </div>
-    );
-  }
 
   return (
     <header className={`sticky top-0 z-50 transition-all duration-300 bg-background shadow-md`}>
@@ -250,7 +254,7 @@ export function Header() {
                 </Button>
               </Link>
             )}
-            {renderUserAuth()}
+            {renderUserAuth({ mobile: false })}
           </div>
 
           <div className="lg:hidden">
@@ -338,7 +342,7 @@ export function Header() {
                     </SheetClose>
                   )}
                    <Separator />
-                   <MobileUserAuth />
+                   {renderUserAuth({ mobile: true })}
                 </div>
               </SheetContent>
             </Sheet>
