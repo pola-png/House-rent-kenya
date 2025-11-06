@@ -17,7 +17,18 @@ import type { Property } from '@/lib/types';
 import { useAuth } from '@/hooks/use-auth-supabase';
 import { useRouter } from 'next/navigation';
 import { trackPropertyView } from '@/lib/view-tracking';
-import { normalizeWasabiImageArray } from '@/lib/wasabi';
+// Use images exactly as returned by the API (already presigned for Wasabi)
+function coerceImages(raw: unknown): string[] {
+  if (!raw) return [];
+  if (Array.isArray(raw)) return raw as string[];
+  if (typeof raw === 'string') {
+    try {
+      const parsed = JSON.parse(raw);
+      return Array.isArray(parsed) ? parsed : [];
+    } catch { return []; }
+  }
+  return [];
+}
 
 interface PropertyDetailClientProps {
   id: string;
@@ -60,8 +71,8 @@ export default function PropertyDetailClient({ id }: PropertyDetailClientProps) 
 
       console.log('Fetched property data:', data);
 
-      // API returns presigned Wasabi URLs; normalize still handles legacy Supabase URLs
-      const images = normalizeWasabiImageArray(data.images);
+      // API returns presigned Wasabi URLs (keep as-is) and legacy Supabase URLs
+      const images = coerceImages(data.images);
 
       setProperty({
         ...data,
