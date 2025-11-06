@@ -282,18 +282,25 @@ export function PropertyForm({ property }: PropertyFormProps) {
       const allImageUrls = Array.from(new Set([...(existingImageUrls || []), ...uploadedImageUrls]));
       setIsUploadingImages(false);
 
+      // Sanitize numeric fields (handle values like "30,000")
+      const toNumber = (v: any, fallback = 0) => {
+        if (typeof v === 'number') return v;
+        const n = Number(String(v ?? '').replace(/,/g, '').trim());
+        return Number.isFinite(n) ? n : fallback;
+      };
+
       const propertyPayload = {
         title: data.title,
         description: data.description,
-        price: data.price,
+        price: toNumber(data.price, 0),
         propertyType: data.propertyType,
-        bedrooms: data.bedrooms,
-        bathrooms: data.bathrooms,
-        area: data.area,
+        bedrooms: toNumber(data.bedrooms, 1),
+        bathrooms: toNumber(data.bathrooms, 1),
+        area: toNumber(data.area, 0),
         location: data.location,
         city: data.city,
-        latitude: data.latitude || -1.286389,
-        longitude: data.longitude || 36.817223,
+        latitude: toNumber(data.latitude, -1.286389),
+        longitude: toNumber(data.longitude, 36.817223),
         images: allImageUrls,
         amenities: data.amenities.split(",").map((s) => s.trim()),
         landlordId: user.uid,
@@ -315,8 +322,7 @@ export function PropertyForm({ property }: PropertyFormProps) {
         if (upErr) {
           // Fallback to REST if RLS/session nuance blocks supabase-js path
           try {
-            const { data: sess } = await supabase.auth.getSession();
-            const accessToken = sess?.session?.access_token;
+            const accessToken = await getAccessToken();
             const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL as string;
             const supabaseAnon = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY as string;
             const rest = await fetch(`${supabaseUrl}/rest/v1/properties?id=eq.${property.id}`, {
@@ -354,8 +360,7 @@ export function PropertyForm({ property }: PropertyFormProps) {
         if (insErr) {
           // Fallback to REST insert if needed
           try {
-            const { data: sess } = await supabase.auth.getSession();
-            const accessToken = sess?.session?.access_token;
+            const accessToken = await getAccessToken();
             const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL as string;
             const supabaseAnon = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY as string;
             const rest = await fetch(`${supabaseUrl}/rest/v1/properties`, {
@@ -1089,3 +1094,29 @@ export function PropertyForm({ property }: PropertyFormProps) {
     </Form>
   );
 }
+  // Helper: try multiple ways to get a bearer token for REST calls
+  const getAccessToken = async (): Promise<string | null> => {
+    try {
+      const { data } = await supabase.auth.getSession();
+      if (data?.session?.access_token) return data.session.access_token;
+    } catch {}
+    try {
+      if (typeof window !== 'undefined' && window.localStorage) {
+        for (let i = 0; i < window.localStorage.length; i++) {
+          const k = window.localStorage.key(i);
+          if (!k) continue;
+          if (k.includes('auth-token') || k.includes('supabase')) {
+            try {
+              const raw = window.localStorage.getItem(k);
+              if (!raw) continue;
+              const json = JSON.parse(raw);
+              if (json?.access_token) return json.access_token as string;
+              if (json?.currentSession?.access_token) return json.currentSession.access_token as string;
+              if (json?.state?.currentSession?.access_token) return json.state.currentSession.access_token as string;
+            } catch {}
+          }
+        }
+      }
+    } catch {}
+    return null;
+  };
