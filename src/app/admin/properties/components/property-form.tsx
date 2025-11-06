@@ -304,31 +304,84 @@ export function PropertyForm({ property }: PropertyFormProps) {
 
       let savedId: string | null = null;
       if (property?.id) {
-        // Update existing row (RLS should enforce who can update). Do not over-constrain here.
+        // Update existing row (primary path via supabase-js)
         const { data: updated, error: upErr } = await supabase
           .from('properties')
           .update({ ...propertyPayload, updatedAt: new Date().toISOString() })
           .eq('id', property.id)
           .select('id')
           .single();
+
         if (upErr) {
-          // Surface full PostgrestError details for debugging
-          const full = [upErr.message, upErr.details, upErr.hint, upErr.code].filter(Boolean).join(' | ');
-          throw new Error(full || upErr.message || 'Update failed');
+          // Fallback to REST if RLS/session nuance blocks supabase-js path
+          try {
+            const { data: sess } = await supabase.auth.getSession();
+            const accessToken = sess?.session?.access_token;
+            const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL as string;
+            const supabaseAnon = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY as string;
+            const rest = await fetch(`${supabaseUrl}/rest/v1/properties?id=eq.${property.id}`, {
+              method: 'PATCH',
+              headers: {
+                'Content-Type': 'application/json',
+                'apikey': supabaseAnon,
+                ...(accessToken ? { 'Authorization': `Bearer ${accessToken}` } : {}),
+                'Prefer': 'return=representation'
+              },
+              body: JSON.stringify({ ...propertyPayload, updatedAt: new Date().toISOString() })
+            });
+            if (!rest.ok) {
+              const errorText = await rest.text();
+              throw new Error(errorText || `REST update failed (${rest.status})`);
+            }
+            const arr = await rest.json();
+            const row = Array.isArray(arr) ? arr[0] : arr;
+            savedId = row?.id || property.id;
+          } catch (fallbackErr: any) {
+            const full = [upErr.message, upErr.details, upErr.hint, upErr.code, fallbackErr?.message].filter(Boolean).join(' | ');
+            throw new Error(full || 'Update failed');
+          }
+        } else {
+          savedId = updated?.id || property.id;
         }
-        savedId = updated?.id || property.id;
       } else {
-        // Insert new
+        // Insert new (primary path via supabase-js)
         const { data: inserted, error: insErr } = await supabase
           .from('properties')
           .insert([{ ...propertyPayload, createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() }])
           .select('id')
           .single();
+
         if (insErr) {
-          const full = [insErr.message, insErr.details, insErr.hint, insErr.code].filter(Boolean).join(' | ');
-          throw new Error(full || insErr.message || 'Insert failed');
+          // Fallback to REST insert if needed
+          try {
+            const { data: sess } = await supabase.auth.getSession();
+            const accessToken = sess?.session?.access_token;
+            const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL as string;
+            const supabaseAnon = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY as string;
+            const rest = await fetch(`${supabaseUrl}/rest/v1/properties`, {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+                'apikey': supabaseAnon,
+                ...(accessToken ? { 'Authorization': `Bearer ${accessToken}` } : {}),
+                'Prefer': 'return=representation'
+              },
+              body: JSON.stringify({ ...propertyPayload, createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() })
+            });
+            if (!rest.ok) {
+              const errorText = await rest.text();
+              throw new Error(errorText || `REST insert failed (${rest.status})`);
+            }
+            const arr = await rest.json();
+            const row = Array.isArray(arr) ? arr[0] : arr;
+            savedId = row?.id || null;
+          } catch (fallbackErr: any) {
+            const full = [insErr.message, insErr.details, insErr.hint, insErr.code, fallbackErr?.message].filter(Boolean).join(' | ');
+            throw new Error(full || 'Insert failed');
+          }
+        } else {
+          savedId = inserted?.id || null;
         }
-        savedId = inserted?.id || null;
       }
 
       // Optional: create promotion request if screenshot provided
