@@ -60,12 +60,6 @@ export default function PropertyDetailClient({ id }: PropertyDetailClientProps) 
 
       console.log('Fetched property data:', data);
 
-      const { data: profileData } = await supabase
-        .from('profiles')
-        .select('*')
-        .eq('id', data.landlordId)
-        .single();
-
       // API returns presigned Wasabi URLs; normalize still handles legacy Supabase URLs
       const images = normalizeWasabiImageArray(data.images);
 
@@ -74,17 +68,17 @@ export default function PropertyDetailClient({ id }: PropertyDetailClientProps) 
         images,
         createdAt: new Date(data.createdAt),
         updatedAt: new Date(data.updatedAt),
-        agent: profileData ? {
-          uid: profileData.id,
-          firstName: profileData.firstName || '',
-          lastName: profileData.lastName || '',
-          displayName: profileData.displayName || '',
-          email: profileData.email || '',
-          role: profileData.role || 'agent',
-          agencyName: profileData.agencyName,
-          phoneNumber: profileData.phoneNumber,
-          photoURL: profileData.photoURL,
-          createdAt: new Date(profileData.createdAt)
+        agent: data?.landlord ? {
+          uid: data.landlord.id,
+          firstName: data.landlord.firstName || '',
+          lastName: data.landlord.lastName || '',
+          displayName: data.landlord.displayName || data.landlord.email?.split('@')[0] || '',
+          email: data.landlord.email || '',
+          role: (data.landlord.role as any) || 'agent',
+          agencyName: data.landlord.agencyName,
+          phoneNumber: data.landlord.phoneNumber,
+          photoURL: data.landlord.photoURL,
+          createdAt: new Date(data.landlord.createdAt)
         } : undefined
       });
 

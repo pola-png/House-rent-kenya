@@ -17,6 +17,7 @@ import { SmartNotifications } from "@/components/smart-notifications";
 import { RealAgentRating } from "@/components/real-agent-rating";
 import Link from "next/link";
 import Image from "next/image";
+import { OptimizedImage } from "@/components/optimized-image";
 import placeholderImages from "@/lib/placeholder-images.json";
 import { formatDistanceToNow } from 'date-fns';
 import { useMemo, useState, useEffect } from "react";
@@ -327,43 +328,50 @@ export default function Dashboard() {
                 {[...Array(3)].map((_, i) => <Skeleton key={i} className="h-20 w-full" />)}
               </div>
             ) : recentProperties && recentProperties.length > 0 ? (
-                <div className="space-y-4">
-                    {recentProperties.map(property => {
-                        const images = Array.isArray(property.images) ? property.images : [];
-                        const imageUrl = images.length > 0 ? images[0] : null;
-                        return (
-                             <Link key={property.id} href={`/property/${property.id}`} className="block">
-                                <div className="flex items-center gap-4 p-2 rounded-lg hover:bg-muted">
-                                    <div className="relative h-16 w-16 rounded-md overflow-hidden flex-shrink-0">
-                                        {imageUrl ? (
-                                            <Image src={imageUrl} alt={property.title} fill className="object-cover" unoptimized />
-                                        ) : (
-                                            <div className="h-full w-full bg-secondary flex items-center justify-center">
-                                                <Building className="h-6 w-6 text-muted-foreground"/>
-                                            </div>
-                                        )}
-                                    </div>
-                                    <div className="flex-grow">
-                                        <h3 className="font-semibold truncate">{property.title}</h3>
-                                        <p className="text-sm text-muted-foreground flex items-center gap-1">
-                                            <MapPin className="h-3 w-3" /> {property.location}, {property.city}
-                                        </p>
-                                        <div className="flex items-center gap-3 text-xs text-muted-foreground mt-1">
-                                            <span className="flex items-center gap-1"><Bed className="h-3 w-3"/>{property.bedrooms}</span>
-                                            <span className="flex items-center gap-1"><Bath className="h-3 w-3"/>{property.bathrooms}</span>
-                                            <span className="flex items-center gap-1"><Maximize className="h-3 w-3"/>{property.area} ft²</span>
-                                        </div>
-                                    </div>
-                                    <div className="text-right flex-shrink-0">
-                                        <Badge variant={property.status === 'Rented' ? 'destructive' : 'default'}>{property.status}</Badge>
-                                        <p className="text-xs text-muted-foreground mt-2">
-                                            {formatDistanceToNow(property.createdAt, { addSuffix: true })}
-                                        </p>
-                                    </div>
-                                </div>
-                            </Link>
-                        )
-                    })}
+                <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">
+                  {recentProperties.map((property) => {
+                    const images = Array.isArray(property.images) ? property.images : [];
+                    const imageUrl = images.length > 0 ? images[0] : null;
+                    return (
+                      <Link key={property.id} href={`/property/${property.id}`} className="group block">
+                        <div className="rounded-lg border overflow-hidden bg-card hover:shadow-sm transition">
+                          <div className="relative w-full aspect-[4/3]">
+                            {imageUrl ? (
+                              <OptimizedImage
+                                src={imageUrl}
+                                alt={property.title}
+                                fill
+                                fit="cover"
+                                sizes="(max-width: 640px) 100vw, (max-width: 1280px) 50vw, 33vw"
+                                className="object-center"
+                              />
+                            ) : (
+                              <div className="h-full w-full bg-secondary flex items-center justify-center">
+                                <Building className="h-6 w-6 text-muted-foreground" />
+                              </div>
+                            )}
+                          </div>
+                          <div className="p-3 space-y-1">
+                            <h3 className="font-semibold line-clamp-2 break-words hyphens-auto leading-snug">{property.title}</h3>
+                            <p className="text-sm text-muted-foreground flex items-center gap-1 truncate">
+                              <MapPin className="h-3 w-3" /> {property.location}, {property.city}
+                            </p>
+                            <div className="mt-2 flex items-center justify-between">
+                              <div className="flex items-center gap-3 text-xs text-muted-foreground">
+                                <span className="flex items-center gap-1"><Bed className="h-3 w-3" />{property.bedrooms}</span>
+                                <span className="flex items-center gap-1"><Bath className="h-3 w-3" />{property.bathrooms}</span>
+                                <span className="flex items-center gap-1"><Maximize className="h-3 w-3" />{property.area} ft²</span>
+                              </div>
+                              <Badge variant={property.status === 'Rented' ? 'destructive' : 'default'}>{property.status}</Badge>
+                            </div>
+                            <p className="text-xs text-muted-foreground mt-1">
+                              {formatDistanceToNow(property.createdAt, { addSuffix: true })}
+                            </p>
+                          </div>
+                        </div>
+                      </Link>
+                    );
+                  })}
                 </div>
             ) : (
               <div className="text-center py-12 text-muted-foreground">

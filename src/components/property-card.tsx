@@ -1,6 +1,8 @@
 'use client';
 
 import Link from 'next/link';
+import { useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import { MapPin, Bed, Bath, Car, Maximize, Star, Eye, BadgeCheck, Award } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -16,6 +18,7 @@ type PropertyCardProps = {
 };
 
 export function PropertyCard({ property }: PropertyCardProps) {
+  const router = useRouter();
   // Handle images whether they come as array or need parsing
   const images = Array.isArray(property.images) ? property.images : [];
   const mainImageUrl = images.length > 0 ? images[0] : null;
@@ -29,6 +32,11 @@ export function PropertyCard({ property }: PropertyCardProps) {
   });
 
   const propertyUrl = createPropertyUrl(property.id, property.title);
+
+  // Proactively prefetch the property route to reduce mobile open time
+  useEffect(() => {
+    try { router.prefetch(propertyUrl); } catch {}
+  }, [router, propertyUrl]);
 
   return (
     <Card ref={impressionRef as any} className="overflow-hidden group hover:shadow-xl transition-shadow duration-300 flex flex-col">

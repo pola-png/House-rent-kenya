@@ -22,7 +22,7 @@ export async function GET(
   try {
     const { data, error } = await supabase
       .from('properties')
-      .select('*')
+      .select('*, landlord:profiles(*)')
       .eq('id', id)
       .single();
 
@@ -39,7 +39,9 @@ export async function GET(
       (data as any).images = await presignImageUrls((data as any).images, PRESIGN_TTL);
     }
 
-    return NextResponse.json(data);
+    const res = NextResponse.json(data);
+    res.headers.set('Cache-Control', 'public, max-age=30, s-maxage=60, stale-while-revalidate=120');
+    return res;
   } catch (error: any) {
     return new NextResponse(JSON.stringify({ error: error.message }), {
       status: 500,
