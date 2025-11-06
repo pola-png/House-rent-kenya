@@ -46,6 +46,7 @@ export function PropertyCard({ property }: PropertyCardProps) {
             src={mainImageUrl || "https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?w=800&h=600&fit=crop&crop=center"}
             alt={`${property.bedrooms} bedroom ${property.propertyType} for ${property.status} in ${property.location}, ${property.city}`}
             fill
+            sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
             className="object-cover transform group-hover:scale-105 transition-transform duration-300"
           />
           <Badge className="absolute top-3 left-3">{property.status}</Badge>
