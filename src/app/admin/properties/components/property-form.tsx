@@ -314,13 +314,27 @@ export function PropertyForm({ property }: PropertyFormProps) {
       const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL as string;
       const supabaseAnon = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY as string;
 
+      if (!supabaseUrl || !supabaseAnon) {
+        throw new Error(`Missing env var: ${!supabaseUrl ? 'NEXT_PUBLIC_SUPABASE_URL' : ''}${!supabaseUrl && !supabaseAnon ? ' and ' : ''}${!supabaseAnon ? 'NEXT_PUBLIC_SUPABASE_ANON_KEY' : ''}`);
+      }
       if (!accessToken) {
         throw new Error('Invalid or expired session');
       }
 
+      const fetchWithTimeout = async (url: string, init: RequestInit, timeoutMs = 20000) => {
+        const controller = new AbortController();
+        const t = setTimeout(() => controller.abort(), timeoutMs);
+        try {
+          const res = await fetch(url, { ...init, signal: controller.signal });
+          return res;
+        } finally {
+          clearTimeout(t);
+        }
+      };
+
       if (property?.id) {
         // REST-only update (matches your original working approach)
-        const rest = await fetch(`${supabaseUrl}/rest/v1/properties?id=eq.${property.id}`, {
+        const rest = await fetchWithTimeout(`${supabaseUrl}/rest/v1/properties?id=eq.${property.id}`, {
           method: 'PATCH',
           headers: {
             'Content-Type': 'application/json',
@@ -340,7 +354,7 @@ export function PropertyForm({ property }: PropertyFormProps) {
         savedId = row?.id || property.id;
       } else {
         // REST-only insert
-        const rest = await fetch(`${supabaseUrl}/rest/v1/properties`, {
+        const rest = await fetchWithTimeout(`${supabaseUrl}/rest/v1/properties`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
