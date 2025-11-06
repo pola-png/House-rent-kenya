@@ -79,6 +79,7 @@ export function PropertyForm({ property }: PropertyFormProps) {
   const router = useRouter();
   const [imagePreviews, setImagePreviews] = React.useState<string[]>([]);
   const [imageFiles, setImageFiles] = React.useState<File[]>([]);
+  const [lastError, setLastError] = React.useState<string | null>(null);
   const fileInputRef = React.useRef<HTMLInputElement>(null);
   const [isPromotionOpen, setIsPromotionOpen] = React.useState(false);
   const [promotionWeeks, setPromotionWeeks] = React.useState(1);
@@ -262,6 +263,7 @@ export function PropertyForm({ property }: PropertyFormProps) {
     setIsSubmitting(true);
     setIsUploadingImages(true);
     toast({ title: "Saving property...", description: "Please wait." });
+    setLastError(null);
 
     try {
       if (!user) {
@@ -302,15 +304,18 @@ export function PropertyForm({ property }: PropertyFormProps) {
 
       let savedId: string | null = null;
       if (property?.id) {
-        // Update existing row
+        // Update existing row (RLS should enforce who can update). Do not over-constrain here.
         const { data: updated, error: upErr } = await supabase
           .from('properties')
           .update({ ...propertyPayload, updatedAt: new Date().toISOString() })
           .eq('id', property.id)
-          .eq('landlordId', user.uid)
           .select('id')
           .single();
-        if (upErr) throw upErr;
+        if (upErr) {
+          // Surface full PostgrestError details for debugging
+          const full = [upErr.message, upErr.details, upErr.hint, upErr.code].filter(Boolean).join(' | ');
+          throw new Error(full || upErr.message || 'Update failed');
+        }
         savedId = updated?.id || property.id;
       } else {
         // Insert new
@@ -319,7 +324,10 @@ export function PropertyForm({ property }: PropertyFormProps) {
           .insert([{ ...propertyPayload, createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() }])
           .select('id')
           .single();
-        if (insErr) throw insErr;
+        if (insErr) {
+          const full = [insErr.message, insErr.details, insErr.hint, insErr.code].filter(Boolean).join(' | ');
+          throw new Error(full || insErr.message || 'Insert failed');
+        }
         savedId = inserted?.id || null;
       }
 
@@ -370,6 +378,7 @@ export function PropertyForm({ property }: PropertyFormProps) {
       } else if (error.message) {
         description = `Database error: ${error.message}`;
       }
+      setLastError(description);
       toast({ variant: 'destructive', title: 'Operation Failed', description });
     } finally {
       setIsSubmitting(false);
@@ -553,6 +562,11 @@ export function PropertyForm({ property }: PropertyFormProps) {
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
+        {lastError && (
+          <div className="rounded-md border border-red-300 bg-red-50 text-red-800 p-3 text-sm">
+            {lastError}
+          </div>
+        )}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-start">
           <div className="lg:col-span-2 space-y-8">
             <Card>
