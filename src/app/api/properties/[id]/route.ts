@@ -11,7 +11,18 @@ export async function GET(
 ) {
   const rawParams = context?.params ? await context.params : undefined;
   const idParam = rawParams?.id;
-  const id = Array.isArray(idParam) ? idParam[0] : idParam;
+  const rawId = Array.isArray(idParam) ? idParam[0] : idParam;
+
+  // Accept either a plain UUID or a slug-with-UUID; extract the trailing UUID groups
+  const resolveId = (input: string): string => {
+    if (!input) return input as any;
+    const parts = String(input).split('-');
+    if (parts.length >= 5) {
+      return parts.slice(-5).join('-');
+    }
+    return input;
+  };
+  const id = resolveId(rawId as string);
 
   if (!id) {
     return new NextResponse(JSON.stringify({ error: 'Missing property id' }), {
@@ -23,25 +34,38 @@ export async function GET(
   try {
     const fetchProperty = unstable_cache(
       async () => {
-    const { data, error } = await supabase
-      .from('properties')
-      .select('*, landlord:profiles(*)')
-      .eq('id', id)
-      .single();
+        // 1) Fetch property without join to avoid RLS/join issues
+        const { data: prop, error: propErr } = await supabase
+          .from('properties')
+          .select('*')
+          .eq('id', id)
+          .single();
+        if (propErr) throw propErr;
+        if (!prop) return null;
 
-        if (error) throw error;
-        if (!data) return null;
+        // 2) Attach landlord profile if accessible; ignore errors
+        let landlord: any = null;
+        try {
+          const { data: prof } = await supabase
+            .from('profiles')
+            .select('*')
+            .eq('id', (prop as any).landlordId)
+            .single();
+          landlord = prof || null;
+        } catch {}
 
-        if ('images' in data) {
-          (data as any).images = await presignImageUrls((data as any).images, PRESIGN_TTL);
+        // 3) Presign images
+        if ('images' in prop) {
+          (prop as any).images = await presignImageUrls((prop as any).images, PRESIGN_TTL);
         }
-        return data;
+
+        return landlord ? { ...prop, landlord } : prop;
       },
       [`property:${id}`],
       { tags: [`property:${id}`, 'properties:list'] }
     );
 
-    const data = await fetchProperty();
+    const data: any = await fetchProperty();
     if (!data) {
       return new NextResponse(JSON.stringify({ error: 'Property not found' }), {
         status: 404,
