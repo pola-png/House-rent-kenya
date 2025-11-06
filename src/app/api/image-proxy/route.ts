@@ -12,7 +12,7 @@ const s3Client = new S3Client({
   },
 });
 
-export const GET: AppRouteHandlerFn = async (request) => {
+export const GET: AppRouteHandlerFn = async (request, _context) => {
   try {
     const { searchParams } = new URL(request.url);
     const path = searchParams.get('path');

@@ -18,7 +18,7 @@ function enforceContentType(ct?: string) {
   }
 }
 
-export const POST: AppRouteHandlerFn = async (request) => {
+export const POST: AppRouteHandlerFn = async (request, _context) => {
   try {
     // AuthN: require a valid Supabase session
     const { data: { session } } = await supabase.auth.getSession();

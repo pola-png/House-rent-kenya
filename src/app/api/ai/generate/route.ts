@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import type { AppRouteHandlerFn } from 'next/dist/server/route-modules/app-route/module';
 
-export const POST: AppRouteHandlerFn = async (request) => {
+export const POST: AppRouteHandlerFn = async (request, _context) => {
   try {
     const { prompt, type } = await request.json();
     
