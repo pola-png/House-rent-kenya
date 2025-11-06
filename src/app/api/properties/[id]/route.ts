@@ -1,12 +1,23 @@
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
+import type { AppRouteHandlerFn } from 'next/dist/server/route-modules/app-route/module';
 import { supabase } from '@/lib/supabase';
 import { presignImageUrls } from '@/lib/image-presign';
-// Use standard Fetch API Request type and inline context typing
 
 const PRESIGN_TTL = 900; // 15 minutes
 
-export async function GET(_request: Request, { params }: { params: { id: string } }) {
-  const { id } = params;
+type RouteContext = Parameters<AppRouteHandlerFn>[1];
+
+export async function GET(_request: NextRequest, context: RouteContext) {
+  const rawParams = context?.params ? await context.params : undefined;
+  const idParam = rawParams?.id;
+  const id = Array.isArray(idParam) ? idParam[0] : idParam;
+
+  if (!id) {
+    return new NextResponse(JSON.stringify({ error: 'Missing property id' }), {
+      status: 400,
+      headers: { 'Content-Type': 'application/json' },
+    });
+  }
   
   try {
     const { data, error } = await supabase
@@ -17,7 +28,16 @@ export async function GET(_request: Request, { params }: { params: { id: string 
 
     if (error) throw error;
 
-    data.images = await presignImageUrls(data.images, PRESIGN_TTL);
+    if (!data) {
+      return new NextResponse(JSON.stringify({ error: 'Property not found' }), {
+        status: 404,
+        headers: { 'Content-Type': 'application/json' },
+      });
+    }
+
+    if ('images' in data) {
+      data.images = await presignImageUrls((data as any).images, PRESIGN_TTL);
+    }
 
     return NextResponse.json(data);
   } catch (error: any) {
