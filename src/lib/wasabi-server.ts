@@ -117,3 +117,9 @@ export function buildPublicishPath(key: string): string {
   if (!bucket || !endpoint) return key.replace(/^\/+/, '');
   return `https://${bucket}.${endpoint}/${key.replace(/^\/+/, '')}`;
 }
+
+// Expose runtime config needed by API routes
+export function getWasabiRuntimeConfig() {
+  const { bucket, endpoint, region } = getConfig();
+  return { bucket, endpoint, region };
+}
