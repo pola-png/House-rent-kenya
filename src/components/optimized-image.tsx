@@ -35,10 +35,14 @@ export function OptimizedImage({
   // Check if image is from Wasabi (direct) or via our proxy
   const isWasabiImage = src.includes('wasabisys.com') || src.startsWith('/api/image-proxy');
   
-  // Convert Wasabi URL to proxy URL
+  // Convert Wasabi URL to proxy URL; if already proxied, keep as-is
   const getProxiedUrl = (url: string) => {
     if (!isWasabiImage) return url;
-    const path = url.split('.com/')[1];
+    if (url.startsWith('/api/image-proxy')) return url;
+    // If this is an already presigned Wasabi URL, we can keep it as-is
+    if (/X-Amz-Signature=|X-Amz-Algorithm=/.test(url)) return url;
+    const idx = url.indexOf('.com/');
+    const path = idx !== -1 ? url.slice(idx + 5) : url;
     return `/api/image-proxy?path=${encodeURIComponent(path)}`;
   };
   
