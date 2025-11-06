@@ -54,6 +54,7 @@ import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useAuth } from "@/hooks/use-auth-supabase";
 import { useRouter } from "next/navigation";
+import { usePathname } from "next/navigation";
 import { supabase } from "@/lib/supabase";
 import { useToast } from "@/hooks/use-toast";
 import { useEffect } from "react";
@@ -73,6 +74,14 @@ export default function AdminLayout({
   const [reauthLoading, setReauthLoading] = useState(false);
   const [password, setPassword] = useState("");
   const [reauthTarget, setReauthTarget] = useState<null | 'admin' | 'agent'>(null);
+  const pathname = usePathname();
+  const [viewMode, setViewMode] = useState<'agent' | 'admin'>(() => {
+    if (typeof window !== 'undefined') {
+      const persisted = window.localStorage.getItem('adminViewMode');
+      if (persisted === 'admin' || persisted === 'agent') return persisted as 'agent' | 'admin';
+    }
+    return 'agent';
+  });
 
   useEffect(() => {
     if (!loading && !user) {
@@ -95,12 +104,35 @@ export default function AdminLayout({
     };
   }, []);
 
+  // Infer admin vs agent view for admins based on pathname
+  useEffect(() => {
+    if (!user || user.role !== 'admin') {
+      setViewMode('agent');
+      return;
+    }
+    const adminRoots = [
+      '/admin/admin-dashboard',
+      '/admin/users',
+      '/admin/analytics',
+      '/admin/promotions',
+      '/admin/bulk-actions',
+      '/admin/settings',
+      '/admin/blog',
+      '/admin/blog/new',
+    ];
+    const isAdminPath = adminRoots.some((r) => pathname?.startsWith(r));
+    const mode = isAdminPath ? 'admin' : 'agent';
+    setViewMode(mode);
+    try { window.localStorage.setItem('adminViewMode', mode); } catch {}
+  }, [pathname, user]);
+
   const handleLogout = async () => {
     await logout();
     router.push("/");
   };
 
   const isAdmin = user?.role === 'admin';
+  const isAdminMode = isAdmin && (typeof viewMode !== 'undefined' ? viewMode === 'admin' : false);
 
   if (loading) {
     return (
@@ -115,7 +147,7 @@ export default function AdminLayout({
   }
 
   return (
-    <div className="dark bg-black text-white min-h-screen">
+    <div className={isAdminMode ? "dark bg-black text-white min-h-screen" : "min-h-screen bg-background text-foreground"}>
     <SidebarProvider open={open} onOpenChange={setOpen}>
       <Sidebar collapsible="icon">
         <SidebarContent className="flex flex-col">
@@ -182,8 +214,8 @@ export default function AdminLayout({
               </>
             )}
 
-            {/* Admin-only menu */}
-            {isAdmin && (
+            {/* Admin-only menu (visible only in Admin view) */}
+            {isAdmin && viewMode === 'admin' && (
               <>
                 <SidebarMenuItem>
                   <SidebarMenuButton tooltip="Overview" onClick={() => { setReauthTarget('admin'); setReauthOpen(true); }}>
@@ -259,7 +291,7 @@ export default function AdminLayout({
             )}
             
             {/* Admin Only Features */}
-            {user.role === 'admin' && (
+            {user.role === 'admin' && viewMode === 'admin' && (
               <SidebarMenuItem>
                 <SidebarMenuButton asChild tooltip="Admin Dashboard">
                   <Link href="/admin/admin-dashboard" onClick={() => setOpen(false)}>
@@ -300,7 +332,7 @@ export default function AdminLayout({
         <SidebarRail />
       </Sidebar>
       <SidebarInset>
-        <header className="sticky top-0 z-30 flex h-14 items-center gap-4 border-b bg-black/70 px-4 sm:static sm:h-auto sm:border-0 sm:bg-black sm:px-6">
+        <header className={`sticky top-0 z-30 flex h-14 items-center gap-4 border-b px-4 sm:static sm:h-auto sm:border-0 sm:px-6 ${isAdminMode ? 'bg-black/70 sm:bg-black' : 'bg-background/70 sm:bg-background'}`}>
           <SidebarTrigger />
           
           <div className="relative ml-auto flex-1 md:grow-0">
@@ -317,7 +349,7 @@ export default function AdminLayout({
                 className="hidden sm:flex items-center gap-2 bg-zinc-900 border-zinc-700 text-white hover:bg-zinc-800 transition-all duration-200"
               >
                 <Shield className="h-4 w-4" />
-                <span className="text-xs font-semibold">Switch to Admin</span>
+                <span className="text-xs font-semibold">{viewMode === 'admin' ? 'Switch to Agent' : 'Switch to Admin'}</span>
               </Button>
               
               {/* Mobile Switch Button */}
@@ -398,12 +430,19 @@ export default function AdminLayout({
                   // Navigate based on chosen target or toggle
                   const currentPath = window.location.pathname;
                   if (reauthTarget === 'admin') {
+                    try { window.localStorage.setItem('adminViewMode', 'admin'); } catch {}
                     router.push('/admin/admin-dashboard');
                   } else if (reauthTarget === 'agent') {
+                    try { window.localStorage.setItem('adminViewMode', 'agent'); } catch {}
                     router.push('/admin/dashboard');
                   } else {
-                    if (currentPath === '/admin/admin-dashboard') router.push('/admin/dashboard');
-                    else router.push('/admin/admin-dashboard');
+                    if (currentPath === '/admin/admin-dashboard') {
+                      try { window.localStorage.setItem('adminViewMode', 'agent'); } catch {}
+                      router.push('/admin/dashboard');
+                    } else {
+                      try { window.localStorage.setItem('adminViewMode', 'admin'); } catch {}
+                      router.push('/admin/admin-dashboard');
+                    }
                   }
                   setReauthOpen(false); setPassword("");
                 } catch (e: any) {
