@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabase';
 import { SEOSchema } from '@/components/seo-schema';
-import Image from 'next/image';
+import { OptimizedImage } from '@/components/optimized-image';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -17,6 +17,8 @@ import type { Property } from '@/lib/types';
 import { useAuth } from '@/hooks/use-auth-supabase';
 import { useRouter } from 'next/navigation';
 import { trackPropertyView } from '@/lib/view-tracking';
+// Render all images in detail view via OptimizedImage (fit="contain") for perfect mobile fit
+const Image = ((props: any) => <OptimizedImage fit="contain" sizes="100vw" {...props} />) as any;
 // Use images exactly as returned by the API (already presigned for Wasabi)
 function coerceImages(raw: unknown): string[] {
   if (!raw) return [];

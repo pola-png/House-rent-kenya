@@ -72,12 +72,28 @@ export default function AdminLayout({
   const [reauthOpen, setReauthOpen] = useState(false);
   const [reauthLoading, setReauthLoading] = useState(false);
   const [password, setPassword] = useState("");
+  const [reauthTarget, setReauthTarget] = useState<null | 'admin' | 'agent'>(null);
 
   useEffect(() => {
     if (!loading && !user) {
       router.push("/login?redirect=/admin/dashboard");
     }
   }, [user, loading, router]);
+
+  // Allow pages to open the reauth overlay via event
+  useEffect(() => {
+    const handler = (e: any) => {
+      const to = e?.detail?.to as 'admin' | 'agent' | undefined;
+      setReauthTarget(to ?? null);
+      setReauthOpen(true);
+    };
+    // @ts-ignore
+    window.addEventListener('open-admin-reauth', handler);
+    return () => {
+      // @ts-ignore
+      window.removeEventListener('open-admin-reauth', handler);
+    };
+  }, []);
 
   const handleLogout = async () => {
     await logout();
@@ -157,6 +173,66 @@ export default function AdminLayout({
                 </SidebarMenuItem>
               </>
             )}
+
+            {/* Admin-only menu */}
+            {isAdmin && (
+              <>
+                <SidebarMenuItem>
+                  <SidebarMenuButton tooltip="Overview" onClick={() => { setReauthTarget('admin'); setReauthOpen(true); }}>
+                    <Home className="h-5 w-5" />
+                    <span>Overview</span>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+                <SidebarMenuItem>
+                  <SidebarMenuButton asChild tooltip="Users">
+                    <Link href="/admin/users" onClick={() => setOpen(false)}>
+                      <Users className="h-5 w-5" />
+                      <span>Users</span>
+                    </Link>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+                <SidebarMenuItem>
+                  <SidebarMenuButton asChild tooltip="Properties">
+                    <Link href="/admin/properties" onClick={() => setOpen(false)}>
+                      <Package className="h-5 w-5" />
+                      <span>Properties</span>
+                    </Link>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+                <SidebarMenuItem>
+                  <SidebarMenuButton asChild tooltip="Promotions">
+                    <Link href="/admin/promotions" onClick={() => setOpen(false)}>
+                      <Star className="h-5 w-5" />
+                      <span>Promotions</span>
+                    </Link>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+                <SidebarMenuItem>
+                  <SidebarMenuButton asChild tooltip="Analytics">
+                    <Link href="/admin/analytics" onClick={() => setOpen(false)}>
+                      <LineChart className="h-5 w-5" />
+                      <span>Analytics</span>
+                    </Link>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+                <SidebarMenuItem>
+                  <SidebarMenuButton asChild tooltip="Bulk">
+                    <Link href="/admin/bulk-actions" onClick={() => setOpen(false)}>
+                      <List className="h-5 w-5" />
+                      <span>Bulk</span>
+                    </Link>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+                <SidebarMenuItem>
+                  <SidebarMenuButton asChild tooltip="Settings">
+                    <Link href="/admin/settings" onClick={() => setOpen(false)}>
+                      <Settings className="h-5 w-5" />
+                      <span>Settings</span>
+                    </Link>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+              </>
+            )}
             
             {/* Admin Only Features */}
             {user.role === 'admin' && (
@@ -217,9 +293,7 @@ export default function AdminLayout({
                 className="hidden sm:flex items-center gap-2 bg-zinc-900 border-zinc-700 text-white hover:bg-zinc-800 transition-all duration-200"
               >
                 <Shield className="h-4 w-4" />
-                <span className="text-xs font-medium">
-                  {typeof window !== 'undefined' && window.location.pathname === '/admin/admin-dashboard' ? 'Agent View' : 'Admin View'}
-                </span>
+                <span className="text-xs font-semibold">Switch to Admin</span>
               </Button>
               
               {/* Mobile Switch Button */}
@@ -297,12 +371,15 @@ export default function AdminLayout({
                   setReauthLoading(true);
                   const { error } = await supabase.auth.signInWithPassword({ email: user.email, password });
                   if (error) throw error;
-                  // toggle between dashboards
+                  // Navigate based on chosen target or toggle
                   const currentPath = window.location.pathname;
-                  if (currentPath === '/admin/admin-dashboard') {
+                  if (reauthTarget === 'admin') {
+                    router.push('/admin/admin-dashboard');
+                  } else if (reauthTarget === 'agent') {
                     router.push('/admin/dashboard');
                   } else {
-                    router.push('/admin/admin-dashboard');
+                    if (currentPath === '/admin/admin-dashboard') router.push('/admin/dashboard');
+                    else router.push('/admin/admin-dashboard');
                   }
                   setReauthOpen(false); setPassword("");
                 } catch (e: any) {
