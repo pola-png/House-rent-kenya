@@ -93,10 +93,14 @@ export function buildPublicishPath(key: string): string {
 
 // Backwards-compatible helper for client forms that previously imported uploadToWasabi
 // This performs the standard two-step flow via our API route.
-export async function uploadToWasabi(file: File, params: { key: string; contentType?: string }): Promise<{ objectPath: string }>{
+export async function uploadToWasabi(
+  file: File,
+  params: string | { key: string; contentType?: string }
+): Promise<string> {
+  const normalized = typeof params === 'string' ? { key: params } : params;
   const body = {
-    key: params.key,
-    contentType: params.contentType || file.type,
+    key: normalized.key,
+    contentType: normalized.contentType || file.type,
     contentLength: file.size,
   };
   const res = await fetch('/api/upload', {
@@ -119,5 +123,5 @@ export async function uploadToWasabi(file: File, params: { key: string; contentT
   if (!put.ok) {
     throw new Error(`Upload failed (${put.status})`);
   }
-  return { objectPath };
+  return objectPath as string;
 }
