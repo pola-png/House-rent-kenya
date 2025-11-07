@@ -311,68 +311,28 @@ export function PropertyForm({ property }: PropertyFormProps) {
 
       let savedId: string | null = null;
       const accessToken = await getAccessToken();
-      const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL as string;
-      const supabaseAnon = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY as string;
+      if (!accessToken) throw new Error('Invalid or expired session');
 
-      if (!supabaseUrl || !supabaseAnon) {
-        throw new Error(`Missing env var: ${!supabaseUrl ? 'NEXT_PUBLIC_SUPABASE_URL' : ''}${!supabaseUrl && !supabaseAnon ? ' and ' : ''}${!supabaseAnon ? 'NEXT_PUBLIC_SUPABASE_ANON_KEY' : ''}`);
+      // Server-side save using service role (no REST from browser)
+      const controller = new AbortController();
+      const to = setTimeout(() => controller.abort(), 20000);
+      const saveRes = await fetch('/api/admin/properties/save', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${accessToken}`,
+          'Accept': 'application/json',
+        },
+        body: JSON.stringify({ ...(property?.id ? { id: property.id } : {}), ...propertyPayload }),
+        signal: controller.signal,
+      });
+      clearTimeout(to);
+      if (!saveRes.ok) {
+        const txt = await saveRes.text();
+        throw new Error(txt || `Save failed (${saveRes.status})`);
       }
-      if (!accessToken) {
-        throw new Error('Invalid or expired session');
-      }
-
-      const fetchWithTimeout = async (url: string, init: RequestInit, timeoutMs = 20000) => {
-        const controller = new AbortController();
-        const t = setTimeout(() => controller.abort(), timeoutMs);
-        try {
-          const res = await fetch(url, { ...init, signal: controller.signal });
-          return res;
-        } finally {
-          clearTimeout(t);
-        }
-      };
-
-      if (property?.id) {
-        // REST-only update (matches your original working approach)
-        const rest = await fetchWithTimeout(`${supabaseUrl}/rest/v1/properties?id=eq.${property.id}`, {
-          method: 'PATCH',
-          headers: {
-            'Content-Type': 'application/json',
-            'apikey': supabaseAnon,
-            'Authorization': `Bearer ${accessToken}`,
-            'Prefer': 'return=representation',
-            'Accept': 'application/json'
-          },
-          body: JSON.stringify({ ...propertyPayload, updatedAt: new Date().toISOString() })
-        });
-        if (!rest.ok) {
-          const errorText = await rest.text();
-          throw new Error(errorText || `REST update failed (${rest.status})`);
-        }
-        const arr = await rest.json();
-        const row = Array.isArray(arr) ? arr[0] : arr;
-        savedId = row?.id || property.id;
-      } else {
-        // REST-only insert
-        const rest = await fetchWithTimeout(`${supabaseUrl}/rest/v1/properties`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'apikey': supabaseAnon,
-            'Authorization': `Bearer ${accessToken}`,
-            'Prefer': 'return=representation',
-            'Accept': 'application/json'
-          },
-          body: JSON.stringify({ ...propertyPayload, createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() })
-        });
-        if (!rest.ok) {
-          const errorText = await rest.text();
-          throw new Error(errorText || `REST insert failed (${rest.status})`);
-        }
-        const arr = await rest.json();
-        const row = Array.isArray(arr) ? arr[0] : arr;
-        savedId = row?.id || null;
-      }
+      const saved = await saveRes.json();
+      savedId = saved?.id || saved?.data?.id || null;
 
       // Optional: create promotion request if screenshot provided
       if (isPromotionOpen && promotionWeeks > 0 && savedId) {
