@@ -36,7 +36,6 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/component
 import { Separator } from "@/components/ui/separator";
 import { useAuth } from "@/hooks/use-auth-supabase";
 import { supabase } from "@/lib/supabase";
-import { createClient } from '@supabase/supabase-js';
 import { AISEOSimple } from "@/components/ai-seo-simple";
 import { generateWithAI } from "@/lib/ai-service";
 
@@ -73,6 +72,47 @@ type PropertyFormValues = z.infer<typeof formSchema>;
 interface PropertyFormProps {
   property?: Property;
 }
+
+const getAccessToken = async (): Promise<string | null> => {
+  try {
+    const { data } = await supabase.auth.getSession();
+    if (data?.session?.access_token) return data.session.access_token;
+  } catch {}
+  try {
+    if (typeof window !== 'undefined' && window.localStorage) {
+      try {
+        const baseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
+        const m = baseUrl.match(/^https:\/\/([a-z0-9-]+)\.supabase\.co/i);
+        const ref = m?.[1];
+        if (ref) {
+          const key = `sb-${ref}-auth-token`;
+          const raw = window.localStorage.getItem(key);
+          if (raw) {
+            const json = JSON.parse(raw);
+            if (json?.access_token) return json.access_token as string;
+            if (json?.currentSession?.access_token) return json.currentSession.access_token as string;
+            if (json?.state?.currentSession?.access_token) return json.state.currentSession.access_token as string;
+          }
+        }
+      } catch {}
+      for (let i = 0; i < window.localStorage.length; i++) {
+        const k = window.localStorage.key(i);
+        if (!k) continue;
+        if (k.includes('auth-token') || k.includes('supabase')) {
+          try {
+            const raw = window.localStorage.getItem(k);
+            if (!raw) continue;
+            const json = JSON.parse(raw);
+            if (json?.access_token) return json.access_token as string;
+            if (json?.currentSession?.access_token) return json.currentSession.access_token as string;
+            if (json?.state?.currentSession?.access_token) return json.state.currentSession.access_token as string;
+          } catch {}
+        }
+      }
+    }
+  } catch {}
+  return null;
+};
 
 export function PropertyForm({ property }: PropertyFormProps) {
   const { toast } = useToast();
@@ -309,6 +349,8 @@ export function PropertyForm({ property }: PropertyFormProps) {
         keywords: data.keywords || '',
       } as any;
 
+      setLastError(null);
+
       let savedId: string | null = null;
       const accessToken = await getAccessToken();
       if (!accessToken) throw new Error('Invalid or expired session');
@@ -327,11 +369,21 @@ export function PropertyForm({ property }: PropertyFormProps) {
         signal: controller.signal,
       });
       clearTimeout(to);
+      const parseError = async () => {
+        try {
+          const json = await saveRes.clone().json();
+          return json?.error || json?.message || JSON.stringify(json);
+        } catch {
+          const txt = await saveRes.text();
+          return txt;
+        }
+      };
+
       if (!saveRes.ok) {
-        const txt = await saveRes.text();
-        throw new Error(txt || `Save failed (${saveRes.status})`);
+        const msg = await parseError();
+        throw new Error(msg || `Save failed (${saveRes.status})`);
       }
-      const saved = await saveRes.json();
+      const saved = await saveRes.json().catch(() => ({}));
       savedId = saved?.id || saved?.data?.id || null;
 
       // Optional: create promotion request if screenshot provided
@@ -1039,50 +1091,3 @@ export function PropertyForm({ property }: PropertyFormProps) {
     </Form>
   );
 }
-  // Helper: try multiple ways to get a bearer token for REST calls
-  const getAccessToken = async (): Promise<string | null> => {
-    try {
-      const { data } = await supabase.auth.getSession();
-      if (data?.session?.access_token) return data.session.access_token;
-    } catch {}
-    try {
-      if (typeof window !== 'undefined' && window.localStorage) {
-        // Try specific Supabase key: sb-{projectRef}-auth-token
-        try {
-          const baseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
-          const m = baseUrl.match(/^https:\/\/([a-z0-9-]+)\.supabase\.co/i);
-          const ref = m?.[1];
-          if (ref) {
-            const key = `sb-${ref}-auth-token`;
-            const raw = window.localStorage.getItem(key);
-            if (raw) {
-              const json = JSON.parse(raw);
-              if (json?.access_token) return json.access_token as string;
-              if (json?.currentSession?.access_token) return json.currentSession.access_token as string;
-              if (json?.state?.currentSession?.access_token) return json.state.currentSession.access_token as string;
-            }
-          }
-        } catch {}
-        for (let i = 0; i < window.localStorage.length; i++) {
-          const k = window.localStorage.key(i);
-          if (!k) continue;
-          if (k.includes('auth-token') || k.includes('supabase')) {
-            try {
-              const raw = window.localStorage.getItem(k);
-              if (!raw) continue;
-              const json = JSON.parse(raw);
-              if (json?.access_token) return json.access_token as string;
-              if (json?.currentSession?.access_token) return json.currentSession.access_token as string;
-              if (json?.state?.currentSession?.access_token) return json.state.currentSession.access_token as string;
-            } catch {}
-          }
-        }
-      }
-    } catch {}
-    return null;
-  };
-
-
-
-
-
