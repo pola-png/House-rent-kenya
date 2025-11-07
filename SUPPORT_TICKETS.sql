@@ -22,11 +22,28 @@ create index if not exists idx_support_tickets_user on public.support_tickets(us
 create index if not exists idx_support_tickets_status on public.support_tickets(status);
 create index if not exists idx_support_tickets_created on public.support_tickets(created_at desc);
 
+-- Add camelCase timestamp columns to match app conventions
+alter table public.support_tickets
+  add column if not exists "createdAt" timestamptz not null default now();
+alter table public.support_tickets
+  add column if not exists "updatedAt" timestamptz not null default now();
+create index if not exists idx_support_tickets_createdAt on public.support_tickets("createdAt" desc);
+
+-- Lightweight summary field for list views
+alter table public.support_tickets
+  add column if not exists "lastMessage" text not null default '';
+
+-- CamelCase userId mirror for compatibility with app code
+alter table public.support_tickets
+  add column if not exists "userId" uuid references public.profiles(id) on delete set null;
+create index if not exists idx_support_tickets_userId on public.support_tickets("userId");
+
 -- Updated at trigger
 create or replace function public.set_updated_at()
 returns trigger language plpgsql as $$
 begin
   new.updated_at := now();
+  new."updatedAt" := now();
   return new;
 end; $$;
 
@@ -34,6 +51,28 @@ drop trigger if exists trg_support_tickets_updated_at on public.support_tickets;
 create trigger trg_support_tickets_updated_at
 before update on public.support_tickets
 for each row execute function public.set_updated_at();
+
+-- Keep user_id and "userId" in sync on insert/update
+create or replace function public.support_tickets_sync_userid()
+returns trigger language plpgsql as $$
+begin
+  if new."userId" is null and new.user_id is not null then
+    new."userId" := new.user_id;
+  elsif new.user_id is null and new."userId" is not null then
+    new.user_id := new."userId";
+  end if;
+  return new;
+end; $$;
+
+drop trigger if exists trg_support_tickets_sync_userid_ins on public.support_tickets;
+create trigger trg_support_tickets_sync_userid_ins
+before insert on public.support_tickets
+for each row execute function public.support_tickets_sync_userid();
+
+drop trigger if exists trg_support_tickets_sync_userid_upd on public.support_tickets;
+create trigger trg_support_tickets_sync_userid_upd
+before update on public.support_tickets
+for each row execute function public.support_tickets_sync_userid();
 
 -- Row Level Security
 alter table public.support_tickets enable row level security;
@@ -93,4 +132,3 @@ using (exists(
 ));
 
 comment on table public.support_tickets is 'Support/contact tickets from users and visitors';
-

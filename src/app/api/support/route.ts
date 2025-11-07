@@ -45,17 +45,24 @@ export async function POST(request: Request) {
     const userId = user?.id || null
 
     // Insert via service key to avoid client‑side RLS complexity
+    const now = new Date().toISOString()
     const { data, error } = await supabaseAdmin
       .from('support_tickets')
       .insert([{
         user_id: userId,
+        userId: userId as any,
         email,
         phone,
         subject,
         message,
+        lastMessage: message,
         priority,
         attachments,
         status: 'open',
+        created_at: now,
+        updated_at: now,
+        createdAt: now as any,
+        updatedAt: now as any,
       }])
       .select('*')
       .single()
@@ -69,4 +76,3 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: e?.message || 'failed' }, { status: 500 })
   }
 }
-
