@@ -356,10 +356,12 @@ export function PropertyForm({ property }: PropertyFormProps) {
       let savedId: string | null = null;
       const accessToken = await getAccessToken();
       if (!accessToken) throw new Error('Invalid or expired session');
+      try { console.log('[PropertyForm] Access token present (len):', String(accessToken).length); } catch {}
 
       // Server-side save using service role (no REST from browser)
       const controller = new AbortController();
       const to = setTimeout(() => controller.abort(), 20000);
+      console.log('[PropertyForm] Calling /api/admin/properties/save');
       const saveRes = await fetch('/api/admin/properties/save', {
         method: 'POST',
         headers: {
@@ -371,6 +373,7 @@ export function PropertyForm({ property }: PropertyFormProps) {
         signal: controller.signal,
       });
       clearTimeout(to);
+      try { console.log('[PropertyForm] Save status:', saveRes.status); } catch {}
       const parseError = async () => {
         try {
           const json = await saveRes.clone().json();

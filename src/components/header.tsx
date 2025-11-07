@@ -8,7 +8,7 @@ import { useRouter, usePathname } from 'next/navigation';
 
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Sheet, SheetContent, SheetTrigger, SheetClose } from '@/components/ui/sheet';
+import { Sheet, SheetContent, SheetTrigger, SheetClose, SheetTitle, SheetDescription } from '@/components/ui/sheet';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -266,6 +266,11 @@ export function Header() {
                 </Button>
               </SheetTrigger>
               <SheetContent side="right" className="w-[320px] sm:w-[400px] bg-background p-0 flex flex-col max-h-screen">
+                {/* A11y: Provide required title/description for dialog semantics */}
+                <div className="sr-only">
+                  <SheetTitle>Mobile Navigation</SheetTitle>
+                  <SheetDescription>Site menu</SheetDescription>
+                </div>
                 <div className="flex justify-between items-center p-4 border-b flex-shrink-0">
                    <Link href="/" className="flex items-center gap-2">
                       <div className="p-2 rounded-md bg-primary">
