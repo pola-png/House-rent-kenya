@@ -349,6 +349,8 @@ export function PropertyForm({ property }: PropertyFormProps) {
         keywords: data.keywords || '',
       } as any;
 
+      console.log('[PropertyForm] Payload ready', { isEdit: Boolean(property?.id), payload: propertyPayload });
+
       setLastError(null);
 
       let savedId: string | null = null;
@@ -384,6 +386,7 @@ export function PropertyForm({ property }: PropertyFormProps) {
         throw new Error(msg || `Save failed (${saveRes.status})`);
       }
       const saved = await saveRes.json().catch(() => ({}));
+      console.log('[PropertyForm] Save response', saved);
       savedId = saved?.id || saved?.data?.id || null;
 
       // Optional: create promotion request if screenshot provided
