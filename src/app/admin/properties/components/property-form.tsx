@@ -36,6 +36,7 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/component
 import { Separator } from "@/components/ui/separator";
 import { useAuth } from "@/hooks/use-auth-supabase";
 import { supabase } from "@/lib/supabase";
+import { getAccessTokenSync } from "@/lib/token-cache";
 import { AISEOSimple } from "@/components/ai-seo-simple";
 import { generateWithAI } from "@/lib/ai-service";
 
@@ -77,6 +78,12 @@ interface PropertyFormProps {
 }
 
 const getAccessToken = async (): Promise<string | null> => {
+  // 1) Try synchronous cache for instant availability
+  try {
+    const t = getAccessTokenSync();
+    if (t) return t;
+  } catch {}
+  // 2) Fallback to supabase client
   try {
     const { data } = await supabase.auth.getSession();
     if (data?.session?.access_token) return data.session.access_token;
@@ -414,21 +421,32 @@ export function PropertyForm({ property }: PropertyFormProps) {
         dlog('Token missing or timed out — falling back to client Supabase save');
         // Client-side save (requires properties RLS OFF or policy allowing anon insert)
         let saved: any = null;
+        const clientSaveTimeoutMs = 45000;
         if (property?.id) {
-          const { data, error } = await supabase
+          dlog('Client save: update path');
+          const updatePromise = supabase
             .from('properties')
             .update({ ...propertyPayload, updatedAt: new Date().toISOString() })
             .eq('id', property.id)
             .select('*')
             .single();
+          const { data, error } = await Promise.race([
+            updatePromise,
+            new Promise<any>((_, reject) => setTimeout(() => reject(new Error('Client save timed out')), clientSaveTimeoutMs)),
+          ]);
           if (error) throw new Error(error.message);
           saved = data;
         } else {
-          const { data, error } = await supabase
+          dlog('Client save: insert path');
+          const insertPromise = supabase
             .from('properties')
             .insert([{ ...propertyPayload, createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() }])
             .select('*')
             .single();
+          const { data, error } = await Promise.race([
+            insertPromise,
+            new Promise<any>((_, reject) => setTimeout(() => reject(new Error('Client save timed out')), clientSaveTimeoutMs)),
+          ]);
           if (error) throw new Error(error.message);
           saved = data;
         }

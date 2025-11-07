@@ -2,6 +2,7 @@
 
 import { useState, useEffect, createContext, useContext, ReactNode } from 'react';
 import { supabase } from '@/lib/supabase';
+import { setAccessToken } from '@/lib/token-cache';
 import type { UserProfile } from '@/lib/types';
 import { User } from '@supabase/supabase-js';
 
@@ -28,6 +29,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         console.error('Session validation error:', error);
         return null;
       }
+      try { setAccessToken(session?.access_token || null); } catch {}
       return session;
     } catch (error) {
       console.error('Session validation failed:', error);
@@ -73,17 +75,19 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
       if (!mounted) return;
-      
+
       if (event === 'SIGNED_OUT') {
         if (mounted) {
           setUser(null);
           setLoading(false);
         }
+        try { setAccessToken(null); } catch {}
         return;
       }
-      
+
       if (session?.user) {
         try {
+          try { setAccessToken(session.access_token || null); } catch {}
           const userProfile = await fetchUserProfile(session.user);
           if (mounted) {
             setUser(userProfile);
