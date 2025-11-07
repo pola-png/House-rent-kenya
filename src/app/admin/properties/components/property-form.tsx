@@ -43,6 +43,9 @@ import { uploadToWasabi } from "@/lib/wasabi";
 import { getSystemSettings } from "@/lib/system-settings";
 
 
+const DEBUG_FORM = true;
+const dlog = (...args: any[]) => { if (DEBUG_FORM) console.log('[PropertyForm]', ...args); };
+
 const formSchema = z.object({
   title: z.string().min(10, {
     message: "Title must be at least 10 characters.",
@@ -303,6 +306,7 @@ export function PropertyForm({ property }: PropertyFormProps) {
     setIsSubmitting(true);
     setIsUploadingImages(true);
     toast({ title: "Saving property...", description: "Please wait." });
+    dlog('Submit started', { isEdit: Boolean(property?.id) });
     setLastError(null);
 
     try {
@@ -317,10 +321,12 @@ export function PropertyForm({ property }: PropertyFormProps) {
 
       // Upload any newly added images (keep existing on edit)
       const uploadedImageUrls = await uploadImages(imageFiles);
+      dlog('Uploaded image URLs:', uploadedImageUrls);
       const existingImageUrls = Array.isArray(property?.images) ? (property!.images as string[]) : [];
       // De-duplicate while preserving order
       const allImageUrls = Array.from(new Set([...(existingImageUrls || []), ...uploadedImageUrls]));
       setIsUploadingImages(false);
+      dlog('All images aggregated:', allImageUrls);
 
       // Sanitize numeric fields (handle values like "30,000")
       const toNumber = (v: any, fallback = 0) => {
@@ -435,6 +441,7 @@ export function PropertyForm({ property }: PropertyFormProps) {
       }, 800);
     } catch (error: any) {
       console.error('Error saving property:', error);
+      dlog('Error (catch) saving property:', error?.message, error);
       let description = 'Could not save the property. Please try again.';
       if (error.message?.includes('Invalid or expired session')) {
         description = 'Your session has expired. Please log in again.';
@@ -451,6 +458,7 @@ export function PropertyForm({ property }: PropertyFormProps) {
     } finally {
       setIsSubmitting(false);
       setIsUploadingImages(false);
+      dlog('Submit finished');
     }
   }
 
@@ -460,6 +468,7 @@ export function PropertyForm({ property }: PropertyFormProps) {
     if (files.length === 0) return [];
 
     console.log(`Uploading ${files.length} images...`);
+    dlog('uploadImages called with', files.length, 'file(s)');
     const uploadPromises = files.map(async (file, index) => {
       const sanitizedName = file.name.replace(/[^a-zA-Z0-9.-]/g, '-');
       const fileName = `properties/${user?.uid}/${Date.now()}-${sanitizedName}`;
@@ -474,7 +483,9 @@ export function PropertyForm({ property }: PropertyFormProps) {
       }
     });
 
-    return Promise.all(uploadPromises);
+    const urls = await Promise.all(uploadPromises);
+    dlog('All image uploads complete. Count:', urls.length);
+    return urls;
   };
 
   const handleImageChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -486,6 +497,7 @@ export function PropertyForm({ property }: PropertyFormProps) {
 
     const newPreviews = newFiles.map(file => URL.createObjectURL(file));
     setImagePreviews(prev => [...prev, ...newPreviews]);
+    dlog('handleImageChange added files:', newFiles.length, 'total now:', imageFiles.length + newFiles.length);
   };
 
   const handleRemoveImage = (indexToRemove: number) => {

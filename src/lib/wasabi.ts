@@ -1,4 +1,6 @@
 // CLIENT-SAFE Wasabi upload helpers (no server env access or private keys)
+const DEBUG_WASABI = true;
+const wlog = (...args: any[]) => { if (DEBUG_WASABI) console.log('[Wasabi]', ...args); };
 const PUBLIC_BUCKET = process.env.NEXT_PUBLIC_WASABI_BUCKET;
 
 const isHttpUrl = (s: string) => /^https?:\/\//i.test(s);
@@ -74,11 +76,13 @@ export async function uploadToWasabi(
   params: string | { key: string; contentType?: string }
 ): Promise<string> {
   const normalized = typeof params === 'string' ? { key: params } : params;
+  try { wlog('uploadToWasabi start', { key: normalized.key, size: file.size, type: file.type }); } catch {}
   const body = {
     key: normalized.key,
     contentType: normalized.contentType || file.type,
     contentLength: file.size,
   };
+  wlog('requesting presigned PUT for', { key: body.key, contentType: body.contentType, contentLength: body.contentLength });
   const res = await fetch('/api/upload', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
@@ -87,16 +91,20 @@ export async function uploadToWasabi(
   });
   if (!res.ok) {
     const err = await res.json().catch(() => ({}));
+    wlog('presign failed', { status: res.status, err });
     throw new Error(err.error || `Failed to create upload URL (${res.status})`);
   }
   const { uploadUrl, uploadHeaders, objectPath } = await res.json();
+  wlog('presign ok', { key: normalized.key });
   const put = await fetch(uploadUrl, {
     method: 'PUT',
     headers: uploadHeaders || {},
     body: file,
   });
   if (!put.ok) {
+    wlog('PUT failed', { status: put.status });
     throw new Error(`Upload failed (${put.status})`);
   }
+  wlog('PUT success', { status: put.status, key: normalized.key });
   return objectPath as string;
 }
