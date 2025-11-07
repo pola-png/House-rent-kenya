@@ -360,7 +360,8 @@ export function PropertyForm({ property }: PropertyFormProps) {
 
       // Server-side save using service role (no REST from browser)
       const controller = new AbortController();
-      const to = setTimeout(() => controller.abort(), 20000);
+      // Allow extra time on slower networks
+      const to = setTimeout(() => controller.abort(), 45000);
       console.log('[PropertyForm] Calling /api/admin/properties/save');
       const saveRes = await fetch('/api/admin/properties/save', {
         method: 'POST',
@@ -371,6 +372,12 @@ export function PropertyForm({ property }: PropertyFormProps) {
         },
         body: JSON.stringify({ ...(property?.id ? { id: property.id } : {}), ...propertyPayload }),
         signal: controller.signal,
+      }).catch((e) => {
+        console.error('[PropertyForm] Save request error:', e);
+        if ((e as any)?.name === 'AbortError') {
+          throw new Error('Save timed out. Please check your connection and try again.');
+        }
+        throw e;
       });
       clearTimeout(to);
       try { console.log('[PropertyForm] Save status:', saveRes.status); } catch {}
