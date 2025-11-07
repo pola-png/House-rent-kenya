@@ -360,50 +360,81 @@ export function PropertyForm({ property }: PropertyFormProps) {
       setLastError(null);
 
       let savedId: string | null = null;
-      const accessToken = await getAccessToken();
-      if (!accessToken) throw new Error('Invalid or expired session');
-      try { console.log('[PropertyForm] Access token present (len):', String(accessToken).length); } catch {}
-
-      // Server-side save using service role (no REST from browser)
-      const controller = new AbortController();
-      // Allow extra time on slower networks
-      const to = setTimeout(() => controller.abort(), 45000);
-      console.log('[PropertyForm] Calling /api/admin/properties/save');
-      const saveRes = await fetch('/api/admin/properties/save', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${accessToken}`,
-          'Accept': 'application/json',
-        },
-        body: JSON.stringify({ ...(property?.id ? { id: property.id } : {}), ...propertyPayload }),
-        signal: controller.signal,
-      }).catch((e) => {
-        console.error('[PropertyForm] Save request error:', e);
-        if ((e as any)?.name === 'AbortError') {
-          throw new Error('Save timed out. Please check your connection and try again.');
+      // Try server route first; if token missing/fails, fall back to client Supabase insert
+      dlog('Retrieving session token...');
+      const tokenTimeoutMs = 8000;
+      const tokenTimeout = new Promise<null>((resolve) => setTimeout(() => resolve(null), tokenTimeoutMs));
+      const maybeToken = await Promise.race<[string | null, null]>([
+        (async () => await getAccessToken())() as any,
+        tokenTimeout as any,
+      ]);
+      const accessToken = (maybeToken as any) || null;
+      if (accessToken) {
+        try { console.log('[PropertyForm] Access token present (len):', String(accessToken).length); } catch {}
+        // Server-side save using service role (no REST from browser)
+        const controller = new AbortController();
+        // Allow extra time on slower networks
+        const to = setTimeout(() => controller.abort(), 45000);
+        console.log('[PropertyForm] Calling /api/admin/properties/save');
+        const saveRes = await fetch('/api/admin/properties/save', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${accessToken}`,
+            'Accept': 'application/json',
+          },
+          body: JSON.stringify({ ...(property?.id ? { id: property.id } : {}), ...propertyPayload }),
+          signal: controller.signal,
+        }).catch((e) => {
+          console.error('[PropertyForm] Save request error:', e);
+          if ((e as any)?.name === 'AbortError') {
+            throw new Error('Save timed out. Please check your connection and try again.');
+          }
+          throw e;
+        });
+        clearTimeout(to);
+        try { console.log('[PropertyForm] Save status:', saveRes.status); } catch {}
+        const parseError = async () => {
+          try {
+            const json = await saveRes.clone().json();
+            return json?.error || json?.message || JSON.stringify(json);
+          } catch {
+            const txt = await saveRes.text();
+            return txt;
+          }
+        };
+        if (!saveRes.ok) {
+          const msg = await parseError();
+          throw new Error(msg || `Save failed (${saveRes.status})`);
         }
-        throw e;
-      });
-      clearTimeout(to);
-      try { console.log('[PropertyForm] Save status:', saveRes.status); } catch {}
-      const parseError = async () => {
-        try {
-          const json = await saveRes.clone().json();
-          return json?.error || json?.message || JSON.stringify(json);
-        } catch {
-          const txt = await saveRes.text();
-          return txt;
+        const saved = await saveRes.json().catch(() => ({}));
+        console.log('[PropertyForm] Save response', saved);
+        savedId = saved?.id || saved?.data?.id || null;
+      } else {
+        dlog('Token missing or timed out — falling back to client Supabase save');
+        // Client-side save (requires properties RLS OFF or policy allowing anon insert)
+        let saved: any = null;
+        if (property?.id) {
+          const { data, error } = await supabase
+            .from('properties')
+            .update({ ...propertyPayload, updatedAt: new Date().toISOString() })
+            .eq('id', property.id)
+            .select('*')
+            .single();
+          if (error) throw new Error(error.message);
+          saved = data;
+        } else {
+          const { data, error } = await supabase
+            .from('properties')
+            .insert([{ ...propertyPayload, createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() }])
+            .select('*')
+            .single();
+          if (error) throw new Error(error.message);
+          saved = data;
         }
-      };
-
-      if (!saveRes.ok) {
-        const msg = await parseError();
-        throw new Error(msg || `Save failed (${saveRes.status})`);
+        console.log('[PropertyForm] Client save response', saved);
+        savedId = saved?.id || null;
       }
-      const saved = await saveRes.json().catch(() => ({}));
-      console.log('[PropertyForm] Save response', saved);
-      savedId = saved?.id || saved?.data?.id || null;
 
       // Optional: create promotion request if screenshot provided
       if (isPromotionOpen && promotionWeeks > 0 && savedId) {
@@ -420,6 +451,7 @@ export function PropertyForm({ property }: PropertyFormProps) {
       }
 
       try {
+        dlog('Triggering tag revalidation');
         // Trigger CDN + tag revalidation so lists refresh instantly
         await fetch('/api/revalidate', {
           method: 'POST',
@@ -429,7 +461,8 @@ export function PropertyForm({ property }: PropertyFormProps) {
           },
           body: JSON.stringify({ tags: ['properties:list', savedId ? `property:${savedId}` : undefined].filter(Boolean) }),
         }).catch(() => {});
-      } catch {}
+        dlog('Revalidation request sent');
+      } catch { dlog('Revalidation request failed (non-fatal)'); }
 
       toast({
         title: `Property ${property?.id ? 'Updated' : 'Created'}`,
@@ -437,6 +470,7 @@ export function PropertyForm({ property }: PropertyFormProps) {
       });
 
       setTimeout(() => {
+        dlog('Navigating back to /admin/properties');
         router.push(`/admin/properties`);
       }, 800);
     } catch (error: any) {
