@@ -475,7 +475,12 @@ export function PropertyForm({ property }: PropertyFormProps) {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
-            'x-revalidate-token': process.env.NEXT_PUBLIC_REVALIDATE_TOKEN || '',
+            // Prefer authenticated revalidation to avoid exposing secrets
+            'Authorization': `Bearer ${accessToken}`,
+            // Keep optional public header if you set REVALIDATE_SECRET + expose a NEXT_PUBLIC value
+            ...(process.env.NEXT_PUBLIC_REVALIDATE_TOKEN
+              ? { 'x-revalidate-token': process.env.NEXT_PUBLIC_REVALIDATE_TOKEN }
+              : {}),
           },
           body: JSON.stringify({ tags: ['properties:list', savedId ? `property:${savedId}` : undefined].filter(Boolean) }),
         }).catch(() => {});
