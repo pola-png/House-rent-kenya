@@ -20,7 +20,8 @@ import Image from "next/image";
 import { OptimizedImage } from "@/components/optimized-image";
 import placeholderImages from "@/lib/placeholder-images.json";
 import { formatDistanceToNow } from 'date-fns';
-import { useMemo, useState, useEffect } from "react";`r`nimport { useAutoRetry } from "@/hooks/use-auto-retry";
+import { useMemo, useState, useEffect } from "react";
+import { useAutoRetry } from "@/hooks/use-auto-retry";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/use-auth-supabase";
@@ -32,7 +33,8 @@ export default function Dashboard() {
   const [properties, setProperties] = useState<Property[]>([]);
   const [recentProperties, setRecentProperties] = useState<Property[]>([]);
   const [leads, setLeads] = useState<CallbackRequest[]>([]);
-  const [isLoading, setIsLoading] = useState(true);`r`n  const [retryTick, retryNow] = useAutoRetry(isLoading || !user, [user]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [retryTick, retryNow] = useAutoRetry(isLoading || !user, [user]);
   const [realTimeStats, setRealTimeStats] = useState({
     totalViews: 0,
     todayViews: 0,

@@ -35,7 +35,8 @@ export default function AdminDashboard() {
   const { user } = useAuth();
   const router = useRouter();
   const [stats, setStats] = useState<AdminStats | null>(null);
-  const [isLoading, setIsLoading] = useState(true);`r`n  const [retryTick, retryNow] = useAutoRetry(isLoading || !user, [user]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [retryTick, retryNow] = useAutoRetry(isLoading || !user, [user]);
 
   useEffect(() => {
     if (user?.role !== 'admin') {
@@ -47,7 +48,7 @@ export default function AdminDashboard() {
     // Real-time updates every 30 seconds
     const interval = setInterval(fetchAdminStats, 30000);
     return () => clearInterval(interval);
-  }, [user, router]);
+  }, [user, router, retryTick]);
 
   const fetchAdminStats = async () => {
     try {

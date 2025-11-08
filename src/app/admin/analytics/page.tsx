@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, useState } from "react";`r`nimport { useAutoRetry } from "@/hooks/use-auto-retry";
+import { useEffect, useState } from "react";
+import { useAutoRetry } from "@/hooks/use-auto-retry";
 import { useAuth } from "@/hooks/use-auth-supabase";
 import { supabase } from "@/lib/supabase";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
