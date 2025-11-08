@@ -13,6 +13,8 @@ interface OptimizedImageProps {
   fill?: boolean;
   sizes?: string;
   fit?: 'cover' | 'contain' | 'fill' | 'none' | 'scale-down';
+  onError?: () => void;
+  onLoad?: () => void;
 }
 
 export function OptimizedImage({ 
@@ -52,10 +54,12 @@ export function OptimizedImage({
   const handleError = () => {
     setImageError(true);
     setIsLoading(false);
+    onError?.();
   };
 
   const handleLoad = () => {
     setIsLoading(false);
+    onLoad?.();
   };
 
   // Generate descriptive alt text if not provided or generic
