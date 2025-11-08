@@ -20,7 +20,7 @@ type PromotionRow = {
 
 export default function PromotionsPage() {
   const router = useRouter();
-  const { user, session } = useAuth();
+  const { user } = useAuth();
   const [propertyId, setPropertyId] = useState("");
   const [propertyTitle, setPropertyTitle] = useState("");
   const [weeks, setWeeks] = useState(1);
@@ -28,7 +28,6 @@ export default function PromotionsPage() {
   const [submitting, setSubmitting] = useState(false);
   const [rows, setRows] = useState<PromotionRow[]>([]);
   const [loadingList, setLoadingList] = useState(false);
-  const token = session?.access_token;
 
   async function presignWasabi(key: string, contentType: string, contentLength: number) {
     const res = await fetch("/api/upload", {
@@ -62,6 +61,10 @@ export default function PromotionsPage() {
     try {
       setSubmitting(true);
       const up = await uploadToWasabi(file);
+      // fetch a fresh access token at submit time
+      const { data: sess } = await supabase.auth.getSession();
+      const token = sess?.session?.access_token || null;
+
       const res = await fetch("/api/admin/promotions/submit", {
         method: "POST",
         headers: {
@@ -178,4 +181,3 @@ export default function PromotionsPage() {
     </div>
   );
 }
-
