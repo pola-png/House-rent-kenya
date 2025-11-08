@@ -1,175 +1,180 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import { useRouter } from "next/navigation";
 import { useAuth } from "@/hooks/use-auth-supabase";
 import { supabase } from "@/lib/supabase";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Badge } from "@/components/ui/badge";
-import { Skeleton } from "@/components/ui/skeleton";
-import { Button } from "@/components/ui/button";
 
-type PaymentRequest = {
+type PromotionRow = {
   id: string;
-  propertyId: string;
-  propertyTitle?: string;
-  userId: string;
-  userName?: string;
-  userEmail?: string;
-  amount: number;
-  paymentScreenshot?: string;
-  status: "pending" | "approved" | "rejected" | string;
-  promotionType?: string;
-  createdAt: string;
+  property_id?: string;
+  property_title?: string | null;
+  user_id?: string | null;
+  agent_id?: string | null;
+  screenshot_url?: string;
+  status?: string;
+  weeks?: number;
+  created_at?: string;
+  updated_at?: string;
 };
 
 export default function PromotionsPage() {
-  const { user, loading: authLoading } = useAuth();
-  const [rows, setRows] = useState<PaymentRequest[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [retryTick, setRetryTick] = useState(0);
-  const [startedAt] = useState<number>(() => Date.now());
+  const router = useRouter();
+  const { user, session } = useAuth();
+  const [propertyId, setPropertyId] = useState("");
+  const [propertyTitle, setPropertyTitle] = useState("");
+  const [weeks, setWeeks] = useState(1);
+  const [file, setFile] = useState<File | null>(null);
+  const [submitting, setSubmitting] = useState(false);
+  const [rows, setRows] = useState<PromotionRow[]>([]);
+  const [loadingList, setLoadingList] = useState(false);
+  const token = session?.access_token;
 
-  useEffect(() => {
-    if (authLoading) return;
-    if (!user) return;
-    fetchRows();
-  }, [user, authLoading, retryTick]);
+  async function presignWasabi(key: string, contentType: string, contentLength: number) {
+    const res = await fetch("/api/upload", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ key, contentType, contentLength }),
+    });
+    if (!res.ok) throw new Error(await res.text());
+    return res.json() as Promise<{ url: string }>;
+  }
 
-  useEffect(() => {
-    const t = setTimeout(() => {
-      if ((isLoading || authLoading) && Date.now() - startedAt > 7000) {
-        setRetryTick((x) => x + 1);
-      }
-    }, 7500);
-    const onOnline = () => setRetryTick((x) => x + 1);
-    try { window.addEventListener('online', onOnline); } catch {}
-    return () => { clearTimeout(t); try { window.removeEventListener('online', onOnline); } catch {} };
-  }, [isLoading, authLoading, startedAt]);
+  async function uploadToWasabi(file: File) {
+    const ext = file.name.split(".").pop() || "jpg";
+    const key = `promotions/${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`;
+    const { url } = await presignWasabi(key, file.type || "image/jpeg", file.size);
+    const put = await fetch(url, { method: "PUT", body: file, headers: { "Content-Type": file.type || "application/octet-stream" } });
+    if (!put.ok) throw new Error(`Wasabi PUT failed: ${put.status}`);
+    const publicUrl = url.split("?")[0];
+    return { key, url: publicUrl };
+  }
 
-  const fetchRows = async () => {
-    if (!user) return;
-    setIsLoading(true);
+  async function submitPromotion() {
+    if (!file) {
+      alert("Please attach a screenshot");
+      return;
+    }
+    if (!propertyId) {
+      alert("Please provide a property ID");
+      return;
+    }
     try {
-      let query = supabase
-        .from('payment_requests')
-        .select('*')
-        .order('createdAt', { ascending: false });
-      if (user.role !== 'admin') {
-        query = query.eq('userId', user.uid);
-      }
-      const { data, error } = await query;
-      if (error) throw error;
-      setRows((data || []) as any);
-    } catch (e) {
-      console.error('Promotions fetch error:', e);
+      setSubmitting(true);
+      const up = await uploadToWasabi(file);
+      const res = await fetch("/api/admin/promotions/submit", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
+        body: JSON.stringify({ propertyId, propertyTitle: propertyTitle || undefined, weeks, screenshotUrl: up.url }),
+      });
+      if (!res.ok) throw new Error(await res.text());
+      await res.json();
+      alert("Promotion request submitted");
+      setFile(null);
+      setWeeks(1);
+      setPropertyTitle("");
+      await loadList();
+    } catch (e: any) {
+      console.error("[Promotions] submit error", e);
+      alert("Failed to submit promotion: " + (e?.message || e));
     } finally {
-      setIsLoading(false);
+      setSubmitting(false);
     }
-  };
+  }
 
-  const grouped = useMemo(() => {
-    const by: Record<string, PaymentRequest[]> = { all: [], pending: [], approved: [], rejected: [] } as any;
-    for (const r of rows) {
-      by.all.push(r);
-      const s = (r.status || 'pending').toLowerCase();
-      if (s === 'approved') by.approved.push(r);
-      else if (s === 'rejected') by.rejected.push(r);
-      else by.pending.push(r);
-    }
-    return by;
-  }, [rows]);
+  async function fetchFirstAvailable(table: string, filter?: (q: any) => any) {
+    let q: any = supabase.from(table).select("*").order("created_at", { ascending: false }).limit(50);
+    if (filter) q = filter(q);
+    const { data, error } = await q;
+    if (error) throw error;
+    return data as PromotionRow[];
+  }
 
-  const renderList = (list: PaymentRequest[]) => {
-    if (isLoading || authLoading) {
-      return (
-        <div className="space-y-3">
-          <Skeleton className="h-10 w-full" />
-          <Skeleton className="h-16 w-full" />
-          <Skeleton className="h-16 w-full" />
-          <div className="flex items-center gap-2">
-            <Button size="sm" variant="outline" onClick={() => setRetryTick((x) => x + 1)}>Reload now</Button>
-            <span className="text-xs text-muted-foreground">If this takes too long, click Reload.</span>
-          </div>
-        </div>
-      );
+  async function loadList() {
+    try {
+      setLoadingList(true);
+      // Try common tables in order. Last one (payment_requests) filters type=promotion
+      const tries: Array<() => Promise<PromotionRow[]>> = [
+        () => fetchFirstAvailable("promotions"),
+        () => fetchFirstAvailable("promotion_requests"),
+        () => fetchFirstAvailable("payment_requests", (q) => q.eq("type", "promotion")),
+      ];
+      for (const t of tries) {
+        try {
+          const result = await t();
+          setRows(result || []);
+          return;
+        } catch (_) {}
+      }
+      setRows([]);
+    } catch (e) {
+      console.error("[Promotions] list load error", e);
+    } finally {
+      setLoadingList(false);
     }
-    if (!list?.length) {
-      return <div className="text-sm text-muted-foreground">No items.</div>;
-    }
-    return (
-      <div className="space-y-3">
-        {list.map((r) => (
-          <div key={r.id} className="rounded-md border p-3 flex items-start justify-between gap-3">
-            <div className="space-y-1">
-              <div className="font-medium">{r.propertyTitle || r.propertyId}</div>
-              <div className="text-xs text-muted-foreground">{new Date(r.createdAt).toLocaleString()}</div>
-              <div className="text-xs">Amount: {Number(r.amount || 0).toLocaleString()}</div>
-              {r.promotionType && <div className="text-xs">Type: {r.promotionType}</div>}
-              {r.userName && <div className="text-xs">By: {r.userName}</div>}
-            </div>
-            <div className="flex flex-col items-end gap-2">
-              <Badge variant="outline">{(r.status || 'pending').toUpperCase()}</Badge>
-              {r.paymentScreenshot && (
-                <a href={r.paymentScreenshot} target="_blank" rel="noreferrer" className="text-xs underline text-primary">Screenshot</a>
-              )}
-            </div>
-          </div>
-        ))}
-      </div>
-    );
-  };
+  }
+
+  useEffect(() => {
+    loadList();
+  }, []);
+
+  const canSubmit = useMemo(() => !!file && !!propertyId && !submitting, [file, propertyId, submitting]);
 
   return (
-    <div className="flex flex-col gap-6">
-      <div>
-        <h1 className="text-2xl font-bold font-headline">Promotions</h1>
-        <p className="text-muted-foreground">Your submitted promotion requests {user?.role === 'admin' ? '(admin: all agents)' : ''}.</p>
+    <div className="max-w-3xl mx-auto p-4 space-y-6">
+      <h1 className="text-2xl font-bold">Promotions</h1>
+
+      <div className="border rounded-md p-4 space-y-3">
+        <h2 className="font-semibold">Submit Promotion Request</h2>
+        <div className="grid gap-3">
+          <label className="grid gap-1">
+            <span className="text-sm">Property ID</span>
+            <input className="border rounded p-2" value={propertyId} onChange={(e) => setPropertyId(e.target.value)} placeholder="b1c54d88-..." />
+          </label>
+          <label className="grid gap-1">
+            <span className="text-sm">Property Title (optional)</span>
+            <input className="border rounded p-2" value={propertyTitle} onChange={(e) => setPropertyTitle(e.target.value)} placeholder="Nice 2-bed in Nairobi" />
+          </label>
+          <label className="grid gap-1">
+            <span className="text-sm">Weeks</span>
+            <input type="number" min={1} max={52} className="border rounded p-2 w-32" value={weeks} onChange={(e) => setWeeks(Math.max(1, Math.min(52, Number(e.target.value) || 1)))} />
+          </label>
+          <label className="grid gap-1">
+            <span className="text-sm">Screenshot</span>
+            <input type="file" accept="image/*" onChange={(e) => setFile(e.target.files?.[0] || null)} />
+          </label>
+          <button disabled={!canSubmit} onClick={submitPromotion} className="inline-flex items-center justify-center rounded bg-primary px-3 py-2 text-white disabled:opacity-50">
+            {submitting ? "Submitting..." : "Submit for Approval"}
+          </button>
+        </div>
       </div>
-      <Tabs defaultValue="pending" className="w-full">
-        <TabsList className="grid w-full grid-cols-4 sm:w-auto">
-          <TabsTrigger value="pending">Pending</TabsTrigger>
-          <TabsTrigger value="approved">Approved</TabsTrigger>
-          <TabsTrigger value="rejected">Rejected</TabsTrigger>
-          <TabsTrigger value="all">All</TabsTrigger>
-        </TabsList>
-        <TabsContent value="pending">
-          <Card>
-            <CardHeader>
-              <CardTitle>Pending</CardTitle>
-              <CardDescription>Awaiting admin approval.</CardDescription>
-            </CardHeader>
-            <CardContent>{renderList(grouped.pending)}</CardContent>
-          </Card>
-        </TabsContent>
-        <TabsContent value="approved">
-          <Card>
-            <CardHeader>
-              <CardTitle>Approved</CardTitle>
-              <CardDescription>Scheduled or active promotions.</CardDescription>
-            </CardHeader>
-            <CardContent>{renderList(grouped.approved)}</CardContent>
-          </Card>
-        </TabsContent>
-        <TabsContent value="rejected">
-          <Card>
-            <CardHeader>
-              <CardTitle>Rejected</CardTitle>
-              <CardDescription>Requests that didn’t pass verification.</CardDescription>
-            </CardHeader>
-            <CardContent>{renderList(grouped.rejected)}</CardContent>
-          </Card>
-        </TabsContent>
-        <TabsContent value="all">
-          <Card>
-            <CardHeader>
-              <CardTitle>All Requests</CardTitle>
-              <CardDescription>Every request in reverse chronological order.</CardDescription>
-            </CardHeader>
-            <CardContent>{renderList(grouped.all)}</CardContent>
-          </Card>
-        </TabsContent>
-      </Tabs>
+
+      <div className="border rounded-md p-4">
+        <div className="flex items-center justify-between mb-3">
+          <h2 className="font-semibold">Recent Promotion Requests</h2>
+          <button onClick={loadList} className="text-sm underline">Reload now</button>
+        </div>
+        {loadingList ? (
+          <div className="text-sm text-muted-foreground">Loading…</div>
+        ) : rows.length === 0 ? (
+          <div className="text-sm text-muted-foreground">No promotion requests yet.</div>
+        ) : (
+          <ul className="space-y-2">
+            {rows.map((r) => (
+              <li key={r.id} className="border rounded p-2">
+                <div className="text-sm">Property: {r.property_title || r.property_id}</div>
+                <div className="text-xs text-muted-foreground">Status: {r.status || "pending"} • Weeks: {r.weeks ?? 1}</div>
+                {r.screenshot_url ? (
+                  <a className="text-xs underline" href={r.screenshot_url} target="_blank">screenshot</a>
+                ) : null}
+              </li>
+            ))}
+          </ul>
+        )}
+      </div>
     </div>
   );
 }
