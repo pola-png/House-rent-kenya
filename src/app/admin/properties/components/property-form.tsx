@@ -618,7 +618,7 @@ export function PropertyForm({ property }: PropertyFormProps) {
         let publicUrl: string;
         try {
           // Prefer Supabase storage for promotion screenshots
-          publicUrl = await uploadPromotionScreenshot(screenshotFile);
+          publicUrl = await uploadToWasabi(screenshotFile, filePath);
         } catch (error: any) {
           console.error('Supabase upload error:', error);
           // Fallback to Wasabi if Supabase storage fails
@@ -682,7 +682,7 @@ export function PropertyForm({ property }: PropertyFormProps) {
 
       let publicUrl: string;
       try {
-        publicUrl = await uploadPromotionScreenshot(screenshotFile);
+        publicUrl = await uploadToWasabi(screenshotFile, filePath);
         console.log('Screenshot uploaded to Supabase:', publicUrl);
       } catch (error: any) {
         console.error('Supabase screenshot upload error:', error);
@@ -1203,3 +1203,4 @@ export function PropertyForm({ property }: PropertyFormProps) {
     </Form>
   );
 }
+
