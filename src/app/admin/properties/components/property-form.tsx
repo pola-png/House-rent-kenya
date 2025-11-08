@@ -1,59 +1,9 @@
-"use client";
-
-// Promotions UI has been removed. Define no-op stubs to avoid any leftover references.
-// These must appear before any potential usage.
-const isPromotionOpen = false;
-const setIsPromotionOpen = (..._args: any[]) => {};
-const promotionWeeks = 0;
-const setPromotionWeeks = (..._args: any[]) => {};
-const screenshotFile: File | null = null;
-const setScreenshotFile = (..._args: any[]) => {};
-
-// As a safety net, hide any legacy Promotion block in the DOM by its copy text
-// so the section is fully removed visually without touching other listing UI.
-if (typeof window !== "undefined") {
-  const hidePromoBlocks = () => {
-    try {
-      const phrases = [
-        "promotion",
-        "boost your property's visibility",
-        'feature as "pro"',
-        "promote this property on the homepage",
-        "top of search results",
-      ];
-      const shouldHide = (txt: string) => {
-        const t = txt.toLowerCase();
-        return (
-          t.includes("promotion") &&
-          (t.includes("boost your property's visibility") ||
-            t.includes('feature as "pro"') ||
-            t.includes("promote this property on the homepage") ||
-            t.includes("top of search results"))
-        );
-      };
-      document.querySelectorAll("*").forEach((el) => {
-        const t = (el.textContent || "").toLowerCase();
-        if (!t) return;
-        if (shouldHide(t)) {
-          const container = (el.closest(
-            "section, .card, .Collapsible, .collapsible, .border, .rounded, .p-4"
-          ) || el) as HTMLElement;
-          container.style.display = "none";
-        }
-      });
-    } catch {}
-  };
-  if (document.readyState === "complete" || document.readyState === "interactive") {
-    setTimeout(hidePromoBlocks, 0);
-  } else {
-    window.addEventListener("DOMContentLoaded", hidePromoBlocks, { once: true } as any);
-  }
-}
+﻿"use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import * as z from "zod";
-import { Loader2, Image as ImageIcon, X, Upload, Sparkles } from "lucide-react";
+import { Loader2, Image as ImageIcon, X, Sparkles } from "lucide-react";
 import React from "react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
@@ -81,9 +31,6 @@ import type { Property } from "@/lib/types";
 import { useToast } from "@/hooks/use-toast";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
-import { Switch } from "@/components/ui/switch";
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
-import { Separator } from "@/components/ui/separator";
 import { useAuth } from "@/hooks/use-auth-supabase";
 import { supabase } from "@/lib/supabase";
 import { getAccessTokenSync } from "@/lib/token-cache";
@@ -91,7 +38,6 @@ import { AISEOSimple } from "@/components/ai-seo-simple";
 import { generateWithAI } from "@/lib/ai-service";
 
 import { uploadToWasabi } from "@/lib/wasabi";
-import { getSystemSettings } from "@/lib/system-settings";
 
 
 const DEBUG_FORM = true;
@@ -182,9 +128,6 @@ export function PropertyForm({ property }: PropertyFormProps) {
   const [lastError, setLastError] = React.useState<string | null>(null);
   const fileInputRef = React.useRef<HTMLInputElement>(null);
   // Promotion section removed
-  const sys = getSystemSettings();
-  const weeklyRate = sys.payment?.weeklyPromoRate ?? 5;
-  // Promotion screenshot flow removed from property form
   const [isGeneratingTitle, setIsGeneratingTitle] = React.useState(false);
   const [isGeneratingDesc, setIsGeneratingDesc] = React.useState(false);
 
@@ -467,7 +410,7 @@ export function PropertyForm({ property }: PropertyFormProps) {
         console.log('[PropertyForm] Save response', saved);
         savedId = saved?.id || saved?.data?.id || null;
       } else {
-        dlog('Token missing or timed out â€” falling back to client Supabase save');
+        dlog('Token missing or timed out Ã¢â‚¬â€ falling back to client Supabase save');
         // Client-side save (requires properties RLS OFF or policy allowing anon insert)
         let saved: any = null;
         const clientSaveTimeoutMs = 45000;
@@ -600,152 +543,8 @@ export function PropertyForm({ property }: PropertyFormProps) {
     URL.revokeObjectURL(imagePreviews[indexToRemove]);
   };
   
-  const handleScreenshotChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (file) {
-      /* promotion removed */ void file;
-    }
-  };
-  
-  const handleSendForApproval = async () => {
-    if (!screenshotFile) {
-        toast({
-            variant: "destructive",
-            title: "No Screenshot",
-            description: "Please upload a screenshot of your payment to proceed.",
-        });
-        return;
-    }
 
-    if (!property?.id) {
-        toast({
-            variant: "destructive",
-            title: "Property Required",
-            description: "Please save the property first before requesting promotion.",
-        });
-        return;
-    }
-
-    if (!user) return;
-
-    try {
-        toast({ title: "Uploading...", description: "Sending payment screenshot to admin." });
-
-        const fileExt = screenshotFile.name.split('.').pop();
-        const fileName = `payment-${user.uid}-${Date.now()}.${fileExt}`;
-        const filePath = `payment-screenshots/${fileName}`;
-
-        let publicUrl: string;
-        try {
-          // Prefer Supabase storage for promotion screenshots
-          publicUrl = await uploadToWasabi(screenshotFile, filePath);
-        } catch (error: any) {
-          console.error('Supabase upload error:', error);
-          // Fallback to Wasabi if Supabase storage fails
-          try {
-            publicUrl = await uploadToWasabi(screenshotFile, filePath);
-          } catch (werr: any) {
-            console.error('Wasabi fallback upload error:', werr);
-            throw new Error(`Upload failed: ${error?.message || werr?.message}`);
-          }
-        }
-
-        const { error: insertError } = await supabase
-          .from('payment_requests')
-          .insert([{
-            propertyId: property.id,
-            propertyTitle: property.title,
-            userId: user.uid,
-            userName: user.displayName || user.email,
-            userEmail: user.email,
-            amount: promotionWeeks * weeklyRate,
-            paymentScreenshot: publicUrl,
-            status: 'pending',
-            promotionType: `Featured - ${promotionWeeks} week${promotionWeeks > 1 ? 's' : ''}`,
-            createdAt: new Date().toISOString()
-          }]);
-
-        if (insertError) {
-          console.error('Database error:', insertError);
-          throw new Error(`Database operation failed: ${insertError.message}`);
-        }
-
-        toast({
-            title: "Request Submitted!",
-            description: "Admin will review your payment and approve your promotion soon.",
-        });
-        
-        router.push('/admin/promotions');
-    } catch (error: any) {
-        console.error('promotion request error:', error);
-        toast({
-            variant: "destructive",
-            title: "Submission Failed",
-            description: error.message || "Could not submit promotion request.",
-        });
-    }
-  }
-
-  const handlePromotion = async (propertyId: string) => {
-    console.log('handlePromotion called with:', { propertyId, screenshotFile, promotionWeeks });
-    
-    if (!screenshotFile) {
-      console.log('No screenshot file, skipping promotion');
-      return; // Don't throw error, just skip promotion
-    }
-
-    try {
-      console.log('Starting promotion upload...');
-      const fileExt = screenshotFile.name.split('.').pop();
-      const fileName = `payment-${user?.uid}-${Date.now()}.${fileExt}`;
-      const filePath = `payment-screenshots/${fileName}`;
-
-      let publicUrl: string;
-      try {
-        publicUrl = await uploadToWasabi(screenshotFile, filePath);
-        console.log('Screenshot uploaded to Supabase:', publicUrl);
-      } catch (error: any) {
-        console.error('Supabase screenshot upload error:', error);
-        try {
-          publicUrl = await uploadToWasabi(screenshotFile, filePath);
-          console.log('Screenshot uploaded to Wasabi (fallback):', publicUrl);
-        } catch (werr: any) {
-          console.error('Screenshot upload fallback error:', werr);
-          throw new Error(`Upload failed: ${error?.message || werr?.message}`);
-        }
-      }
-
-      const promotionData = {
-        propertyId: propertyId,
-        propertyTitle: form.getValues('title'),
-        userId: user?.uid,
-        userName: user?.displayName || user?.email,
-        userEmail: user?.email,
-        amount: promotionWeeks * weeklyRate,
-        paymentScreenshot: publicUrl,
-        status: 'pending',
-        promotionType: `Featured - ${promotionWeeks} week${promotionWeeks > 1 ? 's' : ''}`,
-        createdAt: new Date().toISOString()
-      };
       
-      console.log('Inserting promotion data:', promotionData);
-
-      const { error: insertError } = await supabase
-        .from('payment_requests')
-        .insert([promotionData]);
-
-      if (insertError) {
-        console.error('promotion database error:', insertError);
-        throw new Error(`Database operation failed: ${insertError.message}`);
-      }
-
-      console.log('promotion request saved successfully');
-    } catch (error: any) {
-      console.error('promotion request error:', error);
-      throw error; // Re-throw to be caught by caller
-    }
-  };
-
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
@@ -1044,79 +843,6 @@ export function PropertyForm({ property }: PropertyFormProps) {
               </CardContent>
             </Card>
 
-            <Card>
-              <CardHeader>
-                <CardTitle>Promotion</CardTitle>
-                <CardDescription>Boost your property's visibility.</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <Collapsible open={isPromotionOpen} onOpenChange={setIsPromotionOpen}>
-                  <FormField
-                    control={form.control}
-                    name="featured"
-                    render={({ field }) => (
-                      <CollapsibleTrigger asChild>
-                        <div className="flex flex-row items-center justify-between rounded-lg border p-4 cursor-pointer">
-                          <div className="space-y-0.5">
-                            <FormLabel className="text-base">Feature as "Pro"</FormLabel>
-                            <FormDescription>
-                              Promote this property on the homepage and at the top of search results.
-                            </FormDescription>
-                          </div>
-                          <FormControl>
-                            <Switch checked={field.value} onCheckedChange={field.onChange} aria-readonly />
-                          </FormControl>
-                        </div>
-                      </CollapsibleTrigger>
-                    )}
-                  />
-                  <CollapsibleContent className="space-y-6 pt-6">
-                    <Separator />
-                    <p className="font-semibold">Choose your promotion plan:</p>
-                    <div className="flex items-center gap-4">
-                      <div className="grid gap-2 flex-1">
-                        <Label htmlFor="promotion-weeks">Number of Weeks</Label>
-                        <Input 
-                          id="promotion-weeks" 
-                          type="number" 
-                          min="1" 
-                          value={promotionWeeks} 
-                          onChange={(e) => setPromotionWeeks(Math.max(1, parseInt(e.target.value) || 1))}
-                        />
-                      </div>
-                      <div className="text-right">
-                          <p className="text-sm text-muted-foreground">Price</p>
-                          <p className="font-bold text-lg">${(promotionWeeks * weeklyRate).toLocaleString()}</p>
-                      </div>
-                    </div>
-                    
-                    <div className="text-sm text-center bg-muted p-4 rounded-md">
-                      <p className="font-semibold mb-2">1. Complete Payment via M-Pesa</p>
-                      <p>Send Money to: <span className="font-bold">{sys.payment?.mpesaNumber || '+2547xxxxxxx'}</span></p>
-                      <p>Name: <span className="font-bold">{sys.payment?.accountName || 'Account Name'}</span></p>
-                      {sys.payment?.paybill && (
-                        <p>Paybill: <span className="font-bold">{sys.payment.paybill}</span></p>
-                      )}
-                      <p>Amount: <span className="font-bold">{sys.payment?.currency || 'KES'} {(promotionWeeks * weeklyRate).toLocaleString()}</span></p>
-                      {sys.payment?.instructions && (
-                        <p className="text-xs text-muted-foreground mt-1">{sys.payment.instructions}</p>
-                      )}
-                    </div>
-
-                     <div className="space-y-2">
-                        <Label htmlFor="screenshot-upload">2. Upload Payment Screenshot</Label>
-                        <Input id="screenshot-upload" type="file" accept="image/png, image/jpeg" onChange={handleScreenshotChange} />
-                        {screenshotFile && <p className="text-xs text-muted-foreground">File: {screenshotFile.name}</p>}
-                    </div>
-                    <Button type="button" className="w-full" onClick={handleSendForApproval}>
-                       <Upload className="mr-2 h-4 w-4" />
-                       Send Screenshot to Admin for Approval
-                    </Button>
-                  </CollapsibleContent>
-                </Collapsible>
-              </CardContent>
-            </Card>
-
 
             <Card>
               <CardHeader>
@@ -1223,4 +949,6 @@ export function PropertyForm({ property }: PropertyFormProps) {
     </Form>
   );
 }
+
+
 

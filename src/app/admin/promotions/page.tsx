@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/hooks/use-auth-supabase";
 import { supabase } from "@/lib/supabase";
+import { useAutoRetry } from "@/hooks/use-auto-retry";
 
 type PromotionRow = {
   id: string;
@@ -28,25 +29,45 @@ export default function PromotionsPage() {
   const [submitting, setSubmitting] = useState(false);
   const [rows, setRows] = useState<PromotionRow[]>([]);
   const [loadingList, setLoadingList] = useState(false);
+  const [errorMsg, setErrorMsg] = useState<string | null>(null);
+  const [retryTick, retryNow] = useAutoRetry(loadingList || submitting || !user, [user]);
+
+  function log(...args: any[]) { console.log("[Promotions]", ...args); }
 
   async function presignWasabi(key: string, contentType: string, contentLength: number) {
+    log("presign start", { key, contentType, contentLength });
     const res = await fetch("/api/upload", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ key, contentType, contentLength }),
     });
     if (!res.ok) throw new Error(await res.text());
-    return res.json() as Promise<{ url: string }>;
+    const data = await res.json() as { url: string };
+    log("presign ok", { key });
+    return data;
   }
 
   async function uploadToWasabi(file: File) {
     const ext = file.name.split(".").pop() || "jpg";
     const key = `promotions/${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`;
     const { url } = await presignWasabi(key, file.type || "image/jpeg", file.size);
+    log("wasabi PUT start", { key });
     const put = await fetch(url, { method: "PUT", body: file, headers: { "Content-Type": file.type || "application/octet-stream" } });
     if (!put.ok) throw new Error(`Wasabi PUT failed: ${put.status}`);
+    log("wasabi PUT success", { key, status: put.status });
     const publicUrl = url.split("?")[0];
     return { key, url: publicUrl };
+  }
+
+  async function fetchWithTimeout(input: RequestInfo | URL, init: RequestInit & { timeoutMs?: number } = {}) {
+    const { timeoutMs = 15000, ...rest } = init;
+    const controller = new AbortController();
+    const id = setTimeout(() => controller.abort(), timeoutMs);
+    try {
+      // @ts-ignore
+      const res: Response = await fetch(input, { ...rest, signal: controller.signal });
+      return res;
+    } finally { clearTimeout(id); }
   }
 
   async function submitPromotion() {
@@ -59,22 +80,27 @@ export default function PromotionsPage() {
       return;
     }
     try {
+      setErrorMsg(null);
       setSubmitting(true);
+      log("submit started", { propertyId, weeks });
       const up = await uploadToWasabi(file);
+      log("upload done", up);
       // fetch a fresh access token at submit time
       const { data: sess } = await supabase.auth.getSession();
       const token = sess?.session?.access_token || null;
 
-      const res = await fetch("/api/admin/promotions/submit", {
+      const res = await fetchWithTimeout("/api/admin/promotions/submit", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
           ...(token ? { Authorization: `Bearer ${token}` } : {}),
         },
         body: JSON.stringify({ propertyId, propertyTitle: propertyTitle || undefined, weeks, screenshotUrl: up.url }),
+        timeoutMs: 15000,
       });
       if (!res.ok) throw new Error(await res.text());
-      await res.json();
+      const json = await res.json();
+      log("submit ok", json);
       alert("Promotion request submitted");
       setFile(null);
       setWeeks(1);
@@ -82,7 +108,9 @@ export default function PromotionsPage() {
       await loadList();
     } catch (e: any) {
       console.error("[Promotions] submit error", e);
-      alert("Failed to submit promotion: " + (e?.message || e));
+      setErrorMsg(String(e?.message || e));
+      // best-effort retry
+      setTimeout(() => retryNow(), 2000);
     } finally {
       setSubmitting(false);
     }
@@ -99,11 +127,12 @@ export default function PromotionsPage() {
   async function loadList() {
     try {
       setLoadingList(true);
+      setErrorMsg(null);
       // Try common tables in order. Last one (payment_requests) filters type=promotion
       const tries: Array<() => Promise<PromotionRow[]>> = [
-        () => fetchFirstAvailable("promotions"),
-        () => fetchFirstAvailable("promotion_requests"),
-        () => fetchFirstAvailable("payment_requests", (q) => q.eq("type", "promotion")),
+        () => fetchFirstAvailable("promotions", (q) => user?.id ? q.eq("agent_id", user.id) : q),
+        () => fetchFirstAvailable("promotion_requests", (q) => user?.id ? q.eq("user_id", user.id) : q),
+        () => fetchFirstAvailable("payment_requests", (q) => (user?.id ? q.eq("user_id", user.id) : q).eq("type", "promotion")),
       ];
       for (const t of tries) {
         try {
@@ -115,6 +144,7 @@ export default function PromotionsPage() {
       setRows([]);
     } catch (e) {
       console.error("[Promotions] list load error", e);
+      setErrorMsg(String((e as any)?.message || e));
     } finally {
       setLoadingList(false);
     }
@@ -122,7 +152,7 @@ export default function PromotionsPage() {
 
   useEffect(() => {
     loadList();
-  }, []);
+  }, [retryTick, user?.id]);
 
   const canSubmit = useMemo(() => !!file && !!propertyId && !submitting, [file, propertyId, submitting]);
 
@@ -160,7 +190,9 @@ export default function PromotionsPage() {
           <h2 className="font-semibold">Recent Promotion Requests</h2>
           <button onClick={loadList} className="text-sm underline">Reload now</button>
         </div>
-        {loadingList ? (
+        {errorMsg ? (
+          <div className="text-sm text-destructive">{errorMsg}</div>
+        ) : loadingList ? (
           <div className="text-sm text-muted-foreground">Loading…</div>
         ) : rows.length === 0 ? (
           <div className="text-sm text-muted-foreground">No promotion requests yet.</div>
