@@ -131,28 +131,10 @@ export function PropertyForm({ property }: PropertyFormProps) {
   const [imageFiles, setImageFiles] = React.useState<File[]>([]);
   const [lastError, setLastError] = React.useState<string | null>(null);
   const fileInputRef = React.useRef<HTMLInputElement>(null);
-  const [isPromotionOpen, setIsPromotionOpen] = React.useState(false);
-  const [promotionWeeks, setPromotionWeeks] = React.useState(1);
+  // Promotion section removed
   const sys = getSystemSettings();
   const weeklyRate = sys.payment?.weeklyPromoRate ?? 5;
-  const [screenshotFile, setScreenshotFile] = React.useState<File | null>(null);
-
-  // Upload promotion screenshots to Supabase Storage (avoid Wasabi for this flow)
-  const uploadPromotionScreenshot = async (file: File): Promise<string> => {
-    const bucket = 'promotion-uploads';
-    const ext = file.name.split('.').pop() || 'jpg';
-    const path = `screenshots/${user?.uid || 'anon'}/${Date.now()}.${ext}`;
-    const { error: upErr } = await supabase.storage.from(bucket).upload(path, file, {
-      cacheControl: '31536000',
-      upsert: false,
-      contentType: file.type || 'image/jpeg',
-    });
-    if (upErr) throw upErr;
-    const { data } = supabase.storage.from(bucket).getPublicUrl(path);
-    const publicUrl = data?.publicUrl;
-    if (!publicUrl) throw new Error('Could not resolve uploaded screenshot URL');
-    return publicUrl;
-  };
+  // Promotion screenshot flow removed from property form
   const [isGeneratingTitle, setIsGeneratingTitle] = React.useState(false);
   const [isGeneratingDesc, setIsGeneratingDesc] = React.useState(false);
 
@@ -435,7 +417,7 @@ export function PropertyForm({ property }: PropertyFormProps) {
         console.log('[PropertyForm] Save response', saved);
         savedId = saved?.id || saved?.data?.id || null;
       } else {
-        dlog('Token missing or timed out — falling back to client Supabase save');
+        dlog('Token missing or timed out â€” falling back to client Supabase save');
         // Client-side save (requires properties RLS OFF or policy allowing anon insert)
         let saved: any = null;
         const clientSaveTimeoutMs = 45000;
@@ -471,19 +453,7 @@ export function PropertyForm({ property }: PropertyFormProps) {
         savedId = saved?.id || null;
       }
 
-      // Optional: create promotion request if screenshot provided
-      if (isPromotionOpen && promotionWeeks > 0 && savedId) {
-        try {
-          await handlePromotion(savedId);
-        } catch (promotionError: any) {
-          // Don't fail the save for promotion issues
-          toast({
-            variant: 'destructive',
-            title: 'Property Saved, Promotion Failed',
-            description: 'Property was saved but promotion request failed. You can try again later.',
-          });
-        }
-      }
+      // Promotion flow moved to Admin > Promotions page
 
       try {
         dlog('Triggering tag revalidation');
