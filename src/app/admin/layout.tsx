@@ -403,3 +403,8 @@ export default function AdminLayout({
       </SidebarInset>
     </SidebarProvider>
     
+
+    </div>
+  );
+}
+

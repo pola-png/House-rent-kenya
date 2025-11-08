@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState } from "react";`r`nimport { useAutoRetry } from "@/hooks/use-auto-retry";
 import { useAuth } from "@/hooks/use-auth-supabase";
 import { supabase } from "@/lib/supabase";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -28,7 +28,7 @@ export default function AnalyticsPage() {
   const { user } = useAuth();
   const router = useRouter();
   const [analytics, setAnalytics] = useState<Analytics | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(true);`r`n  const [retryTick, retryNow] = useAutoRetry(isLoading || !user, [user]);
 
   useEffect(() => {
     if (user?.role !== "admin") {

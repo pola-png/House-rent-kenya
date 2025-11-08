@@ -8,6 +8,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import type { SupportTicket, Message } from "@/lib/types";
 import { Skeleton } from "@/components/ui/skeleton";
 import React from "react";
+import { useAutoRetry } from '@/hooks/use-auto-retry';
 import { useSearchParams } from 'next/navigation'
 import { formatDistanceToNow } from 'date-fns';
 import { cn } from "@/lib/utils";
@@ -28,6 +29,7 @@ export default function MessagesPage() {
   const [tickets, setTickets] = React.useState<SupportTicket[]>([]);
   const [messages, setMessages] = React.useState<Message[]>([]);
   const [isLoadingTickets, setIsLoadingTickets] = React.useState(true);
+  const [retryTick, retryNow] = useAutoRetry(isLoadingTickets || !user, [user]);
   const [isLoadingMessages, setIsLoadingMessages] = React.useState(false);
 
   React.useEffect(() => {
@@ -51,10 +53,11 @@ export default function MessagesPage() {
         setTickets([]);
       } finally {
         setIsLoadingTickets(false);
+        if (!data || !data.length) { /* best-effort retry on empty */ setTimeout(() => { retryNow(); }, 2000); }
       }
     };
     loadTickets();
-  }, [user]);
+  }, [user, retryTick]);
 
   React.useEffect(() => {
     if (initialTicketId) {

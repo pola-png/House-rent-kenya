@@ -20,7 +20,7 @@ import Image from "next/image";
 import { OptimizedImage } from "@/components/optimized-image";
 import placeholderImages from "@/lib/placeholder-images.json";
 import { formatDistanceToNow } from 'date-fns';
-import { useMemo, useState, useEffect } from "react";
+import { useMemo, useState, useEffect } from "react";`r`nimport { useAutoRetry } from "@/hooks/use-auto-retry";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/use-auth-supabase";
@@ -32,7 +32,7 @@ export default function Dashboard() {
   const [properties, setProperties] = useState<Property[]>([]);
   const [recentProperties, setRecentProperties] = useState<Property[]>([]);
   const [leads, setLeads] = useState<CallbackRequest[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(true);`r`n  const [retryTick, retryNow] = useAutoRetry(isLoading || !user, [user]);
   const [realTimeStats, setRealTimeStats] = useState({
     totalViews: 0,
     todayViews: 0,
@@ -197,7 +197,7 @@ export default function Dashboard() {
                 <Package className="h-4 w-4 text-blue-600" />
               </CardHeader>
               <CardContent>
-                {isLoading ? <Skeleton className="h-8 w-16" /> : (
+                {isLoading ? (<div className="flex items-center gap-2"><Skeleton className="h-8 w-16" /><button className="text-xs underline" onClick={retryNow}>Reload now</button></div>) : (
                   <div className="space-y-1">
                     <div className="text-2xl font-bold">{stats?.totalProperties}</div>
                     {(stats?.totalProperties ?? 0) > 0 && (
@@ -218,7 +218,7 @@ export default function Dashboard() {
                 <Home className="h-4 w-4 text-green-600" />
               </CardHeader>
               <CardContent>
-                {isLoading ? <Skeleton className="h-8 w-16" /> : (
+                {isLoading ? (<div className="flex items-center gap-2"><Skeleton className="h-8 w-16" /><button className="text-xs underline" onClick={retryNow}>Reload now</button></div>) : (
                   <div className="space-y-1">
                     <div className="text-2xl font-bold">{stats?.activeRentals}</div>
                     <div className="flex items-center text-xs">
@@ -239,7 +239,7 @@ export default function Dashboard() {
                 <Eye className="h-4 w-4 text-purple-600" />
               </CardHeader>
               <CardContent>
-                {isLoading ? <Skeleton className="h-8 w-16" /> : (
+                {isLoading ? (<div className="flex items-center gap-2"><Skeleton className="h-8 w-16" /><button className="text-xs underline" onClick={retryNow}>Reload now</button></div>) : (
                   <div className="space-y-1">
                     <div className="text-2xl font-bold">{realTimeStats.totalViews.toLocaleString()}</div>
                     {realTimeStats.todayViews > 0 && (
@@ -260,7 +260,7 @@ export default function Dashboard() {
                 <DollarSign className="h-4 w-4 text-orange-600" />
               </CardHeader>
               <CardContent>
-                {isLoading ? <Skeleton className="h-8 w-16" /> : (
+                {isLoading ? (<div className="flex items-center gap-2"><Skeleton className="h-8 w-16" /><button className="text-xs underline" onClick={retryNow}>Reload now</button></div>) : (
                   <div className="space-y-1">
                     <div className="text-2xl font-bold">
                       Ksh {stats?.actualMonthlyIncome.toLocaleString('en-KE', { maximumFractionDigits: 0 })}
