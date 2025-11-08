@@ -150,7 +150,8 @@ export default function Dashboard() {
                 try {
                   // Open the reauth overlay in admin layout
                   // @ts-ignore
-                  try { window.localStorage.setItem('adminViewMode', 'admin'); } catch {}\n                  window.location.href = '/admin/admin-dashboard';
+                  try { window.localStorage.setItem('adminViewMode', 'admin'); } catch {}
+                window.location.href = '/admin/admin-dashboard';
                 } catch {}
               }}
               className="text-sm font-bold underline text-primary mr-2"
