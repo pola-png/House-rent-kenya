@@ -30,6 +30,7 @@ export default function PromotionsPage() {
   const [rows, setRows] = useState<PromotionRow[]>([]);
   const [loadingList, setLoadingList] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
+  const [submitError, setSubmitError] = useState<string | null>(null);
   const [retryTick, retryNow] = useAutoRetry(loadingList || submitting || !user, [user]);
 
   function log(...args: any[]) { console.log("[Promotions]", ...args); }
@@ -71,12 +72,18 @@ export default function PromotionsPage() {
   }
 
   async function submitPromotion() {
+    log("submit triggered", { propertyId, hasFile: !!file, weeks });
+    setSubmitError(null);
     if (!file) {
-      alert("Please attach a screenshot");
+      const msg = "Please attach a screenshot";
+      setSubmitError(msg);
+      console.warn("[Promotions] submit blocked", msg);
       return;
     }
     if (!propertyId) {
-      alert("Please provide a property ID");
+      const msg = "Please provide a property ID";
+      setSubmitError(msg);
+      console.warn("[Promotions] submit blocked", msg);
       return;
     }
     try {
@@ -175,11 +182,14 @@ export default function PromotionsPage() {
             <span className="text-sm">Weeks</span>
             <input type="number" min={1} max={52} className="border rounded p-2 w-32" value={weeks} onChange={(e) => setWeeks(Math.max(1, Math.min(52, Number(e.target.value) || 1)))} />
           </label>
-          <label className="grid gap-1">
-            <span className="text-sm">Screenshot</span>
-            <input type="file" accept="image/*" onChange={(e) => setFile(e.target.files?.[0] || null)} />
-          </label>
-          <button disabled={!canSubmit} onClick={submitPromotion} className="inline-flex items-center justify-center rounded bg-primary px-3 py-2 text-white disabled:opacity-50">
+         <label className="grid gap-1">
+           <span className="text-sm">Screenshot</span>
+           <input type="file" accept="image/*" onChange={(e) => setFile(e.target.files?.[0] || null)} />
+         </label>
+          {submitError && (
+            <div className="text-sm text-destructive">{submitError}</div>
+          )}
+          <button type="button" disabled={!canSubmit} onClick={submitPromotion} className="inline-flex items-center justify-center rounded bg-primary px-3 py-2 text-white disabled:opacity-50">
             {submitting ? "Submitting..." : "Submit for Approval"}
           </button>
         </div>
