@@ -27,6 +27,8 @@ export function OptimizedImage({
   fill = false,
   sizes = "(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw",
   fit = 'cover',
+  onError,
+  onLoad,
 }: OptimizedImageProps) {
   const [imageError, setImageError] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
