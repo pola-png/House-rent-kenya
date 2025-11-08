@@ -29,7 +29,8 @@ export default function AnalyticsPage() {
   const { user } = useAuth();
   const router = useRouter();
   const [analytics, setAnalytics] = useState<Analytics | null>(null);
-  const [isLoading, setIsLoading] = useState(true);`r`n  const [retryTick, retryNow] = useAutoRetry(isLoading || !user, [user]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [retryTick, retryNow] = useAutoRetry(isLoading || !user, [user]);
 
   useEffect(() => {
     if (user?.role !== "admin") {
@@ -37,7 +38,7 @@ export default function AnalyticsPage() {
       return;
     }
     fetchAnalytics();
-  }, [user, router]);
+  }, [user, router, retryTick]);
 
   const fetchAnalytics = async () => {
     try {
