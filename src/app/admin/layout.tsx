@@ -55,8 +55,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useAuth } from "@/hooks/use-auth-supabase";
 import { useRouter } from "next/navigation";
 import { usePathname } from "next/navigation";
-import { supabase } from "@/lib/supabase";
-import { useToast } from "@/hooks/use-toast";
+// Removed re-auth overlay; no need for supabase/useToast here
 import { useEffect } from "react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Shield } from "lucide-react";
@@ -69,11 +68,11 @@ export default function AdminLayout({
   const { user, loading, logout } = useAuth();
   const router = useRouter();
   const [open, setOpen] = useState(false);
-  const { toast } = useToast();
-  const [reauthOpen, setReauthOpen] = useState(false);
-  const [reauthLoading, setReauthLoading] = useState(false);
-  const [password, setPassword] = useState("");
-  const [reauthTarget, setReauthTarget] = useState<null | 'admin' | 'agent'>(null);
+  
+  
+  
+  
+  
   const pathname = usePathname();
   const [viewMode, setViewMode] = useState<'agent' | 'admin'>(() => {
     if (typeof window !== 'undefined') {
@@ -89,29 +88,8 @@ export default function AdminLayout({
     }
   }, [user, loading, router]);
 
-  // Allow pages to switch modes directly via event (re-auth disabled)
-  useEffect(() => {
-    const handler = (e: any) => {
-      const to = e?.detail?.to as 'admin' | 'agent' | undefined;
-      try {
-        if (to === 'admin') {
-          window.localStorage.setItem('adminViewMode', 'admin');
-          router.push('/admin/admin-dashboard');
-        } else {
-          window.localStorage.setItem('adminViewMode', 'agent');
-          router.push('/admin/dashboard');
-        }
-      } catch {
-        router.push(to === 'admin' ? '/admin/admin-dashboard' : '/admin/dashboard');
-      }
-    };
-    // @ts-ignore
-    window.addEventListener('open-admin-reauth', handler);
-    return () => {
-      // @ts-ignore
-      window.removeEventListener('open-admin-reauth', handler);
-    };
-  }, []);
+  // Re-auth switch event removed
+  useEffect(() => {}, []);
 
   // Infer admin vs agent view for admins based on pathname
   useEffect(() => {
@@ -424,66 +402,4 @@ export default function AdminLayout({
         <main className="flex-1 w-full max-w-7xl mx-auto px-3 sm:px-6 py-0">{children}</main>
       </SidebarInset>
     </SidebarProvider>
-    {/* Re-auth overlay */}
-    {false && (
-      <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4">
-        <div className="w-full max-w-sm rounded-lg border border-zinc-700 bg-zinc-900 p-4 text-white shadow-lg">
-          <div className="mb-3 text-lg font-semibold">Confirm Admin Access</div>
-          <p className="mb-3 text-sm text-zinc-300">For security, please re-enter your password to switch admin views.</p>
-          <div className="mb-3">
-            <input
-              type="password"
-              placeholder="Password"
-              className="w-full rounded-md border border-zinc-700 bg-zinc-800 px-3 py-2 text-sm outline-none focus:border-zinc-500"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              disabled={reauthLoading}
-            />
-          </div>
-          <div className="flex items-center justify-end gap-2">
-            <Button variant="outline" onClick={() => { setReauthOpen(false); setPassword(""); }} disabled={reauthLoading} className="border-zinc-700 text-white hover:bg-zinc-800">Cancel</Button>
-            <Button
-              onClick={async () => {
-                if (!user?.email) {
-                  router.push('/login?redirect=/admin/admin-dashboard');
-                  return;
-                }
-                try {
-                  setReauthLoading(true);
-                  const { error } = await supabase.auth.signInWithPassword({ email: user.email, password });
-                  if (error) throw error;
-                  // Navigate based on chosen target or toggle
-                  const currentPath = window.location.pathname;
-                  if (reauthTarget === 'admin') {
-                    try { window.localStorage.setItem('adminViewMode', 'admin'); } catch {}
-                    router.push('/admin/admin-dashboard');
-                  } else if (reauthTarget === 'agent') {
-                    try { window.localStorage.setItem('adminViewMode', 'agent'); } catch {}
-                    router.push('/admin/dashboard');
-                  } else {
-                    if (currentPath === '/admin/admin-dashboard') {
-                      try { window.localStorage.setItem('adminViewMode', 'agent'); } catch {}
-                      router.push('/admin/dashboard');
-                    } else {
-                      try { window.localStorage.setItem('adminViewMode', 'admin'); } catch {}
-                      router.push('/admin/admin-dashboard');
-                    }
-                  }
-                  setReauthOpen(false); setPassword("");
-                } catch (e: any) {
-                  toast({ variant: 'destructive', title: 'Re-auth failed', description: e?.message || 'Invalid password' });
-                } finally {
-                  setReauthLoading(false);
-                }
-              }}
-              disabled={reauthLoading || password.length < 4}
-            >
-              {reauthLoading ? 'Checking…' : 'Confirm'}
-            </Button>
-          </div>
-        </div>
-      </div>
-    )}
-    </div>
-  );
-}
+    

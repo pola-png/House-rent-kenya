@@ -598,12 +598,19 @@ export function PropertyForm({ property }: PropertyFormProps) {
         const fileName = `payment-${user.uid}-${Date.now()}.${fileExt}`;
         const filePath = `payment-screenshots/${fileName}`;
 
-        let publicUrl;
+        let publicUrl: string;
         try {
-          publicUrl = await uploadToWasabi(screenshotFile, filePath);
+          // Prefer Supabase storage for promotion screenshots
+          publicUrl = await uploadPromotionScreenshot(screenshotFile);
         } catch (error: any) {
-          console.error('Upload error:', error);
-          throw new Error(`Upload failed: ${error.message}`);
+          console.error('Supabase upload error:', error);
+          // Fallback to Wasabi if Supabase storage fails
+          try {
+            publicUrl = await uploadToWasabi(screenshotFile, filePath);
+          } catch (werr: any) {
+            console.error('Wasabi fallback upload error:', werr);
+            throw new Error(`Upload failed: ${error?.message || werr?.message}`);
+          }
         }
 
         const { error: insertError } = await supabase
@@ -656,13 +663,19 @@ export function PropertyForm({ property }: PropertyFormProps) {
       const fileName = `payment-${user?.uid}-${Date.now()}.${fileExt}`;
       const filePath = `payment-screenshots/${fileName}`;
 
-      let publicUrl;
+      let publicUrl: string;
       try {
-        publicUrl = await uploadToWasabi(screenshotFile, filePath);
-        console.log('Screenshot uploaded:', publicUrl);
+        publicUrl = await uploadPromotionScreenshot(screenshotFile);
+        console.log('Screenshot uploaded to Supabase:', publicUrl);
       } catch (error: any) {
-        console.error('Screenshot upload error:', error);
-        throw new Error(`Upload failed: ${error.message}`);
+        console.error('Supabase screenshot upload error:', error);
+        try {
+          publicUrl = await uploadToWasabi(screenshotFile, filePath);
+          console.log('Screenshot uploaded to Wasabi (fallback):', publicUrl);
+        } catch (werr: any) {
+          console.error('Screenshot upload fallback error:', werr);
+          throw new Error(`Upload failed: ${error?.message || werr?.message}`);
+        }
       }
 
       const promotionData = {
@@ -1173,3 +1186,19 @@ export function PropertyForm({ property }: PropertyFormProps) {
     </Form>
   );
 }
+  // Upload promotion screenshots to Supabase Storage (avoid Wasabi for this flow)
+  const uploadPromotionScreenshot = async (file: File): Promise<string> => {
+    const bucket = 'promotion-uploads';
+    const ext = file.name.split('.').pop() || 'jpg';
+    const path = `screenshots/${user?.uid || 'anon'}/${Date.now()}.${ext}`;
+    const { error: upErr } = await supabase.storage.from(bucket).upload(path, file, {
+      cacheControl: '31536000',
+      upsert: false,
+      contentType: file.type || 'image/jpeg',
+    });
+    if (upErr) throw upErr;
+    const { data } = supabase.storage.from(bucket).getPublicUrl(path);
+    const publicUrl = data?.publicUrl;
+    if (!publicUrl) throw new Error('Could not resolve uploaded screenshot URL');
+    return publicUrl;
+  };

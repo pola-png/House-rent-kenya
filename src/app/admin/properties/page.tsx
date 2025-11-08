@@ -27,17 +27,32 @@ export default function AdminPropertiesPage() {
   const [isLoading, setIsLoading] = useState(true);
   const { user, loading: authLoading } = useAuth();
   const router = useRouter();
+  const [retryTick, setRetryTick] = useState(0);
+  const [startedAt] = useState<number>(() => Date.now());
 
   useEffect(() => {
     if (authLoading) return;
-    
     if (!user) {
       router.push("/login?redirect=/admin/properties");
       return;
     }
-
     fetchProperties();
-  }, [user, authLoading]);
+  }, [user, authLoading, retryTick]);
+
+  // If loading takes too long, auto-retry and also retry when network comes back
+  useEffect(() => {
+    const t = setTimeout(() => {
+      if ((isLoading || authLoading) && Date.now() - startedAt > 7000) {
+        setRetryTick((x) => x + 1);
+      }
+    }, 7500);
+    const onOnline = () => setRetryTick((x) => x + 1);
+    try { window.addEventListener('online', onOnline); } catch {}
+    return () => {
+      clearTimeout(t);
+      try { window.removeEventListener('online', onOnline); } catch {}
+    };
+  }, [isLoading, authLoading, startedAt]);
 
   const fetchProperties = async () => {
     if (!user) return;
@@ -110,6 +125,10 @@ export default function AdminPropertiesPage() {
                     <Skeleton className="h-20 w-full" />
                     <Skeleton className="h-20 w-full" />
                     <Skeleton className="h-20 w-full" />
+                    <div className="flex items-center gap-2">
+                      <Button size="sm" variant="outline" onClick={() => setRetryTick((x) => x + 1)}>Reload now</Button>
+                      <span className="text-xs text-muted-foreground">If this takes too long, click Reload.</span>
+                    </div>
                 </div>
             ) : properties.length === 0 ? (
                 <div className="text-center py-12 text-muted-foreground">

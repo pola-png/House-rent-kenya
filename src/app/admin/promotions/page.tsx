@@ -1,148 +1,176 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useAuth } from "@/hooks/use-auth-supabase";
 import { supabase } from "@/lib/supabase";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
+import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
-import { Loader2, Clock, CheckCircle, XCircle, Eye } from "lucide-react";
-import Image from "next/image";
-import Link from "next/link";
 
-interface PromotionRequest {
+type PaymentRequest = {
   id: string;
   propertyId: string;
-  propertyTitle: string;
+  propertyTitle?: string;
+  userId: string;
+  userName?: string;
+  userEmail?: string;
   amount: number;
-  paymentScreenshot: string;
-  status: string;
-  promotionType: string;
+  paymentScreenshot?: string;
+  status: "pending" | "approved" | "rejected" | string;
+  promotionType?: string;
   createdAt: string;
-  approvedAt?: string;
-}
+};
 
 export default function PromotionsPage() {
-  const { user } = useAuth();
-  const [requests, setRequests] = useState<PromotionRequest[]>([]);
-  const [loading, setLoading] = useState(true);
+  const { user, loading: authLoading } = useAuth();
+  const [rows, setRows] = useState<PaymentRequest[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [retryTick, setRetryTick] = useState(0);
+  const [startedAt] = useState<number>(() => Date.now());
 
   useEffect(() => {
-    if (user) {
-      fetchPromotionRequests();
-    }
-  }, [user]);
-
-  const fetchPromotionRequests = async () => {
+    if (authLoading) return;
     if (!user) return;
+    fetchRows();
+  }, [user, authLoading, retryTick]);
 
+  useEffect(() => {
+    const t = setTimeout(() => {
+      if ((isLoading || authLoading) && Date.now() - startedAt > 7000) {
+        setRetryTick((x) => x + 1);
+      }
+    }, 7500);
+    const onOnline = () => setRetryTick((x) => x + 1);
+    try { window.addEventListener('online', onOnline); } catch {}
+    return () => { clearTimeout(t); try { window.removeEventListener('online', onOnline); } catch {} };
+  }, [isLoading, authLoading, startedAt]);
+
+  const fetchRows = async () => {
+    if (!user) return;
+    setIsLoading(true);
     try {
-      const { data, error } = await supabase
+      let query = supabase
         .from('payment_requests')
         .select('*')
-        .eq('userId', user.uid)
         .order('createdAt', { ascending: false });
-
+      if (user.role !== 'admin') {
+        query = query.eq('userId', user.uid);
+      }
+      const { data, error } = await query;
       if (error) throw error;
-      setRequests(data || []);
-    } catch (error) {
-      console.error('Error fetching promotion requests:', error);
+      setRows((data || []) as any);
+    } catch (e) {
+      console.error('Promotions fetch error:', e);
     } finally {
-      setLoading(false);
+      setIsLoading(false);
     }
   };
 
-  const getStatusBadge = (status: string) => {
-    switch (status) {
-      case 'pending':
-        return <Badge variant="outline" className="bg-yellow-50"><Clock className="h-3 w-3 mr-1" />Pending</Badge>;
-      case 'approved':
-        return <Badge variant="outline" className="bg-green-50"><CheckCircle className="h-3 w-3 mr-1" />Approved</Badge>;
-      case 'rejected':
-        return <Badge variant="outline" className="bg-red-50"><XCircle className="h-3 w-3 mr-1" />Rejected</Badge>;
-      default:
-        return <Badge>{status}</Badge>;
+  const grouped = useMemo(() => {
+    const by: Record<string, PaymentRequest[]> = { all: [], pending: [], approved: [], rejected: [] } as any;
+    for (const r of rows) {
+      by.all.push(r);
+      const s = (r.status || 'pending').toLowerCase();
+      if (s === 'approved') by.approved.push(r);
+      else if (s === 'rejected') by.rejected.push(r);
+      else by.pending.push(r);
     }
-  };
+    return by;
+  }, [rows]);
 
-  if (loading) {
+  const renderList = (list: PaymentRequest[]) => {
+    if (isLoading || authLoading) {
+      return (
+        <div className="space-y-3">
+          <Skeleton className="h-10 w-full" />
+          <Skeleton className="h-16 w-full" />
+          <Skeleton className="h-16 w-full" />
+          <div className="flex items-center gap-2">
+            <Button size="sm" variant="outline" onClick={() => setRetryTick((x) => x + 1)}>Reload now</Button>
+            <span className="text-xs text-muted-foreground">If this takes too long, click Reload.</span>
+          </div>
+        </div>
+      );
+    }
+    if (!list?.length) {
+      return <div className="text-sm text-muted-foreground">No items.</div>;
+    }
     return (
-      <div className="flex items-center justify-center min-h-screen">
-        <Loader2 className="h-8 w-8 animate-spin" />
+      <div className="space-y-3">
+        {list.map((r) => (
+          <div key={r.id} className="rounded-md border p-3 flex items-start justify-between gap-3">
+            <div className="space-y-1">
+              <div className="font-medium">{r.propertyTitle || r.propertyId}</div>
+              <div className="text-xs text-muted-foreground">{new Date(r.createdAt).toLocaleString()}</div>
+              <div className="text-xs">Amount: {Number(r.amount || 0).toLocaleString()}</div>
+              {r.promotionType && <div className="text-xs">Type: {r.promotionType}</div>}
+              {r.userName && <div className="text-xs">By: {r.userName}</div>}
+            </div>
+            <div className="flex flex-col items-end gap-2">
+              <Badge variant="outline">{(r.status || 'pending').toUpperCase()}</Badge>
+              {r.paymentScreenshot && (
+                <a href={r.paymentScreenshot} target="_blank" rel="noreferrer" className="text-xs underline text-primary">Screenshot</a>
+              )}
+            </div>
+          </div>
+        ))}
       </div>
     );
-  }
+  };
 
   return (
-    <div className="container mx-auto p-6 space-y-6">
+    <div className="flex flex-col gap-6">
       <div>
-        <h1 className="text-3xl font-bold">My Promotion Requests</h1>
-        <p className="text-muted-foreground">Track the status of your property promotion requests</p>
+        <h1 className="text-2xl font-bold font-headline">Promotions</h1>
+        <p className="text-muted-foreground">Your submitted promotion requests {user?.role === 'admin' ? '(admin: all agents)' : ''}.</p>
       </div>
-
-      {requests.length === 0 ? (
-        <Card>
-          <CardContent className="flex flex-col items-center justify-center py-12">
-            <p className="text-muted-foreground mb-4">No promotion requests yet</p>
-            <Link href="/admin/properties">
-              <Button>Go to My Properties</Button>
-            </Link>
-          </CardContent>
-        </Card>
-      ) : (
-        <div className="grid gap-6">
-          {requests.map((request) => (
-            <Card key={request.id}>
-              <CardHeader>
-                <div className="flex items-start justify-between">
-                  <div className="space-y-1">
-                    <CardTitle className="text-xl">{request.propertyTitle}</CardTitle>
-                    <CardDescription>{request.promotionType}</CardDescription>
-                  </div>
-                  {getStatusBadge(request.status)}
-                </div>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  <div>
-                    <p className="text-sm text-muted-foreground">Amount Paid</p>
-                    <p className="font-semibold">${request.amount}</p>
-                  </div>
-                  <div>
-                    <p className="text-sm text-muted-foreground">Submitted</p>
-                    <p className="font-semibold">{new Date(request.createdAt).toLocaleDateString()}</p>
-                  </div>
-                  {request.approvedAt && (
-                    <div>
-                      <p className="text-sm text-muted-foreground">Approved</p>
-                      <p className="font-semibold">{new Date(request.approvedAt).toLocaleDateString()}</p>
-                    </div>
-                  )}
-                </div>
-
-                <div className="space-y-2">
-                  <p className="text-sm font-medium">Payment Screenshot</p>
-                  <div className="relative w-full h-48 border rounded-lg overflow-hidden">
-                    <Image
-                      src={request.paymentScreenshot}
-                      alt="Payment Screenshot"
-                      fill
-                      className="object-contain"
-                    />
-                  </div>
-                </div>
-
-                <Link href={`/property/${request.propertyId}`}>
-                  <Button variant="outline" size="sm">
-                    <Eye className="h-4 w-4 mr-2" />
-                    View Property
-                  </Button>
-                </Link>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
-      )}
+      <Tabs defaultValue="pending" className="w-full">
+        <TabsList className="grid w-full grid-cols-4 sm:w-auto">
+          <TabsTrigger value="pending">Pending</TabsTrigger>
+          <TabsTrigger value="approved">Approved</TabsTrigger>
+          <TabsTrigger value="rejected">Rejected</TabsTrigger>
+          <TabsTrigger value="all">All</TabsTrigger>
+        </TabsList>
+        <TabsContent value="pending">
+          <Card>
+            <CardHeader>
+              <CardTitle>Pending</CardTitle>
+              <CardDescription>Awaiting admin approval.</CardDescription>
+            </CardHeader>
+            <CardContent>{renderList(grouped.pending)}</CardContent>
+          </Card>
+        </TabsContent>
+        <TabsContent value="approved">
+          <Card>
+            <CardHeader>
+              <CardTitle>Approved</CardTitle>
+              <CardDescription>Scheduled or active promotions.</CardDescription>
+            </CardHeader>
+            <CardContent>{renderList(grouped.approved)}</CardContent>
+          </Card>
+        </TabsContent>
+        <TabsContent value="rejected">
+          <Card>
+            <CardHeader>
+              <CardTitle>Rejected</CardTitle>
+              <CardDescription>Requests that didn’t pass verification.</CardDescription>
+            </CardHeader>
+            <CardContent>{renderList(grouped.rejected)}</CardContent>
+          </Card>
+        </TabsContent>
+        <TabsContent value="all">
+          <Card>
+            <CardHeader>
+              <CardTitle>All Requests</CardTitle>
+              <CardDescription>Every request in reverse chronological order.</CardDescription>
+            </CardHeader>
+            <CardContent>{renderList(grouped.all)}</CardContent>
+          </Card>
+        </TabsContent>
+      </Tabs>
     </div>
   );
 }
+

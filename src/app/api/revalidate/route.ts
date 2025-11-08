@@ -9,14 +9,14 @@ export async function POST(request: Request) {
     const headerToken = request.headers.get('x-revalidate-token') || '';
     let authorized = false;
 
-    // Path A: shared secret header
+    // Path A: shared secret header (for server automation)
     if (secret && headerToken === secret) authorized = true;
 
     // Path B: Authorization: Bearer <access_token> for authenticated users
     if (!authorized) {
       const authz = request.headers.get('authorization') || '';
       const bearer = authz.startsWith('Bearer ') ? authz.slice(7) : '';
-      if (bearer) {
+      if (!authorized && bearer) {
         const url = process.env.NEXT_PUBLIC_SUPABASE_URL as string;
         const anon = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY as string;
         if (url && anon) {
@@ -24,11 +24,13 @@ export async function POST(request: Request) {
           const { data: userRes } = await supabase.auth.getUser(bearer);
           const user = userRes?.user;
           if (user) {
-            // Optionally check admin role; for tag-scoped revalidation, any authenticated user is acceptable.
-            // If needed, uncomment to restrict to admins only:
-            // const { data: prof } = await supabaseAdmin.from('profiles').select('role').eq('id', user.id).single();
-            // if (prof?.role === 'admin') authorized = true;
-            authorized = true;
+            // Require admin role
+            const { data: prof } = await supabaseAdmin
+              .from('profiles')
+              .select('role')
+              .eq('id', user.id)
+              .single();
+            if (prof?.role === 'admin') authorized = true;
           }
         }
       }
