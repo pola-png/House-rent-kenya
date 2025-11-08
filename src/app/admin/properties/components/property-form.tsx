@@ -136,6 +136,23 @@ export function PropertyForm({ property }: PropertyFormProps) {
   const sys = getSystemSettings();
   const weeklyRate = sys.payment?.weeklyPromoRate ?? 5;
   const [screenshotFile, setScreenshotFile] = React.useState<File | null>(null);
+
+  // Upload promotion screenshots to Supabase Storage (avoid Wasabi for this flow)
+  const uploadPromotionScreenshot = async (file: File): Promise<string> => {
+    const bucket = 'promotion-uploads';
+    const ext = file.name.split('.').pop() || 'jpg';
+    const path = `screenshots/${user?.uid || 'anon'}/${Date.now()}.${ext}`;
+    const { error: upErr } = await supabase.storage.from(bucket).upload(path, file, {
+      cacheControl: '31536000',
+      upsert: false,
+      contentType: file.type || 'image/jpeg',
+    });
+    if (upErr) throw upErr;
+    const { data } = supabase.storage.from(bucket).getPublicUrl(path);
+    const publicUrl = data?.publicUrl;
+    if (!publicUrl) throw new Error('Could not resolve uploaded screenshot URL');
+    return publicUrl;
+  };
   const [isGeneratingTitle, setIsGeneratingTitle] = React.useState(false);
   const [isGeneratingDesc, setIsGeneratingDesc] = React.useState(false);
 
@@ -1186,19 +1203,3 @@ export function PropertyForm({ property }: PropertyFormProps) {
     </Form>
   );
 }
-  // Upload promotion screenshots to Supabase Storage (avoid Wasabi for this flow)
-  const uploadPromotionScreenshot = async (file: File): Promise<string> => {
-    const bucket = 'promotion-uploads';
-    const ext = file.name.split('.').pop() || 'jpg';
-    const path = `screenshots/${user?.uid || 'anon'}/${Date.now()}.${ext}`;
-    const { error: upErr } = await supabase.storage.from(bucket).upload(path, file, {
-      cacheControl: '31536000',
-      upsert: false,
-      contentType: file.type || 'image/jpeg',
-    });
-    if (upErr) throw upErr;
-    const { data } = supabase.storage.from(bucket).getPublicUrl(path);
-    const publicUrl = data?.publicUrl;
-    if (!publicUrl) throw new Error('Could not resolve uploaded screenshot URL');
-    return publicUrl;
-  };
