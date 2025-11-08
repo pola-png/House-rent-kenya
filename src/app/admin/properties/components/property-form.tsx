@@ -9,6 +9,47 @@ const setPromotionWeeks = (..._args: any[]) => {};
 const screenshotFile: File | null = null;
 const setScreenshotFile = (..._args: any[]) => {};
 
+// As a safety net, hide any legacy Promotion block in the DOM by its copy text
+// so the section is fully removed visually without touching other listing UI.
+if (typeof window !== "undefined") {
+  const hidePromoBlocks = () => {
+    try {
+      const phrases = [
+        "promotion",
+        "boost your property's visibility",
+        'feature as "pro"',
+        "promote this property on the homepage",
+        "top of search results",
+      ];
+      const shouldHide = (txt: string) => {
+        const t = txt.toLowerCase();
+        return (
+          t.includes("promotion") &&
+          (t.includes("boost your property's visibility") ||
+            t.includes('feature as "pro"') ||
+            t.includes("promote this property on the homepage") ||
+            t.includes("top of search results"))
+        );
+      };
+      document.querySelectorAll("*").forEach((el) => {
+        const t = (el.textContent || "").toLowerCase();
+        if (!t) return;
+        if (shouldHide(t)) {
+          const container = (el.closest(
+            "section, .card, .Collapsible, .collapsible, .border, .rounded, .p-4"
+          ) || el) as HTMLElement;
+          container.style.display = "none";
+        }
+      });
+    } catch {}
+  };
+  if (document.readyState === "complete" || document.readyState === "interactive") {
+    setTimeout(hidePromoBlocks, 0);
+  } else {
+    window.addEventListener("DOMContentLoaded", hidePromoBlocks, { once: true } as any);
+  }
+}
+
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import * as z from "zod";
