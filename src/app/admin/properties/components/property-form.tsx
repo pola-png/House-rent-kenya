@@ -1,5 +1,14 @@
 "use client";
 
+// Promotions UI has been removed. Define no-op stubs to avoid any leftover references.
+// These must appear before any potential usage.
+const isPromotionOpen = false;
+const setIsPromotionOpen = (..._args: any[]) => {};
+const promotionWeeks = 0;
+const setPromotionWeeks = (..._args: any[]) => {};
+const screenshotFile: File | null = null;
+const setScreenshotFile = (..._args: any[]) => {};
+
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import * as z from "zod";
@@ -553,7 +562,7 @@ export function PropertyForm({ property }: PropertyFormProps) {
   const handleScreenshotChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (file) {
-      setScreenshotFile(file);
+      /* promotion removed */ void file;
     }
   };
   
