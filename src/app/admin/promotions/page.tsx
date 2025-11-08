@@ -189,7 +189,12 @@ export default function PromotionsPage() {
           {submitError && (
             <div className="text-sm text-destructive">{submitError}</div>
           )}
-          <button type="button" disabled={!canSubmit} onClick={submitPromotion} className="inline-flex items-center justify-center rounded bg-primary px-3 py-2 text-white disabled:opacity-50">
+          <button
+            type="button"
+            onClick={submitPromotion}
+            aria-disabled={!canSubmit}
+            className={`inline-flex items-center justify-center rounded bg-primary px-3 py-2 text-white transition ${!canSubmit ? "opacity-60" : ""}`}
+          >
             {submitting ? "Submitting..." : "Submit for Approval"}
           </button>
         </div>

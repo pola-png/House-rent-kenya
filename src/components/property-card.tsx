@@ -1,13 +1,12 @@
 'use client';
 
 import Link from 'next/link';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { MapPin, Bed, Bath, Car, Maximize, Star, Eye, BadgeCheck, Award } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import type { Property } from '@/lib/types';
-import placeholderImages from '@/lib/placeholder-images.json';
 import { Avatar, AvatarFallback, AvatarImage } from './ui/avatar';
 import { createPropertyUrl } from '@/lib/utils-seo';
 import { OptimizedImage } from './optimized-image';
@@ -19,6 +18,8 @@ type PropertyCardProps = {
 
 export function PropertyCard({ property }: PropertyCardProps) {
   const router = useRouter();
+  const [imageError, setImageError] = useState(false);
+  const [reloadKey, setReloadKey] = useState(0);
   // Handle images whether they come as array or need parsing
   const images = Array.isArray(property.images) ? property.images : [];
   const mainImageUrl = images.length > 0 ? images[0] : null;
@@ -38,17 +39,45 @@ export function PropertyCard({ property }: PropertyCardProps) {
     try { router.prefetch(propertyUrl); } catch {}
   }, [router, propertyUrl]);
 
+  useEffect(() => {
+    setImageError(false);
+    setReloadKey(0);
+  }, [mainImageUrl]);
+
   return (
     <Card ref={impressionRef as any} className="overflow-hidden group hover:shadow-xl transition-shadow duration-300 flex flex-col">
       <Link href={propertyUrl} className="block flex flex-col h-full">
-        <div className="relative h-56 w-full">
-          <OptimizedImage
-            src={mainImageUrl || "https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?w=800&h=600&fit=crop&crop=center"}
-            alt={`${property.bedrooms} bedroom ${property.propertyType} for ${property.status} in ${property.location}, ${property.city}`}
-            fill
-            sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
-            className="object-cover transform group-hover:scale-105 transition-transform duration-300"
-          />
+        <div className="relative h-56 w-full overflow-hidden bg-muted text-muted-foreground">
+          {mainImageUrl ? (
+            <OptimizedImage
+              key={`${mainImageUrl}-${reloadKey}`}
+              src={mainImageUrl}
+              alt={`${property.bedrooms} bedroom ${property.propertyType} for ${property.status} in ${property.location}, ${property.city}`}
+              fill
+              sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
+              className="object-cover transform group-hover:scale-105 transition-transform duration-300"
+              onError={() => setImageError(true)}
+            />
+          ) : (
+            <div className="flex h-full w-full items-center justify-center text-sm uppercase tracking-wide">
+              No image provided
+            </div>
+          )}
+          {imageError && (
+            <div className="absolute inset-0 flex flex-col items-center justify-center bg-black/60 text-white">
+              <p className="text-xs uppercase tracking-wider mb-2">Image failed to load</p>
+              <button
+                type="button"
+                className="text-xs underline"
+                onClick={() => {
+                  setImageError(false);
+                  setReloadKey((prev) => prev + 1);
+                }}
+              >
+                Retry
+              </button>
+            </div>
+          )}
           <Badge className="absolute top-3 left-3">{property.status}</Badge>
            {property.status === 'Rented' && (
               <Badge variant="destructive" className="absolute top-3 right-3">Rented</Badge>
