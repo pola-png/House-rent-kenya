@@ -89,12 +89,21 @@ export default function AdminLayout({
     }
   }, [user, loading, router]);
 
-  // Allow pages to open the reauth overlay via event
+  // Allow pages to switch modes directly via event (re-auth disabled)
   useEffect(() => {
     const handler = (e: any) => {
       const to = e?.detail?.to as 'admin' | 'agent' | undefined;
-      setReauthTarget(to ?? null);
-      setReauthOpen(true);
+      try {
+        if (to === 'admin') {
+          window.localStorage.setItem('adminViewMode', 'admin');
+          router.push('/admin/admin-dashboard');
+        } else {
+          window.localStorage.setItem('adminViewMode', 'agent');
+          router.push('/admin/dashboard');
+        }
+      } catch {
+        router.push(to === 'admin' ? '/admin/admin-dashboard' : '/admin/dashboard');
+      }
     };
     // @ts-ignore
     window.addEventListener('open-admin-reauth', handler);
@@ -218,7 +227,7 @@ export default function AdminLayout({
             {isAdmin && viewMode === 'admin' && (
               <>
                 <SidebarMenuItem>
-                  <SidebarMenuButton tooltip="Overview" onClick={() => { setReauthTarget('admin'); setReauthOpen(true); }}>
+                  <SidebarMenuButton tooltip="Overview" onClick={() => { try { window.localStorage.setItem('adminViewMode', 'admin'); } catch {}; router.push('/admin/admin-dashboard'); }}>
                     <Home className="h-5 w-5" />
                     <span>Overview</span>
                   </SidebarMenuButton>
@@ -350,8 +359,8 @@ export default function AdminLayout({
                     try { window.localStorage.setItem('adminViewMode', 'agent'); } catch {}
                     router.push('/admin/dashboard');
                   } else {
-                    setReauthOpen(true);
-                    setReauthTarget('admin');
+                    try { window.localStorage.setItem('adminViewMode', 'admin'); } catch {}
+                    router.push('/admin/admin-dashboard');
                   }
                 }}
                 className="hidden sm:flex items-center gap-2 bg-zinc-900 border-zinc-700 text-white hover:bg-zinc-800 transition-all duration-200"
@@ -369,8 +378,8 @@ export default function AdminLayout({
                     try { window.localStorage.setItem('adminViewMode', 'agent'); } catch {}
                     router.push('/admin/dashboard');
                   } else {
-                    setReauthOpen(true);
-                    setReauthTarget('admin');
+                    try { window.localStorage.setItem('adminViewMode', 'admin'); } catch {}
+                    router.push('/admin/admin-dashboard');
                   }
                 }}
                 className="sm:hidden bg-zinc-900 border-zinc-700 text-white hover:bg-zinc-800"
@@ -416,7 +425,7 @@ export default function AdminLayout({
       </SidebarInset>
     </SidebarProvider>
     {/* Re-auth overlay */}
-    {reauthOpen && (
+    {false && (
       <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4">
         <div className="w-full max-w-sm rounded-lg border border-zinc-700 bg-zinc-900 p-4 text-white shadow-lg">
           <div className="mb-3 text-lg font-semibold">Confirm Admin Access</div>

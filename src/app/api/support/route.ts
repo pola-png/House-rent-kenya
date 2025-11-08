@@ -29,7 +29,28 @@ async function getUserFromBearer(request: Request) {
 
 export async function POST(request: Request) {
   try {
-    const body = (await request.json()) as Body
+    let body: Body = {}
+    const ct = request.headers.get('content-type') || ''
+    if (ct.includes('application/json')) {
+      body = (await request.json()) as Body
+    } else if (ct.includes('application/x-www-form-urlencoded') || ct.includes('multipart/form-data')) {
+      const fd = await request.formData()
+      body = {
+        subject: String(fd.get('subject') || ''),
+        message: String(fd.get('message') || ''),
+        email: String(fd.get('email') || ''),
+        phone: String(fd.get('phone') || ''),
+        priority: (String(fd.get('priority') || 'normal') as any),
+      }
+      const rawAtt = fd.get('attachments')
+      if (rawAtt) {
+        try { body.attachments = JSON.parse(String(rawAtt)) } catch { body.attachments = [] }
+      }
+    } else {
+      // Best effort JSON parse; if empty, keep body {}
+      try { body = (await request.json()) as Body } catch {}
+    }
+
     const subject = (body.subject || '').trim()
     const message = (body.message || '').trim()
     const email = (body.email || '').trim() || null
@@ -38,7 +59,14 @@ export async function POST(request: Request) {
     const attachments = Array.isArray(body.attachments) ? body.attachments : []
 
     if (subject.length < 3 || message.length < 10) {
-      return NextResponse.json({ error: 'Invalid input' }, { status: 400 })
+      return NextResponse.json({ error: 'Invalid input: provide subject (>=3) and message (>=10).' }, { status: 400 })
+    }
+    if (!email) {
+      // If user is not authenticated, email is required for follow-up
+      const user = await getUserFromBearer(request)
+      if (!user) {
+        return NextResponse.json({ error: 'Email required for anonymous support request.' }, { status: 400 })
+      }
     }
 
     const user = await getUserFromBearer(request)
@@ -54,8 +82,8 @@ export async function POST(request: Request) {
         email,
         phone,
         subject,
-        message,
-        lastMessage: message,
+        message: message || '',
+        lastMessage: message || '',
         priority,
         attachments,
         status: 'open',

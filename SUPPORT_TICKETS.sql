@@ -33,6 +33,10 @@ create index if not exists idx_support_tickets_createdAt on public.support_ticke
 alter table public.support_tickets
   add column if not exists "lastMessage" text not null default '';
 
+-- Ensure message has a safe default to avoid NOT NULL violations from older clients
+alter table public.support_tickets
+  alter column message set default '';
+
 -- CamelCase userId mirror for compatibility with app code
 alter table public.support_tickets
   add column if not exists "userId" uuid references public.profiles(id) on delete set null;
@@ -132,3 +136,127 @@ using (exists(
 ));
 
 comment on table public.support_tickets is 'Support/contact tickets from users and visitors';
+
+-- ---------------------------------------------------------------------------
+-- Messages table for per-ticket conversation threads
+-- ---------------------------------------------------------------------------
+
+create table if not exists public.messages (
+  id uuid primary key default gen_random_uuid(),
+  ticket_id uuid not null references public.support_tickets(id) on delete cascade,
+  "ticketId" uuid, -- camelCase mirror
+  user_id uuid references public.profiles(id) on delete set null,
+  "userId" uuid,   -- camelCase mirror
+  message text not null default '',
+  body text not null default '', -- mirror for compatibility
+  attachments jsonb not null default '[]'::jsonb,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now(),
+  "createdAt" timestamptz not null default now(),
+  "updatedAt" timestamptz not null default now()
+);
+
+create index if not exists idx_messages_ticket on public.messages(ticket_id);
+create index if not exists idx_messages_ticketId on public.messages("ticketId");
+create index if not exists idx_messages_user on public.messages(user_id);
+create index if not exists idx_messages_userId on public.messages("userId");
+create index if not exists idx_messages_created on public.messages(created_at desc);
+create index if not exists idx_messages_createdAt on public.messages("createdAt" desc);
+
+-- Keep snake/camel ids in sync
+create or replace function public.messages_sync_ids()
+returns trigger language plpgsql as $$
+begin
+  if new."ticketId" is null and new.ticket_id is not null then
+    new."ticketId" := new.ticket_id;
+  elsif new.ticket_id is null and new."ticketId" is not null then
+    new.ticket_id := new."ticketId";
+  end if;
+  if new."userId" is null and new.user_id is not null then
+    new."userId" := new.user_id;
+  elsif new.user_id is null and new."userId" is not null then
+    new.user_id := new."userId";
+  end if;
+  return new;
+end; $$;
+
+drop trigger if exists trg_messages_sync_ids_ins on public.messages;
+create trigger trg_messages_sync_ids_ins
+before insert on public.messages
+for each row execute function public.messages_sync_ids();
+
+drop trigger if exists trg_messages_sync_ids_upd on public.messages;
+create trigger trg_messages_sync_ids_upd
+before update on public.messages
+for each row execute function public.messages_sync_ids();
+
+-- Keep message/body mirrors in sync and update timestamps
+create or replace function public.messages_sync_fields()
+returns trigger language plpgsql as $$
+begin
+  if (new.message is null or length(new.message) = 0) and (new.body is not null) then
+    new.message := new.body;
+  elsif (new.body is null or length(new.body) = 0) and (new.message is not null) then
+    new.body := new.message;
+  end if;
+  new.updated_at := now();
+  new."updatedAt" := now();
+  return new;
+end; $$;
+
+drop trigger if exists trg_messages_sync_fields_ins on public.messages;
+create trigger trg_messages_sync_fields_ins
+before insert on public.messages
+for each row execute function public.messages_sync_fields();
+
+drop trigger if exists trg_messages_sync_fields_upd on public.messages;
+create trigger trg_messages_sync_fields_upd
+before update on public.messages
+for each row execute function public.messages_sync_fields();
+
+-- Row Level Security policies for messages
+alter table public.messages enable row level security;
+
+-- Select: ticket owner, assigned agent, or admin
+drop policy if exists messages_select on public.messages;
+create policy messages_select on public.messages
+for select to authenticated
+using (
+  exists (
+    select 1 from public.support_tickets st
+    where st.id = messages.ticket_id
+      and (
+        st.user_id = auth.uid()
+        or st.assigned_to = auth.uid()
+        or exists(select 1 from public.profiles p where p.id = auth.uid() and p.role = 'admin')
+      )
+  )
+);
+
+-- Insert: ticket owner, assigned agent, or admin
+drop policy if exists messages_insert on public.messages;
+create policy messages_insert on public.messages
+for insert to authenticated
+with check (
+  exists (
+    select 1 from public.support_tickets st
+    where st.id = ticket_id
+      and (
+        st.user_id = auth.uid()
+        or st.assigned_to = auth.uid()
+        or exists(select 1 from public.profiles p where p.id = auth.uid() and p.role = 'admin')
+      )
+  )
+);
+
+-- Update/Delete: author of message or admin
+drop policy if exists messages_update on public.messages;
+create policy messages_update on public.messages
+for update to authenticated
+using (user_id = auth.uid() or exists(select 1 from public.profiles p where p.id = auth.uid() and p.role = 'admin'))
+with check (user_id = auth.uid() or exists(select 1 from public.profiles p where p.id = auth.uid() and p.role = 'admin'));
+
+drop policy if exists messages_delete on public.messages;
+create policy messages_delete on public.messages
+for delete to authenticated
+using (user_id = auth.uid() or exists(select 1 from public.profiles p where p.id = auth.uid() and p.role = 'admin'));
