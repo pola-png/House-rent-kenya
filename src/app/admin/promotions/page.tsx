@@ -130,9 +130,9 @@ export default function PromotionsPage() {
       setErrorMsg(null);
       // Try common tables in order. Last one (payment_requests) filters type=promotion
       const tries: Array<() => Promise<PromotionRow[]>> = [
-        () => fetchFirstAvailable("promotions", (q) => user?.id ? q.eq("agent_id", user.id) : q),
-        () => fetchFirstAvailable("promotion_requests", (q) => user?.id ? q.eq("user_id", user.id) : q),
-        () => fetchFirstAvailable("payment_requests", (q) => (user?.id ? q.eq("user_id", user.id) : q).eq("type", "promotion")),
+        () => fetchFirstAvailable("promotions", (q) => user?.uid ? q.eq("agent_id", user.uid) : q),
+        () => fetchFirstAvailable("promotion_requests", (q) => user?.uid ? q.eq("user_id", user.uid) : q),
+        () => fetchFirstAvailable("payment_requests", (q) => (user?.uid ? q.eq("user_id", user.uid) : q).eq("type", "promotion")),
       ];
       for (const t of tries) {
         try {
@@ -152,7 +152,7 @@ export default function PromotionsPage() {
 
   useEffect(() => {
     loadList();
-  }, [retryTick, user?.id]);
+  }, [retryTick, user?.uid]);
 
   const canSubmit = useMemo(() => !!file && !!propertyId && !submitting, [file, propertyId, submitting]);
 
