@@ -36,6 +36,7 @@ export default function MessagesPage() {
     const loadTickets = async () => {
       if (!user) return;
       setIsLoadingTickets(true);
+      let rows: any[] | null = null;
       try {
         let q = supabase.from('support_tickets').select('*').order('updatedAt', { ascending: false });
         if (user.role !== 'admin') {
@@ -43,7 +44,8 @@ export default function MessagesPage() {
         }
         const { data, error } = await q;
         if (error) throw error;
-        const typed: SupportTicket[] = (data || []).map((t: any) => ({
+        rows = data || [];
+        const typed: SupportTicket[] = rows.map((t: any) => ({
           ...t,
           createdAt: t.createdAt ? new Date(t.createdAt) : undefined,
           updatedAt: t.updatedAt ? new Date(t.updatedAt) : undefined,
@@ -53,7 +55,7 @@ export default function MessagesPage() {
         setTickets([]);
       } finally {
         setIsLoadingTickets(false);
-        if (!data || !data.length) { /* best-effort retry on empty */ setTimeout(() => { retryNow(); }, 2000); }
+        if (!rows || rows.length === 0) { /* best-effort retry on empty */ setTimeout(() => { retryNow(); }, 2000); }
       }
     };
     loadTickets();
