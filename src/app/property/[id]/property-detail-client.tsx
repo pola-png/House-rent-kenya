@@ -17,8 +17,9 @@ import type { Property } from '@/lib/types';
 import { useAuth } from '@/hooks/use-auth-supabase';
 import { useRouter } from 'next/navigation';
 import { trackPropertyView } from '@/lib/view-tracking';
+import { toWasabiProxyPath } from '@/lib/wasabi';
 // Render all images in detail view via OptimizedImage (fit="contain") for perfect mobile fit
-const Image = ((props: any) => <OptimizedImage fit="contain" sizes="100vw" {...props} />) as any;
+const Image = ((props: any) => <OptimizedImage fit="contain" sizes="100vw" fallbackSrc={null} {...props} />) as any;
 // Use images exactly as returned by the API (already presigned for Wasabi)
 function coerceImages(raw: unknown): string[] {
   if (!raw) return [];
@@ -95,7 +96,9 @@ export default function PropertyDetailClient({ id }: PropertyDetailClientProps) 
       console.log('Fetched property data:', data);
 
       // API returns presigned Wasabi URLs (keep as-is) and legacy Supabase URLs
-      const images = coerceImages(data.images);
+      const images = coerceImages(data.images)
+        .map((img) => toWasabiProxyPath(img))
+        .filter((img): img is string => Boolean(img));
 
       // Ensure agent contact is present; fetch profile if missing
       let agentProfile = data?.landlord;
