@@ -34,7 +34,7 @@ export default function MergedPromotionPage() {
   const { user } = useAuth();
   const { toast } = useToast();
 
-  const propertyIdParam = searchParams.get('propertyId');
+  const propertyIdParam = searchParams?.get('propertyId') || null;
 
   const [property, setProperty] = useState<any>(null);
   const [loading, setLoading] = useState(!!propertyIdParam);
@@ -51,7 +51,7 @@ export default function MergedPromotionPage() {
   const weeklyRate = 5;
 
   function log(...args: any[]) {
-    console.log('[MergedPromotion]', ...args);
+    console.log('[Promotion]', ...args);
   }
 
   // Fetch property if propertyId is in URL
@@ -141,14 +141,14 @@ export default function MergedPromotionPage() {
     if (!screenshotFile) {
       const msg = 'Please attach a screenshot';
       setSubmitError(msg);
-      console.warn('[MergedPromotion] submit blocked', msg);
+      console.warn('[Promotion] submit blocked', msg);
       return;
     }
 
     if (!propertyIdParam && !property?.id) {
       const msg = 'Please provide a property ID';
       setSubmitError(msg);
-      console.warn('[MergedPromotion] submit blocked', msg);
+      console.warn('[Promotion] submit blocked', msg);
       return;
     }
 
@@ -194,7 +194,7 @@ export default function MergedPromotionPage() {
         router.push('/admin/properties');
       }, 2000);
     } catch (e: any) {
-      console.error('[MergedPromotion] submit error', e);
+      console.error('[Promotion] submit error', e);
       setSubmitError(String(e?.message || e));
       setTimeout(() => retryNow(), 2000);
     } finally {
@@ -233,7 +233,7 @@ export default function MergedPromotionPage() {
       }
       setRows([]);
     } catch (e) {
-      console.error('[MergedPromotion] list load error', e);
+      console.error('[Promotion] list load error', e);
       setErrorMsg(String((e as any)?.message || e));
     } finally {
       setLoadingList(false);
@@ -244,9 +244,10 @@ export default function MergedPromotionPage() {
     loadList();
   }, [retryTick, user?.uid]);
 
-  const canSubmit = useMemo(() => !!screenshotFile && !!propertyIdParam && !isSubmitting, [
+  const canSubmit = useMemo(() => !!screenshotFile && (!!propertyIdParam || !!property?.id) && !isSubmitting, [
     screenshotFile,
     propertyIdParam,
+    property?.id,
     isSubmitting,
   ]);
 
