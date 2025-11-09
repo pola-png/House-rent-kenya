@@ -7,21 +7,26 @@ import { useState, useEffect } from "react";
 import { supabase } from "@/lib/supabase";
 import type { Property } from "@/lib/types";
 
-export default function PropertyDetailPage({ params }: { params: { id: string } }) {
+export default function PropertyDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const router = useRouter();
   const [property, setProperty] = useState<Property | null>(null);
   const [loading, setLoading] = useState(true);
+  const [id, setId] = useState<string | null>(null);
 
   useEffect(() => {
-    fetchProperty();
-  }, [params.id]);
+    params.then(p => setId(p.id));
+  }, [params]);
+
+  useEffect(() => {
+    if (id) fetchProperty();
+  }, [id]);
 
   const fetchProperty = async () => {
     try {
       const { data, error } = await supabase
         .from('properties')
         .select('*')
-        .eq('id', params.id)
+        .eq('id', id)
         .single();
 
       if (error) throw error;
