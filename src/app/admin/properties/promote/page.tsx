@@ -163,11 +163,15 @@ export default function MergedPromotionPage() {
       const { data: sess } = await supabase.auth.getSession();
       const token = sess?.session?.access_token || null;
 
+      if (!token) {
+        throw new Error('No authentication token available');
+      }
+
       const res = await fetchWithTimeout('/api/admin/promotions/submit', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+          Authorization: `Bearer ${token}`,
         },
         body: JSON.stringify({
           propertyId: propertyIdParam || property?.id,
@@ -178,25 +182,37 @@ export default function MergedPromotionPage() {
         timeoutMs: 15000,
       });
 
-      if (!res.ok) throw new Error(await res.text());
+      if (!res.ok) {
+        const errorText = await res.text();
+        throw new Error(`API error: ${res.status} - ${errorText}`);
+      }
+
       const json = await res.json();
       log('submit ok', json);
 
-      toast({ title: 'Success', description: 'Promotion request submitted for approval' });
+      toast({ 
+        title: 'Success', 
+        description: 'Promotion request submitted for approval' 
+      });
+
       setScreenshotFile(null);
       setScreenshotPreview(null);
       setPromotionWeeks(1);
 
       await loadList();
 
-      // Redirect back to properties after 2 seconds
       setTimeout(() => {
         router.push('/admin/properties');
       }, 2000);
     } catch (e: any) {
       console.error('[Promotion] submit error', e);
-      setSubmitError(String(e?.message || e));
-      setTimeout(() => retryNow(), 2000);
+      const errorMsg = e?.message || String(e);
+      setSubmitError(errorMsg);
+      toast({
+        variant: 'destructive',
+        title: 'Submission Failed',
+        description: errorMsg,
+      });
     } finally {
       setIsSubmitting(false);
     }
