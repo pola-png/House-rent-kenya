@@ -244,7 +244,7 @@ export default function PropertyDetailClient({ id }: PropertyDetailClientProps) 
                 </Link>
               </Button>
               <Button size="sm" variant="outline" asChild>
-              <Link href={`/admin/properties/promote/${property.id}`}>
+              <Link href={`/admin/promotions?propertyId=${property.id}&propertyTitle=${encodeURIComponent(property.title)}`}>
                   <Star className="h-4 w-4 mr-2" />
                   Promote Property
                 </Link>
