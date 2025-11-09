@@ -46,7 +46,7 @@ export default function PropertyDetailPage({ params }: { params: Promise<{ id: s
       {/* ... your property details JSX ... */}
       
       <Button
-        onClick={() => router.push(`/admin/properties/promote?propertyId=${property.id}`)}
+        onClick={() => router.push(`/admin/properties/${property.id}/promote`)}
         className="w-full"
       >
         Promote Property

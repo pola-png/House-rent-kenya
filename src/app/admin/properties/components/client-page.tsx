@@ -180,7 +180,7 @@ export function PropertiesClient({ data: initialData }: PropertiesClientProps) {
             </DropdownMenuItem>
             <DropdownMenuSeparator />
             <DropdownMenuItem asChild>
-              <Link href={`/admin/properties/promote/${property.id}`}>
+              <Link href={`/admin/properties/promote?propertyId=${property.id}`}>
                 <Star className="mr-2 h-4 w-4" />
                 Promote Property
               </Link>
