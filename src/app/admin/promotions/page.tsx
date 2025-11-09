@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -11,7 +11,7 @@ import { useAuth } from "@/hooks/use-auth-supabase";
 import { Loader2, Upload } from "lucide-react";
 
 export default function PromotionsPage() {
-  const { user } = useAuth();
+  const { user, loading: authLoading } = useAuth();
   const { toast } = useToast();
   const [propertyId, setPropertyId] = useState("");
   const [propertyTitle, setPropertyTitle] = useState("");
@@ -20,11 +20,16 @@ export default function PromotionsPage() {
   const [submitting, setSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState("");
 
+  useEffect(() => {
+    console.log('Auth state:', { user: user?.uid, loading: authLoading });
+  }, [user, authLoading]);
+
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setFile(e.target.files?.[0] || null);
   };
 
   const handleSubmit = async () => {
+    console.log('handleSubmit called', { user: user?.uid, file: file?.name });
     setSubmitError("");
     
     if (!user) {
@@ -44,11 +49,13 @@ export default function PromotionsPage() {
 
     setSubmitting(true);
     try {
-      console.log('Starting upload...', { fileName: file.name, size: file.size, userId: user.uid });
+      console.log('=== STARTING UPLOAD ===', { fileName: file.name, size: file.size, userId: user.uid });
       
       const fileExt = file.name.split('.').pop();
       const fileName = `promotion-${propertyId}-${Date.now()}.${fileExt}`;
       const filePath = `promotions/${fileName}`;
+
+      console.log('Uploading to path:', filePath);
 
       const { error: uploadError, data: uploadData } = await supabase.storage
         .from('user-uploads')
@@ -62,6 +69,8 @@ export default function PromotionsPage() {
         .getPublicUrl(filePath);
 
       console.log('Public URL:', publicUrl);
+
+      console.log('Inserting to payment_requests...');
 
       const { error: insertError, data: insertData } = await supabase
         .from('payment_requests')
@@ -79,19 +88,35 @@ export default function PromotionsPage() {
       console.log('Insert response:', { insertError, insertData });
       if (insertError) throw new Error(`Database insert failed: ${insertError.message}`);
 
+      console.log('=== SUCCESS ===');
       toast({ title: "Success", description: "Promotion request submitted" });
       setFile(null);
       setWeeks(1);
       setPropertyId("");
       setPropertyTitle("");
     } catch (error: any) {
-      console.error('Full error:', error);
+      console.error('=== ERROR ===', error);
       setSubmitError(error?.message || "Submission failed");
       toast({ variant: "destructive", title: "Error", description: error?.message });
     } finally {
       setSubmitting(false);
     }
   };
+
+  if (authLoading) {
+    return (
+      <div className="container mx-auto p-6 max-w-2xl">
+        <Card>
+          <CardContent className="p-6">
+            <div className="flex items-center gap-2">
+              <Loader2 className="h-4 w-4 animate-spin" />
+              Loading...
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
 
   return (
     <div className="container mx-auto p-6 max-w-2xl">
@@ -101,6 +126,12 @@ export default function PromotionsPage() {
           <CardDescription>Submit a promotion request for your property</CardDescription>
         </CardHeader>
         <CardContent className="space-y-6">
+          {!user && (
+            <div className="p-3 bg-yellow-50 border border-yellow-200 rounded text-sm text-yellow-800">
+              Please log in to submit a promotion request
+            </div>
+          )}
+
           <div className="space-y-2">
             <Label htmlFor="propertyId">Property ID</Label>
             <Input
@@ -144,7 +175,7 @@ export default function PromotionsPage() {
 
           {submitError && <div className="text-sm text-red-600">{submitError}</div>}
 
-          <Button onClick={handleSubmit} disabled={submitting || !user} className="w-full">
+          <Button onClick={handleSubmit} disabled={submitting || !user || authLoading} className="w-full">
             {submitting ? (
               <>
                 <Loader2 className="h-4 w-4 mr-2 animate-spin" />
