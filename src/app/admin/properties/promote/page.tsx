@@ -390,10 +390,10 @@ export default function MergedPromotionPage() {
                           {row.status || 'unknown'}
                         </span>
                       </div>
-                      {row.screenshot_url || row.screenshotUrl ? (
+                      {(row.screenshot_url || row.screenshotUrl) ? (
                         <div className="mt-2">
                           <Image
-                            src={row.screenshot_url || row.screenshotUrl}
+                            src={row.screenshot_url || row.screenshotUrl || ''}
                             alt="Promotion screenshot"
                             width={100}
                             height={100}
