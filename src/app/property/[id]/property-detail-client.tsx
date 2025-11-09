@@ -244,7 +244,7 @@ export default function PropertyDetailClient({ id }: PropertyDetailClientProps) 
                 </Link>
               </Button>
               <Button size="sm" variant="outline" asChild>
-              <Link href={`/admin/promotions?propertyId=${property.id}&propertyTitle=${encodeURIComponent(property.title)}&weeks=1`}>
+              <Link href={`/admin/properties/promote/${property.id}`}>
                   <Star className="h-4 w-4 mr-2" />
                   Promote Property
                 </Link>
@@ -296,6 +296,7 @@ export default function PropertyDetailClient({ id }: PropertyDetailClientProps) 
                         <button
                           key={index}
                           onClick={() => setCurrentImageIndex(index)}
+                          aria-label={`View image ${index + 1} of ${property.images.length}`}
                           className={`w-2 h-2 rounded-full transition-all ${
                             index === currentImageIndex ? 'bg-white w-8' : 'bg-white/50'
                           }`}
