@@ -101,7 +101,6 @@ export default function AdminLayout({
       '/admin/admin-dashboard',
       '/admin/users',
       '/admin/analytics',
-      '/admin/promotions',
       '/admin/bulk-actions',
       '/admin/settings',
       '/admin/blog',
