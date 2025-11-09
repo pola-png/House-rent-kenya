@@ -15,7 +15,6 @@ interface OptimizedImageProps {
   fit?: 'cover' | 'contain' | 'fill' | 'none' | 'scale-down';
   onError?: () => void;
   onLoad?: () => void;
-  fallbackSrc?: string | null;
 }
 
 export function OptimizedImage({ 
@@ -30,22 +29,15 @@ export function OptimizedImage({
   fit = 'cover',
   onError,
   onLoad,
-  fallbackSrc: fallbackSrcProp,
 }: OptimizedImageProps) {
   const [imageError, setImageError] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   
-  // Fallback image for properties
-  const fallbackSrc = fallbackSrcProp ?? "https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?w=800&h=600&fit=crop&crop=center";
-
-  // Check if image is from Wasabi (direct) or via our proxy
   const isWasabiImage = src.includes('wasabisys.com') || src.startsWith('/api/image-proxy');
   
-  // Convert Wasabi URL to proxy URL; if already proxied, keep as-is
   const getProxiedUrl = (url: string) => {
     if (!isWasabiImage) return url;
     if (url.startsWith('/api/image-proxy')) return url;
-    // If this is an already presigned Wasabi URL, we can keep it as-is
     if (/X-Amz-Signature=|X-Amz-Algorithm=/.test(url)) return url;
     const idx = url.indexOf('.com/');
     const path = idx !== -1 ? url.slice(idx + 5) : url;
@@ -53,7 +45,6 @@ export function OptimizedImage({
   };
   
   const displaySrc = getProxiedUrl(src);
-  const displayFallback = fallbackSrc;
 
   const handleError = () => {
     setImageError(true);
@@ -66,13 +57,10 @@ export function OptimizedImage({
     onLoad?.();
   };
 
-  // Generate descriptive alt text if not provided or generic
   const generateAltText = (originalAlt: string, imageSrc: string) => {
     if (originalAlt && originalAlt !== 'Property image' && originalAlt !== 'Image') {
       return originalAlt;
     }
-    
-    // Extract property details from URL or context if possible
     if (imageSrc.includes('bedroom')) {
       return 'Modern bedroom interior with natural lighting';
     }
@@ -85,7 +73,6 @@ export function OptimizedImage({
     if (imageSrc.includes('bathroom')) {
       return 'Clean modern bathroom with quality fixtures';
     }
-    
     return 'Property interior view showing modern amenities and design';
   };
 
@@ -99,7 +86,7 @@ export function OptimizedImage({
             <div className="absolute inset-0 bg-muted animate-pulse" />
           )}
           <img
-            src={imageError ? displayFallback : displaySrc}
+            src={displaySrc}
             alt={optimizedAlt}
             className={`${className} transition-opacity duration-300 ${isLoading ? 'opacity-0' : 'opacity-100'} absolute inset-0 w-full h-full object-${fit} object-center`}
             onError={handleError}
@@ -116,7 +103,7 @@ export function OptimizedImage({
           <div className="absolute inset-0 bg-muted animate-pulse" />
         )}
         <Image
-          src={imageError ? displayFallback : displaySrc}
+          src={displaySrc}
           alt={optimizedAlt}
           fill
           className={`${className} transition-opacity duration-300 ${isLoading ? 'opacity-0' : 'opacity-100'} object-${fit} object-center`}
@@ -141,7 +128,7 @@ export function OptimizedImage({
           />
         )}
         <img
-          src={imageError ? displayFallback : displaySrc}
+          src={displaySrc}
           alt={optimizedAlt}
           width={width}
           height={height}
@@ -164,7 +151,7 @@ export function OptimizedImage({
         />
       )}
       <Image
-        src={imageError ? displayFallback : displaySrc}
+        src={displaySrc}
         alt={optimizedAlt}
         width={width}
         height={height}

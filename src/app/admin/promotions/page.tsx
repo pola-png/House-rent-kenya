@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useAuth } from "@/hooks/use-auth-supabase";
 import { supabase } from "@/lib/supabase";
 import { useAutoRetry } from "@/hooks/use-auto-retry";
@@ -32,6 +32,8 @@ export default function PromotionsPage() {
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [retryTick, retryNow] = useAutoRetry(loadingList || submitting || !user, [user]);
+  const searchParams = useSearchParams();
+  const searchParamsString = searchParams?.toString() || "";
 
   function log(...args: any[]) { console.log("[Promotions]", ...args); }
 
@@ -160,6 +162,22 @@ export default function PromotionsPage() {
   useEffect(() => {
     loadList();
   }, [retryTick, user?.uid]);
+
+  useEffect(() => {
+    if (!searchParams) return;
+    const paramId = searchParams.get("propertyId");
+    if (paramId) setPropertyId((prev) => prev || paramId);
+    const paramTitle = searchParams.get("propertyTitle");
+    if (paramTitle) setPropertyTitle((prev) => prev || paramTitle);
+    const paramWeeks = searchParams.get("weeks");
+    if (paramWeeks) {
+      const parsed = Number(paramWeeks);
+      if (!Number.isNaN(parsed)) {
+        const normalized = Math.max(1, Math.min(52, Math.floor(parsed)));
+        setWeeks((prev) => (prev === normalized ? prev : normalized));
+      }
+    }
+  }, [searchParamsString]);
 
   const canSubmit = useMemo(() => !!file && !!propertyId && !submitting, [file, propertyId, submitting]);
 

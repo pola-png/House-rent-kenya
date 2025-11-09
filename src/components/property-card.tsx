@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
@@ -10,6 +10,7 @@ import type { Property } from '@/lib/types';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { createPropertyUrl } from '@/lib/utils-seo';
 import { OptimizedImage } from '@/components/optimized-image';
+import { toWasabiProxyPath } from '@/lib/wasabi';
 import { useImpressionTracking } from '@/hooks/use-impression-tracking';
 
 type PropertyCardProps = {
@@ -24,7 +25,8 @@ export function PropertyCard({ property }: PropertyCardProps) {
   const [retryCount, setRetryCount] = useState(0);
   const [reloadKey, setReloadKey] = useState(0);
   const images = Array.isArray(property.images) ? property.images : [];
-  const mainImageUrl = images.length > 0 ? images[0] : null;
+  const proxiedImages = images.map((img) => toWasabiProxyPath(img)).filter((img) => Boolean(img));
+  const mainImageUrl = proxiedImages.length > 0 ? proxiedImages[0] : null;
   const agentPhotoUrl = property.agent?.photoURL;
 
   const impressionRef = useImpressionTracking({
@@ -66,7 +68,6 @@ export function PropertyCard({ property }: PropertyCardProps) {
               fill
               sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
               className="object-cover transform group-hover:scale-105 transition-transform duration-300"
-              fallbackSrc={null}
               onError={handleImageFailure}
             />
           ) : (
@@ -118,7 +119,7 @@ export function PropertyCard({ property }: PropertyCardProps) {
               </div>
               <div className="flex items-center gap-1">
                 <Maximize className="h-4 w-4 text-primary" />
-                <span>{property.area.toLocaleString()} ft²</span>
+                <span>{property.area.toLocaleString()} ftÂ²</span>
               </div>
             </div>
           </div>
@@ -149,3 +150,5 @@ export function PropertyCard({ property }: PropertyCardProps) {
     </Card>
   );
 }
+
+

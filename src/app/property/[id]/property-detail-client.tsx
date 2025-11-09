@@ -238,13 +238,13 @@ export default function PropertyDetailClient({ id }: PropertyDetailClientProps) 
           <CardContent className="p-4">
             <div className="flex flex-wrap gap-2">
               <Button size="sm" variant="outline" asChild>
-                <Link href={`/admin/properties/edit/${property.id}`}>
+              <Link href={`/admin/properties/edit/${property.id}`}>
                   <Edit className="h-4 w-4 mr-2" />
                   Edit Property
                 </Link>
               </Button>
               <Button size="sm" variant="outline" asChild>
-                <Link href={`/admin/properties/promote/${property.id}`}>
+              <Link href={`/admin/promotions?propertyId=${property.id}&propertyTitle=${encodeURIComponent(property.title)}&weeks=1`}>
                   <Star className="h-4 w-4 mr-2" />
                   Promote Property
                 </Link>
