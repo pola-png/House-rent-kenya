@@ -35,24 +35,31 @@ export default function PromotionsPage() {
 
     setSubmitting(true);
     try {
+      console.log('Starting upload...', { fileName: file.name, size: file.size });
+      
       const fileExt = file.name.split('.').pop();
       const fileName = `promotion-${propertyId}-${Date.now()}.${fileExt}`;
       const filePath = `promotions/${fileName}`;
 
-      const { error: uploadError } = await supabase.storage
+      const { error: uploadError, data: uploadData } = await supabase.storage
         .from('user-uploads')
         .upload(filePath, file, { upsert: true });
 
+      console.log('Upload response:', { uploadError, uploadData });
       if (uploadError) throw uploadError;
 
       const { data: { publicUrl } } = supabase.storage
         .from('user-uploads')
         .getPublicUrl(filePath);
 
+      console.log('Public URL:', publicUrl);
+
       const { data: sess } = await supabase.auth.getSession();
       const userId = sess?.session?.user?.id;
 
-      const { error: insertError } = await supabase
+      console.log('Inserting to DB...', { propertyId, userId });
+
+      const { error: insertError, data: insertData } = await supabase
         .from('payment_requests')
         .insert([{
           propertyId,
@@ -65,6 +72,7 @@ export default function PromotionsPage() {
           createdAt: new Date().toISOString()
         }]);
 
+      console.log('Insert response:', { insertError, insertData });
       if (insertError) throw insertError;
 
       toast({ title: "Success", description: "Promotion request submitted" });
@@ -73,6 +81,7 @@ export default function PromotionsPage() {
       setPropertyId("");
       setPropertyTitle("");
     } catch (error: any) {
+      console.error('Full error:', error);
       setSubmitError(error?.message || "Submission failed");
       toast({ variant: "destructive", title: "Error", description: error?.message });
     } finally {
