@@ -7,9 +7,11 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/lib/supabase";
+import { useAuth } from "@/hooks/use-auth-supabase";
 import { Loader2, Upload } from "lucide-react";
 
 export default function PromotionsPage() {
+  const { user } = useAuth();
   const { toast } = useToast();
   const [propertyId, setPropertyId] = useState("");
   const [propertyTitle, setPropertyTitle] = useState("");
@@ -24,6 +26,13 @@ export default function PromotionsPage() {
 
   const handleSubmit = async () => {
     setSubmitError("");
+    
+    if (!user) {
+      setSubmitError("You must be logged in");
+      toast({ variant: "destructive", title: "Error", description: "Please log in first" });
+      return;
+    }
+
     if (!file) {
       setSubmitError("Please attach a screenshot");
       return;
@@ -35,7 +44,7 @@ export default function PromotionsPage() {
 
     setSubmitting(true);
     try {
-      console.log('Starting upload...', { fileName: file.name, size: file.size });
+      console.log('Starting upload...', { fileName: file.name, size: file.size, userId: user.uid });
       
       const fileExt = file.name.split('.').pop();
       const fileName = `promotion-${propertyId}-${Date.now()}.${fileExt}`;
@@ -46,7 +55,7 @@ export default function PromotionsPage() {
         .upload(filePath, file, { upsert: true });
 
       console.log('Upload response:', { uploadError, uploadData });
-      if (uploadError) throw uploadError;
+      if (uploadError) throw new Error(`Upload failed: ${uploadError.message}`);
 
       const { data: { publicUrl } } = supabase.storage
         .from('user-uploads')
@@ -54,17 +63,12 @@ export default function PromotionsPage() {
 
       console.log('Public URL:', publicUrl);
 
-      const { data: sess } = await supabase.auth.getSession();
-      const userId = sess?.session?.user?.id;
-
-      console.log('Inserting to DB...', { propertyId, userId });
-
       const { error: insertError, data: insertData } = await supabase
         .from('payment_requests')
         .insert([{
           propertyId,
           propertyTitle: propertyTitle || 'Untitled',
-          userId,
+          userId: user.uid,
           amount: weeks * 5,
           paymentScreenshot: publicUrl,
           status: 'pending',
@@ -73,7 +77,7 @@ export default function PromotionsPage() {
         }]);
 
       console.log('Insert response:', { insertError, insertData });
-      if (insertError) throw insertError;
+      if (insertError) throw new Error(`Database insert failed: ${insertError.message}`);
 
       toast({ title: "Success", description: "Promotion request submitted" });
       setFile(null);
@@ -140,7 +144,7 @@ export default function PromotionsPage() {
 
           {submitError && <div className="text-sm text-red-600">{submitError}</div>}
 
-          <Button onClick={handleSubmit} disabled={submitting} className="w-full">
+          <Button onClick={handleSubmit} disabled={submitting || !user} className="w-full">
             {submitting ? (
               <>
                 <Loader2 className="h-4 w-4 mr-2 animate-spin" />
