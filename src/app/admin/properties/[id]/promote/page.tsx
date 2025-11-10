@@ -65,12 +65,28 @@ export default function PromotePage() {
   };
 
   const handleSubmit = async () => {
+    alert('Submit clicked!');
+    
     if (!screenshotFile || !user || !property) {
+      alert('Missing data');
       toast({ variant: "destructive", title: "Error", description: "Missing required data" });
       return;
     }
 
+    alert('Setting submitting true');
     setIsSubmitting(true);
+    
+    try {
+      alert('Checking session');
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        alert('No session');
+        toast({ variant: "destructive", title: "Error", description: "Please log in again" });
+        setIsSubmitting(false);
+        return;
+      }
+      
+      alert('Session OK, starting upload');
     
     try {
       // Upload screenshot using existing API
@@ -121,11 +137,14 @@ export default function PromotePage() {
 
       if (error) throw error;
 
+      alert('Success!');
       toast({ title: "Success!", description: "Promotion request submitted" });
       router.push('/admin/promotions');
     } catch (error: any) {
+      alert('Error: ' + error.message);
       toast({ variant: "destructive", title: "Error", description: error.message || 'Failed to submit' });
     } finally {
+      alert('Setting submitting false');
       setIsSubmitting(false);
     }
   };
