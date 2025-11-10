@@ -3,7 +3,7 @@
 import { useSearchParams, useRouter } from 'next/navigation';
 import { useAuth } from '@/hooks/use-auth-supabase';
 import { supabase } from '@/lib/supabase';
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
@@ -12,7 +12,6 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Loader2, Upload, ArrowLeft } from 'lucide-react';
 import Link from 'next/link';
 import Image from 'next/image';
-import { uploadToWasabi } from '@/lib/wasabi';
 
 export default function PromotePage() {
   const searchParams = useSearchParams();
@@ -28,7 +27,6 @@ export default function PromotePage() {
   const [screenshotFile, setScreenshotFile] = useState<File | null>(null);
   const [screenshotPreview, setScreenshotPreview] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [submitError, setSubmitError] = useState<string | null>(null);
 
   const weeklyRate = 5;
 
@@ -37,12 +35,6 @@ export default function PromotePage() {
       fetchProperty();
     }
   }, [propertyIdParam, user]);
-
-  useEffect(() => {
-    return () => {
-      if (screenshotPreview) URL.revokeObjectURL(screenshotPreview);
-    };
-  }, [screenshotPreview]);
 
   const fetchProperty = async () => {
     try {
@@ -57,7 +49,6 @@ export default function PromotePage() {
       if (error) throw error;
       setProperty(data);
     } catch (error) {
-      console.error('Error fetching property:', error);
       toast({ variant: 'destructive', title: 'Error', description: 'Property not found' });
     } finally {
       setLoading(false);
@@ -68,43 +59,24 @@ export default function PromotePage() {
     const file = event.target.files?.[0];
     if (file) {
       setScreenshotFile(file);
+      if (screenshotPreview) URL.revokeObjectURL(screenshotPreview);
       setScreenshotPreview(URL.createObjectURL(file));
-      setSubmitError(null);
     }
   };
 
   const handleSubmit = async () => {
-    console.log('handleSubmit called');
-    
     if (!screenshotFile || !user || !property) {
-      console.log('Missing data:', { screenshotFile: !!screenshotFile, user: !!user, property: !!property });
       toast({ variant: "destructive", title: "Error", description: "Missing required data" });
       return;
     }
 
-    console.log('Setting isSubmitting to true');
     setIsSubmitting(true);
-    setSubmitError(null);
     
     try {
-      const amount = promotionWeeks * weeklyRate;
-      
-      console.log('Starting upload process...', {
-        userId: user.uid,
-        propertyId: property.id,
-        fileName: screenshotFile.name,
-        fileSize: screenshotFile.size,
-        fileType: screenshotFile.type
-      });
-      
-      toast({ title: "Uploading...", description: "Uploading payment screenshot." });
-      
+      // Upload screenshot using existing API
       const fileName = `promotions/${user.uid}/${Date.now()}-${screenshotFile.name.replace(/[^a-zA-Z0-9.-]/g, '-')}`;
-      console.log('Upload path:', fileName);
       
-      // Test API first
-      console.log('Testing upload API...');
-      const testResponse = await fetch('/api/upload', {
+      const uploadRes = await fetch('/api/upload', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -113,98 +85,50 @@ export default function PromotePage() {
           contentLength: screenshotFile.size,
         }),
       });
-      
-      console.log('API test response:', testResponse.status, testResponse.statusText);
-      
-      if (!testResponse.ok) {
-        const errorData = await testResponse.json().catch(() => ({}));
-        console.log('API error:', errorData);
-        throw new Error(`Upload API failed: ${errorData.error || testResponse.statusText}`);
+
+      if (!uploadRes.ok) {
+        throw new Error('Upload failed');
       }
+
+      const { uploadUrl, uploadHeaders, objectPath } = await uploadRes.json();
       
-      const uploadData = await testResponse.json();
-      console.log('Upload data received:', uploadData);
-      
-      // Now do the actual upload
-      console.log('Uploading to Wasabi...');
-      const putResponse = await fetch(uploadData.uploadUrl, {
+      const putRes = await fetch(uploadUrl, {
         method: 'PUT',
-        headers: uploadData.uploadHeaders || {},
+        headers: uploadHeaders || {},
         body: screenshotFile,
       });
-      
-      console.log('PUT response:', putResponse.status, putResponse.statusText);
-      
-      if (!putResponse.ok) {
-        throw new Error(`File upload failed: ${putResponse.statusText}`);
+
+      if (!putRes.ok) {
+        throw new Error('File upload failed');
       }
-      
-      const screenshotUrl = uploadData.objectPath;
-      console.log('Screenshot uploaded successfully:', screenshotUrl);
-      
-      toast({ title: "Saving...", description: "Saving promotion request." });
-      
-      const insertData = {
-        "propertyId": property.id,
-        "propertyTitle": property.title || 'Untitled',
-        "userId": user.uid,
-        "userName": user.displayName || user.email,
-        "userEmail": user.email,
-        amount: amount,
-        "paymentScreenshot": screenshotUrl,
-        status: 'pending',
-        "promotionType": `Featured - ${promotionWeeks} week${promotionWeeks > 1 ? 's' : ''}`,
-      };
-      
-      console.log('Inserting data:', insertData);
-      
-      const { data, error } = await supabase
+
+      const screenshotUrl = objectPath;
+
+      // Save to database
+      const { error } = await supabase
         .from('payment_requests')
-        .insert(insertData)
-        .select()
-        .single();
+        .insert({
+          "propertyId": property.id,
+          "propertyTitle": property.title || 'Untitled',
+          "userId": user.uid,
+          "userName": user.displayName || user.email,
+          "userEmail": user.email,
+          amount: promotionWeeks * weeklyRate,
+          "paymentScreenshot": screenshotUrl,
+          status: 'pending',
+          "promotionType": `Featured - ${promotionWeeks} week${promotionWeeks > 1 ? 's' : ''}`,
+        });
 
-      if (error) {
-        console.error('Supabase error:', error);
-        throw error;
-      }
+      if (error) throw error;
 
-      console.log('Database insert successful:', data);
-      
-      toast({ title: "Request Submitted!", description: "Admin will review your payment soon." });
-      setScreenshotFile(null);
-      setScreenshotPreview(null);
-      setPromotionWeeks(1);
-      setTimeout(() => router.push('/admin/promotions'), 1500);
+      toast({ title: "Success!", description: "Promotion request submitted" });
+      router.push('/admin/promotions');
     } catch (error: any) {
-      console.error('Full error details:', error);
-      const errorMsg = error?.message || error?.details || 'Submission failed';
-      setSubmitError(errorMsg);
-      toast({ variant: "destructive", title: "Submission Failed", description: errorMsg });
+      toast({ variant: "destructive", title: "Error", description: error.message || 'Failed to submit' });
     } finally {
-      console.log('Setting isSubmitting to false');
       setIsSubmitting(false);
     }
   };
-
-  const canSubmit = useMemo(() => {
-    const hasFile = !!screenshotFile;
-    const hasProperty = !!(propertyIdParam || property?.id);
-    const notSubmitting = !isSubmitting;
-    const result = hasFile && hasProperty && notSubmitting;
-    
-    console.log('canSubmit check:', {
-      hasFile,
-      hasProperty,
-      notSubmitting,
-      result,
-      propertyIdParam,
-      propertyId: property?.id,
-      isSubmitting
-    });
-    
-    return result;
-  }, [screenshotFile, propertyIdParam, property?.id, isSubmitting]);
 
   return (
     <div className="container mx-auto p-6 max-w-4xl space-y-6">
@@ -285,25 +209,11 @@ export default function PromotePage() {
                 />
               )}
             </div>
-            {submitError && (
-              <div className="mt-2 p-3 bg-red-50 border border-red-200 rounded-md">
-                <p className="text-sm text-red-600 font-medium">Error Details:</p>
-                <p className="text-sm text-red-600">{submitError}</p>
-              </div>
-            )}
           </div>
 
           <Button
-            onClick={(e) => {
-              console.log('Button clicked!', { canSubmit, disabled: !canSubmit });
-              e.preventDefault();
-              if (canSubmit) {
-                handleSubmit();
-              } else {
-                console.log('Button disabled, cannot submit');
-              }
-            }}
-            disabled={!canSubmit}
+            onClick={handleSubmit}
+            disabled={!screenshotFile || !property || isSubmitting}
             className="w-full"
           >
             {isSubmitting ? (
