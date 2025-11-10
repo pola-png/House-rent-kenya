@@ -216,7 +216,7 @@ export default function MergedPromotionPage() {
             property_id: property.id,
             property_title: property.title || 'Untitled',
             user_id: user.uid,
-            user_name: user.user_metadata?.full_name || user.email,
+            user_name: user.displayName || user.email,
             user_email: user.email,
             amount: amount,
             payment_screenshot_url: up.url,
