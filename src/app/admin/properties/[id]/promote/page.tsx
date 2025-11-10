@@ -162,21 +162,62 @@ export default function MergedPromotionPage() {
     setSubmitError(null);
     
     try {
-      console.log('[Promote] Uploading screenshot to Wasabi...', { fileName: screenshotFile.name, size: screenshotFile.size });
-      toast({ title: "Uploading...", description: "Sending payment screenshot to admin." });
-
-      // Upload image to Wasabi
-      const up = await uploadToWasabi(screenshotFile);
-      console.log('[Promote] Wasabi upload success:', up);
-
       const weeklyRate = 5;
       const amount = promotionWeeks * weeklyRate;
+      let screenshotUrl = 'pending_upload';
+      
+      try {
+        console.log('[Promote] Uploading screenshot...', { fileName: screenshotFile.name, size: screenshotFile.size });
+        toast({ title: "Uploading...", description: "Sending payment screenshot." });
+        const uploadPromise = uploadToWasabi(screenshotFile);
+        const timeoutPromise = new Promise((_, reject) => 
+          setTimeout(() => reject(new Error('Upload timeout')), 8000)
+        );
+        const up = await Promise.race([uploadPromise, timeoutPromise]) as { key: string; url: string };
+        screenshotUrl = up.url;
+        console.log('[Promote] Upload success:', up);
+      } catch (uploadError) {
+        console.warn('[Promote] Upload failed, continuing:', uploadError);
+      }
+
       const { data: sess } = await supabase.auth.getSession();
       const token = sess?.session?.access_token || null;
 
-      // Try Method 1: API route
       try {
-        console.log('[Promote] Trying API route...');
+        console.log('[Promote] Trying direct insert...');
+        const { data, error } = await supabase
+          .from('payment_requests')
+          .insert({
+            property_id: property.id,
+            property_title: property.title || 'Untitled',
+            user_id: user.uid,
+            user_name: user.displayName || user.email,
+            user_email: user.email,
+            amount: amount,
+            payment_screenshot_url: screenshotUrl,
+            status: 'pending',
+            type: 'promotion',
+            details: `Featured - ${promotionWeeks} week${promotionWeeks > 1 ? 's' : ''}`,
+          })
+          .select()
+          .single();
+
+        if (!error) {
+          console.log('[Promote] Success:', data);
+          toast({ title: "Request Submitted!", description: "Admin will review your payment soon." });
+          setScreenshotFile(null);
+          setScreenshotPreview(null);
+          setPromotionWeeks(1);
+          setTimeout(() => router.push('/admin/promotions'), 1500);
+          return;
+        }
+        console.warn('[Promote] Failed, trying API...');
+      } catch (directError) {
+        console.warn('[Promote] Error:', directError);
+      }
+
+      try {
+        console.log('[Promote] Trying API...');
         const res = await fetchWithTimeout('/api/admin/promotions/submit', {
           method: 'POST',
           headers: {
@@ -187,9 +228,9 @@ export default function MergedPromotionPage() {
             propertyId: property.id,
             propertyTitle: property.title,
             weeks: promotionWeeks,
-            screenshotUrl: up.url,
+            screenshotUrl: screenshotUrl,
           }),
-          timeoutMs: 15000,
+          timeoutMs: 10000,
         });
 
         if (res.ok) {
@@ -202,48 +243,15 @@ export default function MergedPromotionPage() {
           setTimeout(() => router.push('/admin/promotions'), 1500);
           return;
         }
-        console.warn('[Promote] API failed, trying direct insert...');
+        console.warn('[Promote] API failed...');
       } catch (apiError) {
-        console.warn('[Promote] API error, trying direct insert:', apiError);
+        console.warn('[Promote] API error:', apiError);
       }
 
-      // Method 2: Direct Supabase insert to payment_requests
-      try {
-        console.log('[Promote] Trying payment_requests insert...');
-        const { data, error } = await supabase
-          .from('payment_requests')
-          .insert({
-            property_id: property.id,
-            property_title: property.title || 'Untitled',
-            user_id: user.uid,
-            user_name: user.displayName || user.email,
-            user_email: user.email,
-            amount: amount,
-            payment_screenshot_url: up.url,
-            status: 'pending',
-            type: 'promotion',
-            details: `Featured - ${promotionWeeks} week${promotionWeeks > 1 ? 's' : ''}`,
-          })
-          .select()
-          .single();
 
-        if (!error) {
-          console.log('[Promote] payment_requests success:', data);
-          toast({ title: "Request Submitted!", description: "Admin will review your payment soon." });
-          setScreenshotFile(null);
-          setScreenshotPreview(null);
-          setPromotionWeeks(1);
-          setTimeout(() => router.push('/admin/promotions'), 1500);
-          return;
-        }
-        console.warn('[Promote] payment_requests failed, trying promotion_requests...');
-      } catch (e) {
-        console.warn('[Promote] payment_requests error:', e);
-      }
 
-      // Method 3: Try promotion_requests table
       try {
-        console.log('[Promote] Trying promotion_requests insert...');
+        console.log('[Promote] Trying promotion_requests...');
         const { data, error } = await supabase
           .from('promotion_requests')
           .insert({
@@ -252,14 +260,14 @@ export default function MergedPromotionPage() {
             user_id: user.uid,
             weeks: promotionWeeks,
             amount: amount,
-            screenshot_url: up.url,
+            screenshot_url: screenshotUrl,
             status: 'pending',
           })
           .select()
           .single();
 
         if (!error) {
-          console.log('[Promote] promotion_requests success:', data);
+          console.log('[Promote] Success:', data);
           toast({ title: "Request Submitted!", description: "Admin will review your payment soon." });
           setScreenshotFile(null);
           setScreenshotPreview(null);
@@ -267,28 +275,27 @@ export default function MergedPromotionPage() {
           setTimeout(() => router.push('/admin/promotions'), 1500);
           return;
         }
-        console.warn('[Promote] promotion_requests failed, trying promotions...');
+        console.warn('[Promote] Failed...');
       } catch (e) {
-        console.warn('[Promote] promotion_requests error:', e);
+        console.warn('[Promote] Error:', e);
       }
 
-      // Method 4: Try promotions table
       try {
-        console.log('[Promote] Trying promotions insert...');
+        console.log('[Promote] Trying promotions...');
         const { data, error } = await supabase
           .from('promotions')
           .insert({
             property_id: property.id,
             agent_id: user.uid,
             weeks: promotionWeeks,
-            screenshot_url: up.url,
+            screenshot_url: screenshotUrl,
             status: 'pending',
           })
           .select()
           .single();
 
         if (!error) {
-          console.log('[Promote] promotions success:', data);
+          console.log('[Promote] Success:', data);
           toast({ title: "Request Submitted!", description: "Admin will review your payment soon." });
           setScreenshotFile(null);
           setScreenshotPreview(null);
@@ -296,9 +303,9 @@ export default function MergedPromotionPage() {
           setTimeout(() => router.push('/admin/promotions'), 1500);
           return;
         }
-        throw new Error('All submission methods failed');
+        throw new Error('All methods failed');
       } catch (e) {
-        console.error('[Promote] All methods failed');
+        console.error('[Promote] All failed');
         throw e;
       }
     } catch (error: any) {
