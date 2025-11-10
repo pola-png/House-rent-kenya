@@ -1,3 +1,4 @@
+
 import { NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 
@@ -40,28 +41,42 @@ export async function POST(req: Request) {
 
     console.log("✓ Form data parsed");
 
-    // Convert file to base64
-    const buffer = await file.arrayBuffer();
-    const base64 = Buffer.from(buffer).toString("base64");
-    const dataUrl = `data:${file.type};base64,${base64}`;
-
-    console.log("✓ File converted to base64");
-
-    // Insert directly to Supabase
+    // Use Supabase Admin for storage and DB operations
     const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey);
+    const filePath = `promotion-screenshots/${userId}/${Date.now()}-${file.name}`;
 
+    // Upload file to Supabase Storage
+    const { error: uploadError } = await supabaseAdmin.storage
+      .from("payment_screenshots")
+      .upload(filePath, file);
+
+    if (uploadError) {
+      console.error("Storage Error:", uploadError);
+      throw new Error(`Storage error: ${uploadError.message}`);
+    }
+    console.log("✓ File uploaded to storage");
+
+    // Get public URL
+    const { data: urlData } = supabaseAdmin.storage
+      .from("payment_screenshots")
+      .getPublicUrl(filePath);
+
+    const screenshotUrl = urlData.publicUrl;
+    console.log("✓ Public URL retrieved:", screenshotUrl);
+
+    // Insert record into the database
     const { data, error: insertError } = await supabaseAdmin
       .from("payment_requests")
       .insert([
         {
-          property_id: propertyId,
-          property_title: propertyTitle || "Untitled",
-          user_id: userId,
+          propertyId: propertyId,
+          propertyTitle: propertyTitle || "Untitled",
+          userId: userId,
+          userEmail: userData.user.email,
           amount: weeks * 5,
-          screenshot_url: dataUrl,
+          paymentScreenshot: screenshotUrl,
           status: "pending",
-          type: `Featured - ${weeks} week${weeks > 1 ? "s" : ""}`,
-          created_at: new Date().toISOString(),
+          promotionType: `Featured - ${weeks} week${weeks > 1 ? "s" : ""}`,
         },
       ])
       .select();
