@@ -7,9 +7,8 @@ const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
 
 export async function POST(req: Request) {
   try {
-    console.log("=== API ENDPOINT HIT ===");
+    console.log("=== API START ===");
 
-    // Get auth token
     const authHeader = req.headers.get("authorization") || "";
     const token = authHeader.replace("Bearer ", "");
 
@@ -17,7 +16,6 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    // Verify user
     const supabase = createClient(supabaseUrl, supabaseAnonKey, {
       auth: { persistSession: false },
     });
@@ -28,9 +26,8 @@ export async function POST(req: Request) {
     }
 
     const userId = userData.user.id;
-    console.log("User verified:", userId);
+    console.log("✓ User verified:", userId);
 
-    // Parse form data
     const formData = await req.formData();
     const file = formData.get("file") as File;
     const propertyId = formData.get("propertyId") as string;
@@ -38,41 +35,22 @@ export async function POST(req: Request) {
     const weeks = parseInt(formData.get("weeks") as string);
 
     if (!file || !propertyId) {
-      return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
+      return NextResponse.json({ error: "Missing fields" }, { status: 400 });
     }
 
-    console.log("File:", file.name, file.size);
+    console.log("✓ Form data parsed");
 
-    // Upload file to Wasabi
-    const wasabiUrl = process.env.NEXT_PUBLIC_WASABI_URL!;
-    const wasabiAccessKey = process.env.WASABI_ACCESS_KEY!;
-    const wasabiSecretKey = process.env.WASABI_SECRET_KEY!;
-    const wasabiBucket = process.env.WASABI_BUCKET!;
-
-    const key = `promotions/${userId}/${Date.now()}-${file.name}`;
+    // Convert file to base64
     const buffer = await file.arrayBuffer();
+    const base64 = Buffer.from(buffer).toString("base64");
+    const dataUrl = `data:${file.type};base64,${base64}`;
 
-    console.log("Uploading to Wasabi...");
+    console.log("✓ File converted to base64");
 
-    const uploadResponse = await fetch(`${wasabiUrl}/${wasabiBucket}/${key}`, {
-      method: "PUT",
-      headers: {
-        "Content-Type": file.type,
-      },
-      body: buffer,
-    });
-
-    if (!uploadResponse.ok) {
-      throw new Error(`Wasabi upload failed: ${uploadResponse.statusText}`);
-    }
-
-    const screenshotUrl = `${wasabiUrl}/${wasabiBucket}/${key}`;
-    console.log("Upload successful:", screenshotUrl);
-
-    // Insert to Supabase
+    // Insert directly to Supabase
     const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey);
 
-    const { error: insertError } = await supabaseAdmin
+    const { data, error: insertError } = await supabaseAdmin
       .from("payment_requests")
       .insert([
         {
@@ -80,21 +58,23 @@ export async function POST(req: Request) {
           property_title: propertyTitle || "Untitled",
           user_id: userId,
           amount: weeks * 5,
-          screenshot_url: screenshotUrl,
+          screenshot_url: dataUrl,
           status: "pending",
           type: `Featured - ${weeks} week${weeks > 1 ? "s" : ""}`,
           created_at: new Date().toISOString(),
         },
-      ]);
+      ])
+      .select();
 
     if (insertError) {
+      console.error("DB Error:", insertError);
       throw new Error(`Database error: ${insertError.message}`);
     }
 
-    console.log("=== SUCCESS ===");
-    return NextResponse.json({ success: true });
+    console.log("✓ Inserted to DB:", data?.[0]?.id);
+    return NextResponse.json({ success: true, id: data?.[0]?.id });
   } catch (error: any) {
-    console.error("=== API ERROR ===", error);
+    console.error("✗ ERROR:", error.message);
     return NextResponse.json(
       { error: error?.message || "Server error" },
       { status: 500 }
