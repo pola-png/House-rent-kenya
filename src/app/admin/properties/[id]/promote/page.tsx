@@ -188,7 +188,22 @@ export default function PromotePage() {
   };
 
   const canSubmit = useMemo(() => {
-    return !!screenshotFile && !!(propertyIdParam || property?.id) && !isSubmitting;
+    const hasFile = !!screenshotFile;
+    const hasProperty = !!(propertyIdParam || property?.id);
+    const notSubmitting = !isSubmitting;
+    const result = hasFile && hasProperty && notSubmitting;
+    
+    console.log('canSubmit check:', {
+      hasFile,
+      hasProperty,
+      notSubmitting,
+      result,
+      propertyIdParam,
+      propertyId: property?.id,
+      isSubmitting
+    });
+    
+    return result;
   }, [screenshotFile, propertyIdParam, property?.id, isSubmitting]);
 
   return (
@@ -279,9 +294,14 @@ export default function PromotePage() {
           </div>
 
           <Button
-            onClick={() => {
-              console.log('Button clicked, canSubmit:', canSubmit);
-              handleSubmit();
+            onClick={(e) => {
+              console.log('Button clicked!', { canSubmit, disabled: !canSubmit });
+              e.preventDefault();
+              if (canSubmit) {
+                handleSubmit();
+              } else {
+                console.log('Button disabled, cannot submit');
+              }
             }}
             disabled={!canSubmit}
             className="w-full"
