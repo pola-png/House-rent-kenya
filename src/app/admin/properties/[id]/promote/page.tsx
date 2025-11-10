@@ -87,8 +87,6 @@ export default function PromotePage() {
       }
       
       alert('Session OK, starting upload');
-    
-    try {
       // Upload screenshot using existing API
       const fileName = `promotions/${user.uid}/${Date.now()}-${screenshotFile.name.replace(/[^a-zA-Z0-9.-]/g, '-')}`;
       
