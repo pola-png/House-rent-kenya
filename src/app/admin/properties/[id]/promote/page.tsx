@@ -12,16 +12,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Loader2, Upload, ArrowLeft } from 'lucide-react';
 import Link from 'next/link';
 import Image from 'next/image';
-
-interface PromotionRow {
-  id: string;
-  property_id?: string;
-  property_title?: string;
-  status?: string;
-  weeks?: number;
-  screenshot_url?: string;
-  created_at?: string;
-}
+import { uploadToWasabi } from '@/lib/wasabi';
 
 export default function PromotePage() {
   const searchParams = useSearchParams();
@@ -37,8 +28,6 @@ export default function PromotePage() {
   const [screenshotFile, setScreenshotFile] = useState<File | null>(null);
   const [screenshotPreview, setScreenshotPreview] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [rows, setRows] = useState<PromotionRow[]>([]);
-  const [loadingList, setLoadingList] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
 
   const weeklyRate = 5;
@@ -48,10 +37,6 @@ export default function PromotePage() {
       fetchProperty();
     }
   }, [propertyIdParam, user]);
-
-  useEffect(() => {
-    if (user) loadList();
-  }, [user]);
 
   useEffect(() => {
     return () => {
@@ -89,15 +74,8 @@ export default function PromotePage() {
   };
 
   const handleSubmit = async () => {
-    console.log('[Promote] Starting submission');
-    
-    if (!screenshotFile) {
-      toast({ variant: "destructive", title: "No Screenshot", description: "Please upload payment screenshot" });
-      return;
-    }
-
-    if (!user || !property) {
-      toast({ variant: "destructive", title: "Error", description: "Missing user or property data" });
+    if (!screenshotFile || !user || !property) {
+      toast({ variant: "destructive", title: "Error", description: "Missing required data" });
       return;
     }
 
@@ -107,8 +85,14 @@ export default function PromotePage() {
     try {
       const amount = promotionWeeks * weeklyRate;
       
-      console.log('[Promote] Submitting...');
-      const { data: insertData, error } = await supabase
+      toast({ title: "Uploading...", description: "Uploading payment screenshot." });
+      
+      const fileName = `promotions/${user.uid}/${Date.now()}-${screenshotFile.name.replace(/[^a-zA-Z0-9.-]/g, '-')}`;
+      const screenshotUrl = await uploadToWasabi(screenshotFile, fileName);
+      
+      console.log('Screenshot uploaded:', screenshotUrl);
+      
+      const { data, error } = await supabase
         .from('payment_requests')
         .insert({
           propertyId: property.id,
@@ -117,48 +101,24 @@ export default function PromotePage() {
           userName: user.displayName || user.email,
           userEmail: user.email,
           amount: amount,
-          paymentScreenshot: 'pending_upload',
+          paymentScreenshot: screenshotUrl,
           status: 'pending',
           promotionType: `Featured - ${promotionWeeks} week${promotionWeeks > 1 ? 's' : ''}`,
         })
         .select()
         .single();
 
-      if (error) {
-        console.error('[Promote] DB Error:', error);
-        throw error;
-      }
+      if (error) throw error;
 
-      console.log('[Promote] DB Success, uploading...');
+      console.log('Success:', data);
       
-      const fileExt = screenshotFile.name.split('.').pop();
-      const fileName = `payment-screenshots/payment-${user.uid}-${Date.now()}.${fileExt}`;
-      
-      const { data: uploadData, error: uploadError } = await supabase.storage
-        .from('user-uploads')
-        .upload(fileName, screenshotFile, { upsert: true });
-
-      if (!uploadError && uploadData) {
-        const { data: { publicUrl } } = supabase.storage
-          .from('user-uploads')
-          .getPublicUrl(uploadData.path);
-        
-        await supabase
-          .from('payment_requests')
-          .update({ paymentScreenshot: publicUrl })
-          .eq('id', insertData.id);
-        
-        console.log('[Promote] Screenshot uploaded:', publicUrl);
-      }
-
-      console.log('[Promote] Success:', insertData);
       toast({ title: "Request Submitted!", description: "Admin will review your payment soon." });
       setScreenshotFile(null);
       setScreenshotPreview(null);
       setPromotionWeeks(1);
       setTimeout(() => router.push('/admin/promotions'), 1500);
     } catch (error: any) {
-      console.error('[Promote] Error:', error);
+      console.error('Error:', error);
       const errorMsg = error?.message || 'Submission failed';
       setSubmitError(errorMsg);
       toast({ variant: "destructive", title: "Submission Failed", description: errorMsg });
@@ -166,25 +126,6 @@ export default function PromotePage() {
       setIsSubmitting(false);
     }
   };
-
-  async function loadList() {
-    try {
-      setLoadingList(true);
-      const { data, error } = await supabase
-        .from('payment_requests')
-        .select('*')
-        .eq('userId', user?.uid)
-        .order('createdAt', { ascending: false })
-        .limit(10);
-
-      if (error) throw error;
-      setRows(data || []);
-    } catch (e) {
-      console.error('[Promotion] list load error', e);
-    } finally {
-      setLoadingList(false);
-    }
-  }
 
   const canSubmit = useMemo(() => {
     return !!screenshotFile && !!(propertyIdParam || property?.id) && !isSubmitting;
@@ -199,145 +140,97 @@ export default function PromotePage() {
         </Link>
       </Button>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <div className="lg:col-span-2">
-          <Card>
-            <CardHeader>
-              <CardTitle>Promote Property</CardTitle>
-              <CardDescription>Boost your property's visibility with featured placement</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-6">
-              {propertyIdParam && loading ? (
-                <div className="flex items-center justify-center py-8">
-                  <Loader2 className="h-8 w-8 animate-spin" />
-                </div>
-              ) : property ? (
-                <div className="p-4 bg-muted rounded-lg">
-                  <h3 className="font-semibold mb-2">{property.title}</h3>
-                  <p className="text-sm text-muted-foreground">
-                    {property.location}, {property.city}
-                  </p>
-                </div>
-              ) : propertyIdParam ? (
-                <div className="p-4 bg-red-100 rounded-lg">
-                  <p className="text-sm">Property not found</p>
-                </div>
-              ) : null}
+      <Card>
+        <CardHeader>
+          <CardTitle>Promote Property</CardTitle>
+          <CardDescription>Boost your property visibility with featured placement</CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-6">
+          {propertyIdParam && loading ? (
+            <div className="flex items-center justify-center py-8">
+              <Loader2 className="h-8 w-8 animate-spin" />
+            </div>
+          ) : property ? (
+            <div className="p-4 bg-muted rounded-lg">
+              <h3 className="font-semibold mb-2">{property.title}</h3>
+              <p className="text-sm text-muted-foreground">
+                {property.location}, {property.city}
+              </p>
+            </div>
+          ) : propertyIdParam ? (
+            <div className="p-4 bg-red-100 rounded-lg">
+              <p className="text-sm">Property not found</p>
+            </div>
+          ) : null}
 
-              <div>
-                <Label htmlFor="weeks">Number of Weeks</Label>
-                <div className="flex items-center space-x-4 mt-2">
-                  <Input
-                    type="range"
-                    id="weeks"
-                    min="1"
-                    max="12"
-                    value={promotionWeeks}
-                    onChange={(e) => setPromotionWeeks(parseInt(e.target.value))}
-                    className="w-full"
-                  />
-                  <span className="text-lg font-semibold w-10">{promotionWeeks}</span>
-                </div>
-                <p className="text-sm text-muted-foreground mt-2">
-                  ${weeklyRate} per week • Total: ${(promotionWeeks * weeklyRate).toFixed(2)}
-                </p>
-              </div>
-
-              <div>
-                <Label htmlFor="screenshot">Payment Screenshot</Label>
-                <div className="mt-2 flex items-center space-x-4">
-                  <Input
-                    id="screenshot"
-                    type="file"
-                    accept="image/*"
-                    onChange={handleScreenshotChange}
-                    className="hidden"
-                  />
-                  <Button
-                    variant="outline"
-                    onClick={() => document.getElementById('screenshot')?.click()}
-                    disabled={isSubmitting}
-                  >
-                    <Upload className="h-4 w-4 mr-2" />
-                    Choose Screenshot
-                  </Button>
-                  {screenshotPreview && (
-                    <Image
-                      src={screenshotPreview}
-                      alt="Screenshot preview"
-                      width={100}
-                      height={100}
-                      className="rounded-md border object-cover"
-                    />
-                  )}
-                </div>
-                {submitError && (
-                  <p className="mt-2 text-sm text-red-600">{submitError}</p>
-                )}
-              </div>
-
-              <Button
-                onClick={handleSubmit}
-                disabled={!canSubmit}
+          <div>
+            <Label htmlFor="weeks">Number of Weeks</Label>
+            <div className="flex items-center space-x-4 mt-2">
+              <Input
+                type="range"
+                id="weeks"
+                min="1"
+                max="12"
+                value={promotionWeeks}
+                onChange={(e) => setPromotionWeeks(parseInt(e.target.value))}
                 className="w-full"
-              >
-                {isSubmitting ? (
-                  <>
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Submitting...
-                  </>
-                ) : (
-                  'Submit Promotion'
-                )}
-              </Button>
-            </CardContent>
-          </Card>
-        </div>
+              />
+              <span className="text-lg font-semibold w-10">{promotionWeeks}</span>
+            </div>
+            <p className="text-sm text-muted-foreground mt-2">
+              ${weeklyRate} per week • Total: ${(promotionWeeks * weeklyRate).toFixed(2)}
+            </p>
+          </div>
 
-        <div>
-          <Card>
-            <CardHeader>
-              <CardTitle>Promotion History</CardTitle>
-              <CardDescription>Your recent promotion requests</CardDescription>
-            </CardHeader>
-            <CardContent>
-              {loadingList ? (
-                <div className="flex items-center justify-center py-8">
-                  <Loader2 className="h-8 w-8 animate-spin" />
-                </div>
-              ) : rows.length > 0 ? (
-                <div className="space-y-4">
-                  {rows.map((row) => (
-                    <div key={row.id} className="border rounded-lg p-4">
-                      <div className="flex justify-between items-start">
-                        <div>
-                          <h4 className="font-medium">
-                            {row.property_title || 'Untitled Property'}
-                          </h4>
-                          <p className="text-sm text-muted-foreground">
-                            {row.weeks} week{row.weeks !== 1 ? 's' : ''}
-                          </p>
-                        </div>
-                        <span className={`px-2 py-1 rounded text-xs ${
-                          row.status === 'approved' ? 'bg-green-100 text-green-800' :
-                          row.status === 'pending' ? 'bg-yellow-100 text-yellow-800' :
-                          'bg-gray-100 text-gray-800'
-                        }`}>
-                          {row.status || 'unknown'}
-                        </span>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              ) : (
-                <div className="py-4 text-center text-muted-foreground">
-                  No promotions found
-                </div>
+          <div>
+            <Label htmlFor="screenshot">Payment Screenshot</Label>
+            <div className="mt-2 flex items-center space-x-4">
+              <Input
+                id="screenshot"
+                type="file"
+                accept="image/*"
+                onChange={handleScreenshotChange}
+                className="hidden"
+              />
+              <Button
+                variant="outline"
+                onClick={() => document.getElementById('screenshot')?.click()}
+                disabled={isSubmitting}
+              >
+                <Upload className="h-4 w-4 mr-2" />
+                Choose Screenshot
+              </Button>
+              {screenshotPreview && (
+                <Image
+                  src={screenshotPreview}
+                  alt="Screenshot preview"
+                  width={100}
+                  height={100}
+                  className="rounded-md border object-cover"
+                />
               )}
-            </CardContent>
-          </Card>
-        </div>
-      </div>
+            </div>
+            {submitError && (
+              <p className="mt-2 text-sm text-red-600">{submitError}</p>
+            )}
+          </div>
+
+          <Button
+            onClick={handleSubmit}
+            disabled={!canSubmit}
+            className="w-full"
+          >
+            {isSubmitting ? (
+              <>
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                Submitting...
+              </>
+            ) : (
+              'Submit Promotion'
+            )}
+          </Button>
+        </CardContent>
+      </Card>
     </div>
   );
 }

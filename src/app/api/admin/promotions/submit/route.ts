@@ -1,60 +1,73 @@
 
+import { NextResponse } from 'next/server';
 import { createRouteHandlerClient } from '@supabase/auth-helpers-nextjs';
 import { cookies } from 'next/headers';
-import { NextResponse } from 'next/server';
+import AWS from 'aws-sdk';
+
+const s3 = new AWS.S3({
+  endpoint: process.env.WASABI_ENDPOINT,
+  accessKeyId: process.env.WASABI_ACCESS_KEY,
+  secretAccessKey: process.env.WASABI_SECRET_KEY,
+  region: process.env.WASABI_REGION || 'us-east-1',
+  s3ForcePathStyle: true,
+});
 
 export async function POST(request: Request) {
   const supabase = createRouteHandlerClient({ cookies });
   const { data: { user } } = await supabase.auth.getUser();
 
   if (!user) {
-    return new NextResponse(JSON.stringify({ error: 'Unauthorized' }), {
-      status: 401,
-      headers: { 'Content-Type': 'application/json' },
-    });
+    return new NextResponse('Unauthorized', { status: 401 });
   }
 
   try {
-    const { propertyId, propertyTitle, weeks, screenshotUrl } = await request.json();
+    const formData = await request.formData();
+    const file = formData.get('file') as File;
+    const propertyId = formData.get('propertyId') as string;
+    const propertyTitle = formData.get('propertyTitle') as string;
+    const userId = formData.get('userId') as string;
+    const userName = formData.get('userName') as string;
+    const userEmail = formData.get('userEmail') as string;
+    const amount = parseFloat(formData.get('amount') as string);
+    const weeks = parseInt(formData.get('weeks') as string);
 
-    if (!propertyId || !weeks || !screenshotUrl) {
-      return new NextResponse(JSON.stringify({ error: 'Missing required fields' }), {
-        status: 400,
-        headers: { 'Content-Type': 'application/json' },
-      });
+    if (!file || !propertyId) {
+      return new NextResponse('Missing required fields', { status: 400 });
     }
 
-    const weeklyRate = 5;
-    const amount = weeks * weeklyRate;
+    const buffer = Buffer.from(await file.arrayBuffer());
+    const key = `promotions/${userId}/${Date.now()}-${file.name}`;
+
+    await s3.putObject({
+      Bucket: process.env.WASABI_BUCKET_NAME!,
+      Key: key,
+      Body: buffer,
+      ContentType: file.type,
+    }).promise();
+
+    const screenshotUrl = `${process.env.WASABI_ENDPOINT}/${process.env.WASABI_BUCKET_NAME}/${key}`;
 
     const { data, error } = await supabase
       .from('payment_requests')
       .insert({
-        property_id: propertyId,
-        property_title: propertyTitle || 'Untitled',
-        user_id: user.id,
-        user_name: user.user_metadata?.full_name || user.email,
-        user_email: user.email,
-        amount: amount,
-        payment_screenshot_url: screenshotUrl,
+        propertyId,
+        propertyTitle: propertyTitle || 'Untitled',
+        userId,
+        userName,
+        userEmail,
+        amount,
+        paymentScreenshot: screenshotUrl,
         status: 'pending',
-        type: 'promotion',
-        details: `Featured - ${weeks} week${weeks > 1 ? 's' : ''}`,
+        promotionType: `Featured - ${weeks} week${weeks > 1 ? 's' : ''}`,
       })
       .select()
       .single();
 
-    if (error) {
-      console.error('Supabase insert error:', error);
-      throw error;
-    }
+    if (error) throw error;
 
     return NextResponse.json(data);
   } catch (error: any) {
     console.error('API Error:', error);
-    return new NextResponse(JSON.stringify({ error: error.message }), {
-      status: 500,
-      headers: { 'Content-Type': 'application/json' },
-    });
+    return new NextResponse(error.message, { status: 500 });
   }
 }
