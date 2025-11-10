@@ -74,11 +74,15 @@ export default function PromotePage() {
   };
 
   const handleSubmit = async () => {
+    console.log('handleSubmit called');
+    
     if (!screenshotFile || !user || !property) {
+      console.log('Missing data:', { screenshotFile: !!screenshotFile, user: !!user, property: !!property });
       toast({ variant: "destructive", title: "Error", description: "Missing required data" });
       return;
     }
 
+    console.log('Setting isSubmitting to true');
     setIsSubmitting(true);
     setSubmitError(null);
     
@@ -98,7 +102,44 @@ export default function PromotePage() {
       const fileName = `promotions/${user.uid}/${Date.now()}-${screenshotFile.name.replace(/[^a-zA-Z0-9.-]/g, '-')}`;
       console.log('Upload path:', fileName);
       
-      const screenshotUrl = await uploadToWasabi(screenshotFile, fileName);
+      // Test API first
+      console.log('Testing upload API...');
+      const testResponse = await fetch('/api/upload', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          key: fileName,
+          contentType: screenshotFile.type,
+          contentLength: screenshotFile.size,
+        }),
+      });
+      
+      console.log('API test response:', testResponse.status, testResponse.statusText);
+      
+      if (!testResponse.ok) {
+        const errorData = await testResponse.json().catch(() => ({}));
+        console.log('API error:', errorData);
+        throw new Error(`Upload API failed: ${errorData.error || testResponse.statusText}`);
+      }
+      
+      const uploadData = await testResponse.json();
+      console.log('Upload data received:', uploadData);
+      
+      // Now do the actual upload
+      console.log('Uploading to Wasabi...');
+      const putResponse = await fetch(uploadData.uploadUrl, {
+        method: 'PUT',
+        headers: uploadData.uploadHeaders || {},
+        body: screenshotFile,
+      });
+      
+      console.log('PUT response:', putResponse.status, putResponse.statusText);
+      
+      if (!putResponse.ok) {
+        throw new Error(`File upload failed: ${putResponse.statusText}`);
+      }
+      
+      const screenshotUrl = uploadData.objectPath;
       console.log('Screenshot uploaded successfully:', screenshotUrl);
       
       toast({ title: "Saving...", description: "Saving promotion request." });
@@ -141,6 +182,7 @@ export default function PromotePage() {
       setSubmitError(errorMsg);
       toast({ variant: "destructive", title: "Submission Failed", description: errorMsg });
     } finally {
+      console.log('Setting isSubmitting to false');
       setIsSubmitting(false);
     }
   };
@@ -237,7 +279,10 @@ export default function PromotePage() {
           </div>
 
           <Button
-            onClick={handleSubmit}
+            onClick={() => {
+              console.log('Button clicked, canSubmit:', canSubmit);
+              handleSubmit();
+            }}
             disabled={!canSubmit}
             className="w-full"
           >
