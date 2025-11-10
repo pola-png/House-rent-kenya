@@ -108,19 +108,18 @@ export default function PromotePage() {
       const amount = promotionWeeks * weeklyRate;
       
       console.log('[Promote] Submitting...');
-      const { data, error } = await supabase
+      const { data: insertData, error } = await supabase
         .from('payment_requests')
         .insert({
-          property_id: property.id,
-          property_title: property.title || 'Untitled',
-          user_id: user.uid,
-          user_name: user.displayName || user.email,
-          user_email: user.email,
+          propertyId: property.id,
+          propertyTitle: property.title || 'Untitled',
+          userId: user.uid,
+          userName: user.displayName || user.email,
+          userEmail: user.email,
           amount: amount,
-          payment_screenshot_url: 'pending_upload',
+          paymentScreenshot: 'pending_upload',
           status: 'pending',
-          type: 'promotion',
-          details: `Featured - ${promotionWeeks} week${promotionWeeks > 1 ? 's' : ''}`,
+          promotionType: `Featured - ${promotionWeeks} week${promotionWeeks > 1 ? 's' : ''}`,
         })
         .select()
         .single();
@@ -130,7 +129,29 @@ export default function PromotePage() {
         throw error;
       }
 
-      console.log('[Promote] Success:', data);
+      console.log('[Promote] DB Success, uploading...');
+      
+      const fileExt = screenshotFile.name.split('.').pop();
+      const fileName = `payment-screenshots/payment-${user.uid}-${Date.now()}.${fileExt}`;
+      
+      const { data: uploadData, error: uploadError } = await supabase.storage
+        .from('user-uploads')
+        .upload(fileName, screenshotFile, { upsert: true });
+
+      if (!uploadError && uploadData) {
+        const { data: { publicUrl } } = supabase.storage
+          .from('user-uploads')
+          .getPublicUrl(uploadData.path);
+        
+        await supabase
+          .from('payment_requests')
+          .update({ paymentScreenshot: publicUrl })
+          .eq('id', insertData.id);
+        
+        console.log('[Promote] Screenshot uploaded:', publicUrl);
+      }
+
+      console.log('[Promote] Success:', insertData);
       toast({ title: "Request Submitted!", description: "Admin will review your payment soon." });
       setScreenshotFile(null);
       setScreenshotPreview(null);
@@ -152,9 +173,8 @@ export default function PromotePage() {
       const { data, error } = await supabase
         .from('payment_requests')
         .select('*')
-        .eq('user_id', user?.uid)
-        .eq('type', 'promotion')
-        .order('created_at', { ascending: false })
+        .eq('userId', user?.uid)
+        .order('createdAt', { ascending: false })
         .limit(10);
 
       if (error) throw error;
