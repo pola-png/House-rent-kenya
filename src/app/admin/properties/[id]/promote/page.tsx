@@ -4,7 +4,6 @@ import { useSearchParams, useRouter } from 'next/navigation';
 import { useAuth } from '@/hooks/use-auth-supabase';
 import { supabase } from '@/lib/supabase';
 import { useEffect, useMemo, useState } from 'react';
-import { useAutoRetry } from '@/hooks/use-auto-retry';
 import { useToast } from '@/hooks/use-toast';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
@@ -17,18 +16,14 @@ import Image from 'next/image';
 interface PromotionRow {
   id: string;
   property_id?: string;
-  propertyId?: string;
   property_title?: string;
-  propertyTitle?: string;
   status?: string;
   weeks?: number;
   screenshot_url?: string;
-  screenshotUrl?: string;
   created_at?: string;
-  createdAt?: string;
 }
 
-export default function MergedPromotionPage() {
+export default function PromotePage() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const { user } = useAuth();
@@ -44,29 +39,23 @@ export default function MergedPromotionPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [rows, setRows] = useState<PromotionRow[]>([]);
   const [loadingList, setLoadingList] = useState(false);
-  const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [submitError, setSubmitError] = useState<string | null>(null);
-  const [retryTick, retryNow] = useAutoRetry(loadingList || isSubmitting || !user, [user]);
 
   const weeklyRate = 5;
 
-  function log(...args: any[]) {
-    console.log('[Promotion]', ...args);
-  }
-
-  // Fetch property if propertyId is in URL
   useEffect(() => {
     if (propertyIdParam && user) {
       fetchProperty();
     }
   }, [propertyIdParam, user]);
 
-  // Add this useEffect to clean up object URLs
+  useEffect(() => {
+    if (user) loadList();
+  }, [user]);
+
   useEffect(() => {
     return () => {
-      if (screenshotPreview) {
-        URL.revokeObjectURL(screenshotPreview);
-      }
+      if (screenshotPreview) URL.revokeObjectURL(screenshotPreview);
     };
   }, [screenshotPreview]);
 
@@ -95,66 +84,20 @@ export default function MergedPromotionPage() {
     if (file) {
       setScreenshotFile(file);
       setScreenshotPreview(URL.createObjectURL(file));
+      setSubmitError(null);
     }
   };
 
-  async function presignWasabi(key: string, contentType: string, contentLength: number) {
-    log('presign start', { key, contentType, contentLength });
-    const res = await fetch('/api/upload', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ key, contentType, contentLength }),
-    });
-    if (!res.ok) throw new Error(await res.text());
-    const data = (await res.json()) as { url: string };
-    log('presign ok', { key });
-    return data;
-  }
-
-  async function uploadToWasabi(file: File) {
-    const ext = file.name.split('.').pop() || 'jpg';
-    const key = `promotions/${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`;
-    const { url } = await presignWasabi(key, file.type || 'image/jpeg', file.size);
-    log('wasabi PUT start', { key });
-    const put = await fetch(url, {
-      method: 'PUT',
-      body: file,
-      headers: { 'Content-Type': file.type || 'application/octet-stream' },
-    });
-    if (!put.ok) throw new Error(`Wasabi PUT failed: ${put.status}`);
-    log('wasabi PUT success', { key, status: put.status });
-    const publicUrl = url.split('?')[0];
-    return { key, url: publicUrl };
-  }
-
-  async function fetchWithTimeout(
-    input: RequestInfo | URL,
-    init: RequestInit & { timeoutMs?: number } = {}
-  ) {
-    const { timeoutMs = 30000, ...rest } = init;
-    const controller = new AbortController();
-    const id = setTimeout(() => controller.abort(), timeoutMs);
-    try {
-      // @ts-ignore
-      const res: Response = await fetch(input, { ...rest, signal: controller.signal });
-      return res;
-    } finally {
-      clearTimeout(id);
-    }
-  }
-
   const handleSubmit = async () => {
-    console.log("================== PROMOTION SUBMISSION START ==================");
-    console.log('[Promote] Submit started', { screenshotFile: !!screenshotFile, user: !!user, property: !!property });
+    console.log('[Promote] Starting submission');
     
     if (!screenshotFile) {
-      console.warn('[Promote] No screenshot file');
       toast({ variant: "destructive", title: "No Screenshot", description: "Please upload payment screenshot" });
       return;
     }
 
     if (!user || !property) {
-      console.warn('[Promote] Missing user or property', { user: !!user, property: !!property });
+      toast({ variant: "destructive", title: "Error", description: "Missing user or property data" });
       return;
     }
 
@@ -162,212 +105,66 @@ export default function MergedPromotionPage() {
     setSubmitError(null);
     
     try {
-      const weeklyRate = 5;
       const amount = promotionWeeks * weeklyRate;
-      let screenshotUrl = 'pending_upload';
       
-      try {
-        console.log('[Promote] Uploading screenshot...', { fileName: screenshotFile.name, size: screenshotFile.size });
-        toast({ title: "Uploading...", description: "Sending payment screenshot." });
-        const uploadPromise = uploadToWasabi(screenshotFile);
-        const timeoutPromise = new Promise((_, reject) => 
-          setTimeout(() => reject(new Error('Upload timeout')), 8000)
-        );
-        const up = await Promise.race([uploadPromise, timeoutPromise]) as { key: string; url: string };
-        screenshotUrl = up.url;
-        console.log('[Promote] Upload success:', up);
-      } catch (uploadError) {
-        console.warn('[Promote] Upload failed, continuing:', uploadError);
-      }
+      console.log('[Promote] Inserting to database...');
+      const { data, error } = await supabase
+        .from('payment_requests')
+        .insert({
+          property_id: property.id,
+          property_title: property.title || 'Untitled',
+          user_id: user.uid,
+          user_name: user.displayName || user.email,
+          user_email: user.email,
+          amount: amount,
+          payment_screenshot_url: 'pending_upload',
+          status: 'pending',
+          type: 'promotion',
+          details: `Featured - ${promotionWeeks} week${promotionWeeks > 1 ? 's' : ''}`,
+        })
+        .select()
+        .single();
 
-      const { data: sess } = await supabase.auth.getSession();
-      const token = sess?.session?.access_token || null;
+      if (error) throw error;
 
-      try {
-        console.log('[Promote] Trying direct insert...');
-        const { data, error } = await supabase
-          .from('payment_requests')
-          .insert({
-            property_id: property.id,
-            property_title: property.title || 'Untitled',
-            user_id: user.uid,
-            user_name: user.displayName || user.email,
-            user_email: user.email,
-            amount: amount,
-            payment_screenshot_url: screenshotUrl,
-            status: 'pending',
-            type: 'promotion',
-            details: `Featured - ${promotionWeeks} week${promotionWeeks > 1 ? 's' : ''}`,
-          })
-          .select()
-          .single();
-
-        if (!error) {
-          console.log('[Promote] Success:', data);
-          toast({ title: "Request Submitted!", description: "Admin will review your payment soon." });
-          setScreenshotFile(null);
-          setScreenshotPreview(null);
-          setPromotionWeeks(1);
-          setTimeout(() => router.push('/admin/promotions'), 1500);
-          return;
-        }
-        console.warn('[Promote] Failed, trying API...');
-      } catch (directError) {
-        console.warn('[Promote] Error:', directError);
-      }
-
-      try {
-        console.log('[Promote] Trying API...');
-        const res = await fetchWithTimeout('/api/admin/promotions/submit', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            ...(token ? { Authorization: `Bearer ${token}` } : {}),
-          },
-          body: JSON.stringify({
-            propertyId: property.id,
-            propertyTitle: property.title,
-            weeks: promotionWeeks,
-            screenshotUrl: screenshotUrl,
-          }),
-          timeoutMs: 10000,
-        });
-
-        if (res.ok) {
-          const json = await res.json();
-          console.log('[Promote] API success:', json);
-          toast({ title: "Request Submitted!", description: "Admin will review your payment soon." });
-          setScreenshotFile(null);
-          setScreenshotPreview(null);
-          setPromotionWeeks(1);
-          setTimeout(() => router.push('/admin/promotions'), 1500);
-          return;
-        }
-        console.warn('[Promote] API failed...');
-      } catch (apiError) {
-        console.warn('[Promote] API error:', apiError);
-      }
-
-
-
-      try {
-        console.log('[Promote] Trying promotion_requests...');
-        const { data, error } = await supabase
-          .from('promotion_requests')
-          .insert({
-            property_id: property.id,
-            property_title: property.title || 'Untitled',
-            user_id: user.uid,
-            weeks: promotionWeeks,
-            amount: amount,
-            screenshot_url: screenshotUrl,
-            status: 'pending',
-          })
-          .select()
-          .single();
-
-        if (!error) {
-          console.log('[Promote] Success:', data);
-          toast({ title: "Request Submitted!", description: "Admin will review your payment soon." });
-          setScreenshotFile(null);
-          setScreenshotPreview(null);
-          setPromotionWeeks(1);
-          setTimeout(() => router.push('/admin/promotions'), 1500);
-          return;
-        }
-        console.warn('[Promote] Failed...');
-      } catch (e) {
-        console.warn('[Promote] Error:', e);
-      }
-
-      try {
-        console.log('[Promote] Trying promotions...');
-        const { data, error } = await supabase
-          .from('promotions')
-          .insert({
-            property_id: property.id,
-            agent_id: user.uid,
-            weeks: promotionWeeks,
-            screenshot_url: screenshotUrl,
-            status: 'pending',
-          })
-          .select()
-          .single();
-
-        if (!error) {
-          console.log('[Promote] Success:', data);
-          toast({ title: "Request Submitted!", description: "Admin will review your payment soon." });
-          setScreenshotFile(null);
-          setScreenshotPreview(null);
-          setPromotionWeeks(1);
-          setTimeout(() => router.push('/admin/promotions'), 1500);
-          return;
-        }
-        throw new Error('All methods failed');
-      } catch (e) {
-        console.error('[Promote] All failed');
-        throw e;
-      }
+      console.log('[Promote] Success:', data);
+      toast({ title: "Request Submitted!", description: "Admin will review your payment soon." });
+      setScreenshotFile(null);
+      setScreenshotPreview(null);
+      setPromotionWeeks(1);
+      setTimeout(() => router.push('/admin/promotions'), 1500);
     } catch (error: any) {
-      console.error('[Promote] Full error:', error);
-      const errorMsg = error?.message || error?.details || JSON.stringify(error);
-      console.error('[Promote] Error message:', errorMsg);
+      console.error('[Promote] Error:', error);
+      const errorMsg = error?.message || 'Submission failed';
       setSubmitError(errorMsg);
       toast({ variant: "destructive", title: "Submission Failed", description: errorMsg });
     } finally {
       setIsSubmitting(false);
-      console.log("[Promote] Submission process finished.");
-      console.log("================== PROMOTION SUBMISSION END ==================");
     }
   };
-
-  async function fetchFirstAvailable(table: string, filter?: (q: any) => any) {
-    let q: any = supabase.from(table).select('*').order('created_at', { ascending: false }).limit(50);
-    if (filter) q = filter(q);
-    const { data, error } = await q;
-    if (error) throw error;
-    return data as PromotionRow[];
-  }
 
   async function loadList() {
     try {
       setLoadingList(true);
-      setErrorMsg(null);
+      const { data, error } = await supabase
+        .from('payment_requests')
+        .select('*')
+        .eq('user_id', user?.uid)
+        .eq('type', 'promotion')
+        .order('created_at', { ascending: false })
+        .limit(10);
 
-      const tries: Array<() => Promise<PromotionRow[]>> = [
-        () => fetchFirstAvailable('promotions', (q) => (user?.uid ? q.eq('agent_id', user.uid) : q)),
-        () => fetchFirstAvailable('promotion_requests', (q) => (user?.uid ? q.eq('user_id', user.uid) : q)),
-        () =>
-          fetchFirstAvailable('payment_requests', (q) =>
-            (user?.uid ? q.eq('user_id', user.uid) : q).eq('type', 'promotion')
-          ),
-      ];
-
-      for (const t of tries) {
-        try {
-          const result = await t();
-          setRows(result || []);
-          return;
-        } catch (_) {}
-      }
-      setRows([]);
+      if (error) throw error;
+      setRows(data || []);
     } catch (e) {
       console.error('[Promotion] list load error', e);
-      setErrorMsg(String((e as any)?.message || e));
     } finally {
       setLoadingList(false);
     }
   }
 
-  useEffect(() => {
-    loadList();
-  }, [retryTick, user?.uid]);
-
   const canSubmit = useMemo(() => {
-    const hasFile = !!screenshotFile;
-    const hasProperty = !!(propertyIdParam || property?.id);
-    const notSubmitting = !isSubmitting;
-    return hasFile && hasProperty && notSubmitting;
+    return !!screenshotFile && !!(propertyIdParam || property?.id) && !isSubmitting;
   }, [screenshotFile, propertyIdParam, property?.id, isSubmitting]);
 
   return (
@@ -380,7 +177,6 @@ export default function MergedPromotionPage() {
       </Button>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Promotion Form */}
         <div className="lg:col-span-2">
           <Card>
             <CardHeader>
@@ -425,7 +221,7 @@ export default function MergedPromotionPage() {
               </div>
 
               <div>
-                <Label htmlFor="screenshot">Screenshot</Label>
+                <Label htmlFor="screenshot">Payment Screenshot</Label>
                 <div className="mt-2 flex items-center space-x-4">
                   <Input
                     id="screenshot"
@@ -459,7 +255,7 @@ export default function MergedPromotionPage() {
 
               <Button
                 onClick={handleSubmit}
-                disabled={!canSubmit || isSubmitting}
+                disabled={!canSubmit}
                 className="w-full"
               >
                 {isSubmitting ? (
@@ -475,7 +271,6 @@ export default function MergedPromotionPage() {
           </Card>
         </div>
 
-        {/* Promotion History */}
         <div>
           <Card>
             <CardHeader>
@@ -487,8 +282,6 @@ export default function MergedPromotionPage() {
                 <div className="flex items-center justify-center py-8">
                   <Loader2 className="h-8 w-8 animate-spin" />
                 </div>
-              ) : errorMsg ? (
-                <div className="py-4 text-center text-red-600">{errorMsg}</div>
               ) : rows.length > 0 ? (
                 <div className="space-y-4">
                   {rows.map((row) => (
@@ -496,7 +289,7 @@ export default function MergedPromotionPage() {
                       <div className="flex justify-between items-start">
                         <div>
                           <h4 className="font-medium">
-                            {row.property_title || row.propertyTitle || 'Untitled Property'}
+                            {row.property_title || 'Untitled Property'}
                           </h4>
                           <p className="text-sm text-muted-foreground">
                             {row.weeks} week{row.weeks !== 1 ? 's' : ''}
@@ -510,17 +303,6 @@ export default function MergedPromotionPage() {
                           {row.status || 'unknown'}
                         </span>
                       </div>
-                      {(row.screenshot_url || row.screenshotUrl) ? (
-                        <div className="mt-2">
-                          <Image
-                            src={row.screenshot_url || row.screenshotUrl || ''}
-                            alt="Promotion screenshot"
-                            width={100}
-                            height={100}
-                            className="rounded-md border object-cover"
-                          />
-                        </div>
-                      ) : null}
                     </div>
                   ))}
                 </div>
