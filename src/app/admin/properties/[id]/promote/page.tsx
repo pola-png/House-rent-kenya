@@ -106,29 +106,8 @@ export default function PromotePage() {
     
     try {
       const amount = promotionWeeks * weeklyRate;
-      let screenshotUrl = 'pending_upload';
       
-      try {
-        console.log('[Promote] Uploading to Supabase Storage...');
-        const fileExt = screenshotFile.name.split('.').pop();
-        const fileName = `${user.uid}/${Date.now()}.${fileExt}`;
-        
-        const { data: uploadData, error: uploadError } = await supabase.storage
-          .from('payment-screenshots')
-          .upload(fileName, screenshotFile, { upsert: false });
-
-        if (!uploadError && uploadData) {
-          const { data: { publicUrl } } = supabase.storage
-            .from('payment-screenshots')
-            .getPublicUrl(uploadData.path);
-          screenshotUrl = publicUrl;
-          console.log('[Promote] Upload success:', publicUrl);
-        }
-      } catch (uploadErr) {
-        console.warn('[Promote] Upload failed, continuing:', uploadErr);
-      }
-      
-      console.log('[Promote] Inserting to database...');
+      console.log('[Promote] Submitting...');
       const { data, error } = await supabase
         .from('payment_requests')
         .insert({
@@ -138,7 +117,7 @@ export default function PromotePage() {
           user_name: user.displayName || user.email,
           user_email: user.email,
           amount: amount,
-          payment_screenshot_url: screenshotUrl,
+          payment_screenshot_url: 'pending_upload',
           status: 'pending',
           type: 'promotion',
           details: `Featured - ${promotionWeeks} week${promotionWeeks > 1 ? 's' : ''}`,
@@ -146,7 +125,10 @@ export default function PromotePage() {
         .select()
         .single();
 
-      if (error) throw error;
+      if (error) {
+        console.error('[Promote] DB Error:', error);
+        throw error;
+      }
 
       console.log('[Promote] Success:', data);
       toast({ title: "Request Submitted!", description: "Admin will review your payment soon." });
