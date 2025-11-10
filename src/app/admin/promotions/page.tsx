@@ -1,13 +1,14 @@
 "use client";
 
 import { useState } from "react";
+import { useToast } from "@/hooks/use-toast";
+import { Input } from "@/components/ui/input";
+import { useAuth } from "@/hooks/use-auth-supabase";
+import { Label } from "@/components/ui/label";
+import { Loader2, Upload } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { useToast } from "@/hooks/use-toast";
-import { useAuth } from "@/hooks/use-auth-supabase";
-import { Loader2, Upload } from "lucide-react";
+import { supabase } from "@/lib/supabase";
 
 export default function PromotionsPage() {
   const { user, loading: authLoading } = useAuth();
@@ -18,65 +19,62 @@ export default function PromotionsPage() {
   const [file, setFile] = useState<File | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState("");
+  const weeklyRate = 5;
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setFile(e.target.files?.[0] || null);
   };
 
   const handleSubmit = async () => {
-    console.log("=== SUBMIT START ===");
     setSubmitError("");
     
     if (!user) {
-      console.log("No user");
       setSubmitError("You must be logged in");
       return;
     }
 
     if (!file) {
-      console.log("No file");
       setSubmitError("Please attach a screenshot");
       return;
     }
     if (!propertyId.trim()) {
-      console.log("No propertyId");
       setSubmitError("Please provide a property ID");
       return;
     }
 
     setSubmitting(true);
     try {
-      console.log("Getting auth token...");
-      const { data: { session } } = await (await import("@/lib/supabase")).supabase.auth.getSession();
-      const token = session?.access_token;
-      
-      if (!token) {
-        throw new Error("No auth token");
-      }
+      toast({ title: "Uploading...", description: "Sending payment screenshot." });
 
-      console.log("Creating FormData...");
-      const formData = new FormData();
-      formData.append("file", file);
-      formData.append("propertyId", propertyId.trim());
-      formData.append("propertyTitle", propertyTitle.trim() || "Untitled");
-      formData.append("weeks", weeks.toString());
+      const fileExt = file.name.split('.').pop();
+      const fileName = `payment-${user.uid}-${Date.now()}.${fileExt}`;
+      const filePath = `payment-screenshots/${fileName}`;
 
-      console.log("Calling API endpoint...");
-      const response = await fetch("/api/admin/promotions/submit", {
-        method: "POST",
-        headers: {
-          "Authorization": `Bearer ${token}`,
-        },
-        body: formData,
-      });
+      const { error: uploadError } = await supabase.storage
+        .from('user-uploads')
+        .upload(filePath, file, { upsert: true });
 
-      console.log("Response status:", response.status);
-      const data = await response.json();
-      console.log("Response data:", data);
+      if (uploadError) throw uploadError;
 
-      if (!response.ok) {
-        throw new Error(data.error || "Failed to submit");
-      }
+      const { data: { publicUrl } } = supabase.storage
+        .from('user-uploads')
+        .getPublicUrl(filePath);
+
+      const { error: insertError } = await supabase
+        .from('payment_requests')
+        .insert([{
+          propertyId: propertyId.trim(),
+          propertyTitle: propertyTitle.trim() || "Untitled",
+          userId: user.uid,
+          userName: user.displayName || user.email,
+          userEmail: user.email,
+          amount: weeks * weeklyRate,
+          paymentScreenshot: publicUrl,
+          status: 'pending',
+          promotionType: `Featured - ${weeks} week${weeks > 1 ? 's' : ''}`,
+        }]);
+
+      if (insertError) throw insertError;
 
       toast({ title: "Success", description: "Promotion request submitted" });
       setFile(null);
@@ -85,8 +83,9 @@ export default function PromotionsPage() {
       setPropertyTitle("");
     } catch (error: any) {
       console.error("=== ERROR ===", error);
-      setSubmitError(error?.message || "Submission failed");
-      toast({ variant: "destructive", title: "Error", description: error?.message });
+      const errorMessage = error.message || "Submission failed";
+      setSubmitError(errorMessage);
+      toast({ variant: "destructive", title: "Error", description: errorMessage });
     } finally {
       setSubmitting(false);
     }
@@ -157,7 +156,7 @@ export default function PromotionsPage() {
               value={weeks}
               onChange={(e) => setWeeks(Math.max(1, parseInt(e.target.value) || 1))}
             />
-            <p className="text-xs text-muted-foreground">KES {weeks * 5} total</p>
+            <p className="text-xs text-muted-foreground">KES {weeks * weeklyRate} total</p>
           </div>
 
           <div className="space-y-2">
