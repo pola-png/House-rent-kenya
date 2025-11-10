@@ -6,9 +6,10 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
-import { supabase } from "@/lib/supabase";
+import { uploadToWasabi } from "@/lib/wasabi";
 import { useAuth } from "@/hooks/use-auth-supabase";
 import { Loader2, Upload } from "lucide-react";
+import { supabase } from "@/lib/supabase";
 
 export default function PromotionsPage() {
   const { user, loading: authLoading } = useAuth();
@@ -20,21 +21,15 @@ export default function PromotionsPage() {
   const [submitting, setSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState("");
 
-  useEffect(() => {
-    console.log('Auth state:', { user: user?.uid, loading: authLoading });
-  }, [user, authLoading]);
-
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setFile(e.target.files?.[0] || null);
   };
 
   const handleSubmit = async () => {
-    console.log('handleSubmit called', { user: user?.uid, file: file?.name });
     setSubmitError("");
     
     if (!user) {
       setSubmitError("You must be logged in");
-      toast({ variant: "destructive", title: "Error", description: "Please log in first" });
       return;
     }
 
@@ -42,60 +37,40 @@ export default function PromotionsPage() {
       setSubmitError("Please attach a screenshot");
       return;
     }
-    if (!propertyId) {
+    if (!propertyId.trim()) {
       setSubmitError("Please provide a property ID");
       return;
     }
 
     setSubmitting(true);
     try {
-      console.log('=== STARTING UPLOAD ===', { fileName: file.name, size: file.size, userId: user.uid });
-      
-      const fileExt = file.name.split('.').pop();
-      const fileName = `promotion-${propertyId}-${Date.now()}.${fileExt}`;
-      const filePath = `promotions/${fileName}`;
+      // Upload to Wasabi
+      const key = `promotions/${user.uid}/${Date.now()}-${file.name}`;
+      const screenshotUrl = await uploadToWasabi(file, { key });
 
-      console.log('Uploading to path:', filePath);
-
-      const { error: uploadError, data: uploadData } = await supabase.storage
-        .from('user-uploads')
-        .upload(filePath, file, { upsert: true });
-
-      console.log('Upload response:', { uploadError, uploadData });
-      if (uploadError) throw new Error(`Upload failed: ${uploadError.message}`);
-
-      const { data: { publicUrl } } = supabase.storage
-        .from('user-uploads')
-        .getPublicUrl(filePath);
-
-      console.log('Public URL:', publicUrl);
-
-      console.log('Inserting to payment_requests...');
-
-      const { error: insertError, data: insertData } = await supabase
+      // Insert to Supabase
+      const { error } = await supabase
         .from('payment_requests')
         .insert([{
-          propertyId,
-          propertyTitle: propertyTitle || 'Untitled',
+          propertyId: propertyId.trim(),
+          propertyTitle: propertyTitle.trim() || 'Untitled',
           userId: user.uid,
           amount: weeks * 5,
-          paymentScreenshot: publicUrl,
+          paymentScreenshot: screenshotUrl,
           status: 'pending',
           promotionType: `Featured - ${weeks} week${weeks > 1 ? 's' : ''}`,
           createdAt: new Date().toISOString()
         }]);
 
-      console.log('Insert response:', { insertError, insertData });
-      if (insertError) throw new Error(`Database insert failed: ${insertError.message}`);
+      if (error) throw error;
 
-      console.log('=== SUCCESS ===');
       toast({ title: "Success", description: "Promotion request submitted" });
       setFile(null);
       setWeeks(1);
       setPropertyId("");
       setPropertyTitle("");
     } catch (error: any) {
-      console.error('=== ERROR ===', error);
+      console.error('Error:', error);
       setSubmitError(error?.message || "Submission failed");
       toast({ variant: "destructive", title: "Error", description: error?.message });
     } finally {
@@ -118,6 +93,18 @@ export default function PromotionsPage() {
     );
   }
 
+  if (!user) {
+    return (
+      <div className="container mx-auto p-6 max-w-2xl">
+        <Card>
+          <CardContent className="p-6 text-center">
+            <p className="text-muted-foreground">Please log in to submit a promotion request</p>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
   return (
     <div className="container mx-auto p-6 max-w-2xl">
       <Card>
@@ -126,14 +113,8 @@ export default function PromotionsPage() {
           <CardDescription>Submit a promotion request for your property</CardDescription>
         </CardHeader>
         <CardContent className="space-y-6">
-          {!user && (
-            <div className="p-3 bg-yellow-50 border border-yellow-200 rounded text-sm text-yellow-800">
-              Please log in to submit a promotion request
-            </div>
-          )}
-
           <div className="space-y-2">
-            <Label htmlFor="propertyId">Property ID</Label>
+            <Label htmlFor="propertyId">Property ID *</Label>
             <Input
               id="propertyId"
               value={propertyId}
@@ -153,29 +134,32 @@ export default function PromotionsPage() {
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="weeks">Number of Weeks</Label>
+            <Label htmlFor="weeks">Number of Weeks *</Label>
             <Input
               id="weeks"
               type="number"
               min="1"
+              max="52"
               value={weeks}
               onChange={(e) => setWeeks(Math.max(1, parseInt(e.target.value) || 1))}
             />
+            <p className="text-xs text-muted-foreground">KES {weeks * 5} total</p>
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="screenshot">Payment Screenshot</Label>
+            <Label htmlFor="screenshot">Payment Screenshot *</Label>
             <Input
               id="screenshot"
               type="file"
               accept="image/png,image/jpeg"
               onChange={handleFileChange}
             />
+            {file && <p className="text-xs text-green-600">✓ {file.name}</p>}
           </div>
 
-          {submitError && <div className="text-sm text-red-600">{submitError}</div>}
+          {submitError && <div className="text-sm text-red-600 bg-red-50 p-2 rounded">{submitError}</div>}
 
-          <Button onClick={handleSubmit} disabled={submitting || !user || authLoading} className="w-full">
+          <Button onClick={handleSubmit} disabled={submitting} className="w-full">
             {submitting ? (
               <>
                 <Loader2 className="h-4 w-4 mr-2 animate-spin" />
