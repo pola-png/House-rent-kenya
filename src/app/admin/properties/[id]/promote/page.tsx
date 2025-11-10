@@ -169,42 +169,138 @@ export default function MergedPromotionPage() {
       const up = await uploadToWasabi(screenshotFile);
       console.log('[Promote] Wasabi upload success:', up);
 
-      // Get fresh token
+      const weeklyRate = 5;
+      const amount = promotionWeeks * weeklyRate;
       const { data: sess } = await supabase.auth.getSession();
       const token = sess?.session?.access_token || null;
 
-      // Submit details to Supabase via API
-      const res = await fetch('/api/admin/promotions/submit', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          ...(token ? { Authorization: `Bearer ${token}` } : {}),
-        },
-        body: JSON.stringify({
-          propertyId: property.id,
-          propertyTitle: property.title,
-          weeks: promotionWeeks,
-          screenshotUrl: up.url,
-        }),
-      });
+      // Try Method 1: API route
+      try {
+        console.log('[Promote] Trying API route...');
+        const res = await fetchWithTimeout('/api/admin/promotions/submit', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            ...(token ? { Authorization: `Bearer ${token}` } : {}),
+          },
+          body: JSON.stringify({
+            propertyId: property.id,
+            propertyTitle: property.title,
+            weeks: promotionWeeks,
+            screenshotUrl: up.url,
+          }),
+          timeoutMs: 15000,
+        });
 
-      if (!res.ok) {
-        const errorText = await res.text();
-        console.error('[Promote] API error:', errorText);
-        throw new Error(errorText);
+        if (res.ok) {
+          const json = await res.json();
+          console.log('[Promote] API success:', json);
+          toast({ title: "Request Submitted!", description: "Admin will review your payment soon." });
+          setScreenshotFile(null);
+          setScreenshotPreview(null);
+          setPromotionWeeks(1);
+          setTimeout(() => router.push('/admin/promotions'), 1500);
+          return;
+        }
+        console.warn('[Promote] API failed, trying direct insert...');
+      } catch (apiError) {
+        console.warn('[Promote] API error, trying direct insert:', apiError);
       }
 
-      const json = await res.json();
-      console.log('[Promote] Payment request created:', json);
+      // Method 2: Direct Supabase insert to payment_requests
+      try {
+        console.log('[Promote] Trying payment_requests insert...');
+        const { data, error } = await supabase
+          .from('payment_requests')
+          .insert({
+            property_id: property.id,
+            property_title: property.title || 'Untitled',
+            user_id: user.uid,
+            user_name: user.user_metadata?.full_name || user.email,
+            user_email: user.email,
+            amount: amount,
+            payment_screenshot_url: up.url,
+            status: 'pending',
+            type: 'promotion',
+            details: `Featured - ${promotionWeeks} week${promotionWeeks > 1 ? 's' : ''}`,
+          })
+          .select()
+          .single();
 
-      toast({ title: "Request Submitted!", description: "Admin will review your payment soon." });
-      setScreenshotFile(null);
-      setScreenshotPreview(null);
-      setPromotionWeeks(1);
-      
-      setTimeout(() => {
-        router.push('/admin/promotions');
-      }, 1500);
+        if (!error) {
+          console.log('[Promote] payment_requests success:', data);
+          toast({ title: "Request Submitted!", description: "Admin will review your payment soon." });
+          setScreenshotFile(null);
+          setScreenshotPreview(null);
+          setPromotionWeeks(1);
+          setTimeout(() => router.push('/admin/promotions'), 1500);
+          return;
+        }
+        console.warn('[Promote] payment_requests failed, trying promotion_requests...');
+      } catch (e) {
+        console.warn('[Promote] payment_requests error:', e);
+      }
+
+      // Method 3: Try promotion_requests table
+      try {
+        console.log('[Promote] Trying promotion_requests insert...');
+        const { data, error } = await supabase
+          .from('promotion_requests')
+          .insert({
+            property_id: property.id,
+            property_title: property.title || 'Untitled',
+            user_id: user.uid,
+            weeks: promotionWeeks,
+            amount: amount,
+            screenshot_url: up.url,
+            status: 'pending',
+          })
+          .select()
+          .single();
+
+        if (!error) {
+          console.log('[Promote] promotion_requests success:', data);
+          toast({ title: "Request Submitted!", description: "Admin will review your payment soon." });
+          setScreenshotFile(null);
+          setScreenshotPreview(null);
+          setPromotionWeeks(1);
+          setTimeout(() => router.push('/admin/promotions'), 1500);
+          return;
+        }
+        console.warn('[Promote] promotion_requests failed, trying promotions...');
+      } catch (e) {
+        console.warn('[Promote] promotion_requests error:', e);
+      }
+
+      // Method 4: Try promotions table
+      try {
+        console.log('[Promote] Trying promotions insert...');
+        const { data, error } = await supabase
+          .from('promotions')
+          .insert({
+            property_id: property.id,
+            agent_id: user.uid,
+            weeks: promotionWeeks,
+            screenshot_url: up.url,
+            status: 'pending',
+          })
+          .select()
+          .single();
+
+        if (!error) {
+          console.log('[Promote] promotions success:', data);
+          toast({ title: "Request Submitted!", description: "Admin will review your payment soon." });
+          setScreenshotFile(null);
+          setScreenshotPreview(null);
+          setPromotionWeeks(1);
+          setTimeout(() => router.push('/admin/promotions'), 1500);
+          return;
+        }
+        throw new Error('All submission methods failed');
+      } catch (e) {
+        console.error('[Promote] All methods failed');
+        throw e;
+      }
     } catch (error: any) {
       console.error('[Promote] Full error:', error);
       const errorMsg = error?.message || error?.details || JSON.stringify(error);
@@ -260,12 +356,12 @@ export default function MergedPromotionPage() {
     loadList();
   }, [retryTick, user?.uid]);
 
-  const canSubmit = useMemo(() => !!screenshotFile && (!!propertyIdParam || !!property?.id) && !isSubmitting, [
-    screenshotFile,
-    propertyIdParam,
-    property?.id,
-    isSubmitting,
-  ]);
+  const canSubmit = useMemo(() => {
+    const hasFile = !!screenshotFile;
+    const hasProperty = !!(propertyIdParam || property?.id);
+    const notSubmitting = !isSubmitting;
+    return hasFile && hasProperty && notSubmitting;
+  }, [screenshotFile, propertyIdParam, property?.id, isSubmitting]);
 
   return (
     <div className="container mx-auto p-6 max-w-4xl space-y-6">
