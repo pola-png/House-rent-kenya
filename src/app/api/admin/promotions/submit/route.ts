@@ -42,7 +42,9 @@ export async function POST(req: Request) {
     console.log("✓ Form data parsed");
 
     // Use Supabase Admin for storage and DB operations
-    const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey);
+    const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey, {
+      auth: { persistSession: false },
+    });
     const filePath = `promotion-screenshots/${userId}/${Date.now()}-${file.name}`;
 
     // Upload file to Supabase Storage
@@ -72,7 +74,7 @@ export async function POST(req: Request) {
           propertyId: propertyId,
           propertyTitle: propertyTitle || "Untitled",
           userId: userId,
-          userEmail: userData.user.email,
+          userEmail: userData.user.email || "email-not-found",
           amount: weeks * 5,
           paymentScreenshot: screenshotUrl,
           status: "pending",
