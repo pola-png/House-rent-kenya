@@ -1,57 +1,103 @@
-import { NextRequest, NextResponse } from "next/server";
-import { supabaseAdmin } from "@/lib/supabase-admin";
+import { NextResponse } from "next/server";
+import { createClient } from "@supabase/supabase-js";
 
-function json(status: number, body: any) {
-  return NextResponse.json(body, { status });
-}
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
+const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
+const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
 
-export async function POST(req: NextRequest) {
+export async function POST(req: Request) {
   try {
-    const auth = req.headers.get("authorization") || "";
-    const token = auth.startsWith("Bearer ") ? auth.slice(7) : null;
+    console.log("=== API ENDPOINT HIT ===");
+
+    // Get auth token
+    const authHeader = req.headers.get("authorization") || "";
+    const token = authHeader.replace("Bearer ", "");
+
     if (!token) {
-      return json(401, { error: "Missing bearer token" });
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const { data: userData, error: userErr } = await supabaseAdmin.auth.getUser(token);
-    if (userErr || !userData?.user) {
-      return json(401, { error: "Invalid or expired token" });
+    // Verify user
+    const supabase = createClient(supabaseUrl, supabaseAnonKey, {
+      auth: { persistSession: false },
+    });
+
+    const { data: userData, error: userError } = await supabase.auth.getUser(token);
+    if (userError || !userData?.user) {
+      return NextResponse.json({ error: "Invalid token" }, { status: 401 });
     }
 
     const userId = userData.user.id;
-    const body = (await req.json()) as any;
+    console.log("User verified:", userId);
 
-    if (!body?.propertyId || !body?.screenshotUrl) {
-      return json(400, { error: "propertyId and screenshotUrl are required" });
+    // Parse form data
+    const formData = await req.formData();
+    const file = formData.get("file") as File;
+    const propertyId = formData.get("propertyId") as string;
+    const propertyTitle = formData.get("propertyTitle") as string;
+    const weeks = parseInt(formData.get("weeks") as string);
+
+    if (!file || !propertyId) {
+      return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
     }
 
-    const weeks = Math.max(1, Math.min(52, Number(body.weeks ?? 1) || 1));
+    console.log("File:", file.name, file.size);
 
-    // Insert into payment_requests table
-    const { data, error } = await supabaseAdmin
+    // Upload file to Wasabi
+    const wasabiUrl = process.env.NEXT_PUBLIC_WASABI_URL!;
+    const wasabiAccessKey = process.env.WASABI_ACCESS_KEY!;
+    const wasabiSecretKey = process.env.WASABI_SECRET_KEY!;
+    const wasabiBucket = process.env.WASABI_BUCKET!;
+
+    const key = `promotions/${userId}/${Date.now()}-${file.name}`;
+    const buffer = await file.arrayBuffer();
+
+    console.log("Uploading to Wasabi...");
+
+    const uploadResponse = await fetch(`${wasabiUrl}/${wasabiBucket}/${key}`, {
+      method: "PUT",
+      headers: {
+        "Content-Type": file.type,
+      },
+      body: buffer,
+    });
+
+    if (!uploadResponse.ok) {
+      throw new Error(`Wasabi upload failed: ${uploadResponse.statusText}`);
+    }
+
+    const screenshotUrl = `${wasabiUrl}/${wasabiBucket}/${key}`;
+    console.log("Upload successful:", screenshotUrl);
+
+    // Insert to Supabase
+    const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey);
+
+    const { error: insertError } = await supabaseAdmin
       .from("payment_requests")
-      .insert({
-        property_id: body.propertyId,
-        property_title: body.propertyTitle || null,
-        user_id: userId,
-        screenshot_url: body.screenshotUrl,
-        status: "pending",
-        weeks: weeks,
-        type: "promotion",
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString(),
-      })
-      .select()
-      .single();
+      .insert([
+        {
+          property_id: propertyId,
+          property_title: propertyTitle || "Untitled",
+          user_id: userId,
+          amount: weeks * 5,
+          screenshot_url: screenshotUrl,
+          status: "pending",
+          type: `Featured - ${weeks} week${weeks > 1 ? "s" : ""}`,
+          created_at: new Date().toISOString(),
+        },
+      ]);
 
-    if (error) {
-      console.error("Supabase insert error:", error);
-      return json(500, { error: "Failed to save promotion request", details: error.message });
+    if (insertError) {
+      throw new Error(`Database error: ${insertError.message}`);
     }
 
-    return json(200, { ok: true, data });
-  } catch (err: any) {
-    console.error("Server error:", err);
-    return json(500, { error: "Unexpected server error", details: err.message });
+    console.log("=== SUCCESS ===");
+    return NextResponse.json({ success: true });
+  } catch (error: any) {
+    console.error("=== API ERROR ===", error);
+    return NextResponse.json(
+      { error: error?.message || "Server error" },
+      { status: 500 }
+    );
   }
 }
