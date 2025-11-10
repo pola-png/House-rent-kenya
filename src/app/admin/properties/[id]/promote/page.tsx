@@ -77,7 +77,7 @@ export default function MergedPromotionPage() {
         .from('properties')
         .select('*')
         .eq('id', propertyIdParam)
-        .eq('landlordId', user?.uid)
+        .eq('landlord_id', user?.uid)
         .single();
 
       if (error) throw error;
@@ -144,6 +144,7 @@ export default function MergedPromotionPage() {
   }
 
   const handleSubmit = async () => {
+    console.log("================== PROMOTION SUBMISSION START ==================");
     console.log('[Promote] Submit started', { screenshotFile: !!screenshotFile, user: !!user, property: !!property });
     
     if (!screenshotFile) {
@@ -212,6 +213,8 @@ export default function MergedPromotionPage() {
       toast({ variant: "destructive", title: "Submission Failed", description: errorMsg });
     } finally {
       setIsSubmitting(false);
+      console.log("[Promote] Submission process finished.");
+      console.log("================== PROMOTION SUBMISSION END ==================");
     }
   };
 
