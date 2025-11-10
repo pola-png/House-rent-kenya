@@ -85,32 +85,50 @@ export default function PromotePage() {
     try {
       const amount = promotionWeeks * weeklyRate;
       
+      console.log('Starting upload process...', {
+        userId: user.uid,
+        propertyId: property.id,
+        fileName: screenshotFile.name,
+        fileSize: screenshotFile.size,
+        fileType: screenshotFile.type
+      });
+      
       toast({ title: "Uploading...", description: "Uploading payment screenshot." });
       
       const fileName = `promotions/${user.uid}/${Date.now()}-${screenshotFile.name.replace(/[^a-zA-Z0-9.-]/g, '-')}`;
-      const screenshotUrl = await uploadToWasabi(screenshotFile, fileName);
+      console.log('Upload path:', fileName);
       
-      console.log('Screenshot uploaded:', screenshotUrl);
+      const screenshotUrl = await uploadToWasabi(screenshotFile, fileName);
+      console.log('Screenshot uploaded successfully:', screenshotUrl);
+      
+      toast({ title: "Saving...", description: "Saving promotion request." });
+      
+      const insertData = {
+        "propertyId": property.id,
+        "propertyTitle": property.title || 'Untitled',
+        "userId": user.uid,
+        "userName": user.displayName || user.email,
+        "userEmail": user.email,
+        amount: amount,
+        "paymentScreenshot": screenshotUrl,
+        status: 'pending',
+        "promotionType": `Featured - ${promotionWeeks} week${promotionWeeks > 1 ? 's' : ''}`,
+      };
+      
+      console.log('Inserting data:', insertData);
       
       const { data, error } = await supabase
         .from('payment_requests')
-        .insert({
-          propertyId: property.id,
-          propertyTitle: property.title || 'Untitled',
-          userId: user.uid,
-          userName: user.displayName || user.email,
-          userEmail: user.email,
-          amount: amount,
-          paymentScreenshot: screenshotUrl,
-          status: 'pending',
-          promotionType: `Featured - ${promotionWeeks} week${promotionWeeks > 1 ? 's' : ''}`,
-        })
+        .insert(insertData)
         .select()
         .single();
 
-      if (error) throw error;
+      if (error) {
+        console.error('Supabase error:', error);
+        throw error;
+      }
 
-      console.log('Success:', data);
+      console.log('Database insert successful:', data);
       
       toast({ title: "Request Submitted!", description: "Admin will review your payment soon." });
       setScreenshotFile(null);
@@ -118,8 +136,8 @@ export default function PromotePage() {
       setPromotionWeeks(1);
       setTimeout(() => router.push('/admin/promotions'), 1500);
     } catch (error: any) {
-      console.error('Error:', error);
-      const errorMsg = error?.message || 'Submission failed';
+      console.error('Full error details:', error);
+      const errorMsg = error?.message || error?.details || 'Submission failed';
       setSubmitError(errorMsg);
       toast({ variant: "destructive", title: "Submission Failed", description: errorMsg });
     } finally {
@@ -211,7 +229,10 @@ export default function PromotePage() {
               )}
             </div>
             {submitError && (
-              <p className="mt-2 text-sm text-red-600">{submitError}</p>
+              <div className="mt-2 p-3 bg-red-50 border border-red-200 rounded-md">
+                <p className="text-sm text-red-600 font-medium">Error Details:</p>
+                <p className="text-sm text-red-600">{submitError}</p>
+              </div>
             )}
           </div>
 

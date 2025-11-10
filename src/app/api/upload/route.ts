@@ -45,10 +45,12 @@ export async function POST(request: Request) {
     // Allow either:
     // - user/{uid}/... when logged in
     // - properties/{propertyId}/... always (used by admin listing form)
+    // - promotions/{uid}/... when logged in (for promotion screenshots)
     const uid = session?.user?.id;
     const allowProperties = sanitized.startsWith('properties/');
     const allowUserPrefix = uid ? sanitized.startsWith(`user/${uid}/`) : false;
-    if (!allowProperties && !allowUserPrefix) {
+    const allowPromotions = uid ? sanitized.startsWith(`promotions/${uid}/`) : false;
+    if (!allowProperties && !allowUserPrefix && !allowPromotions) {
       return NextResponse.json({ error: 'Invalid key prefix' }, { status: 403 });
     }
 
