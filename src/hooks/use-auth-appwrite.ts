@@ -17,11 +17,11 @@ interface AuthContextType {
   logout: () => Promise<void>;
 }
 
-const AuthContext = createContext<AuthContextType | undefined>(undefined);
+const AuthContext = createContext<AuthContextType>({} as AuthContextType);
 
 export function useAuth() {
   const context = useContext(AuthContext);
-  if (!context) {
+  if (!context.user && !context.loading && !context.login) {
     throw new Error('useAuth must be used within AuthProvider');
   }
   return context;
