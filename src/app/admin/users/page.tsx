@@ -220,16 +220,24 @@ export default function AdminUsersPage() {
         .update({ isBanned: newBanStatus })
         .eq('id', userId);
 
-      if (error) throw error;
+      if (error) {
+        console.error('Ban update error:', error);
+        throw error;
+      }
+      
       toast({ 
         title: newBanStatus ? 'User Banned' : 'User Unbanned', 
         description: 'User status updated successfully.' 
       });
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error updating ban status:', error);
       // Revert on error
       setUsers(prev => prev.map(u => u.id === userId ? { ...u, isBanned: currentStatus } : u));
-      toast({ title: 'Error', description: 'Failed to update ban status.', variant: 'destructive' });
+      toast({ 
+        title: 'Error', 
+        description: error?.message || 'Failed to update ban status.', 
+        variant: 'destructive' 
+      });
     }
   };
 
