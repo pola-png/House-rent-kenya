@@ -83,19 +83,26 @@ export default function Home() {
 
   const fetchFeaturedProperties = async () => {
     try {
-      // Fetch promoted/premium properties first, then regular properties
-      const { data, error } = await supabase
+      // Fetch properties
+      const { data: properties, error } = await supabase
         .from('properties')
         .select('*')
         .in('status', ['Available', 'For Rent', 'For Sale'])
-        .order('isPremium', { ascending: false, nullsFirst: false })
         .order('createdAt', { ascending: false })
-        .limit(6);
+        .limit(20);
+
+      // Get active promotion requests
+      const { data: promotions } = await supabase
+        .from('payment_requests')
+        .select('propertyId')
+        .eq('status', 'approved');
+
+      const promotedPropertyIds = new Set(promotions?.map(p => p.propertyId) || []);
 
       if (error) throw error;
 
       // Fetch agent profiles for the properties
-      const landlordIds = [...new Set((data || []).map(p => p.landlordId))];
+      const landlordIds = [...new Set((properties || []).map(p => p.landlordId))];
       const { data: profiles } = await supabase
         .from('profiles')
         .select('*')
@@ -103,10 +110,12 @@ export default function Home() {
       
       const profileMap = new Map(profiles?.map(p => [p.id, p]) || []);
       
-      const propertiesWithAgents = (data || []).map(p => {
+      const propertiesWithAgents = (properties || []).map(p => {
+        const isPromoted = promotedPropertyIds.has(p.id);
         const profileData = profileMap.get(p.landlordId);
         return {
           ...p,
+          isPremium: isPromoted,
           images: normalizeWasabiImageArray(p.images),
           createdAt: new Date(p.createdAt),
           updatedAt: new Date(p.updatedAt),
@@ -134,7 +143,14 @@ export default function Home() {
         };
       });
 
-      setFeaturedProperties(propertiesWithAgents);
+      // Sort promoted properties first
+      const sortedProperties = propertiesWithAgents.sort((a, b) => {
+        if (a.isPremium && !b.isPremium) return -1;
+        if (!a.isPremium && b.isPremium) return 1;
+        return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+      });
+
+      setFeaturedProperties(sortedProperties.slice(0, 6));
     } catch (error) {
       console.error('Error fetching featured properties:', error);
     } finally {
