@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { MapPin, Bed, Bath, Maximize, Eye } from 'lucide-react';
+import { MapPin, Bed, Bath, Maximize, Eye, Star } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import type { Property } from '@/lib/types';

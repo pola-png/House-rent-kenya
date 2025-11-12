@@ -13,7 +13,7 @@ import {
   getSortedRowModel,
   useReactTable,
 } from "@tanstack/react-table";
-import { MoreHorizontal, PlusCircle, Star, Copy, Trash2, Eye, Edit } from "lucide-react";
+import { MoreHorizontal, PlusCircle, Star, Copy, Trash2, Eye, Edit, MapPin } from "lucide-react";
 import Link from 'next/link';
 
 import { Button } from "@/components/ui/button";
@@ -40,6 +40,7 @@ import {
 import type { Property } from "@/lib/types";
 import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
+import { Card, CardContent } from "@/components/ui/card";
 
 interface PropertiesClientProps {
   data: Property[];
@@ -256,7 +257,7 @@ export function PropertiesClient({ data: initialData }: PropertiesClientProps) {
         />
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <Button variant="outline" className="ml-auto">
+            <Button variant="outline" className="ml-auto hidden md:flex">
               Columns
             </Button>
           </DropdownMenuTrigger>
@@ -281,7 +282,78 @@ export function PropertiesClient({ data: initialData }: PropertiesClientProps) {
           </DropdownMenuContent>
         </DropdownMenu>
       </div>
-      <div className="rounded-md border overflow-x-auto">
+      {/* Mobile Card Layout */}
+      <div className="md:hidden space-y-4">
+        {table.getRowModel().rows?.length ? (
+          table.getRowModel().rows.map((row) => {
+            const property = row.original;
+            return (
+              <Card key={property.id}>
+                <CardContent className="p-4">
+                  <div className="flex justify-between items-start mb-2">
+                    <div className="flex-1">
+                      <h3 className="font-medium text-lg line-clamp-1">{property.title}</h3>
+                      <div className="flex items-center text-muted-foreground text-sm mt-1">
+                        <MapPin className="h-3 w-3 mr-1" />
+                        <span>{property.location}</span>
+                      </div>
+                    </div>
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button variant="ghost" size="sm">
+                          <MoreHorizontal className="h-4 w-4" />
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end">
+                        <DropdownMenuItem asChild>
+                          <Link href={`/property/${property.id}`}>
+                            <Eye className="mr-2 h-4 w-4" />
+                            View
+                          </Link>
+                        </DropdownMenuItem>
+                        <DropdownMenuItem asChild>
+                          <Link href={`/admin/properties/edit/${property.id}`}>
+                            <Edit className="mr-2 h-4 w-4" />
+                            Edit
+                          </Link>
+                        </DropdownMenuItem>
+                        <DropdownMenuItem asChild>
+                          <Link href={`/admin/properties/promote?propertyId=${property.id}`}>
+                            <Star className="mr-2 h-4 w-4" />
+                            Promote
+                          </Link>
+                        </DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => handleDelete(property.id)} className="text-destructive">
+                          <Trash2 className="mr-2 h-4 w-4" />
+                          Delete
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <div className="flex gap-2">
+                      <Badge variant={property.status === 'Rented' ? 'destructive' : 'default'}>
+                        {property.status}
+                      </Badge>
+                    </div>
+                    <div className="text-right">
+                      <div className="font-semibold">Ksh {property.price.toLocaleString()}</div>
+                      <div className="text-xs text-muted-foreground">{property.views || 0} views</div>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            );
+          })
+        ) : (
+          <div className="text-center py-8 text-muted-foreground">
+            No properties found.
+          </div>
+        )}
+      </div>
+
+      {/* Desktop Table Layout */}
+      <div className="hidden md:block rounded-md border overflow-x-auto">
         <Table className="min-w-[720px]">
           <TableHeader>
             {table.getHeaderGroups().map((headerGroup) => (
