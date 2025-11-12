@@ -9,9 +9,8 @@ import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Loader2, Upload, ArrowLeft } from 'lucide-react';
+import { Loader2, ArrowLeft, MessageCircle } from 'lucide-react';
 import Link from 'next/link';
-import Image from 'next/image';
 
 export default function PromotePage() {
   const searchParams = useSearchParams();
@@ -24,8 +23,7 @@ export default function PromotePage() {
   const [property, setProperty] = useState<any>(null);
   const [loading, setLoading] = useState(!!propertyIdParam);
   const [promotionWeeks, setPromotionWeeks] = useState(1);
-  const [screenshotFile, setScreenshotFile] = useState<File | null>(null);
-  const [screenshotPreview, setScreenshotPreview] = useState<string | null>(null);
+
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const weeklyRate = 5;
@@ -55,70 +53,21 @@ export default function PromotePage() {
     }
   };
 
-  const handleScreenshotChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (file) {
-      setScreenshotFile(file);
-      if (screenshotPreview) URL.revokeObjectURL(screenshotPreview);
-      setScreenshotPreview(URL.createObjectURL(file));
-    }
-  };
+
 
   const handleSubmit = async () => {
-    alert('Submit clicked!');
-    
-    if (!screenshotFile || !user || !property) {
-      alert('Missing data');
+    if (!user || !property) {
       toast({ variant: "destructive", title: "Error", description: "Missing required data" });
       return;
     }
 
-    alert('Setting submitting true');
     setIsSubmitting(true);
     
     try {
-      alert('Checking session');
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session) {
-        alert('No session');
-        toast({ variant: "destructive", title: "Error", description: "Please log in again" });
-        setIsSubmitting(false);
-        return;
-      }
-      
-      alert('Session OK, starting upload');
-      // Upload screenshot using existing API
-      const fileName = `promotions/${user.uid}/${Date.now()}-${screenshotFile.name.replace(/[^a-zA-Z0-9.-]/g, '-')}`;
-      
-      const uploadRes = await fetch('/api/upload', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          key: fileName,
-          contentType: screenshotFile.type,
-          contentLength: screenshotFile.size,
-        }),
-      });
+      const promotionType = `Featured - ${promotionWeeks} week${promotionWeeks > 1 ? 's' : ''}`;
+      const totalAmount = promotionWeeks * weeklyRate;
 
-      if (!uploadRes.ok) {
-        throw new Error('Upload failed');
-      }
-
-      const { uploadUrl, uploadHeaders, objectPath } = await uploadRes.json();
-      
-      const putRes = await fetch(uploadUrl, {
-        method: 'PUT',
-        headers: uploadHeaders || {},
-        body: screenshotFile,
-      });
-
-      if (!putRes.ok) {
-        throw new Error('File upload failed');
-      }
-
-      const screenshotUrl = objectPath;
-
-      // Save to database
+      // Save promotion request to database
       const { error } = await supabase
         .from('payment_requests')
         .insert({
@@ -127,22 +76,39 @@ export default function PromotePage() {
           "userId": user.uid,
           "userName": user.displayName || user.email,
           "userEmail": user.email,
-          amount: promotionWeeks * weeklyRate,
-          "paymentScreenshot": screenshotUrl,
+          amount: totalAmount,
           status: 'pending',
-          "promotionType": `Featured - ${promotionWeeks} week${promotionWeeks > 1 ? 's' : ''}`,
+          "promotionType": promotionType,
         });
 
       if (error) throw error;
 
-      alert('Success!');
-      toast({ title: "Success!", description: "Promotion request submitted" });
+      // Create WhatsApp message
+      const adminPhone = "+254706060684";
+      const message = `🏠 *PROPERTY PROMOTION REQUEST*\n\n` +
+        `📋 *Property Details:*\n` +
+        `• Title: ${property.title}\n` +
+        `• Location: ${property.location}, ${property.city}\n\n` +
+        `💰 *Promotion Details:*\n` +
+        `• Type: ${promotionType}\n` +
+        `• Amount: $${totalAmount}\n\n` +
+        `👤 *User Details:*\n` +
+        `• Name: ${user.displayName || user.email}\n` +
+        `• Email: ${user.email}\n\n` +
+        `📱 *Next Steps:*\n` +
+        `Please send your payment screenshot here after making the payment.\n\n` +
+        `Thank you! 🙏`;
+
+      const whatsappUrl = `https://wa.me/${adminPhone}?text=${encodeURIComponent(message)}`;
+      
+      // Open WhatsApp
+      window.open(whatsappUrl, '_blank');
+      
+      toast({ title: "Success!", description: "Promotion request submitted. WhatsApp opened for payment." });
       router.push('/admin/promotions');
     } catch (error: any) {
-      alert('Error: ' + error.message);
       toast({ variant: "destructive", title: "Error", description: error.message || 'Failed to submit' });
     } finally {
-      alert('Setting submitting false');
       setIsSubmitting(false);
     }
   };
@@ -198,39 +164,17 @@ export default function PromotePage() {
             </p>
           </div>
 
-          <div>
-            <Label htmlFor="screenshot">Payment Screenshot</Label>
-            <div className="mt-2 flex items-center space-x-4">
-              <Input
-                id="screenshot"
-                type="file"
-                accept="image/*"
-                onChange={handleScreenshotChange}
-                className="hidden"
-              />
-              <Button
-                variant="outline"
-                onClick={() => document.getElementById('screenshot')?.click()}
-                disabled={isSubmitting}
-              >
-                <Upload className="h-4 w-4 mr-2" />
-                Choose Screenshot
-              </Button>
-              {screenshotPreview && (
-                <Image
-                  src={screenshotPreview}
-                  alt="Screenshot preview"
-                  width={100}
-                  height={100}
-                  className="rounded-md border object-cover"
-                />
-              )}
-            </div>
+          <div className="p-4 bg-blue-50 rounded-lg border border-blue-200">
+            <h4 className="font-semibold text-blue-900 mb-2">Payment Process</h4>
+            <p className="text-sm text-blue-700">
+              After submitting, you'll be redirected to WhatsApp to contact our admin. 
+              Please make your payment and send the screenshot via WhatsApp for quick approval.
+            </p>
           </div>
 
           <Button
             onClick={handleSubmit}
-            disabled={!screenshotFile || !property || isSubmitting}
+            disabled={!property || isSubmitting}
             className="w-full"
           >
             {isSubmitting ? (
@@ -239,7 +183,10 @@ export default function PromotePage() {
                 Submitting...
               </>
             ) : (
-              'Submit Promotion'
+              <>
+                <MessageCircle className="mr-2 h-4 w-4" />
+                Submit & Contact Admin
+              </>
             )}
           </Button>
         </CardContent>
