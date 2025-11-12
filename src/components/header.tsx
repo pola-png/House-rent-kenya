@@ -233,17 +233,11 @@ export function Header() {
             </nav>
             
             {!isHomepage && (
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                <Input
-                  type="text"
-                  placeholder="Search properties..."
-                  className="w-64 pl-10"
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  onKeyDown={handleKeyDown}
-                />
-              </div>
+              <Link href="/search">
+                <Button variant="ghost" size="icon">
+                  <Search className="h-5 w-5" />
+                </Button>
+              </Link>
             )}
           </div>
 
@@ -288,17 +282,14 @@ export function Header() {
                 <div className="flex-1 overflow-y-auto">
                   {!isHomepage && (
                     <div className="p-4 border-b">
-                      <div className="relative">
-                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                        <Input
-                          type="text"
-                          placeholder="Search properties..."
-                          className="w-full pl-10"
-                          value={searchQuery}
-                          onChange={(e) => setSearchQuery(e.target.value)}
-                          onKeyDown={handleKeyDown}
-                        />
-                      </div>
+                      <SheetClose asChild>
+                        <Link href="/search">
+                          <Button variant="ghost" className="w-full justify-start">
+                            <Search className="mr-2 h-4 w-4" />
+                            Search Properties
+                          </Button>
+                        </Link>
+                      </SheetClose>
                     </div>
                   )}
                   <nav className="flex flex-col gap-1 p-4">
