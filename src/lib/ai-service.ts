@@ -1,3 +1,5 @@
+import { GoogleGenAI } from '@google/genai';
+
 const getApiKey = () => {
   const apiKey = process.env.NEXT_PUBLIC_GEMINI_API_KEY;
   if (!apiKey) {
@@ -8,6 +10,7 @@ const getApiKey = () => {
 
 export const generateWithAI = async (prompt: string): Promise<string> => {
   const apiKey = getApiKey();
+  const ai = new GoogleGenAI({ apiKey });
   
   const models = [
     'gemini-2.5-flash',
@@ -16,38 +19,26 @@ export const generateWithAI = async (prompt: string): Promise<string> => {
     'gemini-2.0-flash-lite'
   ];
   
-  let response;
   let lastError;
   
   for (const model of models) {
     try {
       if (!prompt) continue;
-      response = await fetch(
-        `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`,
-        {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            contents: [{ parts: [{ text: prompt }] }]
-          })
+      const response = await ai.models.generateContent({
+        model,
+        contents: prompt,
+        config: {
+          thinkingConfig: {
+            thinkingBudget: 0
+          }
         }
-      );
-      if (response.ok) break;
-      lastError = await response.json();
+      });
+      return response.text;
     } catch (error) {
       lastError = error;
       continue;
     }
   }
   
-  if (!response || !response.ok) {
-    throw new Error(lastError?.error?.message || 'All models failed');
-  }
-
-  const data = await response.json();
-  const text = data.candidates?.[0]?.content?.parts?.[0]?.text || '';
-  
-  if (!text) throw new Error('No content generated');
-  
-  return text;
+  throw new Error(lastError?.message || 'All models failed');
 };
