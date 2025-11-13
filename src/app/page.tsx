@@ -83,21 +83,14 @@ export default function Home() {
 
   const fetchFeaturedProperties = async () => {
     try {
-      // Fetch properties
+      // Fetch properties with premium sorting like search page
       const { data: properties, error } = await supabase
         .from('properties')
         .select('*')
         .in('status', ['Available', 'For Rent', 'For Sale'])
+        .order('isPremium', { ascending: false, nullsFirst: false })
         .order('createdAt', { ascending: false })
-        .limit(20);
-
-      // Get active promotion requests
-      const { data: promotions } = await supabase
-        .from('payment_requests')
-        .select('propertyId')
-        .eq('status', 'approved');
-
-      const promotedPropertyIds = new Set(promotions?.map(p => p.propertyId) || []);
+        .limit(6);
 
       if (error) throw error;
 
@@ -111,11 +104,11 @@ export default function Home() {
       const profileMap = new Map(profiles?.map(p => [p.id, p]) || []);
       
       const propertiesWithAgents = (properties || []).map(p => {
-        const isPromoted = promotedPropertyIds.has(p.id);
+
         const profileData = profileMap.get(p.landlordId);
         return {
           ...p,
-          isPremium: isPromoted,
+
           images: normalizeWasabiImageArray(p.images),
           createdAt: new Date(p.createdAt),
           updatedAt: new Date(p.updatedAt),
@@ -143,14 +136,7 @@ export default function Home() {
         };
       });
 
-      // Sort promoted properties first
-      const sortedProperties = propertiesWithAgents.sort((a, b) => {
-        if (a.isPremium && !b.isPremium) return -1;
-        if (!a.isPremium && b.isPremium) return 1;
-        return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
-      });
-
-      setFeaturedProperties(sortedProperties.slice(0, 6));
+      setFeaturedProperties(propertiesWithAgents);
     } catch (error) {
       console.error('Error fetching featured properties:', error);
     } finally {
