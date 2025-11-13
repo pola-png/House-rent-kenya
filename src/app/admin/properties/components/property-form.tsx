@@ -568,19 +568,7 @@ export function PropertyForm({ property }: PropertyFormProps) {
                   name="title"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel className="flex items-center justify-between">
-                        <span>Title</span>
-                        <Button
-                          type="button"
-                          variant="outline"
-                          size="sm"
-                          onClick={() => generateAITitle(field.onChange)}
-                          disabled={isGeneratingTitle}
-                        >
-                          {isGeneratingTitle ? <Loader2 className="h-4 w-4 mr-1 animate-spin" /> : <Sparkles className="h-4 w-4 mr-1" />}
-                          {isGeneratingTitle ? 'Generating...' : 'AI Generate'}
-                        </Button>
-                      </FormLabel>
+                      <FormLabel>Title</FormLabel>
                       <FormControl>
                         <Input placeholder="e.g., Luxury 3-Bedroom Apartment in Kilimani" {...field} />
                       </FormControl>
@@ -593,19 +581,7 @@ export function PropertyForm({ property }: PropertyFormProps) {
                   name="description"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel className="flex items-center justify-between">
-                        <span>Description</span>
-                        <Button
-                          type="button"
-                          variant="outline"
-                          size="sm"
-                          onClick={() => generateAIDescription(field.onChange)}
-                          disabled={isGeneratingDesc}
-                        >
-                          {isGeneratingDesc ? <Loader2 className="h-4 w-4 mr-1 animate-spin" /> : <Sparkles className="h-4 w-4 mr-1" />}
-                          {isGeneratingDesc ? 'Generating...' : 'AI Generate'}
-                        </Button>
-                      </FormLabel>
+                      <FormLabel>Description</FormLabel>
                       <FormControl>
                         <Textarea
                           placeholder="Tell us a little bit about the property"
