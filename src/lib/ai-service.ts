@@ -19,7 +19,7 @@ export const generateWithAI = async (prompt: string): Promise<string> => {
     'gemini-2.0-flash-lite'
   ];
   
-  let lastError;
+  let lastError: any;
   
   for (const modelName of models) {
     try {
