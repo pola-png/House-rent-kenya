@@ -1,4 +1,4 @@
-import { GoogleGenAI } from '@google/genai';
+import { GoogleGenerativeAI } from '@google/generative-ai';
 
 const getApiKey = () => {
   const apiKey = process.env.NEXT_PUBLIC_GEMINI_API_KEY;
@@ -10,7 +10,7 @@ const getApiKey = () => {
 
 export const generateWithAI = async (prompt: string): Promise<string> => {
   const apiKey = getApiKey();
-  const ai = new GoogleGenAI({ apiKey });
+  const ai = new GoogleGenerativeAI(apiKey);
   
   const models = [
     'gemini-2.5-flash',
@@ -21,19 +21,12 @@ export const generateWithAI = async (prompt: string): Promise<string> => {
   
   let lastError;
   
-  for (const model of models) {
+  for (const modelName of models) {
     try {
       if (!prompt) continue;
-      const response = await ai.models.generateContent({
-        model,
-        contents: prompt,
-        config: {
-          thinkingConfig: {
-            thinkingBudget: 0
-          }
-        }
-      });
-      return response.text;
+      const model = ai.getGenerativeModel({ model: modelName });
+      const response = await model.generateContent(prompt);
+      return response.response.text();
     } catch (error) {
       lastError = error;
       continue;
