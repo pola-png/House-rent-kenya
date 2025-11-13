@@ -43,3 +43,9 @@ next-env.d.ts
 # firebase logs (not used but generated)
 .firebase/
 *.log
+
+# SQL files
+*.sql
+*.db
+*.sqlite
+*.sqlite3
