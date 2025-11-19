@@ -106,6 +106,12 @@ export default function ProfilePage() {
 
     setSaving(true);
     try {
+      console.log('handleSaveProfile called with', formData);
+      toast({
+        title: "Saving profile...",
+        description: "Updating your profile details."
+      });
+
       const updates = {
         firstName: formData.firstName,
         lastName: formData.lastName,
@@ -240,7 +246,7 @@ export default function ProfilePage() {
             </div>
           )}
 
-          <Button onClick={handleSaveProfile} disabled={saving} className="w-full">
+          <Button type="button" onClick={handleSaveProfile} disabled={saving} className="w-full">
             {saving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
             Save Changes
           </Button>
