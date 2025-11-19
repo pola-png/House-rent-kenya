@@ -103,42 +103,29 @@ export default function ProfilePage() {
 
   const handleSaveProfile = async () => {
     if (!user) return;
-    
+
     setSaving(true);
     try {
-      // Update auth user metadata
-      const { error: authError } = await supabase.auth.updateUser({
-        data: {
-          firstName: formData.firstName,
-          lastName: formData.lastName,
-          phoneNumber: formData.phoneNumber,
-          agencyName: formData.agencyName,
-          displayName: `${formData.firstName} ${formData.lastName}`
-        }
-      });
+      const updates = {
+        firstName: formData.firstName,
+        lastName: formData.lastName,
+        phoneNumber: formData.phoneNumber,
+        agencyName: formData.agencyName,
+        displayName: `${formData.firstName} ${formData.lastName}`,
+      };
 
-      if (authError) throw authError;
-
-      // Update profiles table
-      const { error: profileError } = await supabase
+      const { error } = await supabase
         .from('profiles')
-        .update({
-          firstName: formData.firstName,
-          lastName: formData.lastName,
-          phoneNumber: formData.phoneNumber,
-          agencyName: formData.agencyName,
-          displayName: `${formData.firstName} ${formData.lastName}`,
-          updatedAt: new Date().toISOString()
-        })
+        .update(updates)
         .eq('id', user.uid);
 
-      if (profileError) throw profileError;
+      if (error) throw error;
 
       toast({
         title: "Success!",
         description: "Profile updated successfully."
       });
-      
+
       window.location.reload();
     } catch (error: any) {
       console.error('Error updating profile:', error);
