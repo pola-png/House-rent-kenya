@@ -162,6 +162,13 @@ function SearchContent() {
     setCurrentPage((prev) => Math.min(prev, totalPages));
   }, [properties.length]);
 
+  const getVisiblePages = () => {
+    const windowSize = 5;
+    const windowStart = Math.floor((currentPage - 1) / windowSize) * windowSize + 1;
+    const windowEnd = Math.min(windowStart + windowSize - 1, totalPages);
+    return Array.from({ length: windowEnd - windowStart + 1 }, (_, i) => windowStart + i);
+  };
+
   return (
     <>
       <CanonicalUrl />
@@ -228,22 +235,21 @@ function SearchContent() {
               {properties.length > itemsPerPage && (
                 <div className="mt-12">
                   <Pagination>
-                    <PaginationContent className="flex-wrap justify-center gap-2 sm:gap-1">
+                    <PaginationContent className="flex-wrap justify-center gap-2">
                       <PaginationItem>
                         <PaginationPrevious 
                           href="#"
                           onClick={(e) => { e.preventDefault(); setCurrentPage(p => Math.max(1, p - 1)); }}
-                          className={currentPage === 1 ? 'pointer-events-none opacity-50' : 'cursor-pointer'}
+                          className={currentPage === 1 ? 'pointer-events-none opacity-40' : 'cursor-pointer'}
                         />
                       </PaginationItem>
-                      {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
+                      {getVisiblePages().map((page) => (
                         <PaginationItem key={page}>
                           <PaginationLink 
                             href="#"
                             onClick={(e) => { e.preventDefault(); setCurrentPage(page); }}
                             isActive={currentPage === page}
-                            size="default"
-                            className="cursor-pointer min-w-10 justify-center"
+                            className="cursor-pointer"
                           >
                             {page}
                           </PaginationLink>
@@ -253,7 +259,7 @@ function SearchContent() {
                         <PaginationNext 
                           href="#"
                           onClick={(e) => { e.preventDefault(); setCurrentPage(p => Math.min(totalPages, p + 1)); }}
-                          className={currentPage === totalPages ? 'pointer-events-none opacity-50' : 'cursor-pointer'}
+                          className={currentPage === totalPages ? 'pointer-events-none opacity-40' : 'cursor-pointer'}
                         />
                       </PaginationItem>
                     </PaginationContent>
