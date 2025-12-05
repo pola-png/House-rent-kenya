@@ -141,9 +141,9 @@ export default function PropertyDetailClient({ id }: PropertyDetailClientProps) 
         const newViewCount = await trackPropertyView(actualId);
         console.log('Property view tracked, new count:', newViewCount);
         
-        // Update local state with new view count
-        if (data && newViewCount > 0) {
-          data.views = newViewCount;
+        // Update local state with new view count so UI matches DB
+        if (newViewCount > 0) {
+          setProperty((prev) => prev ? { ...prev, views: newViewCount } : prev);
         }
       } catch (viewError) {
         console.error('Error tracking property view:', viewError);
