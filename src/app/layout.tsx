@@ -7,6 +7,7 @@ import { Footer } from '@/components/footer';
 import { Toaster } from '@/components/ui/toaster';
 import { AuthProvider } from '@/hooks/use-auth-supabase';
 import { SessionMonitor } from '@/components/session-monitor';
+import { ConditionalLayout } from '@/components/conditional-layout';
 
 export const metadata: Metadata = {
   metadataBase: new URL('https://houserentkenya.co.ke'),
@@ -178,11 +179,7 @@ export default function RootLayout({
       <body className={cn('min-h-screen bg-background font-body antialiased')}>
         <AuthProvider>
           <SessionMonitor />
-          <div className="relative flex min-h-screen flex-col">
-              <Header />
-              <main className="flex-1">{children}</main>
-              <Footer />
-          </div>
+          <ConditionalLayout>{children}</ConditionalLayout>
           <Toaster />
         </AuthProvider>
       </body>

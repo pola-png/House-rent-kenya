@@ -13,7 +13,7 @@ import {
   getSortedRowModel,
   useReactTable,
 } from "@tanstack/react-table";
-import { MoreHorizontal, PlusCircle, Star, Copy, Trash2, Eye, Edit, MapPin } from "lucide-react";
+import { MoreHorizontal, PlusCircle, Star, Copy, Trash2, Eye, Edit, MapPin, Crown, Zap } from "lucide-react";
 import Link from 'next/link';
 
 import { Button } from "@/components/ui/button";
@@ -91,6 +91,47 @@ export function PropertiesClient({ data: initialData }: PropertiesClientProps) {
     }
   };
 
+  const toggleFeatured = async (propertyId: string, currentFeatured: boolean) => {
+    try {
+      const { error } = await supabase
+        .from('properties')
+        .update({ 
+          featured: !currentFeatured,
+          featuredExpiresAt: !currentFeatured ? new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString() : null
+        })
+        .eq('id', propertyId);
+
+      if (error) throw error;
+
+      setProperties(prev => prev.map(p => 
+        p.id === propertyId 
+          ? { ...p, featured: !currentFeatured, featuredExpiresAt: !currentFeatured ? new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString() : undefined }
+          : p
+      ));
+      toast({ title: 'Updated', description: `Property ${!currentFeatured ? 'featured' : 'unfeatured'} successfully.` });
+    } catch (error: any) {
+      toast({ variant: 'destructive', title: 'Update failed', description: error.message });
+    }
+  };
+
+  const togglePremium = async (propertyId: string, currentPremium: boolean) => {
+    try {
+      const { error } = await supabase
+        .from('properties')
+        .update({ isPremium: !currentPremium })
+        .eq('id', propertyId);
+
+      if (error) throw error;
+
+      setProperties(prev => prev.map(p => 
+        p.id === propertyId ? { ...p, isPremium: !currentPremium } : p
+      ));
+      toast({ title: 'Updated', description: `Property ${!currentPremium ? 'marked as premium' : 'removed from premium'} successfully.` });
+    } catch (error: any) {
+      toast({ variant: 'destructive', title: 'Update failed', description: error.message });
+    }
+  };
+
   const columns: ColumnDef<Property>[] = [
     {
     id: "select",
@@ -153,6 +194,19 @@ export function PropertiesClient({ data: initialData }: PropertiesClientProps) {
     },
   },
   {
+    accessorKey: "featured",
+    header: "Featured",
+    cell: ({ row }) => {
+      const property = row.original;
+      return (
+        <div className="flex items-center gap-2">
+          {property.featured && <Star className="h-4 w-4 text-yellow-500" />}
+          {property.isPremium && <Crown className="h-4 w-4 text-purple-500" />}
+        </div>
+      );
+    },
+  },
+  {
     id: "actions",
     enableHiding: false,
     cell: ({ row }) => {
@@ -185,6 +239,18 @@ export function PropertiesClient({ data: initialData }: PropertiesClientProps) {
                 <Star className="mr-2 h-4 w-4" />
                 Promote Property
               </Link>
+            </DropdownMenuItem>
+            <DropdownMenuItem
+              onClick={() => toggleFeatured(property.id, property.featured || false)}
+            >
+              <Zap className="mr-2 h-4 w-4" />
+              {property.featured ? 'Remove Featured' : 'Make Featured'}
+            </DropdownMenuItem>
+            <DropdownMenuItem
+              onClick={() => togglePremium(property.id, property.isPremium || false)}
+            >
+              <Crown className="mr-2 h-4 w-4" />
+              {property.isPremium ? 'Remove Premium' : 'Make Premium'}
             </DropdownMenuItem>
             <DropdownMenuItem
               onClick={() => {
@@ -236,6 +302,11 @@ export function PropertiesClient({ data: initialData }: PropertiesClientProps) {
     getFilteredRowModel: getFilteredRowModel(),
     onColumnVisibilityChange: setColumnVisibility,
     onRowSelectionChange: setRowSelection,
+    initialState: {
+      pagination: {
+        pageSize: 20,
+      },
+    },
     state: {
       sorting,
       columnFilters,
@@ -323,6 +394,18 @@ export function PropertiesClient({ data: initialData }: PropertiesClientProps) {
                             Promote
                           </Link>
                         </DropdownMenuItem>
+                        <DropdownMenuItem
+                          onClick={() => toggleFeatured(property.id, property.featured || false)}
+                        >
+                          <Zap className="mr-2 h-4 w-4" />
+                          {property.featured ? 'Remove Featured' : 'Make Featured'}
+                        </DropdownMenuItem>
+                        <DropdownMenuItem
+                          onClick={() => togglePremium(property.id, property.isPremium || false)}
+                        >
+                          <Crown className="mr-2 h-4 w-4" />
+                          {property.isPremium ? 'Remove Premium' : 'Make Premium'}
+                        </DropdownMenuItem>
                         <DropdownMenuItem onClick={() => handleDelete(property.id)} className="text-destructive">
                           <Trash2 className="mr-2 h-4 w-4" />
                           Delete
@@ -335,6 +418,18 @@ export function PropertiesClient({ data: initialData }: PropertiesClientProps) {
                       <Badge variant={property.status === 'Rented' ? 'destructive' : 'default'}>
                         {property.status}
                       </Badge>
+                      {property.featured && (
+                        <Badge variant="secondary" className="text-yellow-600">
+                          <Star className="h-3 w-3 mr-1" />
+                          Featured
+                        </Badge>
+                      )}
+                      {property.isPremium && (
+                        <Badge variant="secondary" className="text-purple-600">
+                          <Crown className="h-3 w-3 mr-1" />
+                          Premium
+                        </Badge>
+                      )}
                     </div>
                     <div className="text-right">
                       <div className="font-semibold">Ksh {property.price.toLocaleString()}</div>
@@ -403,27 +498,72 @@ export function PropertiesClient({ data: initialData }: PropertiesClientProps) {
           </TableBody>
         </Table>
       </div>
-      <div className="flex items-center justify-end space-x-2 py-4">
-        <div className="flex-1 text-sm text-muted-foreground">
+      <div className="flex items-center justify-between py-4">
+        <div className="text-sm text-muted-foreground">
           {table.getFilteredSelectedRowModel().rows.length} of{" "}
           {table.getFilteredRowModel().rows.length} row(s) selected.
         </div>
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={() => table.previousPage()}
-          disabled={!table.getCanPreviousPage()}
-        >
-          Previous
-        </Button>
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={() => table.nextPage()}
-          disabled={!table.getCanNextPage()}
-        >
-          Next
-        </Button>
+        <div className="flex items-center space-x-2">
+          <div className="text-sm text-muted-foreground">
+            Page {table.getState().pagination.pageIndex + 1} of {table.getPageCount()}
+          </div>
+          <div className="flex items-center space-x-1">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => table.setPageIndex(0)}
+              disabled={!table.getCanPreviousPage()}
+            >
+              First
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => table.previousPage()}
+              disabled={!table.getCanPreviousPage()}
+            >
+              Previous
+            </Button>
+            {(() => {
+              const currentPage = table.getState().pagination.pageIndex + 1;
+              const totalPages = table.getPageCount();
+              const startPage = Math.floor((currentPage - 1) / 10) * 10 + 1;
+              const endPage = Math.min(startPage + 9, totalPages);
+              const pages = [];
+              
+              for (let i = startPage; i <= endPage; i++) {
+                pages.push(
+                  <Button
+                    key={i}
+                    variant={currentPage === i ? "default" : "outline"}
+                    size="sm"
+                    onClick={() => table.setPageIndex(i - 1)}
+                    className="w-8 h-8 p-0"
+                  >
+                    {i}
+                  </Button>
+                );
+              }
+              return pages;
+            })()}
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => table.nextPage()}
+              disabled={!table.getCanNextPage()}
+            >
+              Next
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => table.setPageIndex(table.getPageCount() - 1)}
+              disabled={!table.getCanNextPage()}
+            >
+              Last
+            </Button>
+          </div>
+        </div>
       </div>
     </div>
   );
