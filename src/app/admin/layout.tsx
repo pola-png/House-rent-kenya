@@ -105,6 +105,12 @@ export default function AdminLayout({
       '/admin/settings',
       '/admin/blog',
       '/admin/blog/new',
+      '/admin/all-properties',
+      '/admin/promotions',
+      '/admin/payment-approvals',
+      '/admin/system-settings',
+      '/admin/leads',
+      '/admin/my-team',
     ];
     const isAdminPath = adminRoots.some((r) => pathname?.startsWith(r));
     const mode = isAdminPath ? 'admin' : 'agent';
@@ -218,10 +224,10 @@ export default function AdminLayout({
                   </SidebarMenuButton>
                 </SidebarMenuItem>
                 <SidebarMenuItem>
-                  <SidebarMenuButton asChild tooltip="Properties">
-                    <Link href="/admin/properties" onClick={() => setOpen(false)}>
+                  <SidebarMenuButton asChild tooltip="All Properties">
+                    <Link href="/admin/all-properties" onClick={() => setOpen(false)}>
                       <Package className="h-5 w-5" />
-                      <span>Properties</span>
+                      <span>All Properties</span>
                     </Link>
                   </SidebarMenuButton>
                 </SidebarMenuItem>
@@ -262,6 +268,38 @@ export default function AdminLayout({
                     <Link href="/admin/bulk-actions" onClick={() => setOpen(false)}>
                       <List className="h-5 w-5" />
                       <span>Bulk</span>
+                    </Link>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+                <SidebarMenuItem>
+                  <SidebarMenuButton asChild tooltip="Payment Approvals">
+                    <Link href="/admin/payment-approvals" onClick={() => setOpen(false)}>
+                      <CheckCircle className="h-5 w-5" />
+                      <span>Payment Approvals</span>
+                    </Link>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+                <SidebarMenuItem>
+                  <SidebarMenuButton asChild tooltip="Leads">
+                    <Link href="/admin/leads" onClick={() => setOpen(false)}>
+                      <Users2 className="h-5 w-5" />
+                      <span>Leads</span>
+                    </Link>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+                <SidebarMenuItem>
+                  <SidebarMenuButton asChild tooltip="My Team">
+                    <Link href="/admin/my-team" onClick={() => setOpen(false)}>
+                      <Users2 className="h-5 w-5" />
+                      <span>My Team</span>
+                    </Link>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+                <SidebarMenuItem>
+                  <SidebarMenuButton asChild tooltip="System Settings">
+                    <Link href="/admin/system-settings" onClick={() => setOpen(false)}>
+                      <Settings className="h-5 w-5" />
+                      <span>System Settings</span>
                     </Link>
                   </SidebarMenuButton>
                 </SidebarMenuItem>

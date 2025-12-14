@@ -29,6 +29,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { supabase } from "@/lib/supabase";
 import { useToast } from "@/hooks/use-toast";
+import { useAuth } from "@/hooks/use-auth-supabase";
 import {
   Table,
   TableBody,
@@ -48,8 +49,11 @@ interface PropertiesClientProps {
 
 export function PropertiesClient({ data: initialData }: PropertiesClientProps) {
   const { toast } = useToast();
+  const { user } = useAuth();
   const [properties, setProperties] = React.useState<Property[]>(initialData);
   const [deletingIds, setDeletingIds] = React.useState<Set<string>>(new Set());
+  
+  const isAdmin = user?.role === 'admin';
   
   React.useEffect(() => {
     setProperties(initialData);
@@ -240,18 +244,22 @@ export function PropertiesClient({ data: initialData }: PropertiesClientProps) {
                 Promote Property
               </Link>
             </DropdownMenuItem>
-            <DropdownMenuItem
-              onClick={() => toggleFeatured(property.id, property.featured || false)}
-            >
-              <Zap className="mr-2 h-4 w-4" />
-              {property.featured ? 'Remove Featured' : 'Make Featured'}
-            </DropdownMenuItem>
-            <DropdownMenuItem
-              onClick={() => togglePremium(property.id, property.isPremium || false)}
-            >
-              <Crown className="mr-2 h-4 w-4" />
-              {property.isPremium ? 'Remove Premium' : 'Make Premium'}
-            </DropdownMenuItem>
+            {isAdmin && (
+              <>
+                <DropdownMenuItem
+                  onClick={() => toggleFeatured(property.id, property.featured || false)}
+                >
+                  <Zap className="mr-2 h-4 w-4" />
+                  {property.featured ? 'Remove Featured' : 'Make Featured'}
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  onClick={() => togglePremium(property.id, property.isPremium || false)}
+                >
+                  <Crown className="mr-2 h-4 w-4" />
+                  {property.isPremium ? 'Remove Premium' : 'Make Premium'}
+                </DropdownMenuItem>
+              </>
+            )}
             <DropdownMenuItem
               onClick={() => {
                 navigator.clipboard.writeText(property.id);
@@ -394,18 +402,22 @@ export function PropertiesClient({ data: initialData }: PropertiesClientProps) {
                             Promote
                           </Link>
                         </DropdownMenuItem>
-                        <DropdownMenuItem
-                          onClick={() => toggleFeatured(property.id, property.featured || false)}
-                        >
-                          <Zap className="mr-2 h-4 w-4" />
-                          {property.featured ? 'Remove Featured' : 'Make Featured'}
-                        </DropdownMenuItem>
-                        <DropdownMenuItem
-                          onClick={() => togglePremium(property.id, property.isPremium || false)}
-                        >
-                          <Crown className="mr-2 h-4 w-4" />
-                          {property.isPremium ? 'Remove Premium' : 'Make Premium'}
-                        </DropdownMenuItem>
+                        {isAdmin && (
+                          <>
+                            <DropdownMenuItem
+                              onClick={() => toggleFeatured(property.id, property.featured || false)}
+                            >
+                              <Zap className="mr-2 h-4 w-4" />
+                              {property.featured ? 'Remove Featured' : 'Make Featured'}
+                            </DropdownMenuItem>
+                            <DropdownMenuItem
+                              onClick={() => togglePremium(property.id, property.isPremium || false)}
+                            >
+                              <Crown className="mr-2 h-4 w-4" />
+                              {property.isPremium ? 'Remove Premium' : 'Make Premium'}
+                            </DropdownMenuItem>
+                          </>
+                        )}
                         <DropdownMenuItem onClick={() => handleDelete(property.id)} className="text-destructive">
                           <Trash2 className="mr-2 h-4 w-4" />
                           Delete
