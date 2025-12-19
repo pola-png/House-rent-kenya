@@ -131,8 +131,10 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
       other: {
         'geo.region': 'KE',
         'geo.placename': `${property.location}, ${property.city}`,
-        'geo.position': property.latitude && property.longitude ? `${property.latitude};${property.longitude}` : undefined,
-        'ICBM': property.latitude && property.longitude ? `${property.latitude}, ${property.longitude}` : undefined,
+        ...(property.latitude && property.longitude && {
+          'geo.position': `${property.latitude};${property.longitude}`,
+          'ICBM': `${property.latitude}, ${property.longitude}`
+        })
       }
     };
   } catch (error) {
