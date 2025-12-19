@@ -141,7 +141,7 @@ export default function AdminLayout({
         <Header />
       </div>
       <SidebarProvider open={open} onOpenChange={setOpen}>
-      <Sidebar collapsible="icon" className="mt-26">
+      <Sidebar collapsible="icon" className="mt-28 h-[calc(100vh-7rem)] overflow-y-auto">
         <SidebarContent className="flex flex-col">
           <SidebarHeader className="p-4">
             <Link href="/admin/dashboard" className="flex items-center gap-2 font-semibold min-w-0">
@@ -159,7 +159,7 @@ export default function AdminLayout({
               </SidebarMenuButton>
             </SidebarMenuItem>
             
-            {(user.role === 'agent' || user.role === 'admin') && (
+            {(user.role === 'agent' || user.role === 'admin') && viewMode === 'agent' && (
               <>
                 <SidebarMenuItem>
                   <SidebarMenuButton asChild tooltip="Post a Property">
@@ -322,22 +322,26 @@ export default function AdminLayout({
               </SidebarMenuItem>
             )}
             
-            <SidebarMenuItem>
-              <SidebarMenuButton asChild tooltip="Profile">
-                <Link href="/admin/profile" onClick={() => setOpen(false)}>
-                  <User className="h-5 w-5" />
-                  <span>Profile</span>
-                </Link>
-              </SidebarMenuButton>
-            </SidebarMenuItem>
-            <SidebarMenuItem>
-              <SidebarMenuButton asChild tooltip="Messages">
-                <Link href="/admin/messages" onClick={() => setOpen(false)}>
-                  <MessageSquare className="h-5 w-5" />
-                  <span>Messages</span>
-                </Link>
-              </SidebarMenuButton>
-            </SidebarMenuItem>
+            {viewMode === 'agent' && (
+              <>
+                <SidebarMenuItem>
+                  <SidebarMenuButton asChild tooltip="Profile">
+                    <Link href="/admin/profile" onClick={() => setOpen(false)}>
+                      <User className="h-5 w-5" />
+                      <span>Profile</span>
+                    </Link>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+                <SidebarMenuItem>
+                  <SidebarMenuButton asChild tooltip="Messages">
+                    <Link href="/admin/messages" onClick={() => setOpen(false)}>
+                      <MessageSquare className="h-5 w-5" />
+                      <span>Messages</span>
+                    </Link>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+              </>
+            )}
           </SidebarMenu>
           <SidebarFooter className="p-4 border-t">
              <Button variant="ghost" className="w-full justify-start" asChild>
