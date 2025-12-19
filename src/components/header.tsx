@@ -2,7 +2,7 @@
 "use client";
 
 import Link from 'next/link';
-import { Building, Menu, User, X, ChevronDown, ChevronUp, Briefcase, UserCircle, LogOut, Home, Settings, Search } from 'lucide-react';
+import { Building, Menu, User, X, ChevronDown, ChevronUp, Briefcase, UserCircle, LogOut, Home, Settings, Search, ChevronRight } from 'lucide-react';
 import React, { useState } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
 
@@ -81,6 +81,27 @@ export function Header() {
     if (e.key === 'Enter') {
       handleSearch();
     }
+  };
+
+  const getBreadcrumbs = () => {
+    const segments = pathname.split('/').filter(Boolean);
+    const breadcrumbs = [{ label: 'Home', href: '/' }];
+    
+    let currentPath = '';
+    segments.forEach((segment, index) => {
+      currentPath += `/${segment}`;
+      let label = segment.charAt(0).toUpperCase() + segment.slice(1).replace(/-/g, ' ');
+      
+      if (segment === 'admin') label = 'Dashboard';
+      if (segment === 'all-properties') label = 'All Properties';
+      if (segment === 'properties' && segments[0] === 'admin') label = 'My Properties';
+      if (segment === 'new') label = 'Add New';
+      if (segment === 'edit') label = 'Edit';
+      
+      breadcrumbs.push({ label, href: currentPath });
+    });
+    
+    return breadcrumbs;
   };
 
   const renderUserAuth = ({ mobile = false }) => {
@@ -345,6 +366,27 @@ export function Header() {
             </Sheet>
           </div>
         </div>
+        
+        {/* Breadcrumb Navigation */}
+        {!isHomepage && (
+          <div className="border-t py-2">
+            <nav className="flex items-center space-x-1 text-sm text-muted-foreground">
+              {getBreadcrumbs().map((crumb, index) => (
+                <React.Fragment key={crumb.href}>
+                  {index > 0 && <ChevronRight className="h-4 w-4" />}
+                  <Link
+                    href={crumb.href}
+                    className={`hover:text-primary transition-colors ${
+                      index === getBreadcrumbs().length - 1 ? 'text-foreground font-medium' : ''
+                    }`}
+                  >
+                    {crumb.label}
+                  </Link>
+                </React.Fragment>
+              ))}
+            </nav>
+          </div>
+        )}
       </div>
     </header>
   );
