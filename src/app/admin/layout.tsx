@@ -56,10 +56,10 @@ import { Header } from "@/components/header";
 import { useAuth } from "@/hooks/use-auth-supabase";
 import { useRouter } from "next/navigation";
 import { usePathname } from "next/navigation";
-// Removed re-auth overlay; no need for supabase/useToast here
 import { useEffect } from "react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Shield, ChevronRight } from "lucide-react";
+import React from "react";
 
 export default function AdminLayout({
   children,
@@ -69,10 +69,6 @@ export default function AdminLayout({
   const { user, loading, logout } = useAuth();
   const router = useRouter();
   const [open, setOpen] = useState(false);
-  
-  
-  
-  
   
   const pathname = usePathname();
   const [viewMode, setViewMode] = useState<'agent' | 'admin'>(() => {
@@ -89,10 +85,8 @@ export default function AdminLayout({
     }
   }, [user, loading, router]);
 
-  // Re-auth switch event removed
   useEffect(() => {}, []);
 
-  // Infer admin vs agent view for admins based on pathname
   useEffect(() => {
     if (!user || user.role !== 'admin') {
       setViewMode('agent');
@@ -152,7 +146,6 @@ export default function AdminLayout({
             </Link>
           </SidebarHeader>
           <SidebarMenu className="flex-1 p-4">
-            {/* Agent/User Dashboard */}
             <SidebarMenuItem>
               <SidebarMenuButton asChild tooltip="Dashboard">
                 <Link href="/admin/dashboard" onClick={() => setOpen(false)}>
@@ -162,7 +155,6 @@ export default function AdminLayout({
               </SidebarMenuButton>
             </SidebarMenuItem>
             
-            {/* Agent Features */}
             {(user.role === 'agent' || user.role === 'admin') && (
               <>
                 <SidebarMenuItem>
@@ -208,7 +200,6 @@ export default function AdminLayout({
               </>
             )}
 
-            {/* Admin-only menu (visible only in Admin view) */}
             {isAdmin && viewMode === 'admin' && (
               <>
                 <SidebarMenuItem>
@@ -316,7 +307,6 @@ export default function AdminLayout({
               </>
             )}
             
-            {/* Admin Only Features */}
             {user.role === 'admin' && viewMode === 'admin' && (
               <SidebarMenuItem>
                 <SidebarMenuButton asChild tooltip="Admin Dashboard">
@@ -328,7 +318,6 @@ export default function AdminLayout({
               </SidebarMenuItem>
             )}
             
-            {/* Common Features */}
             <SidebarMenuItem>
               <SidebarMenuButton asChild tooltip="Profile">
                 <Link href="/admin/profile" onClick={() => setOpen(false)}>
@@ -363,12 +352,10 @@ export default function AdminLayout({
             <SidebarTrigger />
           
           <div className="relative ml-auto flex-1 md:grow-0">
-            {/* Search can be added here if needed */}
           </div>
           
           {user?.role === 'admin' && (
             <>
-              {/* Desktop Switch Button */}
               <Button
                 variant="outline"
                 size="sm"
@@ -387,7 +374,6 @@ export default function AdminLayout({
                 <span className="text-xs font-semibold">{viewMode === 'admin' ? 'Switch to Agent' : 'Switch to Admin'}</span>
               </Button>
               
-              {/* Mobile Switch Button */}
               <Button
                 variant="outline"
                 size="icon"
@@ -438,6 +424,7 @@ export default function AdminLayout({
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
+          </div>
         </header>
         <div className="px-4 sm:px-6 py-2 border-b">
           <nav className="flex items-center space-x-1 text-sm text-muted-foreground">
@@ -476,9 +463,6 @@ export default function AdminLayout({
         <main className="flex-1 w-full max-w-7xl mx-auto px-3 sm:px-6 py-0">{children}</main>
       </SidebarInset>
     </SidebarProvider>
-    
-
     </div>
   );
 }
-
