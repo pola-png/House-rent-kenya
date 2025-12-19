@@ -142,11 +142,13 @@ export default function AdminLayout({
       </div>
       <SidebarProvider open={open} onOpenChange={setOpen}>
       <Sidebar collapsible="icon" className="mt-28 h-[calc(100vh-8rem)] flex flex-col">
-        <SidebarContent className="flex flex-col overflow-y-auto flex-1">
+        <SidebarContent className="flex flex-col">
           <SidebarHeader className="p-4">
             <Link href="/admin/dashboard" className="flex items-center gap-2 font-semibold min-w-0">
               <Building className="h-6 w-6 text-primary shrink-0" />
-              <span className="font-headline text-lg whitespace-nowrap truncate" title="Agent Panel">Agent Panel</span>
+              <span className="font-headline text-lg whitespace-nowrap truncate" title={viewMode === 'admin' ? 'Admin Panel' : 'Agent Panel'}>
+                {viewMode === 'admin' ? 'Admin Panel' : 'Agent Panel'}
+              </span>
             </Link>
           </SidebarHeader>
           <SidebarMenu className="flex-1 p-4">
