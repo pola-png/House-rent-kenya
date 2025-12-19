@@ -4,6 +4,8 @@ import PropertyDetailClient from './property-detail-client';
 import { PropertySchema } from '@/components/property-schema';
 import { toWasabiProxyAbsolute } from '@/lib/wasabi';
 
+export const revalidate = 3600; // Revalidate every hour for fresh content
+
 interface Props {
   params: Promise<{ id: string }>;
 }
@@ -34,8 +36,17 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
       };
     }
 
-    const title = `${property.title} - ${property.bedrooms} Bed ${property.propertyType} in ${property.location} | House Rent Kenya`;
-    const description = `${property.bedrooms} bedroom ${property.propertyType.toLowerCase()} for ${property.status.toLowerCase()} in ${property.location}, ${property.city}. Ksh ${property.price.toLocaleString()}/month. ${property.description?.substring(0, 120)}...`;
+    // Enhanced SEO title with more keywords
+    const statusText = property.status === 'For Rent' ? 'Rent' : property.status === 'For Sale' ? 'Sale' : property.status;
+    const priceText = property.status === 'For Rent' ? `/month` : '';
+    const title = `${property.bedrooms} Bedroom ${property.propertyType} for ${statusText} in ${property.location}, ${property.city} - Ksh ${property.price.toLocaleString()}${priceText} | House Rent Kenya`;
+    
+    // Enhanced description with more details
+    const amenitiesText = property.amenities && property.amenities.length > 0 
+      ? ` Features: ${property.amenities.slice(0, 3).join(', ')}.` 
+      : '';
+    const description = `${property.bedrooms} bedroom ${property.propertyType.toLowerCase()} for ${statusText.toLowerCase()} in ${property.location}, ${property.city}. Ksh ${property.price.toLocaleString()}${priceText}. ${property.bathrooms} bathrooms, ${property.area} sq ft.${amenitiesText} ${property.description?.substring(0, 100) || 'Premium property with modern amenities'}. Contact verified agent today!`;
+    
     const images = Array.isArray(property.images)
       ? property.images
           .map((img: string) => toWasabiProxyAbsolute(img))
@@ -46,35 +57,82 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
       ? (primaryImage ? [primaryImage] : images)
       : ['https://houserentkenya.co.ke/default-property.jpg'];
 
+    // Comprehensive keywords for better SEO
+    const keywords = [
+      // Primary keywords
+      `${property.bedrooms} bedroom ${property.propertyType.toLowerCase()} ${property.location.toLowerCase()}`,
+      `${property.propertyType.toLowerCase()} for ${statusText.toLowerCase()} ${property.location.toLowerCase()}`,
+      `${property.bedrooms}BR ${property.location.toLowerCase()} ${property.city.toLowerCase()}`,
+      
+      // Location-based keywords
+      `${property.location.toLowerCase()} ${property.propertyType.toLowerCase()}`,
+      `${property.city.toLowerCase()} ${property.propertyType.toLowerCase()}`,
+      `property for ${statusText.toLowerCase()} ${property.location.toLowerCase()}`,
+      `house rent ${property.location.toLowerCase()}`,
+      `apartments ${property.location.toLowerCase()}`,
+      
+      // Price-based keywords
+      `${property.propertyType.toLowerCase()} under ${Math.ceil(property.price / 10000) * 10000}`,
+      `affordable ${property.propertyType.toLowerCase()} ${property.city.toLowerCase()}`,
+      
+      // Feature-based keywords
+      `${property.bedrooms} bed ${property.bathrooms} bath ${property.location.toLowerCase()}`,
+      `${property.area} sq ft ${property.propertyType.toLowerCase()}`,
+      
+      // General keywords
+      'kenya property rental',
+      'verified property listings kenya',
+      'house rent kenya',
+      `${property.city.toLowerCase()} real estate`,
+      'property with photos kenya'
+    ];
+
+    // Add amenity-based keywords
+    if (property.amenities && property.amenities.length > 0) {
+      property.amenities.forEach((amenity: string) => {
+        keywords.push(`${property.propertyType.toLowerCase()} with ${amenity.toLowerCase()} ${property.location.toLowerCase()}`);
+      });
+    }
+
     return {
       title,
       description,
-      keywords: [
-        `${property.bedrooms} bedroom ${property.propertyType.toLowerCase()}`,
-        `${property.location} ${property.propertyType.toLowerCase()}`,
-        `${property.city} property rental`,
-        `house rent ${property.location.toLowerCase()}`,
-        `${property.propertyType.toLowerCase()} for rent ${property.city.toLowerCase()}`,
-        'kenya property rental',
-        'nairobi apartments',
-        'house rent kenya'
-      ],
+      keywords,
       openGraph: {
         title,
         description,
         images: ogImages,
         url: `https://houserentkenya.co.ke/property/${id}`,
         type: 'article',
-        siteName: 'House Rent Kenya'
+        siteName: 'House Rent Kenya',
+        locale: 'en_KE'
       },
       twitter: {
         card: 'summary_large_image',
         title,
         description,
-        images: ogImages
+        images: ogImages,
+        site: '@HouseRentKenya'
       },
       alternates: {
         canonical: `https://houserentkenya.co.ke/property/${id}`
+      },
+      robots: {
+        index: true,
+        follow: true,
+        googleBot: {
+          index: true,
+          follow: true,
+          'max-video-preview': -1,
+          'max-image-preview': 'large',
+          'max-snippet': -1,
+        },
+      },
+      other: {
+        'geo.region': 'KE',
+        'geo.placename': `${property.location}, ${property.city}`,
+        'geo.position': property.latitude && property.longitude ? `${property.latitude};${property.longitude}` : undefined,
+        'ICBM': property.latitude && property.longitude ? `${property.latitude}, ${property.longitude}` : undefined,
       }
     };
   } catch (error) {
@@ -99,6 +157,7 @@ export default async function PropertyPage({ params }: Props) {
 
   // Fetch property for schema
   let property = null;
+  let agent = null;
   try {
     const { data } = await supabase
       .from('properties')
@@ -106,12 +165,137 @@ export default async function PropertyPage({ params }: Props) {
       .eq('id', actualId)
       .single();
     property = data;
+    
+    // Fetch agent data for enhanced schema
+    if (property?.landlordId) {
+      const { data: agentData } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('id', property.landlordId)
+        .single();
+      agent = agentData;
+    }
   } catch (error) {
     console.error('Error fetching property for schema:', error);
   }
   
   return (
     <>
+      {/* Enhanced JSON-LD Schema for SEO */}
+      {property && (
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{
+            __html: JSON.stringify({
+              "@context": "https://schema.org",
+              "@type": "RealEstateListing",
+              "@id": `https://houserentkenya.co.ke/property/${id}`,
+              "url": `https://houserentkenya.co.ke/property/${id}`,
+              "name": property.title,
+              "description": property.description,
+              "datePosted": property.createdAt,
+              "validThrough": property.featuredExpiresAt || new Date(Date.now() + 90 * 24 * 60 * 60 * 1000).toISOString(),
+              "price": {
+                "@type": "PriceSpecification",
+                "price": property.price,
+                "priceCurrency": "KES",
+                "priceType": property.status === 'For Rent' ? 'monthly' : 'total'
+              },
+              "availableAtOrFrom": {
+                "@type": "Place",
+                "name": `${property.location}, ${property.city}`,
+                "address": {
+                  "@type": "PostalAddress",
+                  "addressLocality": property.location,
+                  "addressRegion": property.city,
+                  "addressCountry": "Kenya"
+                },
+                "geo": property.latitude && property.longitude ? {
+                  "@type": "GeoCoordinates",
+                  "latitude": property.latitude,
+                  "longitude": property.longitude
+                } : undefined
+              },
+              "category": property.propertyType,
+              "numberOfRooms": property.bedrooms,
+              "numberOfBathroomsTotal": property.bathrooms,
+              "floorSize": {
+                "@type": "QuantitativeValue",
+                "value": property.area,
+                "unitCode": "FTK"
+              },
+              "amenityFeature": property.amenities?.map((amenity: string) => ({
+                "@type": "LocationFeatureSpecification",
+                "name": amenity
+              })) || [],
+              "image": property.images?.map((img: string) => toWasabiProxyAbsolute(img)).filter(Boolean) || [],
+              "provider": {
+                "@type": "RealEstateAgent",
+                "name": agent?.displayName || agent?.firstName + ' ' + agent?.lastName || "House Rent Kenya",
+                "telephone": agent?.phoneNumber,
+                "email": agent?.email,
+                "url": "https://houserentkenya.co.ke"
+              },
+              "mainEntity": {
+                "@type": "Residence",
+                "name": property.title,
+                "numberOfRooms": property.bedrooms,
+                "accommodationCategory": property.propertyType
+              },
+              "offers": {
+                "@type": "Offer",
+                "price": property.price,
+                "priceCurrency": "KES",
+                "availability": "https://schema.org/InStock",
+                "validFrom": property.createdAt,
+                "priceValidUntil": property.featuredExpiresAt || new Date(Date.now() + 90 * 24 * 60 * 60 * 1000).toISOString()
+              },
+              "potentialAction": {
+                "@type": "ViewAction",
+                "target": `https://houserentkenya.co.ke/property/${id}`
+              }
+            })
+          }}
+        />
+      )}
+      
+      {/* Breadcrumb Schema */}
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify({
+            "@context": "https://schema.org",
+            "@type": "BreadcrumbList",
+            "itemListElement": [
+              {
+                "@type": "ListItem",
+                "position": 1,
+                "name": "Home",
+                "item": "https://houserentkenya.co.ke"
+              },
+              {
+                "@type": "ListItem",
+                "position": 2,
+                "name": "Properties",
+                "item": "https://houserentkenya.co.ke/search"
+              },
+              {
+                "@type": "ListItem",
+                "position": 3,
+                "name": property?.location || "Property",
+                "item": `https://houserentkenya.co.ke/search?q=${property?.location || ''}`
+              },
+              {
+                "@type": "ListItem",
+                "position": 4,
+                "name": property?.title || "Property Details",
+                "item": `https://houserentkenya.co.ke/property/${id}`
+              }
+            ]
+          })
+        }}
+      />
+      
       {property && <PropertySchema property={property} />}
       <PropertyDetailClient id={actualId} />
     </>
