@@ -60,10 +60,20 @@ export function Header() {
   const isHomepage = pathname === '/';
   const isAdminPage = pathname?.startsWith('/admin');
   
-  const linkClasses = `text-sm font-medium transition-colors hover:text-primary ${isAdminPage ? 'dark:text-white text-black' : 'text-black'}`;
+  // Check if we're in admin mode by looking at localStorage and pathname
+  const getIsAdminMode = () => {
+    if (typeof window === 'undefined') return false;
+    const viewMode = window.localStorage.getItem('adminViewMode');
+    const adminRoots = ['/admin/admin-dashboard', '/admin/users', '/admin/analytics', '/admin/bulk-actions', '/admin/settings', '/admin/blog', '/admin/all-properties', '/admin/promotions', '/admin/payment-approvals', '/admin/system-settings', '/admin/leads', '/admin/my-team'];
+    return viewMode === 'admin' && adminRoots.some(r => pathname?.startsWith(r));
+  };
+  
+  const isAdminMode = getIsAdminMode();
+  
+  const linkClasses = `text-sm font-medium transition-colors hover:text-primary ${isAdminMode ? 'dark:text-white text-white' : 'text-black'}`;
   const buttonBorderClasses = 'border-primary text-primary hover:bg-primary hover:text-primary-foreground';
-  const textClasses = `${isAdminPage ? 'dark:text-white text-black' : 'text-black'}`;
-  const logoTextClasses = `text-xl font-bold font-headline transition-colors ${isAdminPage ? 'dark:text-white text-black' : 'text-black'}`;
+  const textClasses = `${isAdminMode ? 'dark:text-white text-white' : 'text-black'}`;
+  const logoTextClasses = `text-xl font-bold font-headline transition-colors ${isAdminMode ? 'dark:text-white text-white' : 'text-black'}`;
 
   const handleLogout = () => {
     logout();
@@ -215,7 +225,7 @@ export function Header() {
   };
 
   return (
-    <header className={`sticky top-0 z-50 transition-all duration-300 ${isAdminPage ? 'bg-black shadow-md' : 'bg-background shadow-md'}`}>
+    <header className={`sticky top-0 z-50 transition-all duration-300 ${isAdminMode ? 'bg-black shadow-md' : 'bg-background shadow-md'}`}>
       <div className="container mx-auto px-4">
         <div className="flex h-20 items-center justify-between">
           <Link href="/" className="flex items-center gap-2">
