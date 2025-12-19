@@ -87,35 +87,100 @@ export default async function NairobiPropertiesPage() {
         {/* Featured Properties */}
         <section className="mb-12">
           <div className="flex justify-between items-center mb-6">
-            <h2 className="text-2xl font-bold">Featured Properties in Nairobi</h2>
+            <h2 className="text-2xl font-bold">Properties in Nairobi</h2>
             <Button variant="outline" asChild>
               <Link href="/search?q=nairobi&type=rent">View All</Link>
             </Button>
           </div>
           
           {properties && properties.length > 0 ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {properties.map((property) => (
-                <div key={property.id}>
-                  <PropertySchema property={property} />
-                  <PropertyCard property={{
-                    ...property,
-                    createdAt: new Date(property.createdAt),
-                    updatedAt: new Date(property.updatedAt),
-                    agent: {
-                      uid: 'default-agent',
-                      firstName: 'Default',
-                      lastName: 'Agent',
-                      displayName: 'Default Agent',
-                      email: 'agent@default.com',
-                      role: 'agent',
-                      agencyName: 'Default Agency',
-                      createdAt: new Date()
-                    }
-                  }} />
-                </div>
-              ))}
-            </div>
+            <>
+              {/* Separate promoted and regular properties */}
+              {(() => {
+                const currentDate = new Date();
+                const promoted = properties.filter(p => 
+                  p.isPremium && 
+                  (!p.featuredExpiresAt || new Date(p.featuredExpiresAt) > currentDate)
+                );
+                const regular = properties.filter(p => 
+                  !p.isPremium || 
+                  (p.featuredExpiresAt && new Date(p.featuredExpiresAt) <= currentDate)
+                );
+                
+                return (
+                  <>
+                    {/* Featured Properties */}
+                    {promoted.length > 0 && (
+                      <div className="mb-12">
+                        <div className="flex items-center gap-2 mb-6">
+                          <div className="bg-gradient-to-r from-yellow-400 to-orange-500 text-white px-3 py-1 rounded-full text-sm font-semibold">
+                            ⭐ Featured Properties in Nairobi
+                          </div>
+                          <span className="text-sm text-muted-foreground">({promoted.length})</span>
+                        </div>
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 p-4 bg-gradient-to-r from-yellow-50 to-orange-50 rounded-lg border-2 border-yellow-200">
+                          {promoted.map((property) => (
+                            <div key={`featured-${property.id}`}>
+                              <PropertySchema property={property} />
+                              <PropertyCard property={{
+                                ...property,
+                                createdAt: new Date(property.createdAt),
+                                updatedAt: new Date(property.updatedAt),
+                                agent: {
+                                  uid: 'default-agent',
+                                  firstName: 'Default',
+                                  lastName: 'Agent',
+                                  displayName: 'Default Agent',
+                                  email: 'agent@default.com',
+                                  role: 'agent',
+                                  agencyName: 'Default Agency',
+                                  createdAt: new Date()
+                                }
+                              }} />
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                    
+                    {/* Regular Properties */}
+                    {regular.length > 0 && (
+                      <div>
+                        {promoted.length > 0 && (
+                          <div className="flex items-center gap-2 mb-6">
+                            <h3 className="text-xl font-semibold">More Properties in Nairobi</h3>
+                            <span className="text-sm text-muted-foreground">({regular.length})</span>
+                          </div>
+                        )}
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                          {regular.map((property) => (
+                            <div key={property.id}>
+                              <PropertySchema property={property} />
+                              <PropertyCard property={{
+                                ...property,
+                                createdAt: new Date(property.createdAt),
+                                updatedAt: new Date(property.updatedAt),
+                                agent: {
+                                  uid: 'default-agent',
+                                  firstName: 'Default',
+                                  lastName: 'Agent',
+                                  displayName: 'Default Agent',
+                                  email: 'agent@default.com',
+                                  role: 'agent',
+                                  agencyName: 'Default Agency',
+                                  createdAt: new Date()
+                                }
+                              }} />
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                  </>
+                );
+              })()
+              }
+            </>
           ) : (
             <div className="text-center py-12">
               <p className="text-muted-foreground">No properties available at the moment.</p>

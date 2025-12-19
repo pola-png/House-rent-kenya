@@ -1,26 +1,74 @@
 import { PropertyCard } from '@/components/property-card';
-import { supabase } from '@/lib/supabase';
+import { getPropertiesWithPromotion } from '@/lib/promoted-properties';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 
 export const revalidate = 3600;
 
-async function getProperties() {
-  const { data } = await supabase.from('properties').select('*').or('location.ilike.%kasarani%,city.ilike.%kasarani%').lte('bedrooms', 1).eq('status', 'For Rent').order('createdAt', { ascending: false }).limit(12);
-  if (!data) return [];
-  const landlordIds = [...new Set(data.map(p => p.landlordId))];
-  const { data: profiles } = await supabase.from('profiles').select('*').in('id', landlordIds);
-  const profileMap = new Map(profiles?.map(p => [p.id, p]) || []);
-  return data.map(p => ({ ...p, createdAt: new Date(p.createdAt), updatedAt: new Date(p.updatedAt), agent: profileMap.get(p.landlordId) ? { uid: profileMap.get(p.landlordId)!.id, firstName: profileMap.get(p.landlordId)!.firstName || '', lastName: profileMap.get(p.landlordId)!.lastName || '', displayName: profileMap.get(p.landlordId)!.displayName || '', email: profileMap.get(p.landlordId)!.email || '', role: 'agent', agencyName: profileMap.get(p.landlordId)!.agencyName, phoneNumber: profileMap.get(p.landlordId)!.phoneNumber, photoURL: profileMap.get(p.landlordId)!.photoURL, createdAt: new Date(profileMap.get(p.landlordId)!.createdAt) } : undefined }));
-}
-
 export default async function Page() {
-  const properties = await getProperties();
+  const { promoted, regular, all } = await getPropertiesWithPromotion({
+    location: 'kasarani',
+    maxBedrooms: 1,
+    status: 'For Rent',
+    limit: 20
+  });
+  const totalProperties = all.length;
+  
   return (
     <div className="container mx-auto px-4 py-8">
       <h1 className="text-4xl font-bold mb-4">Bedsitter for Rent in Kasarani - Affordable Studio Apartments</h1>
-      <p className="text-lg text-muted-foreground mb-8">Find affordable bedsitter apartments for rent in Kasarani, Nairobi. Browse {properties.length}+ verified listings with photos, prices, and agent contacts.</p>
-      {properties.length > 0 ? (<><div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">{properties.map((property) => <PropertyCard key={property.id} property={property} />)}</div><div className="text-center"><Button asChild size="lg"><Link href="/search?q=kasarani&beds=1">View All Bedsitters in Kasarani</Link></Button></div></>) : (<p className="text-center py-12">No bedsitters available. <Link href="/search" className="text-primary underline">Browse all properties</Link></p>)}
+      <p className="text-lg text-muted-foreground mb-8">
+        Find affordable bedsitter apartments for rent in Kasarani, Nairobi. Browse {totalProperties}+ verified listings with photos, prices, and agent contacts.
+        {promoted.length > 0 && ` Featuring ${promoted.length} premium listings.`}
+      </p>
+      
+      {totalProperties > 0 ? (
+        <>
+          {/* Featured/Promoted Properties Section */}
+          {promoted.length > 0 && (
+            <div className="mb-12">
+              <div className="flex items-center gap-2 mb-6">
+                <div className="bg-gradient-to-r from-yellow-400 to-orange-500 text-white px-3 py-1 rounded-full text-sm font-semibold">
+                  ⭐ Featured Bedsitters in Kasarani
+                </div>
+                <span className="text-sm text-muted-foreground">({promoted.length})</span>
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 p-4 bg-gradient-to-r from-yellow-50 to-orange-50 rounded-lg border-2 border-yellow-200">
+                {promoted.map((property) => (
+                  <PropertyCard key={`featured-${property.id}`} property={property} />
+                ))}
+              </div>
+            </div>
+          )}
+          
+          {/* Regular Properties Section */}
+          {regular.length > 0 && (
+            <div className="mb-8">
+              {promoted.length > 0 && (
+                <div className="flex items-center gap-2 mb-6">
+                  <h3 className="text-2xl font-semibold">More Bedsitters in Kasarani</h3>
+                  <span className="text-sm text-muted-foreground">({regular.length})</span>
+                </div>
+              )}
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {regular.map((property) => (
+                  <PropertyCard key={property.id} property={property} />
+                ))}
+              </div>
+            </div>
+          )}
+          
+          <div className="text-center">
+            <Button asChild size="lg">
+              <Link href="/search?q=kasarani&beds=1">View All Bedsitters in Kasarani</Link>
+            </Button>
+          </div>
+        </>
+      ) : (
+        <p className="text-center py-12">
+          No bedsitters available. <Link href="/search" className="text-primary underline">Browse all properties</Link>
+        </p>
+      )}
     </div>
   );
 }

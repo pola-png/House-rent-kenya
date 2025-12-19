@@ -1,5 +1,5 @@
 import { PropertyCard } from '@/components/property-card';
-import { supabase } from '@/lib/supabase';
+import { getPropertiesWithPromotion } from '@/lib/promoted-properties';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Metadata } from 'next';
@@ -15,17 +15,14 @@ export const metadata: Metadata = {
   },
 };
 
-async function getProperties() {
-  const { data } = await supabase.from('properties').select('*').or('location.ilike.%mombasa%,city.ilike.%mombasa%').eq('bedrooms', 2).eq('status', 'For Rent').order('createdAt', { ascending: false }).limit(12);
-  if (!data) return [];
-  const landlordIds = [...new Set(data.map(p => p.landlordId))];
-  const { data: profiles } = await supabase.from('profiles').select('*').in('id', landlordIds);
-  const profileMap = new Map(profiles?.map(p => [p.id, p]) || []);
-  return data.map(p => ({ ...p, createdAt: new Date(p.createdAt), updatedAt: new Date(p.updatedAt), agent: profileMap.get(p.landlordId) ? { uid: profileMap.get(p.landlordId)!.id, firstName: profileMap.get(p.landlordId)!.firstName || '', lastName: profileMap.get(p.landlordId)!.lastName || '', displayName: profileMap.get(p.landlordId)!.displayName || '', email: profileMap.get(p.landlordId)!.email || '', role: 'agent', agencyName: profileMap.get(p.landlordId)!.agencyName, phoneNumber: profileMap.get(p.landlordId)!.phoneNumber, photoURL: profileMap.get(p.landlordId)!.photoURL, createdAt: new Date(profileMap.get(p.landlordId)!.createdAt) } : undefined }));
-}
-
 export default async function Page() {
-  const properties = await getProperties();
+  const { promoted, regular, all } = await getPropertiesWithPromotion({
+    location: 'mombasa',
+    bedrooms: 2,
+    status: 'For Rent',
+    limit: 20
+  });
+  const totalProperties = all.length;
   return (
     <div className="container mx-auto px-4 py-8">
       <h1 className="text-4xl font-bold mb-4">2 Bedroom House for Rent in Mombasa</h1>
@@ -55,11 +52,40 @@ export default async function Page() {
           </div>
         </div>
       </div>
-      {properties.length > 0 ? (
+      {totalProperties > 0 ? (
         <>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
-            {properties.map((property) => <PropertyCard key={property.id} property={property} />)}
-          </div>
+          {/* Featured Properties */}
+          {promoted.length > 0 && (
+            <div className="mb-12">
+              <div className="flex items-center gap-2 mb-6">
+                <div className="bg-gradient-to-r from-yellow-400 to-orange-500 text-white px-3 py-1 rounded-full text-sm font-semibold">
+                  ⭐ Featured Properties in Mombasa
+                </div>
+                <span className="text-sm text-muted-foreground">({promoted.length})</span>
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 p-4 bg-gradient-to-r from-yellow-50 to-orange-50 rounded-lg border-2 border-yellow-200">
+                {promoted.map((property) => (
+                  <PropertyCard key={`featured-${property.id}`} property={property} />
+                ))}
+              </div>
+            </div>
+          )}
+          
+          {/* Regular Properties */}
+          {regular.length > 0 && (
+            <div className="mb-8">
+              {promoted.length > 0 && (
+                <div className="flex items-center gap-2 mb-6">
+                  <h3 className="text-2xl font-semibold">More Properties in Mombasa</h3>
+                  <span className="text-sm text-muted-foreground">({regular.length})</span>
+                </div>
+              )}
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {regular.map((property) => <PropertyCard key={property.id} property={property} />)}
+              </div>
+            </div>
+          )}
+          
           <div className="text-center">
             <Button asChild size="lg">
               <Link href="/search?q=mombasa&beds=2">View All Mombasa Properties</Link>

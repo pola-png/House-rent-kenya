@@ -1,23 +1,36 @@
 import { PropertyCard } from '@/components/property-card';
-import { getPropertiesWithPromotion } from '@/lib/promoted-properties';
+import type { Property } from '@/lib/types';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 
-export const revalidate = 3600;
+interface PromotedPropertiesLayoutProps {
+  promoted: Property[];
+  regular: Property[];
+  totalProperties: number;
+  title: string;
+  description: string;
+  featuredSectionTitle: string;
+  regularSectionTitle?: string;
+  viewAllLink: string;
+  viewAllText: string;
+}
 
-export default async function Page() {
-  const { promoted, regular, all } = await getPropertiesWithPromotion({
-    location: 'nairobi',
-    status: 'For Rent',
-    limit: 20
-  });
-  const totalProperties = all.length;
-  
+export function PromotedPropertiesLayout({
+  promoted,
+  regular,
+  totalProperties,
+  title,
+  description,
+  featuredSectionTitle,
+  regularSectionTitle,
+  viewAllLink,
+  viewAllText
+}: PromotedPropertiesLayoutProps) {
   return (
     <div className="container mx-auto px-4 py-8">
-      <h1 className="text-4xl font-bold mb-4">House Rent in Nairobi - Apartments & Homes</h1>
+      <h1 className="text-4xl font-bold mb-4">{title}</h1>
       <p className="text-lg text-muted-foreground mb-8">
-        Find {totalProperties}+ houses for rent in Nairobi. Westlands, Kilimani, Karen, Lavington & more neighborhoods.
+        {description}
         {promoted.length > 0 && ` Featuring ${promoted.length} premium listings.`}
       </p>
       
@@ -28,7 +41,7 @@ export default async function Page() {
             <div className="mb-12">
               <div className="flex items-center gap-2 mb-6">
                 <div className="bg-gradient-to-r from-yellow-400 to-orange-500 text-white px-3 py-1 rounded-full text-sm font-semibold">
-                  ⭐ Featured Properties in Nairobi
+                  ⭐ {featuredSectionTitle}
                 </div>
                 <span className="text-sm text-muted-foreground">({promoted.length})</span>
               </div>
@@ -43,9 +56,9 @@ export default async function Page() {
           {/* Regular Properties Section */}
           {regular.length > 0 && (
             <div className="mb-8">
-              {promoted.length > 0 && (
+              {promoted.length > 0 && regularSectionTitle && (
                 <div className="flex items-center gap-2 mb-6">
-                  <h3 className="text-2xl font-semibold">More Properties in Nairobi</h3>
+                  <h3 className="text-2xl font-semibold">{regularSectionTitle}</h3>
                   <span className="text-sm text-muted-foreground">({regular.length})</span>
                 </div>
               )}
@@ -59,7 +72,7 @@ export default async function Page() {
           
           <div className="text-center">
             <Button asChild size="lg">
-              <Link href="/search?q=nairobi&type=rent">View All Nairobi Properties</Link>
+              <Link href={viewAllLink}>{viewAllText}</Link>
             </Button>
           </div>
         </>

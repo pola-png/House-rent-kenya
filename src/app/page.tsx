@@ -251,7 +251,7 @@ export default function Home() {
         {/* Featured Properties Section */}
         <section className="py-12 md:py-20 bg-background" itemScope itemType="https://schema.org/ItemList">
           <div className="container mx-auto px-4">
-            <h2 className="text-2xl sm:text-3xl md:text-4xl font-headline font-bold text-center mb-2 px-4" itemProp="name">Sponsored Premium Properties</h2>
+            <h2 className="text-2xl sm:text-3xl md:text-4xl font-headline font-bold text-center mb-2 px-4" itemProp="name">Featured Premium Properties</h2>
             <p className="text-center text-sm sm:text-base text-muted-foreground mb-8 sm:mb-10 max-w-2xl mx-auto px-4" itemProp="description">Verified premium listings featuring the best apartments & homes in Nairobi & across Kenya.</p>
             {isLoading ? (
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 md:gap-8">
@@ -265,14 +265,64 @@ export default function Home() {
                     ))}
                 </div>
             ) : (
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 md:gap-8">
-                {featuredProperties && featuredProperties.map((property, index) => (
-                    <div key={property.id} itemProp="itemListElement" itemScope itemType="https://schema.org/ListItem">
-                      <meta itemProp="position" content={String(index + 1)} />
-                      <PropertyCard property={property} />
-                    </div>
-                ))}
-                </div>
+                <>
+                  {(() => {
+                    const currentDate = new Date();
+                    const promoted = featuredProperties.filter(p => 
+                      p.isPremium && 
+                      (!p.featuredExpiresAt || new Date(p.featuredExpiresAt) > currentDate)
+                    );
+                    const regular = featuredProperties.filter(p => 
+                      !p.isPremium || 
+                      (p.featuredExpiresAt && new Date(p.featuredExpiresAt) <= currentDate)
+                    );
+                    
+                    return (
+                      <>
+                        {/* Featured Properties */}
+                        {promoted.length > 0 && (
+                          <div className="mb-12">
+                            <div className="flex items-center justify-center gap-2 mb-6">
+                              <div className="bg-gradient-to-r from-yellow-400 to-orange-500 text-white px-4 py-2 rounded-full text-sm font-semibold">
+                                ⭐ Premium Featured Properties
+                              </div>
+                              <span className="text-sm text-muted-foreground">({promoted.length})</span>
+                            </div>
+                            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 md:gap-8 p-4 bg-gradient-to-r from-yellow-50 to-orange-50 rounded-lg border-2 border-yellow-200">
+                              {promoted.map((property, index) => (
+                                <div key={`featured-${property.id}`} itemProp="itemListElement" itemScope itemType="https://schema.org/ListItem">
+                                  <meta itemProp="position" content={String(index + 1)} />
+                                  <PropertyCard property={property} />
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+                        
+                        {/* Regular Properties */}
+                        {regular.length > 0 && (
+                          <div>
+                            {promoted.length > 0 && (
+                              <div className="flex items-center justify-center gap-2 mb-6">
+                                <h3 className="text-xl font-semibold">More Quality Properties</h3>
+                                <span className="text-sm text-muted-foreground">({regular.length})</span>
+                              </div>
+                            )}
+                            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 md:gap-8">
+                              {regular.map((property, index) => (
+                                <div key={property.id} itemProp="itemListElement" itemScope itemType="https://schema.org/ListItem">
+                                  <meta itemProp="position" content={String(promoted.length + index + 1)} />
+                                  <PropertyCard property={property} />
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+                      </>
+                    );
+                  })()
+                  }
+                </>
             )}
             <div className="text-center mt-12">
               <Button asChild variant="outline" size="lg">
