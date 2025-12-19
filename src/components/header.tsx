@@ -58,9 +58,12 @@ export function Header() {
   const [searchQuery, setSearchQuery] = useState('');
   const [isBrowseOpen, setIsBrowseOpen] = useState(false);
   const isHomepage = pathname === '/';
+  const isAdminPage = pathname?.startsWith('/admin');
   
-  const linkClasses = `text-sm font-medium transition-colors hover:text-primary text-black`;
+  const linkClasses = `text-sm font-medium transition-colors hover:text-primary ${isAdminPage ? 'dark:text-white text-black' : 'text-black'}`;
   const buttonBorderClasses = 'border-primary text-primary hover:bg-primary hover:text-primary-foreground';
+  const textClasses = `${isAdminPage ? 'dark:text-white text-black' : 'text-black'}`;
+  const logoTextClasses = `text-xl font-bold font-headline transition-colors ${isAdminPage ? 'dark:text-white text-black' : 'text-black'}`;
 
   const handleLogout = () => {
     logout();
@@ -212,14 +215,14 @@ export function Header() {
   };
 
   return (
-    <header className={`sticky top-0 z-50 transition-all duration-300 bg-background shadow-md`}>
+    <header className={`sticky top-0 z-50 transition-all duration-300 ${isAdminPage ? 'bg-black shadow-md' : 'bg-background shadow-md'}`}>
       <div className="container mx-auto px-4">
         <div className="flex h-20 items-center justify-between">
           <Link href="/" className="flex items-center gap-2">
             <div className={`p-2 rounded-md transition-colors bg-primary`}>
                 <Building className={`h-6 w-6 transition-colors text-primary-foreground`} />
             </div>
-            <span className={`text-xl font-bold font-headline transition-colors text-black`}>
+            <span className={logoTextClasses}>
               House Rent Kenya
             </span>
           </Link>
