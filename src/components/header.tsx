@@ -237,7 +237,7 @@ export function Header() {
               ))}
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" className="text-sm font-medium text-black hover:text-primary">
+                  <Button variant="ghost" className={`text-sm font-medium ${textClasses} hover:text-primary`}>
                     Browse Properties <ChevronDown className="ml-1 h-4 w-4" />
                   </Button>
                 </DropdownMenuTrigger>
@@ -276,7 +276,7 @@ export function Header() {
           <div className="lg:hidden">
             <Sheet>
               <SheetTrigger asChild>
-                <Button variant="ghost" size="icon" className={`text-black hover:bg-black/20`}>
+                <Button variant="ghost" size="icon" className={`${textClasses} hover:bg-black/20 dark:hover:bg-white/20`}>
                   <Menu className="h-6 w-6" />
                 </Button>
               </SheetTrigger>

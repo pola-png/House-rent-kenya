@@ -430,40 +430,6 @@ export default function AdminLayout({
           </DropdownMenu>
           </div>
         </header>
-        <div className="px-4 sm:px-6 py-2 border-b">
-          <nav className="flex items-center space-x-1 text-sm text-muted-foreground">
-            {pathname && pathname.split('/').filter(Boolean).length > 1 && (
-              <>
-                <Link href="/admin/dashboard" className="hover:text-primary transition-colors">
-                  Dashboard
-                </Link>
-                {pathname.split('/').filter(Boolean).slice(1).map((segment, index) => {
-                  const currentPath = '/admin/' + pathname.split('/').filter(Boolean).slice(1, index + 2).join('/');
-                  let label = segment.charAt(0).toUpperCase() + segment.slice(1).replace(/-/g, ' ');
-                  
-                  if (segment === 'all-properties') label = 'All Properties';
-                  if (segment === 'properties') label = 'My Properties';
-                  if (segment === 'new') label = 'Add New';
-                  if (segment === 'admin-dashboard') label = 'Admin Overview';
-                  
-                  return (
-                    <React.Fragment key={currentPath}>
-                      <ChevronRight className="h-4 w-4" />
-                      <Link
-                        href={currentPath}
-                        className={`hover:text-primary transition-colors ${
-                          index === pathname.split('/').filter(Boolean).slice(1).length - 1 ? 'text-foreground font-medium' : ''
-                        }`}
-                      >
-                        {label}
-                      </Link>
-                    </React.Fragment>
-                  );
-                })}
-              </>
-            )}
-          </nav>
-        </div>
         <main className="flex-1 w-full max-w-7xl mx-auto px-3 sm:px-6 py-0">{children}</main>
       </SidebarInset>
     </SidebarProvider>

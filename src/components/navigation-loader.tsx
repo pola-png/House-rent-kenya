@@ -17,8 +17,11 @@ export function NavigationLoader() {
   if (!loading) return null;
 
   return (
-    <div className="fixed top-0 left-0 right-0 z-50 h-1 bg-gradient-to-r from-blue-500 to-purple-500 animate-pulse">
-      <div className="h-full bg-white/20 animate-pulse" />
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-background/80 backdrop-blur-sm">
+      <div className="flex items-center gap-2 text-foreground">
+        <Loader2 className="h-6 w-6 animate-spin" />
+        <span className="text-sm font-medium">Loading...</span>
+      </div>
     </div>
   );
 }
