@@ -53,6 +53,7 @@ import { Input } from "@/components/ui/input";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Header } from "@/components/header";
+import { NavigationLoader } from "@/components/navigation-loader";
 import { useAuth } from "@/hooks/use-auth-supabase";
 import { useRouter } from "next/navigation";
 import { usePathname } from "next/navigation";
@@ -135,7 +136,10 @@ export default function AdminLayout({
 
   return (
     <div className={isAdminMode ? "dark bg-black text-white min-h-screen" : "min-h-screen bg-background text-foreground"}>
-      <Header />
+      <NavigationLoader />
+      <div className={isAdminMode ? "dark" : ""}>
+        <Header />
+      </div>
       <SidebarProvider open={open} onOpenChange={setOpen}>
       <Sidebar collapsible="icon">
         <SidebarContent className="flex flex-col">

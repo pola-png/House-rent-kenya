@@ -8,6 +8,7 @@ import { Toaster } from '@/components/ui/toaster';
 import { AuthProvider } from '@/hooks/use-auth-supabase';
 import { SessionMonitor } from '@/components/session-monitor';
 import { ConditionalLayout } from '@/components/conditional-layout';
+import { NavigationLoader } from '@/components/navigation-loader';
 
 export const metadata: Metadata = {
   metadataBase: new URL('https://houserentkenya.co.ke'),
@@ -178,6 +179,7 @@ export default function RootLayout({
       </head>
       <body className={cn('min-h-screen bg-background font-body antialiased')}>
         <AuthProvider>
+          <NavigationLoader />
           <SessionMonitor />
           <ConditionalLayout>{children}</ConditionalLayout>
           <Toaster />
