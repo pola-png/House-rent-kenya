@@ -7,9 +7,24 @@ import { Metadata } from 'next';
 export const revalidate = 3600;
 
 export const metadata: Metadata = {
-  title: '2 Bedroom House for Rent in Mombasa | Coastal Properties Kenya',
-  description: 'Find 2 bedroom houses for rent in Mombasa, Kenya. Beachfront apartments, modern townhouses in Nyali, Bamburi & Diani. Prices from Ksh 40,000/month.',
-  keywords: '2 bedroom house rent Mombasa, coastal properties Mombasa, Nyali apartments, Bamburi houses, Diani rentals',
+  title: '2 Bedroom Houses for Rent in Mombasa | Coastal Properties Kenya',
+  description: 'Find 2 bedroom houses and apartments for rent in Mombasa, Kenya. Beachfront properties in Nyali, Bamburi & Diani. Ocean views from Ksh 40,000/month.',
+  keywords: [
+    '2 bedroom house rent Mombasa',
+    'coastal properties Mombasa',
+    'Nyali apartments 2 bedroom',
+    'Bamburi houses for rent',
+    'Diani beach rentals',
+    'beachfront apartments Mombasa',
+    '2BR coastal homes Kenya',
+    'ocean view properties Mombasa'
+  ],
+  openGraph: {
+    title: '2 Bedroom Coastal Properties in Mombasa | Beach Living',
+    description: 'Discover 2 bedroom beachfront properties in Mombasa with ocean views and modern amenities.',
+    url: 'https://houserentkenya.co.ke/2-bedroom-house-for-rent-in-mombasa',
+    type: 'website'
+  },
   alternates: {
     canonical: 'https://houserentkenya.co.ke/2-bedroom-house-for-rent-in-mombasa',
   },
@@ -24,7 +39,27 @@ export default async function Page() {
   });
   const totalProperties = all.length;
   return (
-    <div className="container mx-auto px-4 py-8">
+    <>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify({
+            "@context": "https://schema.org",
+            "@type": "WebPage",
+            "name": "2 Bedroom Houses for Rent in Mombasa",
+            "description": "Find 2 bedroom coastal properties for rent in Mombasa with beachfront views and modern amenities.",
+            "url": "https://houserentkenya.co.ke/2-bedroom-house-for-rent-in-mombasa",
+            "mainEntity": {
+              "@type": "RealEstateAgent",
+              "name": "House Rent Kenya",
+              "areaServed": "Mombasa, Kenya",
+              "serviceType": "2 Bedroom Coastal Property Rental"
+            }
+          })
+        }}
+      />
+      
+      <div className="container mx-auto px-4 py-8">
       <h1 className="text-4xl font-bold mb-4">2 Bedroom House for Rent in Mombasa</h1>
       <p className="text-lg text-muted-foreground mb-8">Find 2 bedroom houses for rent in Mombasa. Coastal living with modern amenities and beachfront access.</p>
       <div className="bg-muted/50 p-6 rounded-lg mb-8">
@@ -105,6 +140,7 @@ export default async function Page() {
           </div>
         </div>
       )}
-    </div>
+      </div>
+    </>
   );
 }

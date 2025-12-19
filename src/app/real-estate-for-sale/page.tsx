@@ -1,46 +1,72 @@
-import { PropertyCard } from '@/components/property-card';
-import { supabase } from '@/lib/supabase';
-import Link from 'next/link';
-import { Button } from '@/components/ui/button';
+import { PromotedPropertiesLayout } from '@/components/promoted-properties-layout';
+import { getPropertiesWithPromotion } from '@/lib/promoted-properties';
 import { Metadata } from 'next';
 
 export const revalidate = 3600;
 
 export const metadata: Metadata = {
-  title: 'Real Estate for Sale in Kenya | Investment Properties',
-  description: 'Explore real estate properties for sale in Kenya. Investment opportunities, residential & commercial properties with professional listings.',
-  keywords: 'real estate for sale Kenya, investment property Kenya, commercial property Kenya, residential property Kenya',
+  title: 'Real Estate for Sale in Kenya | Premium Investment Properties',
+  description: 'Invest in real estate in Kenya - residential, commercial & land. 1000+ premium investment opportunities with high ROI. Verified listings in prime locations.',
+  keywords: [
+    'real estate for sale Kenya',
+    'investment property Kenya',
+    'commercial property Kenya',
+    'residential property Kenya',
+    'real estate investment Kenya',
+    'property investment opportunities',
+    'buy real estate Kenya',
+    'Kenya property market',
+    'real estate deals Kenya'
+  ],
+  openGraph: {
+    title: 'Real Estate for Sale in Kenya | Premium Investment Opportunities',
+    description: 'Discover premium real estate investment opportunities in Kenya with verified listings and high ROI potential.',
+    url: 'https://houserentkenya.co.ke/real-estate-for-sale',
+    type: 'website'
+  },
+  alternates: {
+    canonical: 'https://houserentkenya.co.ke/real-estate-for-sale'
+  }
 };
 
-async function getProperties() {
-  const { data } = await supabase.from('properties').select('*').in('status', ['For Sale']).order('createdAt', { ascending: false }).limit(12);
-  if (!data) return [];
-  const landlordIds = [...new Set(data.map(p => p.landlordId))];
-  const { data: profiles } = await supabase.from('profiles').select('*').in('id', landlordIds);
-  const profileMap = new Map(profiles?.map(p => [p.id, p]) || []);
-  return data.map(p => ({ ...p, createdAt: new Date(p.createdAt), updatedAt: new Date(p.updatedAt), agent: profileMap.get(p.landlordId) ? { uid: profileMap.get(p.landlordId)!.id, firstName: profileMap.get(p.landlordId)!.firstName || '', lastName: profileMap.get(p.landlordId)!.lastName || '', displayName: profileMap.get(p.landlordId)!.displayName || '', email: profileMap.get(p.landlordId)!.email || '', role: 'agent', agencyName: profileMap.get(p.landlordId)!.agencyName, phoneNumber: profileMap.get(p.landlordId)!.phoneNumber, photoURL: profileMap.get(p.landlordId)!.photoURL, createdAt: new Date(profileMap.get(p.landlordId)!.createdAt) } : undefined }));
-}
-
 export default async function Page() {
-  const properties = await getProperties();
+  const { promoted, regular, all } = await getPropertiesWithPromotion({
+    status: 'For Sale',
+    limit: 20
+  });
+
   return (
-    <div className="container mx-auto px-4 py-8">
-      <h1 className="text-4xl font-bold mb-4">Real Estate for Sale in Kenya - Investment Properties</h1>
-      <p className="text-lg text-muted-foreground mb-8">Explore {properties.length}+ real estate properties for sale in Kenya. Investment opportunities, residential & commercial properties.</p>
-      {properties.length > 0 ? (
-        <>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
-            {properties.map((property) => <PropertyCard key={property.id} property={property} />)}
-          </div>
-          <div className="text-center">
-            <Button asChild size="lg">
-              <Link href="/search?type=sale">View All Real Estate Properties</Link>
-            </Button>
-          </div>
-        </>
-      ) : (
-        <p className="text-center py-12">No properties available. <Link href="/search" className="text-primary underline">Browse all properties</Link></p>
-      )}
-    </div>
+    <>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify({
+            "@context": "https://schema.org",
+            "@type": "WebPage",
+            "name": "Real Estate for Sale in Kenya",
+            "description": "Invest in premium real estate in Kenya with verified listings and high ROI investment opportunities.",
+            "url": "https://houserentkenya.co.ke/real-estate-for-sale",
+            "mainEntity": {
+              "@type": "RealEstateAgent",
+              "name": "House Rent Kenya",
+              "areaServed": "Kenya",
+              "serviceType": "Real Estate Investment and Property Sales"
+            }
+          })
+        }}
+      />
+      
+      <PromotedPropertiesLayout
+        promoted={promoted}
+        regular={regular}
+        totalProperties={all.length}
+        title="Real Estate for Sale in Kenya - Investment Properties"
+        description={`Explore ${all.length}+ real estate properties for sale in Kenya. Premium investment opportunities, residential & commercial properties with verified listings and high ROI potential.`}
+        featuredSectionTitle="Featured Investment Properties"
+        regularSectionTitle="More Real Estate Opportunities"
+        viewAllLink="/search?type=sale"
+        viewAllText="View All Real Estate Properties"
+      />
+    </>
   );
 }
