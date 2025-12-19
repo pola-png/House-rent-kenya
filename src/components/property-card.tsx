@@ -60,7 +60,7 @@ export function PropertyCard({ property }: PropertyCardProps) {
   
   return (
     <Card ref={impressionRef as any} className={`overflow-hidden group hover:shadow-xl transition-shadow duration-300 flex flex-col ${
-      isPromoted ? 'ring-2 ring-yellow-400 shadow-lg' : ''
+      isPromoted ? 'ring-2 ring-green-500 shadow-lg' : ''
     }`}>
       <Link href={propertyUrl} className="block flex flex-col h-full">
         <div className="relative h-56 w-full overflow-hidden bg-muted text-muted-foreground">
@@ -81,11 +81,11 @@ export function PropertyCard({ property }: PropertyCardProps) {
           )}
           {isPromoted && (
             <div className="absolute top-2 left-2 flex flex-col gap-1">
-              <Badge className="bg-gradient-to-r from-yellow-400 to-orange-500 hover:from-yellow-500 hover:to-orange-600 text-white text-xs px-2 py-1 font-semibold shadow-md">
+              <Badge className="bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white text-xs px-2 py-1 font-semibold shadow-md">
                 <Star className="h-3 w-3 mr-1 fill-current" />
                 FEATURED
               </Badge>
-              <Badge className="bg-green-600 hover:bg-green-700 text-white text-xs px-2 py-1">
+              <Badge className="bg-blue-600 hover:bg-blue-700 text-white text-xs px-2 py-1">
                 VERIFIED
               </Badge>
             </div>

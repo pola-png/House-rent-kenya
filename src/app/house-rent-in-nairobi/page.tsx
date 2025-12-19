@@ -27,12 +27,12 @@ export default async function Page() {
           {promoted.length > 0 && (
             <div className="mb-12">
               <div className="flex items-center gap-2 mb-6">
-                <div className="bg-gradient-to-r from-yellow-400 to-orange-500 text-white px-3 py-1 rounded-full text-sm font-semibold">
+                <div className="bg-gradient-to-r from-green-500 to-emerald-600 text-white px-3 py-1 rounded-full text-sm font-semibold">
                   ⭐ Featured Properties in Nairobi
                 </div>
                 <span className="text-sm text-muted-foreground">({promoted.length})</span>
               </div>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 p-4 bg-gradient-to-r from-yellow-50 to-orange-50 rounded-lg border-2 border-yellow-200">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 p-4 bg-gradient-to-r from-green-50 to-emerald-50 rounded-lg border-2 border-green-200">
                 {promoted.map((property) => (
                   <PropertyCard key={`featured-${property.id}`} property={property} />
                 ))}
