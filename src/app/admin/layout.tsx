@@ -52,13 +52,14 @@ import {
 import { Input } from "@/components/ui/input";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Header } from "@/components/header";
 import { useAuth } from "@/hooks/use-auth-supabase";
 import { useRouter } from "next/navigation";
 import { usePathname } from "next/navigation";
 // Removed re-auth overlay; no need for supabase/useToast here
 import { useEffect } from "react";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Shield } from "lucide-react";
+import { Shield, ChevronRight } from "lucide-react";
 
 export default function AdminLayout({
   children,
@@ -140,7 +141,8 @@ export default function AdminLayout({
 
   return (
     <div className={isAdminMode ? "dark bg-black text-white min-h-screen" : "min-h-screen bg-background text-foreground"}>
-    <SidebarProvider open={open} onOpenChange={setOpen}>
+      <Header />
+      <SidebarProvider open={open} onOpenChange={setOpen}>
       <Sidebar collapsible="icon">
         <SidebarContent className="flex flex-col">
           <SidebarHeader className="p-4">
@@ -356,8 +358,9 @@ export default function AdminLayout({
         <SidebarRail />
       </Sidebar>
       <SidebarInset>
-        <header className={`sticky top-0 z-30 flex h-14 items-center gap-4 border-b px-4 sm:static sm:h-auto sm:border-0 sm:px-6 ${isAdminMode ? 'bg-black/70 sm:bg-black' : 'bg-background/70 sm:bg-background'}`}>
-          <SidebarTrigger />
+        <header className={`sticky top-0 z-30 flex flex-col gap-2 border-b px-4 sm:px-6 py-3 ${isAdminMode ? 'bg-black/70 sm:bg-black' : 'bg-background/70 sm:bg-background'}`}>
+          <div className="flex w-full items-center gap-4">
+            <SidebarTrigger />
           
           <div className="relative ml-auto flex-1 md:grow-0">
             {/* Search can be added here if needed */}
@@ -436,6 +439,40 @@ export default function AdminLayout({
             </DropdownMenuContent>
           </DropdownMenu>
         </header>
+        <div className="px-4 sm:px-6 py-2 border-b">
+          <nav className="flex items-center space-x-1 text-sm text-muted-foreground">
+            {pathname && pathname.split('/').filter(Boolean).length > 1 && (
+              <>
+                <Link href="/admin/dashboard" className="hover:text-primary transition-colors">
+                  Dashboard
+                </Link>
+                {pathname.split('/').filter(Boolean).slice(1).map((segment, index) => {
+                  const currentPath = '/admin/' + pathname.split('/').filter(Boolean).slice(1, index + 2).join('/');
+                  let label = segment.charAt(0).toUpperCase() + segment.slice(1).replace(/-/g, ' ');
+                  
+                  if (segment === 'all-properties') label = 'All Properties';
+                  if (segment === 'properties') label = 'My Properties';
+                  if (segment === 'new') label = 'Add New';
+                  if (segment === 'admin-dashboard') label = 'Admin Overview';
+                  
+                  return (
+                    <React.Fragment key={currentPath}>
+                      <ChevronRight className="h-4 w-4" />
+                      <Link
+                        href={currentPath}
+                        className={`hover:text-primary transition-colors ${
+                          index === pathname.split('/').filter(Boolean).slice(1).length - 1 ? 'text-foreground font-medium' : ''
+                        }`}
+                      >
+                        {label}
+                      </Link>
+                    </React.Fragment>
+                  );
+                })}
+              </>
+            )}
+          </nav>
+        </div>
         <main className="flex-1 w-full max-w-7xl mx-auto px-3 sm:px-6 py-0">{children}</main>
       </SidebarInset>
     </SidebarProvider>
