@@ -141,7 +141,7 @@ export default function AdminLayout({
         <Header />
       </div>
       <SidebarProvider open={open} onOpenChange={setOpen}>
-      <Sidebar collapsible="icon" className="mt-24">
+      <Sidebar collapsible="icon" className="mt-26">
         <SidebarContent className="flex flex-col">
           <SidebarHeader className="p-4">
             <Link href="/admin/dashboard" className="flex items-center gap-2 font-semibold min-w-0">
