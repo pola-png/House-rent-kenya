@@ -55,6 +55,7 @@ export default function Home() {
   
   const [featuredProperties, setFeaturedProperties] = useState<Property[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [searchForm, setSearchForm] = useState({
     location: '',
     type: '',
@@ -66,7 +67,15 @@ export default function Home() {
 
   useEffect(() => {
     fetchFeaturedProperties();
-  }, []);
+    
+    const retryInterval = setInterval(() => {
+      if (error) {
+        fetchFeaturedProperties();
+      }
+    }, 10000);
+    
+    return () => clearInterval(retryInterval);
+  }, [error]);
 
   const handleSearch = () => {
     const params = new URLSearchParams();
