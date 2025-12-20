@@ -92,19 +92,42 @@ export default function Home() {
 
   const fetchFeaturedProperties = async () => {
     try {
-      // Fetch properties with premium sorting like search page
-      const { data: properties, error } = await supabase
+      // First, fetch promoted/featured properties
+      const { data: promotedProperties, error: promotedError } = await supabase
         .from('properties')
         .select('*')
         .in('status', ['Available', 'For Rent', 'For Sale'])
-        .order('isPremium', { ascending: false, nullsFirst: false })
+        .eq('isPremium', true)
+        .or('featuredExpiresAt.is.null,featuredExpiresAt.gt.' + new Date().toISOString())
         .order('createdAt', { ascending: false })
-        .limit(6);
+        .limit(4);
 
-      if (error) throw error;
+      if (promotedError) throw promotedError;
+
+      // Then fetch random new properties to fill remaining slots
+      const remainingSlots = 6 - (promotedProperties?.length || 0);
+      let randomProperties = [];
+      
+      if (remainingSlots > 0) {
+        const { data: allProperties } = await supabase
+          .from('properties')
+          .select('*')
+          .in('status', ['Available', 'For Rent', 'For Sale'])
+          .neq('isPremium', true)
+          .order('createdAt', { ascending: false })
+          .limit(20); // Get more to randomize from
+        
+        // Shuffle and take needed amount
+        if (allProperties) {
+          const shuffled = allProperties.sort(() => 0.5 - Math.random());
+          randomProperties = shuffled.slice(0, remainingSlots);
+        }
+      }
+
+      const allProperties = [...(promotedProperties || []), ...randomProperties];
 
       // Fetch agent profiles for the properties
-      const landlordIds = [...new Set((properties || []).map(p => p.landlordId))];
+      const landlordIds = [...new Set(allProperties.map(p => p.landlordId))];
       const { data: profiles } = await supabase
         .from('profiles')
         .select('*')
@@ -112,7 +135,7 @@ export default function Home() {
       
       const profileMap = new Map(profiles?.map(p => [p.id, p]) || []);
       
-      const propertiesWithAgents = (properties || []).map(p => {
+      const propertiesWithAgents = allProperties.map(p => {
 
         const profileData = profileMap.get(p.landlordId);
         return {
