@@ -39,7 +39,7 @@ export default async function Page() {
                 </div>
                 <span className="text-sm text-muted-foreground">({promoted.length})</span>
               </div>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 p-4 bg-gradient-to-r from-green-50 to-emerald-50 rounded-lg border-2 border-green-200">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 {promoted.map((property) => (
                   <PropertyCard key={`featured-${property.id}`} property={property} />
                 ))}
