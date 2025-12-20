@@ -59,9 +59,7 @@ export function PropertyCard({ property }: PropertyCardProps) {
   const isPromoted = property.isPremium && (!property.featuredExpiresAt || new Date(property.featuredExpiresAt) > new Date());
   
   return (
-    <Card ref={impressionRef as any} className={`overflow-hidden group hover:shadow-xl transition-shadow duration-300 flex flex-col ${
-      isPromoted ? 'ring-2 ring-green-500 shadow-lg' : ''
-    }`}>
+    <Card ref={impressionRef as any} className="overflow-hidden group hover:shadow-xl transition-shadow duration-300 flex flex-col">
       <Link href={propertyUrl} className="block flex flex-col h-full">
         <div className="relative h-56 w-full overflow-hidden bg-muted text-muted-foreground">
           {mainImageUrl ? (

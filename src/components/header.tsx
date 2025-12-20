@@ -105,11 +105,24 @@ export function Header() {
       currentPath += `/${segment}`;
       let label = segment.charAt(0).toUpperCase() + segment.slice(1).replace(/-/g, ' ');
       
-      if (segment === 'admin') label = 'Dashboard';
-      if (segment === 'all-properties') label = 'All Properties';
-      if (segment === 'properties' && segments[0] === 'admin') label = 'My Properties';
-      if (segment === 'new') label = 'Add New';
-      if (segment === 'edit') label = 'Edit';
+      // Handle admin paths properly - only show one Dashboard
+      if (segment === 'admin') {
+        // For /admin path, show Dashboard and link to appropriate dashboard
+        const dashboardPath = user?.role === 'admin' ? '/admin/admin-dashboard' : '/admin/dashboard';
+        breadcrumbs.push({ label: 'Dashboard', href: dashboardPath });
+        return;
+      } else if (segment === 'dashboard' || segment === 'admin-dashboard') {
+        // Skip these segments as we already handled them above
+        return;
+      } else if (segment === 'all-properties') {
+        label = 'All Properties';
+      } else if (segment === 'properties' && segments[0] === 'admin') {
+        label = 'My Properties';
+      } else if (segment === 'new') {
+        label = 'Add New';
+      } else if (segment === 'edit') {
+        label = 'Edit';
+      }
       
       breadcrumbs.push({ label, href: currentPath });
     });
@@ -129,7 +142,7 @@ export function Header() {
               <p className="text-sm font-medium text-muted-foreground px-4">My Account</p>
               {(user.role === 'agent' || user.role === 'admin') && (
                 <SheetClose asChild>
-                    <Link href="/admin/dashboard" className="flex items-center gap-2 p-4 text-lg font-medium transition-colors hover:text-primary"><Home className="h-5 w-5"/> Dashboard</Link>
+                    <Link href={user.role === 'admin' ? "/admin/admin-dashboard" : "/admin/dashboard"} className="flex items-center gap-2 p-4 text-lg font-medium transition-colors hover:text-primary"><Home className="h-5 w-5"/> Dashboard</Link>
                 </SheetClose>
               )}
               <SheetClose asChild>
@@ -164,7 +177,7 @@ export function Header() {
             <DropdownMenuSeparator />
             {(user.role === 'agent' || user.role === 'admin') && (
               <DropdownMenuItem asChild>
-                <Link href="/admin/dashboard">Dashboard</Link>
+                <Link href={user.role === 'admin' ? "/admin/admin-dashboard" : "/admin/dashboard"}>Dashboard</Link>
               </DropdownMenuItem>
             )}
             <DropdownMenuItem asChild>
