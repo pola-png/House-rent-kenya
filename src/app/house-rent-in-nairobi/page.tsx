@@ -2,8 +2,20 @@ import { PropertyCard } from '@/components/property-card';
 import { getPropertiesWithPromotion } from '@/lib/promoted-properties';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
+import { Metadata } from 'next';
 
 export const revalidate = 3600;
+
+export const metadata: Metadata = {
+  title: 'House Rent in Nairobi - Apartments & Homes for Rent | House Rent Kenya',
+  description: 'Find houses for rent in Nairobi, Kenya. Browse 1000+ apartments, bedsitters & homes in Westlands, Kilimani, Karen, Lavington with photos and prices.',
+  keywords: 'house rent Nairobi, apartments Nairobi, bedsitter Nairobi, Westlands rent, Kilimani rent, Karen rent, Lavington rent',
+  openGraph: {
+    title: 'House Rent in Nairobi - Apartments & Homes for Rent',
+    description: 'Find houses for rent in Nairobi, Kenya. Browse apartments, bedsitters & homes in prime locations with photos and competitive prices.',
+    type: 'website',
+  },
+};
 
 export default async function Page() {
   const { promoted, regular, all } = await getPropertiesWithPromotion({

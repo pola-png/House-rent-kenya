@@ -88,14 +88,6 @@ export function PropertyCard({ property }: PropertyCardProps) {
               </Badge>
             </div>
           )}
-          {property.isPremium && !isPromoted && property.featuredExpiresAt && new Date(property.featuredExpiresAt) < new Date() && (
-            <div className="absolute top-2 left-2">
-              <Badge className="bg-gray-600 hover:bg-gray-700 text-white text-xs px-2 py-1">
-                <Star className="h-3 w-3 mr-1" />
-                EXPIRED
-              </Badge>
-            </div>
-          )}
           {imageError && retryCount >= MAX_IMAGE_RETRIES && (
             <div className="absolute inset-0 flex flex-col items-center justify-center bg-black/70 text-white">
               <p className="text-xs uppercase tracking-wider mb-2">Image failed to load</p>

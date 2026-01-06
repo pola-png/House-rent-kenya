@@ -2,8 +2,20 @@ import { PropertyCard } from '@/components/property-card';
 import { getPropertiesWithPromotion } from '@/lib/promoted-properties';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
+import { Metadata } from 'next';
 
 export const revalidate = 3600;
+
+export const metadata: Metadata = {
+  title: 'Bedsitter for Rent in Kasarani - Affordable Studio Apartments | House Rent Kenya',
+  description: 'Find affordable bedsitter apartments for rent in Kasarani, Nairobi. Browse verified listings with photos, prices, and agent contacts. Studio apartments from KSh 8,000.',
+  keywords: 'bedsitter Kasarani, studio apartment Kasarani, single room Kasarani, affordable rent Kasarani, Nairobi bedsitter',
+  openGraph: {
+    title: 'Bedsitter for Rent in Kasarani - Affordable Studio Apartments',
+    description: 'Find affordable bedsitter apartments for rent in Kasarani, Nairobi. Browse verified listings with photos, prices, and agent contacts.',
+    type: 'website',
+  },
+};
 
 export default async function Page() {
   const { promoted, regular, all } = await getPropertiesWithPromotion({
