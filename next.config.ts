@@ -93,8 +93,13 @@ const nextConfig = {
   async redirects() {
     return [
       {
-        source: '/Properties/:location/:slug*',
-        destination: '/property/:slug*',
+        source: '/muthaiga-bedsitter-cozy-1-bed-studio-in-prime-nairobi-:id',
+        destination: '/property/muthaiga-bedsitter-cozy-1-bed-studio-in-prime-nairobi-:id',
+        permanent: true,
+      },
+      {
+        source: '/:slug*-:uuid([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})',
+        destination: '/property/:slug*-:uuid',
         permanent: true,
       },
     ];
