@@ -90,6 +90,15 @@ const nextConfig = {
       },
     ];
   },
+  async redirects() {
+    return [
+      {
+        source: '/Properties/:location/:slug*',
+        destination: '/property/:slug*',
+        permanent: true,
+      },
+    ];
+  },
 
 };
 
