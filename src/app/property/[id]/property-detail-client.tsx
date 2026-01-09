@@ -7,8 +7,12 @@ import { OptimizedImage } from '@/components/optimized-image';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { Separator } from '@/components/ui/separator';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { PropertyCard } from '@/components/property-card';
 import Link from 'next/link';
-import { MapPin, Bed, Bath, Maximize, Phone, Mail, Share2, Heart, MessageSquare, Eye, Calendar, Edit, Star, Copy, Trash2 } from 'lucide-react';
+import { MapPin, Bed, Bath, Maximize, Phone, Mail, Share2, Heart, MessageSquare, Eye, Calendar, Edit, Star, Copy, Trash2, ChevronLeft, ChevronRight, X, ZoomIn, Wifi, Car, Shield, Zap, Droplets, Wind } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -18,9 +22,9 @@ import { useAuth } from '@/hooks/use-auth-supabase';
 import { useRouter } from 'next/navigation';
 import { trackPropertyView } from '@/lib/view-tracking';
 import { toWasabiProxyPath } from '@/lib/wasabi';
-// Render all images in detail view via OptimizedImage (fit="contain") for perfect mobile fit
+
 const Image = ((props: any) => <OptimizedImage fit="contain" sizes="100vw" fallbackSrc={null} {...props} />) as any;
-// Use images exactly as returned by the API (already presigned for Wasabi)
+
 function coerceImages(raw: unknown): string[] {
   if (!raw) return [];
   if (Array.isArray(raw)) return raw as string[];
@@ -33,6 +37,16 @@ function coerceImages(raw: unknown): string[] {
   return [];
 }
 
+const amenityIcons: Record<string, any> = {
+  'WiFi': Wifi,
+  'Internet': Wifi,
+  'Parking': Car,
+  'Security': Shield,
+  'Electricity': Zap,
+  'Water': Droplets,
+  'Air Conditioning': Wind,
+};
+
 interface PropertyDetailClientProps {
   id: string;
 }
@@ -41,10 +55,12 @@ export default function PropertyDetailClient({ id }: PropertyDetailClientProps) 
   const [property, setProperty] = useState<Property | null>(null);
   const [loading, setLoading] = useState(true);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
+  const [showLightbox, setShowLightbox] = useState(false);
   const [showCallbackForm, setShowCallbackForm] = useState(false);
   const [callbackName, setCallbackName] = useState('');
   const [callbackPhone, setCallbackPhone] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [relevantProperties, setRelevantProperties] = useState<Property[]>([]);
   const { toast } = useToast();
   const { user } = useAuth();
   const router = useRouter();
@@ -76,7 +92,6 @@ export default function PropertyDetailClient({ id }: PropertyDetailClientProps) 
 
   const fetchProperty = async () => {
     try {
-      // Extract actual ID from slug-id format
       let actualId = id;
       if (id.includes('-')) {
         const parts = id.split('-');
@@ -85,7 +100,6 @@ export default function PropertyDetailClient({ id }: PropertyDetailClientProps) 
         }
       }
 
-      // Prefer server API (presigns Wasabi URLs, consistent on mobile)
       const controller = new AbortController();
       const timeout = setTimeout(() => controller.abort(), 10000);
       const res = await fetch(`/api/properties/${actualId}`, { cache: 'no-store', signal: controller.signal });
@@ -93,14 +107,10 @@ export default function PropertyDetailClient({ id }: PropertyDetailClientProps) 
       if (!res.ok) throw new Error(`Failed to load property (${res.status})`);
       const data = await res.json();
 
-      console.log('Fetched property data:', data);
-
-      // API returns presigned Wasabi URLs (keep as-is) and legacy Supabase URLs
       const images = coerceImages(data.images)
         .map((img) => toWasabiProxyPath(img))
         .filter((img): img is string => Boolean(img));
 
-      // Ensure agent contact is present; fetch profile if missing
       let agentProfile = data?.landlord;
       if (!agentProfile || !agentProfile.email || !agentProfile.phoneNumber) {
         try {
@@ -136,22 +146,97 @@ export default function PropertyDetailClient({ id }: PropertyDetailClientProps) 
 
       setCurrentImageIndex(0);
 
-      // Track property view (works for all users including anonymous)
       try {
         const newViewCount = await trackPropertyView(actualId);
-        console.log('Property view tracked, new count:', newViewCount);
-        
-        // Update local state with new view count so UI matches DB
         if (newViewCount > 0) {
           setProperty((prev) => prev ? { ...prev, views: newViewCount } : prev);
         }
       } catch (viewError) {
         console.error('Error tracking property view:', viewError);
       }
+
+      // Fetch relevant properties
+      await fetchRelevantProperties(data);
     } catch (error) {
       console.error('Error fetching property:', error);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const fetchRelevantProperties = async (currentProperty: any) => {
+    try {
+      // Extract keywords from title and location
+      const titleWords = currentProperty.title.toLowerCase().split(' ').filter((word: string) => word.length > 3);
+      const location = currentProperty.location.toLowerCase();
+      const propertyType = currentProperty.propertyType.toLowerCase();
+      const bedrooms = currentProperty.bedrooms;
+      
+      // Build search query for similar properties
+      let query = supabase
+        .from('properties')
+        .select('*, profiles!properties_landlordId_fkey(id, firstName, lastName, displayName, email, phoneNumber, photoURL, agencyName)')
+        .neq('id', currentProperty.id)
+        .eq('status', currentProperty.status)
+        .limit(6);
+
+      // Priority 1: Same location and property type
+      const { data: locationMatches } = await query
+        .ilike('location', `%${location}%`)
+        .ilike('propertyType', `%${propertyType}%`);
+
+      // Priority 2: Same bedrooms and property type
+      const { data: bedroomMatches } = await query
+        .eq('bedrooms', bedrooms)
+        .ilike('propertyType', `%${propertyType}%`);
+
+      // Priority 3: Title keyword matches
+      const titleQueries = titleWords.slice(0, 3).map(async (word: string) => {
+        const { data } = await query.ilike('title', `%${word}%`);
+        return data || [];
+      });
+      const titleResults = await Promise.all(titleQueries);
+      const titleMatches = titleResults.flat();
+
+      // Combine and deduplicate
+      const allMatches = [...(locationMatches || []), ...(bedroomMatches || []), ...titleMatches];
+      const uniqueMatches = allMatches.filter((property, index, self) => 
+        index === self.findIndex(p => p.id === property.id)
+      );
+
+      // Sort by promotion status (promoted first), then by creation date
+      const sortedMatches = uniqueMatches
+        .sort((a, b) => {
+          // Promoted properties first
+          if (a.isPremium && !b.isPremium) return -1;
+          if (!a.isPremium && b.isPremium) return 1;
+          // Then by creation date (newest first)
+          return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+        })
+        .slice(0, 6);
+
+      // Map to Property format
+      const mappedProperties = sortedMatches.map(p => ({
+        ...p,
+        createdAt: new Date(p.createdAt),
+        updatedAt: new Date(p.updatedAt),
+        agent: p.profiles ? {
+          uid: p.profiles.id,
+          firstName: p.profiles.firstName || '',
+          lastName: p.profiles.lastName || '',
+          displayName: p.profiles.displayName || '',
+          email: p.profiles.email || '',
+          role: 'agent' as const,
+          agencyName: p.profiles.agencyName,
+          phoneNumber: p.profiles.phoneNumber,
+          photoURL: p.profiles.photoURL,
+          createdAt: new Date()
+        } : undefined
+      }));
+
+      setRelevantProperties(mappedProperties);
+    } catch (error) {
+      console.error('Error fetching relevant properties:', error);
     }
   };
 
@@ -230,245 +315,475 @@ export default function PropertyDetailClient({ id }: PropertyDetailClientProps) 
   }
 
   return (
-    <div className="container mx-auto px-4 py-8" itemScope itemType="https://schema.org/Accommodation">
+    <div className="min-h-screen bg-gradient-to-br from-background to-muted/20">
       <SEOSchema type="property" data={property} />
 
-      {user && property.landlordId === user.uid && (
-        <Card className="mb-6 bg-muted/50">
-          <CardContent className="p-4">
-            <div className="flex flex-wrap gap-2">
-              <Button size="sm" variant="outline" asChild>
-              <Link href={`/admin/properties/edit/${property.id}`}>
-                  <Edit className="h-4 w-4 mr-2" />
-                  Edit Property
-                </Link>
-              </Button>
-              <Button size="sm" variant="outline" asChild>
-              <Link href={`/admin/properties/promote?propertyId=${property.id}`}>
-                  <Star className="h-4 w-4 mr-2" />
-                  Promote Property
-                </Link>
-              </Button>
-              <Button size="sm" variant="outline" onClick={handleDuplicate}>
-                <Copy className="h-4 w-4 mr-2" />
-                Duplicate Property
-              </Button>
-              <Button size="sm" variant="destructive" onClick={handleDelete}>
-                <Trash2 className="h-4 w-4 mr-2" />
-                Delete Property
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
-      )}
-
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        <div className="lg:col-span-2 space-y-6">
-          <div className="relative h-96 rounded-lg overflow-hidden group">
-            {property.images && property.images.length > 0 ? (
+      {/* Lightbox Modal */}
+      {showLightbox && property.images && property.images.length > 0 && (
+        <div className="fixed inset-0 z-50 bg-black/90 flex items-center justify-center">
+          <Button
+            variant="ghost"
+            size="icon"
+            className="absolute top-4 right-4 text-white hover:bg-white/20"
+            onClick={() => setShowLightbox(false)}
+          >
+            <X className="h-6 w-6" />
+          </Button>
+          <div className="relative w-full h-full flex items-center justify-center p-4">
+            <Image
+              src={property.images[currentImageIndex]}
+              alt={property.title}
+              fill
+              className="object-contain"
+            />
+            {property.images.length > 1 && (
               <>
-                <Image
-                  src={property.images[currentImageIndex]}
-                  alt={property.title}
-                  fill
-                  className="object-cover"
-                />
-                {property.images.length > 1 && (
-                  <>
-                    <Button
-                      variant="secondary"
-                      size="icon"
-                      className="absolute left-4 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity"
-                      onClick={() => setCurrentImageIndex((prev) => (prev === 0 ? property.images!.length - 1 : prev - 1))}
-                    >
-                      <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m15 18-6-6 6-6"/></svg>
-                    </Button>
-                    <Button
-                      variant="secondary"
-                      size="icon"
-                      className="absolute right-4 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity"
-                      onClick={() => setCurrentImageIndex((prev) => (prev === property.images!.length - 1 ? 0 : prev + 1))}
-                    >
-                      <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m9 18 6-6-6-6"/></svg>
-                    </Button>
-                    <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-2">
-                      {property.images.map((_, index) => (
-                        <button
-                          key={index}
-                          onClick={() => setCurrentImageIndex(index)}
-                          aria-label={`View image ${index + 1} of ${property.images.length}`}
-                          className={`w-2 h-2 rounded-full transition-all ${
-                            index === currentImageIndex ? 'bg-white w-8' : 'bg-white/50'
-                          }`}
-                        />
-                      ))}
-                    </div>
-                  </>
-                )}
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="absolute left-4 top-1/2 -translate-y-1/2 text-white hover:bg-white/20"
+                  onClick={() => setCurrentImageIndex((prev) => (prev === 0 ? property.images!.length - 1 : prev - 1))}
+                >
+                  <ChevronLeft className="h-8 w-8" />
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="absolute right-4 top-1/2 -translate-y-1/2 text-white hover:bg-white/20"
+                  onClick={() => setCurrentImageIndex((prev) => (prev === property.images!.length - 1 ? 0 : prev + 1))}
+                >
+                  <ChevronRight className="h-8 w-8" />
+                </Button>
               </>
-            ) : (
-              <div className="w-full h-full bg-muted flex items-center justify-center">
-                <span className="text-muted-foreground">No image available</span>
-              </div>
-            )}
-          </div>
-
-          <div>
-            <div className="flex items-start justify-between mb-4">
-              <div>
-                <h1 className="text-3xl font-bold mb-2" itemProp="name">{property.title}</h1>
-                <div className="flex items-center text-muted-foreground" itemProp="address" itemScope itemType="https://schema.org/PostalAddress">
-                  <MapPin className="h-4 w-4 mr-1" />
-                  <span itemProp="addressLocality">{property.location}</span>,{' '}
-                  <span itemProp="addressRegion">{property.city}</span>
-                </div>
-              </div>
-              <div className="text-right">
-                <div className="text-3xl font-bold text-primary" itemProp="priceRange">
-                  Ksh {property.price.toLocaleString()}
-                </div>
-                <div className="text-sm text-muted-foreground">{property.status === 'For Sale' ? '' : '/month'}</div>
-              </div>
-            </div>
-
-            <div className="flex flex-wrap gap-4 mb-6">
-              <div className="flex items-center gap-2">
-                <Bed className="h-5 w-5 text-muted-foreground" />
-                <span>{property.bedrooms} Bedrooms</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <Bath className="h-5 w-5 text-muted-foreground" />
-                <span>{property.bathrooms} Bathrooms</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <Maximize className="h-5 w-5 text-muted-foreground" />
-                <span>{property.area} sqft</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <Eye className="h-5 w-5 text-muted-foreground" />
-                <span>{property.views || 0} Views</span>
-              </div>
-              <Badge>{property.propertyType}</Badge>
-              <Badge variant="secondary">{property.status}</Badge>
-            </div>
-            
-            <div className="flex items-center gap-4 text-sm text-muted-foreground mb-6 pb-6 border-b">
-              <div className="flex items-center gap-1">
-                <Calendar className="h-4 w-4" />
-                <span>Listed {new Date(property.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}</span>
-              </div>
-              <div className="flex items-center gap-1">
-                <Eye className="h-4 w-4" />
-                <span className="font-medium">{property.views || 0} total views</span>
-              </div>
-            </div>
-
-            <div className="prose max-w-none">
-              <h2 className="text-xl font-bold mb-2">Description</h2>
-              <p className="text-muted-foreground">{property.description}</p>
-            </div>
-
-            {property.amenities && property.amenities.length > 0 && (
-              <div>
-                <h2 className="text-xl font-bold mb-2">Amenities</h2>
-                <div className="flex flex-wrap gap-2">
-                  {property.amenities.map((amenity, index) => (
-                    <Badge key={index} variant="outline">{amenity}</Badge>
-                  ))}
-                </div>
-              </div>
             )}
           </div>
         </div>
+      )}
 
-        <div className="lg:col-span-1">
-          <Card className="sticky top-24">
-            <CardContent className="p-6 space-y-4">
-              <h3 className="text-lg font-bold">Contact Agent</h3>
-              <div className="space-y-3">
-                <div>
+      <div className="container mx-auto px-4 py-8" itemScope itemType="https://schema.org/Accommodation">
+        {user && property.landlordId === user.uid && (
+          <Card className="mb-6 bg-gradient-to-r from-blue-50 to-indigo-50 border-blue-200">
+            <CardContent className="p-4">
+              <div className="flex flex-wrap gap-2">
+                <Button size="sm" variant="outline" asChild className="hover:bg-blue-100">
+                  <Link href={`/admin/properties/edit/${property.id}`}>
+                    <Edit className="h-4 w-4 mr-2" />
+                    Edit Property
+                  </Link>
+                </Button>
+                <Button size="sm" variant="outline" asChild className="hover:bg-green-100">
+                  <Link href={`/admin/properties/promote?propertyId=${property.id}`}>
+                    <Star className="h-4 w-4 mr-2" />
+                    Promote Property
+                  </Link>
+                </Button>
+                <Button size="sm" variant="outline" onClick={handleDuplicate} className="hover:bg-purple-100">
+                  <Copy className="h-4 w-4 mr-2" />
+                  Duplicate Property
+                </Button>
+                <Button size="sm" variant="destructive" onClick={handleDelete}>
+                  <Trash2 className="h-4 w-4 mr-2" />
+                  Delete Property
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
+        <div className="grid grid-cols-1 xl:grid-cols-4 gap-8">
+          {/* Main Content */}
+          <div className="xl:col-span-3 space-y-8">
+            {/* Modern Image Gallery */}
+            <Card className="overflow-hidden shadow-xl">
+              <div className="relative">
+                {property.images && property.images.length > 0 ? (
+                  <>
+                    <div className="relative h-[60vh] group cursor-pointer" onClick={() => setShowLightbox(true)}>
+                      <Image
+                        src={property.images[currentImageIndex]}
+                        alt={property.title}
+                        fill
+                        className="object-cover transition-transform duration-300 group-hover:scale-105"
+                      />
+                      <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors duration-300" />
+                      <Button
+                        variant="secondary"
+                        size="icon"
+                        className="absolute top-4 right-4 opacity-0 group-hover:opacity-100 transition-opacity"
+                      >
+                        <ZoomIn className="h-4 w-4" />
+                      </Button>
+                      
+                      {property.images.length > 1 && (
+                        <>
+                          <Button
+                            variant="secondary"
+                            size="icon"
+                            className="absolute left-4 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setCurrentImageIndex((prev) => (prev === 0 ? property.images!.length - 1 : prev - 1));
+                            }}
+                          >
+                            <ChevronLeft className="h-5 w-5" />
+                          </Button>
+                          <Button
+                            variant="secondary"
+                            size="icon"
+                            className="absolute right-4 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setCurrentImageIndex((prev) => (prev === property.images!.length - 1 ? 0 : prev + 1));
+                            }}
+                          >
+                            <ChevronRight className="h-5 w-5" />
+                          </Button>
+                        </>
+                      )}
+                    </div>
+                    
+                    {/* Image Thumbnails */}
+                    {property.images.length > 1 && (
+                      <div className="p-4 bg-muted/30">
+                        <div className="flex gap-2 overflow-x-auto pb-2">
+                          {property.images.map((image, index) => (
+                            <button
+                              key={index}
+                              onClick={() => setCurrentImageIndex(index)}
+                              className={`relative flex-shrink-0 w-20 h-16 rounded-lg overflow-hidden border-2 transition-all ${
+                                index === currentImageIndex ? 'border-primary shadow-lg' : 'border-transparent hover:border-muted-foreground/30'
+                              }`}
+                            >
+                              <Image
+                                src={image}
+                                alt={`${property.title} - Image ${index + 1}`}
+                                fill
+                                className="object-cover"
+                              />
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                  </>
+                ) : (
+                  <div className="h-96 bg-gradient-to-br from-muted to-muted/50 flex items-center justify-center">
+                    <span className="text-muted-foreground text-lg">No images available</span>
+                  </div>
+                )}
+              </div>
+            </Card>
+
+            {/* Property Header */}
+            <Card className="shadow-lg">
+              <CardContent className="p-8">
+                <div className="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-6">
+                  <div className="flex-1">
+                    <div className="flex items-center gap-3 mb-4">
+                      <Badge className="bg-gradient-to-r from-green-500 to-emerald-600 text-white px-3 py-1">
+                        {property.propertyType}
+                      </Badge>
+                      <Badge variant="outline" className="border-blue-200 text-blue-700">
+                        {property.status}
+                      </Badge>
+                      {property.isPremium && (
+                        <Badge className="bg-gradient-to-r from-yellow-500 to-orange-500 text-white px-3 py-1">
+                          <Star className="h-3 w-3 mr-1 fill-current" />
+                          FEATURED
+                        </Badge>
+                      )}
+                    </div>
+                    
+                    <h1 className="text-4xl font-bold mb-4 leading-tight" itemProp="name">
+                      {property.title}
+                    </h1>
+                    
+                    <div className="flex items-center text-muted-foreground mb-6" itemProp="address" itemScope itemType="https://schema.org/PostalAddress">
+                      <MapPin className="h-5 w-5 mr-2 text-primary" />
+                      <span className="text-lg" itemProp="addressLocality">{property.location}</span>
+                      <span className="mx-2">•</span>
+                      <span className="text-lg" itemProp="addressRegion">{property.city}</span>
+                    </div>
+                    
+                    {/* Key Features Grid */}
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                      <div className="flex items-center gap-3 p-3 bg-muted/30 rounded-lg">
+                        <div className="p-2 bg-primary/10 rounded-full">
+                          <Bed className="h-5 w-5 text-primary" />
+                        </div>
+                        <div>
+                          <div className="font-semibold">{property.bedrooms}</div>
+                          <div className="text-sm text-muted-foreground">Bedrooms</div>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-3 p-3 bg-muted/30 rounded-lg">
+                        <div className="p-2 bg-primary/10 rounded-full">
+                          <Bath className="h-5 w-5 text-primary" />
+                        </div>
+                        <div>
+                          <div className="font-semibold">{property.bathrooms}</div>
+                          <div className="text-sm text-muted-foreground">Bathrooms</div>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-3 p-3 bg-muted/30 rounded-lg">
+                        <div className="p-2 bg-primary/10 rounded-full">
+                          <Maximize className="h-5 w-5 text-primary" />
+                        </div>
+                        <div>
+                          <div className="font-semibold">{property.area.toLocaleString()}</div>
+                          <div className="text-sm text-muted-foreground">Sq Ft</div>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-3 p-3 bg-muted/30 rounded-lg">
+                        <div className="p-2 bg-primary/10 rounded-full">
+                          <Eye className="h-5 w-5 text-primary" />
+                        </div>
+                        <div>
+                          <div className="font-semibold">{property.views || 0}</div>
+                          <div className="text-sm text-muted-foreground">Views</div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <div className="text-right">
+                    <div className="text-4xl font-bold text-primary mb-2" itemProp="priceRange">
+                      Ksh {property.price.toLocaleString()}
+                    </div>
+                    <div className="text-lg text-muted-foreground">
+                      {property.status === 'For Sale' ? 'Total Price' : 'Per Month'}
+                    </div>
+                  </div>
+                </div>
+                
+                <Separator className="my-6" />
+                
+                <div className="flex items-center justify-between text-sm text-muted-foreground">
+                  <div className="flex items-center gap-4">
+                    <div className="flex items-center gap-2">
+                      <Calendar className="h-4 w-4" />
+                      <span>Listed {new Date(property.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}</span>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-4">
+                    <Button variant="outline" size="sm" onClick={handleShare}>
+                      <Share2 className="h-4 w-4 mr-2" />
+                      Share
+                    </Button>
+                    <Button variant="outline" size="sm">
+                      <Heart className="h-4 w-4 mr-2" />
+                      Save
+                    </Button>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Tabbed Content */}
+            <Card className="shadow-lg">
+              <Tabs defaultValue="description" className="w-full">
+                <TabsList className="grid w-full grid-cols-2 lg:grid-cols-3">
+                  <TabsTrigger value="description">Description</TabsTrigger>
+                  <TabsTrigger value="amenities">Amenities</TabsTrigger>
+                  <TabsTrigger value="location">Location</TabsTrigger>
+                </TabsList>
+                
+                <TabsContent value="description" className="p-6">
+                  <div className="prose max-w-none">
+                    <h3 className="text-xl font-bold mb-4">About This Property</h3>
+                    <p className="text-muted-foreground leading-relaxed text-lg">{property.description}</p>
+                  </div>
+                </TabsContent>
+                
+                <TabsContent value="amenities" className="p-6">
+                  <h3 className="text-xl font-bold mb-4">Amenities & Features</h3>
+                  {property.amenities && property.amenities.length > 0 ? (
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                      {property.amenities.map((amenity, index) => {
+                        const IconComponent = amenityIcons[amenity] || Shield;
+                        return (
+                          <div key={index} className="flex items-center gap-3 p-3 bg-muted/30 rounded-lg">
+                            <div className="p-2 bg-primary/10 rounded-full">
+                              <IconComponent className="h-4 w-4 text-primary" />
+                            </div>
+                            <span className="font-medium">{amenity}</span>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  ) : (
+                    <p className="text-muted-foreground">No amenities listed for this property.</p>
+                  )}
+                </TabsContent>
+                
+                <TabsContent value="location" className="p-6">
+                  <h3 className="text-xl font-bold mb-4">Location Details</h3>
+                  <div className="space-y-4">
+                    <div className="flex items-center gap-3 p-4 bg-muted/30 rounded-lg">
+                      <MapPin className="h-5 w-5 text-primary" />
+                      <div>
+                        <div className="font-semibold">{property.location}</div>
+                        <div className="text-sm text-muted-foreground">{property.city}, Kenya</div>
+                      </div>
+                    </div>
+                    <p className="text-muted-foreground">
+                      This property is located in {property.location}, {property.city}. 
+                      Contact the agent for more specific location details and nearby amenities.
+                    </p>
+                  </div>
+                </TabsContent>
+              </Tabs>
+            </Card>
+          </div>
+
+          {/* Sidebar - Agent Contact */}
+          <div className="xl:col-span-1">
+            <Card className="sticky top-24 shadow-xl">
+              <CardContent className="p-6">
+                <h3 className="text-xl font-bold mb-6 text-center">Contact Agent</h3>
+                
+                {/* Agent Profile */}
+                <div className="text-center mb-6">
                   {property.agent ? (
                     <>
-                      <div className="font-semibold">{property.agent.displayName}</div>
+                      <Avatar className="h-20 w-20 mx-auto mb-4">
+                        <AvatarImage src={property.agent.photoURL} alt={property.agent.displayName} />
+                        <AvatarFallback className="text-lg font-semibold bg-primary/10 text-primary">
+                          {property.agent.displayName?.charAt(0).toUpperCase() || 'A'}
+                        </AvatarFallback>
+                      </Avatar>
+                      <div className="font-bold text-lg">{property.agent.displayName}</div>
                       {property.agent.agencyName && (
-                        <div className="text-sm text-muted-foreground">{property.agent.agencyName}</div>
+                        <div className="text-sm text-muted-foreground mb-2">{property.agent.agencyName}</div>
                       )}
                       {property.agent.phoneNumber && (
-                        <div className="text-sm text-muted-foreground flex items-center gap-1">
-                          <Phone className="h-3 w-3" />
+                        <div className="text-sm text-muted-foreground flex items-center justify-center gap-2">
+                          <Phone className="h-4 w-4" />
                           {property.agent.phoneNumber}
                         </div>
                       )}
                     </>
                   ) : (
-                    <div className="text-sm text-muted-foreground">Agent details unavailable. You can request a callback and we’ll notify the listing owner.</div>
+                    <div className="text-center p-4 bg-muted/30 rounded-lg">
+                      <div className="text-sm text-muted-foreground mb-2">
+                        Agent details unavailable. Request a callback and we'll notify the listing owner.
+                      </div>
+                    </div>
                   )}
                 </div>
 
-                {property.agent?.phoneNumber && (
-                  <Button className="w-full" asChild>
-                    <a href={`tel:${property.agent.phoneNumber}`}>
-                      <Phone className="h-4 w-4 mr-2" />
-                      Call Agent
-                    </a>
-                  </Button>
-                )}
-
-                <Button 
-                  variant="outline" 
-                  className="w-full" 
-                  onClick={() => setShowCallbackForm(!showCallbackForm)}
-                  type="button"
-                >
-                  <MessageSquare className="h-4 w-4 mr-2" />
-                  {showCallbackForm ? 'Cancel' : 'Request Callback'}
-                </Button>
-                {showCallbackForm && (
-                  <div className="space-y-3 p-4 border rounded-lg">
-                    <div className="space-y-2">
-                      <Label>Your Name</Label>
-                      <Input
-                        value={callbackName}
-                        onChange={(e) => setCallbackName(e.target.value)}
-                        placeholder="Enter your name"
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label>Phone Number</Label>
-                      <Input
-                        value={callbackPhone}
-                        onChange={(e) => setCallbackPhone(e.target.value)}
-                        placeholder="Enter your phone"
-                      />
-                    </div>
-                    <Button onClick={handleCallbackRequest} disabled={isSubmitting} className="w-full">
-                      {isSubmitting ? 'Sending...' : 'Send Request'}
+                <div className="space-y-3">
+                  {property.agent?.phoneNumber && (
+                    <Button className="w-full bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700" asChild>
+                      <a href={`tel:${property.agent.phoneNumber}`}>
+                        <Phone className="h-4 w-4 mr-2" />
+                        Call Now
+                      </a>
                     </Button>
-                  </div>
+                  )}
+
+                  <Button 
+                    variant="outline" 
+                    className="w-full border-primary text-primary hover:bg-primary hover:text-white" 
+                    onClick={() => setShowCallbackForm(!showCallbackForm)}
+                  >
+                    <MessageSquare className="h-4 w-4 mr-2" />
+                    {showCallbackForm ? 'Cancel Request' : 'Request Callback'}
+                  </Button>
+
+                  {property.agent?.email && (
+                    <Button variant="outline" className="w-full" asChild>
+                      <a href={`mailto:${property.agent.email}?subject=Inquiry about ${property.title}&body=Hi, I'm interested in this property: ${typeof window !== 'undefined' ? window.location.href : ''}`}>
+                        <Mail className="h-4 w-4 mr-2" />
+                        Send Email
+                      </a>
+                    </Button>
+                  )}
+                </div>
+
+                {/* Callback Form */}
+                {showCallbackForm && (
+                  <Card className="mt-6 border-primary/20">
+                    <CardContent className="p-4 space-y-4">
+                      <h4 className="font-semibold text-center">Request Callback</h4>
+                      <div className="space-y-3">
+                        <div>
+                          <Label htmlFor="callback-name">Your Name</Label>
+                          <Input
+                            id="callback-name"
+                            value={callbackName}
+                            onChange={(e) => setCallbackName(e.target.value)}
+                            placeholder="Enter your full name"
+                            className="mt-1"
+                          />
+                        </div>
+                        <div>
+                          <Label htmlFor="callback-phone">Phone Number</Label>
+                          <Input
+                            id="callback-phone"
+                            value={callbackPhone}
+                            onChange={(e) => setCallbackPhone(e.target.value)}
+                            placeholder="Enter your phone number"
+                            className="mt-1"
+                          />
+                        </div>
+                        <Button 
+                          onClick={handleCallbackRequest} 
+                          disabled={isSubmitting || !callbackName || !callbackPhone} 
+                          className="w-full bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700"
+                        >
+                          {isSubmitting ? 'Sending...' : 'Send Request'}
+                        </Button>
+                      </div>
+                    </CardContent>
+                  </Card>
                 )}
 
-                {property.agent?.email && (
-                  <Button variant="outline" className="w-full" asChild>
-                    <a href={`mailto:${property.agent.email}`}>
-                      <Mail className="h-4 w-4 mr-2" />
-                      Email Agent
-                    </a>
-                  </Button>
-                )}
-              </div>
-              <div className="flex gap-2 pt-4 border-t">
-                <Button variant="outline" className="flex-1">
-                  <Heart className="h-4 w-4 mr-2" />
-                  Save
-                </Button>
-                <Button variant="outline" className="flex-1" onClick={handleShare} aria-label="Share property">
-                  <Share2 className="h-4 w-4 mr-2" />
-                  Share
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
+                <Separator className="my-6" />
+                
+                {/* Property Stats */}
+                <div className="space-y-3">
+                  <h4 className="font-semibold">Property Stats</h4>
+                  <div className="grid grid-cols-2 gap-3 text-sm">
+                    <div className="text-center p-3 bg-muted/30 rounded-lg">
+                      <div className="font-bold text-lg">{property.views || 0}</div>
+                      <div className="text-muted-foreground">Total Views</div>
+                    </div>
+                    <div className="text-center p-3 bg-muted/30 rounded-lg">
+                      <div className="font-bold text-lg">
+                        {Math.floor((Date.now() - new Date(property.createdAt).getTime()) / (1000 * 60 * 60 * 24))}
+                      </div>
+                      <div className="text-muted-foreground">Days Listed</div>
+                    </div>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
         </div>
+
+        {/* Relevant Properties Section */}
+        {relevantProperties.length > 0 && (
+          <div className="mt-12">
+            <Card className="shadow-lg">
+              <CardContent className="p-8">
+                <h2 className="text-2xl font-bold mb-6">Similar Properties You Might Like</h2>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                  {relevantProperties.map((relatedProperty) => (
+                    <PropertyCard key={relatedProperty.id} property={relatedProperty} />
+                  ))}
+                </div>
+                <div className="text-center mt-8">
+                  <Button variant="outline" asChild>
+                    <Link href={`/search?q=${property.location}&type=${property.status.toLowerCase().includes('rent') ? 'rent' : 'sale'}`}>
+                      View More Properties in {property.location}
+                    </Link>
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        )}
       </div>
     </div>
   );
