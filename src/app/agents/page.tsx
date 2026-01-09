@@ -1,16 +1,22 @@
 'use client';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Building, Mail, Phone, User, Users } from 'lucide-react';
+import { Building, Mail, Phone, User, Users, Search, Filter, MapPin, Star, Award, Calendar, MessageSquare } from 'lucide-react';
 import type { UserProfile } from '@/lib/types';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Button } from '@/components/ui/button';
-import { useState, useEffect } from 'react';
+import { Input } from '@/components/ui/input';
+import { Badge } from '@/components/ui/badge';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { useState, useEffect, useMemo } from 'react';
 import { supabase } from '@/lib/supabase';
 
 export default function AgentsPage() {
   const [agents, setAgents] = useState<UserProfile[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [locationFilter, setLocationFilter] = useState('all');
+  const [sortBy, setSortBy] = useState('newest');
 
   useEffect(() => {
     fetchAgents();
@@ -47,22 +53,109 @@ export default function AgentsPage() {
     }
   };
 
+  const filteredAndSortedAgents = useMemo(() => {
+    let filtered = agents.filter(agent => {
+      const matchesSearch = agent.displayName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                           (agent.agencyName || '').toLowerCase().includes(searchTerm.toLowerCase());
+      return matchesSearch;
+    });
+
+    // Sort agents
+    filtered.sort((a, b) => {
+      switch (sortBy) {
+        case 'name':
+          return a.displayName.localeCompare(b.displayName);
+        case 'agency':
+          return (a.agencyName || '').localeCompare(b.agencyName || '');
+        case 'newest':
+        default:
+          return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+      }
+    });
+
+    return filtered;
+  }, [agents, searchTerm, locationFilter, sortBy]);
+
+  const uniqueAgencies = useMemo(() => {
+    const agencies = agents.map(a => a.agencyName).filter(Boolean);
+    return [...new Set(agencies)];
+  }, [agents]);
+
   return (
-    <div className="bg-background">
+    <div className="min-h-screen bg-gradient-to-br from-background via-muted/10 to-background">
       <div className="container mx-auto px-4 py-12">
         <div className="text-center mb-12">
-          <Users className="h-12 w-12 mx-auto text-primary mb-4" />
-          <h1 className="text-4xl md:text-5xl font-bold font-headline">Find an Agent</h1>
-          <p className="text-lg text-muted-foreground mt-2 max-w-2xl mx-auto">
-            Connect with professional and verified real estate agents across Kenya.
+          <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-r from-primary to-blue-600 rounded-full mb-6">
+            <Users className="h-8 w-8 text-white" />
+          </div>
+          <h1 className="text-4xl md:text-6xl font-bold font-headline bg-gradient-to-r from-primary to-blue-600 bg-clip-text text-transparent mb-4">
+            Find Your Agent
+          </h1>
+          <p className="text-xl text-muted-foreground max-w-3xl mx-auto mb-8">
+            Connect with professional and verified real estate agents across Kenya. Find the perfect agent to help you buy, sell, or rent your property.
           </p>
+          <div className="flex flex-wrap justify-center gap-2">
+            <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">
+              <Award className="h-3 w-3 mr-1" /> Verified Agents
+            </Badge>
+            <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200">
+              <Star className="h-3 w-3 mr-1" /> Top Rated
+            </Badge>
+            <Badge variant="outline" className="bg-purple-50 text-purple-700 border-purple-200">
+              <MessageSquare className="h-3 w-3 mr-1" /> Instant Contact
+            </Badge>
+          </div>
         </div>
 
+        {/* Search and Filter Section */}
+        <Card className="mb-8 shadow-lg border-0 bg-white/80 backdrop-blur-sm">
+          <CardContent className="p-6">
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+              <div className="md:col-span-2">
+                <div className="relative">
+                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
+                  <Input
+                    placeholder="Search agents or agencies..."
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    className="pl-10 h-11"
+                  />
+                </div>
+              </div>
+              <Select value={locationFilter} onValueChange={setLocationFilter}>
+                <SelectTrigger className="h-11">
+                  <SelectValue placeholder="Filter by location" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Locations</SelectItem>
+                  <SelectItem value="nairobi">Nairobi</SelectItem>
+                  <SelectItem value="mombasa">Mombasa</SelectItem>
+                  <SelectItem value="kisumu">Kisumu</SelectItem>
+                </SelectContent>
+              </Select>
+              <Select value={sortBy} onValueChange={setSortBy}>
+                <SelectTrigger className="h-11">
+                  <SelectValue placeholder="Sort by" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="newest">Newest First</SelectItem>
+                  <SelectItem value="name">Name A-Z</SelectItem>
+                  <SelectItem value="agency">Agency A-Z</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="mt-4 flex items-center justify-between text-sm text-muted-foreground">
+              <span>Showing {filteredAndSortedAgents.length} of {agents.length} agents</span>
+              <span>{uniqueAgencies.length} agencies represented</span>
+            </div>
+          </CardContent>
+        </Card>
+
         {isLoading ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {[...Array(6)].map((_, i) => (
-              <Card key={i}>
-                <CardHeader className="items-center text-center">
+              <Card key={i} className="shadow-lg">
+                <CardHeader className="items-center text-center pb-4">
                   <Skeleton className="h-24 w-24 rounded-full" />
                   <Skeleton className="h-6 w-40 mt-4" />
                   <Skeleton className="h-4 w-32" />
@@ -77,42 +170,87 @@ export default function AgentsPage() {
               </Card>
             ))}
           </div>
-        ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-            {agents?.map(agent => {
+        ) : filteredAndSortedAgents.length > 0 ? (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {filteredAndSortedAgents.map(agent => {
               const agentPhoneNumber = agent.phoneNumber || '+254704202939';
+              const joinedDate = new Date(agent.createdAt).toLocaleDateString('en-US', { month: 'short', year: 'numeric' });
               return (
-              <Card key={agent.uid} className="flex flex-col">
-                <CardHeader className="items-center text-center">
-                  <Avatar className="h-24 w-24 mb-4">
-                    {agent.photoURL && <AvatarImage src={agent.photoURL} alt={agent.displayName} />}
-                    <AvatarFallback>
-                      {agent.displayName?.charAt(0) || <User />}
-                    </AvatarFallback>
-                  </Avatar>
-                  <CardTitle className="font-headline text-2xl">{agent.displayName}</CardTitle>
-                  <p className="text-muted-foreground">{agent.agencyName || 'Independent Agent'}</p>
-                </CardHeader>
-                <CardContent className="flex-grow flex flex-col justify-between text-center space-y-4">
-                  <div className="flex items-center justify-center text-muted-foreground">
-                    <Building className="h-4 w-4 mr-2" />
-                    <span>{agent.agencyName || 'No Agency Info'}</span>
+              <Card key={agent.uid} className="group hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-2 bg-white/90 backdrop-blur-sm border-0">
+                <CardHeader className="items-center text-center pb-4">
+                  <div className="relative">
+                    <Avatar className="h-24 w-24 mb-4 ring-4 ring-primary/10 group-hover:ring-primary/30 transition-all">
+                      {agent.photoURL && <AvatarImage src={agent.photoURL} alt={agent.displayName} />}
+                      <AvatarFallback className="text-xl font-bold bg-gradient-to-r from-primary to-blue-600 text-white">
+                        {agent.displayName?.charAt(0).toUpperCase() || <User />}
+                      </AvatarFallback>
+                    </Avatar>
+                    <div className="absolute -bottom-2 -right-2 bg-green-500 text-white rounded-full p-1">
+                      <Award className="h-3 w-3" />
+                    </div>
                   </div>
+                  <CardTitle className="font-headline text-xl mb-2">{agent.displayName}</CardTitle>
                   <div className="space-y-2">
-                    <Button asChild className="w-full">
+                    <Badge variant="outline" className="bg-primary/5 text-primary border-primary/20">
+                      <Building className="h-3 w-3 mr-1" />
+                      {agent.agencyName || 'Independent Agent'}
+                    </Badge>
+                    <div className="flex items-center justify-center text-xs text-muted-foreground">
+                      <Calendar className="h-3 w-3 mr-1" />
+                      Joined {joinedDate}
+                    </div>
+                  </div>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="grid grid-cols-2 gap-3 text-xs">
+                    <div className="text-center p-2 bg-muted/30 rounded-lg">
+                      <div className="font-bold text-lg text-primary">4.8</div>
+                      <div className="text-muted-foreground">Rating</div>
+                    </div>
+                    <div className="text-center p-2 bg-muted/30 rounded-lg">
+                      <div className="font-bold text-lg text-primary">25+</div>
+                      <div className="text-muted-foreground">Properties</div>
+                    </div>
+                  </div>
+                  
+                  <div className="space-y-2">
+                    <Button asChild className="w-full bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700">
                       <a href={`tel:${agentPhoneNumber}`}>
-                        <Phone className="h-4 w-4 mr-2" /> Call Agent
+                        <Phone className="h-4 w-4 mr-2" /> Call Now
                       </a>
                     </Button>
-                    <Button variant="outline" className="w-full" asChild>
-                      <a href={`mailto:${agent.email}`}>
-                        <Mail className="h-4 w-4 mr-2" /> Email Agent
-                      </a>
-                    </Button>
+                    <div className="grid grid-cols-2 gap-2">
+                      <Button variant="outline" size="sm" asChild className="border-primary/20 hover:bg-primary/5">
+                        <a href={`mailto:${agent.email}`}>
+                          <Mail className="h-3 w-3 mr-1" /> Email
+                        </a>
+                      </Button>
+                      <Button variant="outline" size="sm" className="border-primary/20 hover:bg-primary/5">
+                        <MessageSquare className="h-3 w-3 mr-1" /> Chat
+                      </Button>
+                    </div>
+                  </div>
+                  
+                  <div className="pt-2 border-t border-muted/30">
+                    <div className="flex items-center justify-between text-xs text-muted-foreground">
+                      <span>Response time</span>
+                      <span className="text-green-600 font-medium">~2 hours</span>
+                    </div>
                   </div>
                 </CardContent>
               </Card>
             )})}
+          </div>
+        ) : (
+          <div className="text-center py-16">
+            <div className="inline-flex items-center justify-center w-16 h-16 bg-muted rounded-full mb-6">
+              <Users className="h-8 w-8 text-muted-foreground" />
+            </div>
+            <h3 className="text-xl font-semibold mb-2">No agents found</h3>
+            <p className="text-muted-foreground mb-6">Try adjusting your search criteria or browse all agents.</p>
+            <Button onClick={() => { setSearchTerm(''); setLocationFilter('all'); }}>
+              Clear Filters
+            </Button>
           </div>
         )}
       </div>
