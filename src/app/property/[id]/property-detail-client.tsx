@@ -229,6 +229,84 @@ export default function PropertyDetailClient({ id }: PropertyDetailClientProps) 
 
       console.log('Scored properties:', scoredProperties.length);
 
+      // If no relevant properties found, get promoted properties as fallback
+      if (scoredProperties.length === 0) {
+        console.log('No relevant properties, fetching promoted properties...');
+        const { data: promotedProperties } = await supabase
+          .from('properties')
+          .select(`
+            *,
+            profiles!properties_landlordId_fkey(
+              id, firstName, lastName, displayName, email, phoneNumber, photoURL, agencyName
+            )
+          `)
+          .neq('id', currentProperty.id)
+          .eq('isPremium', true)
+          .limit(6);
+
+        if (promotedProperties && promotedProperties.length > 0) {
+          const mappedPromoted = promotedProperties.map(p => ({
+            ...p,
+            createdAt: new Date(p.createdAt),
+            updatedAt: new Date(p.updatedAt),
+            agent: p.profiles ? {
+              uid: p.profiles.id,
+              firstName: p.profiles.firstName || '',
+              lastName: p.profiles.lastName || '',
+              displayName: p.profiles.displayName || '',
+              email: p.profiles.email || '',
+              role: 'agent' as const,
+              agencyName: p.profiles.agencyName,
+              phoneNumber: p.profiles.phoneNumber,
+              photoURL: p.profiles.photoURL,
+              createdAt: new Date()
+            } : undefined
+          }));
+          
+          setRelevantProperties(mappedPromoted);
+          console.log('Set promoted properties as fallback:', mappedPromoted.length);
+          return;
+        }
+        
+        // If no promoted properties, get newest properties
+        console.log('No promoted properties, fetching newest properties...');
+        const { data: newestProperties } = await supabase
+          .from('properties')
+          .select(`
+            *,
+            profiles!properties_landlordId_fkey(
+              id, firstName, lastName, displayName, email, phoneNumber, photoURL, agencyName
+            )
+          `)
+          .neq('id', currentProperty.id)
+          .order('createdAt', { ascending: false })
+          .limit(6);
+
+        if (newestProperties && newestProperties.length > 0) {
+          const mappedNewest = newestProperties.map(p => ({
+            ...p,
+            createdAt: new Date(p.createdAt),
+            updatedAt: new Date(p.updatedAt),
+            agent: p.profiles ? {
+              uid: p.profiles.id,
+              firstName: p.profiles.firstName || '',
+              lastName: p.profiles.lastName || '',
+              displayName: p.profiles.displayName || '',
+              email: p.profiles.email || '',
+              role: 'agent' as const,
+              agencyName: p.profiles.agencyName,
+              phoneNumber: p.profiles.phoneNumber,
+              photoURL: p.profiles.photoURL,
+              createdAt: new Date()
+            } : undefined
+          }));
+          
+          setRelevantProperties(mappedNewest);
+          console.log('Set newest properties as fallback:', mappedNewest.length);
+          return;
+        }
+      }
+
       // Map to Property format
       const mappedProperties = scoredProperties.map(p => ({
         ...p,
@@ -786,28 +864,48 @@ export default function PropertyDetailClient({ id }: PropertyDetailClientProps) 
           </div>
         </div>
 
-        {/* Relevant Properties Section */}
-        {relevantProperties.length > 0 && (
-          <div className="mt-12">
-            <Card className="shadow-lg">
-              <CardContent className="p-8">
-                <h2 className="text-2xl font-bold mb-6">Similar Properties You Might Like</h2>
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                  {relevantProperties.map((relatedProperty) => (
-                    <PropertyCard key={relatedProperty.id} property={relatedProperty} />
-                  ))}
-                </div>
-                <div className="text-center mt-8">
+        {/* Relevant Properties Section - Always show if we have any properties */}
+        <div className="mt-12">
+          <Card className="shadow-lg">
+            <CardContent className="p-8">
+              <h2 className="text-2xl font-bold mb-6">
+                {relevantProperties.length > 0 
+                  ? (relevantProperties.some(p => p.isPremium) 
+                      ? 'Similar Properties You Might Like' 
+                      : relevantProperties.some(p => new Date(p.createdAt).getTime() > Date.now() - 7 * 24 * 60 * 60 * 1000)
+                        ? 'New Properties'
+                        : 'Other Properties'
+                    )
+                  : 'Loading Properties...'
+                }
+              {relevantProperties.length > 0 ? (
+                <>
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    {relevantProperties.map((relatedProperty) => (
+                      <PropertyCard key={relatedProperty.id} property={relatedProperty} />
+                    ))}
+                  </div>
+                  <div className="text-center mt-8">
+                    <Button variant="outline" asChild>
+                      <Link href={`/search?q=${property.location}&type=${property.status.toLowerCase().includes('rent') ? 'rent' : 'sale'}`}>
+                        View More Properties in {property.location}
+                      </Link>
+                    </Button>
+                  </div>
+                </>
+              ) : (
+                <div className="text-center py-8">
+                  <p className="text-muted-foreground mb-4">Loading similar properties...</p>
                   <Button variant="outline" asChild>
-                    <Link href={`/search?q=${property.location}&type=${property.status.toLowerCase().includes('rent') ? 'rent' : 'sale'}`}>
-                      View More Properties in {property.location}
+                    <Link href="/search">
+                      Browse All Properties
                     </Link>
                   </Button>
                 </div>
-              </CardContent>
-            </Card>
-          </div>
-        )}
+              )}
+            </CardContent>
+          </Card>
+        </div>
         
         {/* Debug info - remove in production */}
         {process.env.NODE_ENV === 'development' && (
