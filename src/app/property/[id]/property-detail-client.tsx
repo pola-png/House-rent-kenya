@@ -160,9 +160,6 @@ export default function PropertyDetailClient({ id }: PropertyDetailClientProps) 
       } catch (viewError) {
         console.error('Error tracking property view:', viewError);
       }
-
-      // Fetch relevant properties
-      fetchRelevantProperties(data);
     } catch (error) {
       console.error('Error fetching property:', error);
     } finally {
@@ -242,8 +239,6 @@ export default function PropertyDetailClient({ id }: PropertyDetailClientProps) 
         createdAt: new Date(profileMap.get(p.landlordId)!.createdAt)
       } : undefined
     }));
-  };
-
   };
 
   const handleDelete = async () => {
@@ -781,7 +776,7 @@ export default function PropertyDetailClient({ id }: PropertyDetailClientProps) 
           </div>
         </div>
 
-        {/* Relevant Properties Section - Always show if we have any properties */}
+        {/* Relevant Properties Section */}
         <div className="mt-12">
           <Card className="shadow-lg">
             <CardContent className="p-8">
@@ -814,14 +809,6 @@ export default function PropertyDetailClient({ id }: PropertyDetailClientProps) 
             </CardContent>
           </Card>
         </div>
-        
-        {/* Debug info - remove in production */}
-        {process.env.NODE_ENV === 'development' && (
-          <div className="mt-4 p-4 bg-gray-100 rounded text-sm">
-            <p>Relevant properties found: {relevantProperties.length}</p>
-            <p>Current property: {property.title} in {property.location}</p>
-          </div>
-        )}
       </div>
     </div>
   );
