@@ -322,17 +322,12 @@ export default function PropertyDetailClient({ id }: PropertyDetailClientProps) 
       {/* Lightbox Modal */}
       {showLightbox && property.images && property.images.length > 0 && (
         <div className="fixed inset-0 z-50 bg-black/90 flex items-center justify-center" onClick={() => setShowLightbox(false)}>
-          <Button
-            variant="ghost"
-            size="icon"
-            className="absolute top-4 right-4 text-white hover:bg-white/20 z-60"
-            onClick={(e) => {
-              e.stopPropagation();
-              setShowLightbox(false);
-            }}
+          <button
+            className="absolute top-4 right-4 z-[60] p-2 text-white hover:bg-white/20 rounded-full transition-colors"
+            onClick={() => setShowLightbox(false)}
           >
             <X className="h-6 w-6" />
-          </Button>
+          </button>
           <div className="relative w-full h-full flex items-center justify-center p-4" onClick={(e) => e.stopPropagation()}>
             <Image
               src={property.images[currentImageIndex]}
