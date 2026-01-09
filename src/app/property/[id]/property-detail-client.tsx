@@ -172,9 +172,28 @@ export default function PropertyDetailClient({ id }: PropertyDetailClientProps) 
 
   const fetchRelevantProperties = async (currentProperty: any) => {
     try {
-      console.log('Fetching similar properties for:', currentProperty.title);
+      console.log('Fetching properties for:', currentProperty.title);
       
-      // Get similar properties based on location, property type, and bedrooms
+      let allResults: any[] = [];
+      
+      // 1. Get ALL promoted properties first (regardless of similarity)
+      const { data: promotedProperties } = await supabase
+        .from('properties')
+        .select(`
+          *,
+          profiles!properties_landlordId_fkey(
+            id, firstName, lastName, displayName, email, phoneNumber, photoURL, agencyName
+          )
+        `)
+        .neq('id', currentProperty.id)
+        .eq('isPremium', true);
+
+      if (promotedProperties) {
+        allResults = [...promotedProperties];
+        console.log('Promoted properties found:', promotedProperties.length);
+      }
+
+      // 2. Get similar properties (non-promoted)
       const { data: similarProperties } = await supabase
         .from('properties')
         .select(`
@@ -184,26 +203,56 @@ export default function PropertyDetailClient({ id }: PropertyDetailClientProps) 
           )
         `)
         .neq('id', currentProperty.id)
-        .or(`location.ilike.%${currentProperty.location}%,propertyType.ilike.%${currentProperty.propertyType}%,bedrooms.eq.${currentProperty.bedrooms}`)
-        .limit(6);
+        .eq('isPremium', false)
+        .or(`location.ilike.%${currentProperty.location}%,propertyType.ilike.%${currentProperty.propertyType}%,bedrooms.eq.${currentProperty.bedrooms}`);
 
-      console.log('Similar properties found:', similarProperties?.length || 0);
-
-      if (!similarProperties || similarProperties.length === 0) {
-        console.log('No similar properties found');
-        return;
+      if (similarProperties) {
+        allResults = [...allResults, ...similarProperties];
+        console.log('Similar properties found:', similarProperties.length);
       }
 
-      // Sort: promoted first, then newest
-      const sortedProperties = similarProperties
-        .sort((a, b) => {
-          if (a.isPremium && !b.isPremium) return -1;
-          if (!a.isPremium && b.isPremium) return 1;
-          return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
-        });
+      // 3. Get new properties (non-promoted, non-similar)
+      if (allResults.length < 6) {
+        const existingIds = allResults.map(p => p.id);
+        const { data: newProperties } = await supabase
+          .from('properties')
+          .select(`
+            *,
+            profiles!properties_landlordId_fkey(
+              id, firstName, lastName, displayName, email, phoneNumber, photoURL, agencyName
+            )
+          `)
+          .neq('id', currentProperty.id)
+          .eq('isPremium', false)
+          .not('id', 'in', `(${existingIds.join(',')})`)
+          .order('createdAt', { ascending: false });
 
-      // Map to Property format
-      const mappedProperties = sortedProperties.map(p => ({
+        if (newProperties) {
+          allResults = [...allResults, ...newProperties];
+          console.log('New properties found:', newProperties.length);
+        }
+      }
+
+      // Take first 6 and map
+      const finalResults = allResults.slice(0, 6);
+      if (finalResults.length > 0) {
+        const mapped = mapProperties(finalResults);
+        setRelevantProperties(mapped);
+        console.log('Total properties set:', finalResults.length);
+      }
+    } catch (error) {
+      console.error('Error fetching properties:', error);
+    }
+  };
+
+  const mapProperties = (properties: any[]) => {
+    return properties
+      .sort((a, b) => {
+        if (a.isPremium && !b.isPremium) return -1;
+        if (!a.isPremium && b.isPremium) return 1;
+        return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+      })
+      .map(p => ({
         ...p,
         createdAt: new Date(p.createdAt),
         updatedAt: new Date(p.updatedAt),
@@ -220,12 +269,6 @@ export default function PropertyDetailClient({ id }: PropertyDetailClientProps) 
           createdAt: new Date()
         } : undefined
       }));
-
-      console.log('Setting similar properties:', mappedProperties.length);
-      setRelevantProperties(mappedProperties);
-    } catch (error) {
-      console.error('Error fetching similar properties:', error);
-    }
   };
 
   const handleDelete = async () => {
