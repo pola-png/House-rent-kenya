@@ -176,7 +176,7 @@ export default function PropertyDetailClient({ id }: PropertyDetailClientProps) 
       
       let allResults: any[] = [];
       
-      // 1. Get ALL promoted properties first (regardless of similarity)
+      // 1. Get ALL promoted properties first
       const { data: promotedProperties } = await supabase
         .from('properties')
         .select(`
@@ -203,7 +203,7 @@ export default function PropertyDetailClient({ id }: PropertyDetailClientProps) 
           )
         `)
         .neq('id', currentProperty.id)
-        .eq('isPremium', false)
+        .neq('isPremium', true)
         .or(`location.ilike.%${currentProperty.location}%,propertyType.ilike.%${currentProperty.propertyType}%,bedrooms.eq.${currentProperty.bedrooms}`);
 
       if (similarProperties) {
@@ -211,9 +211,8 @@ export default function PropertyDetailClient({ id }: PropertyDetailClientProps) 
         console.log('Similar properties found:', similarProperties.length);
       }
 
-      // 3. Get new properties (non-promoted, non-similar)
+      // 3. Get newest properties if we need more
       if (allResults.length < 6) {
-        const existingIds = allResults.map(p => p.id);
         const { data: newProperties } = await supabase
           .from('properties')
           .select(`
@@ -223,22 +222,25 @@ export default function PropertyDetailClient({ id }: PropertyDetailClientProps) 
             )
           `)
           .neq('id', currentProperty.id)
-          .eq('isPremium', false)
-          .not('id', 'in', `(${existingIds.join(',')})`)
-          .order('createdAt', { ascending: false });
+          .order('createdAt', { ascending: false })
+          .limit(6);
 
         if (newProperties) {
-          allResults = [...allResults, ...newProperties];
-          console.log('New properties found:', newProperties.length);
+          // Filter out already included properties
+          const existingIds = allResults.map(p => p.id);
+          const newOnes = newProperties.filter(p => !existingIds.includes(p.id));
+          allResults = [...allResults, ...newOnes];
+          console.log('New properties added:', newOnes.length);
         }
       }
 
       // Take first 6 and map
       const finalResults = allResults.slice(0, 6);
+      console.log('Final results count:', finalResults.length);
+      
       if (finalResults.length > 0) {
         const mapped = mapProperties(finalResults);
         setRelevantProperties(mapped);
-        console.log('Total properties set:', finalResults.length);
       }
     } catch (error) {
       console.error('Error fetching properties:', error);
