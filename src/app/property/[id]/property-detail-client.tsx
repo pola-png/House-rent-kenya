@@ -174,103 +174,76 @@ export default function PropertyDetailClient({ id }: PropertyDetailClientProps) 
     try {
       console.log('Fetching properties for:', currentProperty.title);
       
-      let allResults: any[] = [];
+      // Use the same approach as landing pages
+      let query = supabase.from('properties').select('*');
       
-      // 1. Get ALL promoted properties first
-      const { data: promotedProperties } = await supabase
-        .from('properties')
-        .select(`
-          *,
-          profiles!properties_landlordId_fkey(
-            id, firstName, lastName, displayName, email, phoneNumber, photoURL, agencyName
-          )
-        `)
-        .neq('id', currentProperty.id)
-        .eq('isPremium', true);
+      // Exclude current property
+      query = query.neq('id', currentProperty.id);
+      
+      // Filter by location OR property type OR bedrooms (similar properties)
+      query = query.or(`location.ilike.%${currentProperty.location}%,propertyType.ilike.%${currentProperty.propertyType}%,bedrooms.eq.${currentProperty.bedrooms}`);
+      
+      // Order by promotion status first, then by creation date (same as landing pages)
+      query = query
+        .order('isPremium', { ascending: false, nullsFirst: false })
+        .order('createdAt', { ascending: false })
+        .limit(6);
 
-      if (promotedProperties) {
-        allResults = [...promotedProperties];
-        console.log('Promoted properties found:', promotedProperties.length);
-      }
-
-      // 2. Get similar properties (non-promoted)
-      const { data: similarProperties } = await supabase
-        .from('properties')
-        .select(`
-          *,
-          profiles!properties_landlordId_fkey(
-            id, firstName, lastName, displayName, email, phoneNumber, photoURL, agencyName
-          )
-        `)
-        .neq('id', currentProperty.id)
-        .neq('isPremium', true)
-        .or(`location.ilike.%${currentProperty.location}%,propertyType.ilike.%${currentProperty.propertyType}%,bedrooms.eq.${currentProperty.bedrooms}`);
-
-      if (similarProperties) {
-        allResults = [...allResults, ...similarProperties];
-        console.log('Similar properties found:', similarProperties.length);
-      }
-
-      // 3. Get newest properties if we need more
-      if (allResults.length < 6) {
-        const { data: newProperties } = await supabase
-          .from('properties')
-          .select(`
-            *,
-            profiles!properties_landlordId_fkey(
-              id, firstName, lastName, displayName, email, phoneNumber, photoURL, agencyName
-            )
-          `)
+      const { data } = await query;
+      console.log('Properties found:', data?.length || 0);
+      
+      if (!data || data.length === 0) {
+        // Fallback: get any properties if no similar ones found
+        const fallbackQuery = supabase.from('properties')
+          .select('*')
           .neq('id', currentProperty.id)
+          .order('isPremium', { ascending: false, nullsFirst: false })
           .order('createdAt', { ascending: false })
           .limit(6);
-
-        if (newProperties) {
-          // Filter out already included properties
-          const existingIds = allResults.map(p => p.id);
-          const newOnes = newProperties.filter(p => !existingIds.includes(p.id));
-          allResults = [...allResults, ...newOnes];
-          console.log('New properties added:', newOnes.length);
+          
+        const { data: fallbackData } = await fallbackQuery;
+        if (fallbackData && fallbackData.length > 0) {
+          const mapped = await mapPropertiesWithAgents(fallbackData);
+          setRelevantProperties(mapped);
         }
+        return;
       }
 
-      // Take first 6 and map
-      const finalResults = allResults.slice(0, 6);
-      console.log('Final results count:', finalResults.length);
-      
-      if (finalResults.length > 0) {
-        const mapped = mapProperties(finalResults);
-        setRelevantProperties(mapped);
-      }
+      // Map properties with agent data (same as landing pages)
+      const mapped = await mapPropertiesWithAgents(data);
+      setRelevantProperties(mapped);
+      console.log('Properties set:', mapped.length);
     } catch (error) {
       console.error('Error fetching properties:', error);
     }
   };
 
-  const mapProperties = (properties: any[]) => {
-    return properties
-      .sort((a, b) => {
-        if (a.isPremium && !b.isPremium) return -1;
-        if (!a.isPremium && b.isPremium) return 1;
-        return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
-      })
-      .map(p => ({
-        ...p,
-        createdAt: new Date(p.createdAt),
-        updatedAt: new Date(p.updatedAt),
-        agent: p.profiles ? {
-          uid: p.profiles.id,
-          firstName: p.profiles.firstName || '',
-          lastName: p.profiles.lastName || '',
-          displayName: p.profiles.displayName || '',
-          email: p.profiles.email || '',
-          role: 'agent' as const,
-          agencyName: p.profiles.agencyName,
-          phoneNumber: p.profiles.phoneNumber,
-          photoURL: p.profiles.photoURL,
-          createdAt: new Date()
-        } : undefined
-      }));
+  const mapPropertiesWithAgents = async (properties: any[]) => {
+    // Get agent profiles (same as landing pages)
+    const landlordIds = [...new Set(properties.map(p => p.landlordId))];
+    const { data: profiles } = await supabase.from('profiles').select('*').in('id', landlordIds);
+    const profileMap = new Map(profiles?.map(p => [p.id, p]) || []);
+
+    // Map properties with agent data (same as landing pages)
+    return properties.map(p => ({
+      ...p,
+      createdAt: new Date(p.createdAt),
+      updatedAt: new Date(p.updatedAt),
+      agent: profileMap.get(p.landlordId) ? {
+        uid: profileMap.get(p.landlordId)!.id,
+        firstName: profileMap.get(p.landlordId)!.firstName || '',
+        lastName: profileMap.get(p.landlordId)!.lastName || '',
+        displayName: profileMap.get(p.landlordId)!.displayName || '',
+        email: profileMap.get(p.landlordId)!.email || '',
+        role: 'agent' as const,
+        agencyName: profileMap.get(p.landlordId)!.agencyName,
+        phoneNumber: profileMap.get(p.landlordId)!.phoneNumber,
+        photoURL: profileMap.get(p.landlordId)!.photoURL,
+        createdAt: new Date(profileMap.get(p.landlordId)!.createdAt)
+      } : undefined
+    }));
+  };
+
   };
 
   const handleDelete = async () => {
