@@ -407,6 +407,10 @@ export default function PropertyDetailClient({ id }: PropertyDetailClientProps) 
                         variant="secondary"
                         size="icon"
                         className="absolute top-4 right-4 opacity-0 group-hover:opacity-100 transition-opacity"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setShowLightbox(true);
+                        }}
                       >
                         <ZoomIn className="h-4 w-4" />
                       </Button>
@@ -765,26 +769,26 @@ export default function PropertyDetailClient({ id }: PropertyDetailClientProps) 
             <CardContent className="p-8">
               <h2 className="text-2xl font-bold mb-6">Similar Properties</h2>
               {relevantProperties.length > 0 ? (
-                <>
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                    {relevantProperties.map((relatedProperty) => (
-                      <PropertyCard key={relatedProperty.id} property={relatedProperty} />
-                    ))}
-                  </div>
-                  <div className="text-center mt-8">
-                    <Button variant="outline" asChild>
-                      <Link href={`/search?q=${property.location}&type=${property.status.toLowerCase().includes('rent') ? 'rent' : 'sale'}`}>
-                        View More Properties in {property.location}
-                      </Link>
-                    </Button>
-                  </div>
-                </>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                  {relevantProperties.map((relatedProperty) => (
+                    <PropertyCard key={relatedProperty.id} property={relatedProperty} />
+                  ))}
+                </div>
               ) : (
                 <div className="text-center py-8">
-                  <p className="text-muted-foreground mb-4">Loading similar properties...</p>
+                  <p className="text-muted-foreground mb-4">No similar properties found</p>
                   <Button variant="outline" asChild>
                     <Link href="/search">
                       Browse All Properties
+                    </Link>
+                  </Button>
+                </div>
+              )}
+              {relevantProperties.length > 0 && (
+                <div className="text-center mt-8">
+                  <Button variant="outline" asChild>
+                    <Link href={`/search?q=${property.location}&type=${property.status.toLowerCase().includes('rent') ? 'rent' : 'sale'}`}>
+                      View More Properties in {property.location}
                     </Link>
                   </Button>
                 </div>
