@@ -172,51 +172,65 @@ export default function PropertyDetailClient({ id }: PropertyDetailClientProps) 
       const propertyType = currentProperty.propertyType.toLowerCase();
       const bedrooms = currentProperty.bedrooms;
       
-      // Build search query for similar properties
-      let query = supabase
+      // Simple query to get similar properties
+      const { data: allProperties } = await supabase
         .from('properties')
-        .select('*, profiles!properties_landlordId_fkey(id, firstName, lastName, displayName, email, phoneNumber, photoURL, agencyName)')
+        .select(`
+          *,
+          profiles!properties_landlordId_fkey(
+            id, firstName, lastName, displayName, email, phoneNumber, photoURL, agencyName
+          )
+        `)
         .neq('id', currentProperty.id)
         .eq('status', currentProperty.status)
-        .limit(6);
+        .limit(20);
 
-      // Priority 1: Same location and property type
-      const { data: locationMatches } = await query
-        .ilike('location', `%${location}%`)
-        .ilike('propertyType', `%${propertyType}%`);
+      if (!allProperties) {
+        console.log('No properties found');
+        return;
+      }
 
-      // Priority 2: Same bedrooms and property type
-      const { data: bedroomMatches } = await query
-        .eq('bedrooms', bedrooms)
-        .ilike('propertyType', `%${propertyType}%`);
+      console.log('Found properties:', allProperties.length);
 
-      // Priority 3: Title keyword matches
-      const titleQueries = titleWords.slice(0, 3).map(async (word: string) => {
-        const { data } = await query.ilike('title', `%${word}%`);
-        return data || [];
-      });
-      const titleResults = await Promise.all(titleQueries);
-      const titleMatches = titleResults.flat();
+      // Filter and score properties
+      const scoredProperties = allProperties.map(property => {
+        let score = 0;
+        
+        // Same location (highest priority)
+        if (property.location?.toLowerCase().includes(location)) score += 10;
+        
+        // Same property type
+        if (property.propertyType?.toLowerCase().includes(propertyType)) score += 8;
+        
+        // Same bedrooms
+        if (property.bedrooms === bedrooms) score += 6;
+        
+        // Title keyword matches
+        titleWords.forEach(word => {
+          if (property.title?.toLowerCase().includes(word)) score += 3;
+        });
+        
+        // Promoted properties always get included (minimum score of 1)
+        if (property.isPremium) score = Math.max(score + 5, 1);
+        
+        return { ...property, score };
+      })
+      .filter(property => property.score > 0 || property.isPremium) // Include all promoted properties
+      .sort((a, b) => {
+        // Promoted properties first
+        if (a.isPremium && !b.isPremium) return -1;
+        if (!a.isPremium && b.isPremium) return 1;
+        // Then by score
+        if (b.score !== a.score) return b.score - a.score;
+        // Then by date
+        return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+      })
+      .slice(0, 6);
 
-      // Combine and deduplicate
-      const allMatches = [...(locationMatches || []), ...(bedroomMatches || []), ...titleMatches];
-      const uniqueMatches = allMatches.filter((property, index, self) => 
-        index === self.findIndex(p => p.id === property.id)
-      );
-
-      // Sort by promotion status (promoted first), then by creation date
-      const sortedMatches = uniqueMatches
-        .sort((a, b) => {
-          // Promoted properties first
-          if (a.isPremium && !b.isPremium) return -1;
-          if (!a.isPremium && b.isPremium) return 1;
-          // Then by creation date (newest first)
-          return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
-        })
-        .slice(0, 6);
+      console.log('Scored properties:', scoredProperties.length);
 
       // Map to Property format
-      const mappedProperties = sortedMatches.map(p => ({
+      const mappedProperties = scoredProperties.map(p => ({
         ...p,
         createdAt: new Date(p.createdAt),
         updatedAt: new Date(p.updatedAt),
@@ -235,6 +249,7 @@ export default function PropertyDetailClient({ id }: PropertyDetailClientProps) 
       }));
 
       setRelevantProperties(mappedProperties);
+      console.log('Set relevant properties:', mappedProperties.length);
     } catch (error) {
       console.error('Error fetching relevant properties:', error);
     }
@@ -320,16 +335,19 @@ export default function PropertyDetailClient({ id }: PropertyDetailClientProps) 
 
       {/* Lightbox Modal */}
       {showLightbox && property.images && property.images.length > 0 && (
-        <div className="fixed inset-0 z-50 bg-black/90 flex items-center justify-center">
+        <div className="fixed inset-0 z-50 bg-black/90 flex items-center justify-center" onClick={() => setShowLightbox(false)}>
           <Button
             variant="ghost"
             size="icon"
-            className="absolute top-4 right-4 text-white hover:bg-white/20"
-            onClick={() => setShowLightbox(false)}
+            className="absolute top-4 right-4 text-white hover:bg-white/20 z-60"
+            onClick={(e) => {
+              e.stopPropagation();
+              setShowLightbox(false);
+            }}
           >
             <X className="h-6 w-6" />
           </Button>
-          <div className="relative w-full h-full flex items-center justify-center p-4">
+          <div className="relative w-full h-full flex items-center justify-center p-4" onClick={(e) => e.stopPropagation()}>
             <Image
               src={property.images[currentImageIndex]}
               alt={property.title}
@@ -342,7 +360,10 @@ export default function PropertyDetailClient({ id }: PropertyDetailClientProps) 
                   variant="ghost"
                   size="icon"
                   className="absolute left-4 top-1/2 -translate-y-1/2 text-white hover:bg-white/20"
-                  onClick={() => setCurrentImageIndex((prev) => (prev === 0 ? property.images!.length - 1 : prev - 1))}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setCurrentImageIndex((prev) => (prev === 0 ? property.images!.length - 1 : prev - 1));
+                  }}
                 >
                   <ChevronLeft className="h-8 w-8" />
                 </Button>
@@ -350,7 +371,10 @@ export default function PropertyDetailClient({ id }: PropertyDetailClientProps) 
                   variant="ghost"
                   size="icon"
                   className="absolute right-4 top-1/2 -translate-y-1/2 text-white hover:bg-white/20"
-                  onClick={() => setCurrentImageIndex((prev) => (prev === property.images!.length - 1 ? 0 : prev + 1))}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setCurrentImageIndex((prev) => (prev === property.images!.length - 1 ? 0 : prev + 1));
+                  }}
                 >
                   <ChevronRight className="h-8 w-8" />
                 </Button>
@@ -782,6 +806,14 @@ export default function PropertyDetailClient({ id }: PropertyDetailClientProps) 
                 </div>
               </CardContent>
             </Card>
+          </div>
+        )}
+        
+        {/* Debug info - remove in production */}
+        {process.env.NODE_ENV === 'development' && (
+          <div className="mt-4 p-4 bg-gray-100 rounded text-sm">
+            <p>Relevant properties found: {relevantProperties.length}</p>
+            <p>Current property: {property.title} in {property.location}</p>
           </div>
         )}
       </div>
