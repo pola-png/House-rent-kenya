@@ -90,6 +90,12 @@ export default function PropertyDetailClient({ id }: PropertyDetailClientProps) 
     fetchProperty();
   }, [id]);
 
+  useEffect(() => {
+    if (property) {
+      fetchRelevantProperties(property);
+    }
+  }, [property]);
+
   const fetchProperty = async () => {
     try {
       let actualId = id;
@@ -156,7 +162,7 @@ export default function PropertyDetailClient({ id }: PropertyDetailClientProps) 
       }
 
       // Fetch relevant properties
-      await fetchRelevantProperties(data);
+      fetchRelevantProperties(data);
     } catch (error) {
       console.error('Error fetching property:', error);
     } finally {
@@ -166,14 +172,10 @@ export default function PropertyDetailClient({ id }: PropertyDetailClientProps) 
 
   const fetchRelevantProperties = async (currentProperty: any) => {
     try {
-      // Extract keywords from title and location
-      const titleWords = currentProperty.title.toLowerCase().split(' ').filter((word: string) => word.length > 3);
-      const location = currentProperty.location.toLowerCase();
-      const propertyType = currentProperty.propertyType.toLowerCase();
-      const bedrooms = currentProperty.bedrooms;
+      console.log('Fetching similar properties for:', currentProperty.title);
       
-      // Simple query to get similar properties
-      const { data: allProperties } = await supabase
+      // Get similar properties based on location, property type, and bedrooms
+      const { data: similarProperties } = await supabase
         .from('properties')
         .select(`
           *,
@@ -182,133 +184,26 @@ export default function PropertyDetailClient({ id }: PropertyDetailClientProps) 
           )
         `)
         .neq('id', currentProperty.id)
-        .eq('status', currentProperty.status)
-        .limit(20);
+        .or(`location.ilike.%${currentProperty.location}%,propertyType.ilike.%${currentProperty.propertyType}%,bedrooms.eq.${currentProperty.bedrooms}`)
+        .limit(6);
 
-      if (!allProperties) {
-        console.log('No properties found');
+      console.log('Similar properties found:', similarProperties?.length || 0);
+
+      if (!similarProperties || similarProperties.length === 0) {
+        console.log('No similar properties found');
         return;
       }
 
-      console.log('Found properties:', allProperties.length);
-
-      // Filter and score properties
-      const scoredProperties = allProperties.map(property => {
-        let score = 0;
-        
-        // Same location (highest priority)
-        if (property.location?.toLowerCase().includes(location)) score += 10;
-        
-        // Same property type
-        if (property.propertyType?.toLowerCase().includes(propertyType)) score += 8;
-        
-        // Same bedrooms
-        if (property.bedrooms === bedrooms) score += 6;
-        
-        // Title keyword matches
-        titleWords.forEach((word: string) => {
-          if (property.title?.toLowerCase().includes(word)) score += 3;
+      // Sort: promoted first, then newest
+      const sortedProperties = similarProperties
+        .sort((a, b) => {
+          if (a.isPremium && !b.isPremium) return -1;
+          if (!a.isPremium && b.isPremium) return 1;
+          return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
         });
-        
-        // Promoted properties always get included (minimum score of 1)
-        if (property.isPremium) score = Math.max(score + 5, 1);
-        
-        return { ...property, score };
-      })
-      .filter(property => property.score > 0 || property.isPremium) // Include all promoted properties
-      .sort((a, b) => {
-        // Promoted properties first
-        if (a.isPremium && !b.isPremium) return -1;
-        if (!a.isPremium && b.isPremium) return 1;
-        // Then by score
-        if (b.score !== a.score) return b.score - a.score;
-        // Then by date
-        return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
-      })
-      .slice(0, 6);
-
-      console.log('Scored properties:', scoredProperties.length);
-
-      // If no relevant properties found, get promoted properties as fallback
-      if (scoredProperties.length === 0) {
-        console.log('No relevant properties, fetching promoted properties...');
-        const { data: promotedProperties } = await supabase
-          .from('properties')
-          .select(`
-            *,
-            profiles!properties_landlordId_fkey(
-              id, firstName, lastName, displayName, email, phoneNumber, photoURL, agencyName
-            )
-          `)
-          .neq('id', currentProperty.id)
-          .eq('isPremium', true)
-          .limit(6);
-
-        if (promotedProperties && promotedProperties.length > 0) {
-          const mappedPromoted = promotedProperties.map(p => ({
-            ...p,
-            createdAt: new Date(p.createdAt),
-            updatedAt: new Date(p.updatedAt),
-            agent: p.profiles ? {
-              uid: p.profiles.id,
-              firstName: p.profiles.firstName || '',
-              lastName: p.profiles.lastName || '',
-              displayName: p.profiles.displayName || '',
-              email: p.profiles.email || '',
-              role: 'agent' as const,
-              agencyName: p.profiles.agencyName,
-              phoneNumber: p.profiles.phoneNumber,
-              photoURL: p.profiles.photoURL,
-              createdAt: new Date()
-            } : undefined
-          }));
-          
-          setRelevantProperties(mappedPromoted);
-          console.log('Set promoted properties as fallback:', mappedPromoted.length);
-          return;
-        }
-        
-        // If no promoted properties, get newest properties
-        console.log('No promoted properties, fetching newest properties...');
-        const { data: newestProperties } = await supabase
-          .from('properties')
-          .select(`
-            *,
-            profiles!properties_landlordId_fkey(
-              id, firstName, lastName, displayName, email, phoneNumber, photoURL, agencyName
-            )
-          `)
-          .neq('id', currentProperty.id)
-          .order('createdAt', { ascending: false })
-          .limit(6);
-
-        if (newestProperties && newestProperties.length > 0) {
-          const mappedNewest = newestProperties.map(p => ({
-            ...p,
-            createdAt: new Date(p.createdAt),
-            updatedAt: new Date(p.updatedAt),
-            agent: p.profiles ? {
-              uid: p.profiles.id,
-              firstName: p.profiles.firstName || '',
-              lastName: p.profiles.lastName || '',
-              displayName: p.profiles.displayName || '',
-              email: p.profiles.email || '',
-              role: 'agent' as const,
-              agencyName: p.profiles.agencyName,
-              phoneNumber: p.profiles.phoneNumber,
-              photoURL: p.profiles.photoURL,
-              createdAt: new Date()
-            } : undefined
-          }));
-          
-          setRelevantProperties(mappedNewest);
-          console.log('Set newest properties as fallback:', mappedNewest.length);
-          return;
-        }
-      }
 
       // Map to Property format
-      const mappedProperties = scoredProperties.map(p => ({
+      const mappedProperties = sortedProperties.map(p => ({
         ...p,
         createdAt: new Date(p.createdAt),
         updatedAt: new Date(p.updatedAt),
@@ -326,10 +221,10 @@ export default function PropertyDetailClient({ id }: PropertyDetailClientProps) 
         } : undefined
       }));
 
+      console.log('Setting similar properties:', mappedProperties.length);
       setRelevantProperties(mappedProperties);
-      console.log('Set relevant properties:', mappedProperties.length);
     } catch (error) {
-      console.error('Error fetching relevant properties:', error);
+      console.error('Error fetching similar properties:', error);
     }
   };
 
@@ -868,17 +763,7 @@ export default function PropertyDetailClient({ id }: PropertyDetailClientProps) 
         <div className="mt-12">
           <Card className="shadow-lg">
             <CardContent className="p-8">
-              <h2 className="text-2xl font-bold mb-6">
-                {relevantProperties.length > 0 
-                  ? (relevantProperties.some(p => p.isPremium) 
-                      ? 'Similar Properties You Might Like' 
-                      : relevantProperties.some(p => new Date(p.createdAt).getTime() > Date.now() - 7 * 24 * 60 * 60 * 1000)
-                        ? 'New Properties'
-                        : 'Other Properties'
-                    )
-                  : 'Loading Properties...'
-                }
-              </h2>
+              <h2 className="text-2xl font-bold mb-6">Similar Properties</h2>
               {relevantProperties.length > 0 ? (
                 <>
                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
