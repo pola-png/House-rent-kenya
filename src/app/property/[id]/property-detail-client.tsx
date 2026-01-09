@@ -206,7 +206,7 @@ export default function PropertyDetailClient({ id }: PropertyDetailClientProps) 
         if (property.bedrooms === bedrooms) score += 6;
         
         // Title keyword matches
-        titleWords.forEach(word => {
+        titleWords.forEach((word: string) => {
           if (property.title?.toLowerCase().includes(word)) score += 3;
         });
         
