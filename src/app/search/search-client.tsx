@@ -40,31 +40,46 @@ function SearchContent() {
     
     // Listen for page load completion
     const handlePageLoad = () => {
+      console.log('Page load detected, isLoading:', isLoading, 'properties:', properties.length);
       if (isLoading && properties.length === 0) {
         console.log('Page loaded but no results, retrying fetch...');
-        fetchProperties();
+        setTimeout(() => fetchProperties(), 500);
       }
     };
     
     // Listen for navigation completion
     const handleRouteChange = () => {
+      console.log('Route change detected, readyState:', document.readyState);
       if (document.readyState === 'complete') {
         handlePageLoad();
       }
     };
     
+    // Listen for popstate (back/forward navigation)
+    const handlePopState = () => {
+      console.log('Popstate detected, forcing search update');
+      setProperties([]);
+      setPromotedProperties([]);
+      setRegularProperties([]);
+      setIsLoading(true);
+      setTimeout(() => fetchProperties(), 100);
+    };
+    
     window.addEventListener('clearSearch', handleClearSearch);
     window.addEventListener('load', handlePageLoad);
+    window.addEventListener('popstate', handlePopState);
     document.addEventListener('readystatechange', handleRouteChange);
     
     return () => {
       window.removeEventListener('clearSearch', handleClearSearch);
       window.removeEventListener('load', handlePageLoad);
+      window.removeEventListener('popstate', handlePopState);
       document.removeEventListener('readystatechange', handleRouteChange);
     };
   }, [isLoading, properties.length]);
 
   useEffect(() => {
+    console.log('URL changed, searchParams:', searchParams?.toString());
     // Clear previous results and show loading immediately
     setProperties([]);
     setPromotedProperties([]);
@@ -72,13 +87,9 @@ function SearchContent() {
     setIsLoading(true);
     setCurrentPage(1);
     
-    // Add small delay to ensure UI updates before fetch
-    const timer = setTimeout(() => {
-      fetchProperties();
-    }, 100);
-    
-    return () => clearTimeout(timer);
-  }, [searchParams]);
+    // Force immediate fetch without delay
+    fetchProperties();
+  }, [searchParams?.toString()]);
 
   const fetchProperties = async () => {
     console.log('Starting fetchProperties...');
