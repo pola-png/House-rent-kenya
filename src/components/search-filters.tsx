@@ -41,14 +41,9 @@ export function SearchFilters() {
     urlMinPrice ? parseInt(urlMinPrice, 10) : 0,
     urlMaxPrice ? parseInt(urlMaxPrice, 10) : 1000000
   ]);
-  const debouncedKeyword = useDebounce(keyword, 500);
   const debouncedPriceRange = useDebounce(priceRange, 500);
   
   // Sync state when URL changes (from external navigation)
-  useEffect(() => {
-    if (urlKeyword !== keyword) setKeyword(urlKeyword);
-  }, [urlKeyword]);
-  
   useEffect(() => {
     const newMin = urlMinPrice ? parseInt(urlMinPrice, 10) : 0;
     const newMax = urlMaxPrice ? parseInt(urlMaxPrice, 10) : 1000000;
@@ -72,11 +67,15 @@ export function SearchFilters() {
     return params.toString();
   }, [searchParams]);
 
-  useEffect(() => {
-    if (debouncedKeyword !== urlKeyword && keyword === debouncedKeyword) {
-      router.push(pathname + '?' + createQueryString({ q: debouncedKeyword || null }), { scroll: false });
+  const handleSearch = () => {
+    router.push(pathname + '?' + createQueryString({ q: keyword || null }), { scroll: false });
+  };
+
+  const handleKeyPress = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter') {
+      handleSearch();
     }
-  }, [debouncedKeyword]);
+  };
 
   useEffect(() => {
     const currentMin = urlMinPrice ? parseInt(urlMinPrice, 10) : 0;
@@ -105,12 +104,11 @@ export function SearchFilters() {
   };
 
   const clearFilters = () => {
-    // Preserve listing type (rent/buy) from home page when clearing filters
     const listingType = searchParams?.get('type');
     const preservedParams = listingType ? `?type=${listingType}` : '';
-    router.push(pathname + preservedParams, { scroll: false });
     setKeyword('');
     setPriceRange([0, 1000000]);
+    router.push(pathname + preservedParams, { scroll: false });
   };
 
 
@@ -158,18 +156,24 @@ export function SearchFilters() {
           </div>
         )}
         <div className="space-y-2">
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
-            <Input 
-              placeholder="Search location, property type..." 
-              className="pl-10" 
-              value={keyword}
-              onChange={(e) => setKeyword(e.target.value)}
-            />
+          <div className="flex gap-2">
+            <div className="relative flex-1">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+              <Input 
+                placeholder="Search location, property type..." 
+                className="pl-10" 
+                value={keyword}
+                onChange={(e) => setKeyword(e.target.value)}
+                onKeyPress={handleKeyPress}
+              />
+            </div>
+            <Button onClick={handleSearch} size="default">
+              <Search className="h-4 w-4" />
+            </Button>
           </div>
-          {keyword && (
+          {keyword && keyword !== urlKeyword && (
             <div className="text-xs text-muted-foreground">
-              Searching for: <span className="font-medium">"{keyword}"</span>
+              Type and press Enter or click search button
             </div>
           )}
         </div>
