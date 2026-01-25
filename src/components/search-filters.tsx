@@ -76,12 +76,14 @@ export function SearchFilters() {
 
   const handleSearch = () => {
     setIsSearching(true);
-    router.push(pathname + '?' + createQueryString({ q: keyword || null }), { scroll: false });
+    const newUrl = pathname + '?' + createQueryString({ q: keyword || null });
+    router.push(newUrl, { scroll: false });
     setTimeout(() => setIsSearching(false), 1000);
   };
 
   const handleKeyPress = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter') {
+      e.preventDefault();
       handleSearch();
     }
   };
