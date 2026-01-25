@@ -283,7 +283,7 @@ function SearchContent() {
       setRegularProperties(regular);
       setProperties([...promoted, ...regular]);
     } catch (error) {
-      if (error.name === 'AbortError') {
+      if (error instanceof Error && error.name === 'AbortError') {
         console.log('Request was cancelled');
         return;
       }
