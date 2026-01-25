@@ -18,7 +18,7 @@ const footerLinks = {
     { label: 'Help Center', href: '/contact' },
     { label: 'Terms of Service', href: '/terms' },
     { label: 'Privacy Policy', href: '/privacy' },
-    { label: 'Contact Web Developer', href: '/contact-web-developer' },
+    { label: 'Contact Web Developer', href: '/contact-developer' },
     { label: 'Sitemap', href: '/sitemap.xml' },
   ],
 };

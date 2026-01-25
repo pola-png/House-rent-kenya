@@ -30,21 +30,16 @@ function SearchContent() {
   const totalPages = Math.max(1, Math.ceil(properties.length / itemsPerPage));
 
   useEffect(() => {
-    fetchProperties();
-    setCurrentPage(1);
-    // Clear previous results immediately when search params change
+    // Clear previous results and show loading immediately
     setProperties([]);
     setPromotedProperties([]);
     setRegularProperties([]);
+    setIsLoading(true);
+    setCurrentPage(1);
+    fetchProperties();
   }, [searchParams]);
 
   const fetchProperties = async () => {
-    setIsLoading(true);
-    // Clear previous results immediately
-    setProperties([]);
-    setPromotedProperties([]);
-    setRegularProperties([]);
-    
     try {
       const q = searchParams?.get('q')?.toLowerCase();
       const listingType = searchParams?.get('type');
