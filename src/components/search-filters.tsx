@@ -37,6 +37,7 @@ export function SearchFilters() {
   
   // State for immediate input, initialized from URL
   const [keyword, setKeyword] = useState(urlKeyword);
+  const [isSearching, setIsSearching] = useState(false);
   const [priceRange, setPriceRange] = useState([
     urlMinPrice ? parseInt(urlMinPrice, 10) : 0,
     urlMaxPrice ? parseInt(urlMaxPrice, 10) : 1000000
@@ -44,6 +45,12 @@ export function SearchFilters() {
   const debouncedPriceRange = useDebounce(priceRange, 500);
   
   // Sync state when URL changes (from external navigation)
+  useEffect(() => {
+    if (urlKeyword !== keyword) {
+      setKeyword(urlKeyword);
+    }
+  }, [urlKeyword]);
+  
   useEffect(() => {
     const newMin = urlMinPrice ? parseInt(urlMinPrice, 10) : 0;
     const newMax = urlMaxPrice ? parseInt(urlMaxPrice, 10) : 1000000;
@@ -68,7 +75,9 @@ export function SearchFilters() {
   }, [searchParams]);
 
   const handleSearch = () => {
+    setIsSearching(true);
     router.push(pathname + '?' + createQueryString({ q: keyword || null }), { scroll: false });
+    setTimeout(() => setIsSearching(false), 1000);
   };
 
   const handleKeyPress = (e: React.KeyboardEvent) => {
@@ -106,8 +115,12 @@ export function SearchFilters() {
   const clearFilters = () => {
     const listingType = searchParams?.get('type');
     const preservedParams = listingType ? `?type=${listingType}` : '';
+    
+    // Clear state first
     setKeyword('');
     setPriceRange([0, 1000000]);
+    
+    // Then navigate to clear URL
     router.push(pathname + preservedParams, { scroll: false });
   };
 
@@ -167,8 +180,12 @@ export function SearchFilters() {
                 onKeyPress={handleKeyPress}
               />
             </div>
-            <Button onClick={handleSearch} size="default">
-              <Search className="h-4 w-4" />
+            <Button onClick={handleSearch} size="default" disabled={isSearching}>
+              {isSearching ? (
+                <div className="animate-spin h-4 w-4 border-2 border-white border-t-transparent rounded-full" />
+              ) : (
+                <Search className="h-4 w-4" />
+              )}
             </Button>
           </div>
           {keyword && keyword !== urlKeyword && (

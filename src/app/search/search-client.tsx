@@ -229,7 +229,10 @@ function SearchContent() {
           <h1 className="text-3xl font-headline font-bold mb-2">{pageTitle}</h1>
           <div className="text-muted-foreground mb-6">
             {isLoading ? (
-                <Skeleton className="h-5 w-32" />
+                <div className="flex items-center gap-2">
+                  <div className="animate-spin h-4 w-4 border-2 border-primary border-t-transparent rounded-full" />
+                  <span>Searching properties...</span>
+                </div>
             ) : (
                 `Showing ${properties.length} results${promotedProperties.length > 0 ? ` (${promotedProperties.length} featured)` : ''}`
             )}
