@@ -18,6 +18,7 @@ import { normalizeWasabiImageArray } from '@/lib/wasabi';
 import { Skeleton } from '@/components/ui/skeleton';
 import { supabase } from '@/lib/supabase';
 import { SEOSchema } from '@/components/seo-schema';
+import { useAuth } from '@/hooks/use-auth-supabase';
 
 
 const popularSearches = [
@@ -51,6 +52,7 @@ const features = [
 ];
 
 export default function Home() {
+  const { user } = useAuth();
   const heroImageUrl = "https://images.unsplash.com/photo-1664372623516-0b1540d6771e?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw1fHxtb2Rlcm4lMjBhcGFydG1lbnR8ZW58MHx8fHwxNzU5NDQ3ODY5fDA&ixlib=rb-4.1.0&q=80&w=1080";
   
   const [featuredProperties, setFeaturedProperties] = useState<Property[]>([]);
@@ -558,22 +560,24 @@ export default function Home() {
         </section>
 
         {/* Call to Action */}
-        <section className="py-20 bg-primary text-primary-foreground">
-          <div className="container mx-auto px-4 text-center">
-            <h2 className="text-2xl sm:text-3xl md:text-4xl font-headline font-bold mb-4 px-4">Ready to Find Your Dream Home?</h2>
-            <p className="text-lg max-w-2xl mx-auto mb-8">
-              Create an account to save your favorite properties and get personalized alerts.
-            </p>
-            <div className="flex flex-col sm:flex-row justify-center gap-3 sm:gap-4 px-4">
-              <Button size="lg" variant="secondary" asChild>
-                <Link href="/search">Start Searching</Link>
-              </Button>
-              <Button size="lg" variant="outline" className="bg-transparent border-primary-foreground text-primary-foreground hover:bg-primary-foreground hover:text-primary" asChild>
-                <Link href="/signup">Create Account</Link>
-              </Button>
+        {!user && (
+          <section className="py-20 bg-primary text-primary-foreground">
+            <div className="container mx-auto px-4 text-center">
+              <h2 className="text-2xl sm:text-3xl md:text-4xl font-headline font-bold mb-4 px-4">Ready to Find Your Dream Home?</h2>
+              <p className="text-lg max-w-2xl mx-auto mb-8">
+                Create an account to save your favorite properties and get personalized alerts.
+              </p>
+              <div className="flex flex-col sm:flex-row justify-center gap-3 sm:gap-4 px-4">
+                <Button size="lg" variant="secondary" asChild>
+                  <Link href="/search">Start Searching</Link>
+                </Button>
+                <Button size="lg" variant="outline" className="bg-transparent border-primary-foreground text-primary-foreground hover:bg-primary-foreground hover:text-primary" asChild>
+                  <Link href="/signup">Create Account</Link>
+                </Button>
+              </div>
             </div>
-          </div>
-        </section>
+          </section>
+        )}
 
       </main>
     </div>

@@ -32,10 +32,19 @@ function SearchContent() {
   useEffect(() => {
     fetchProperties();
     setCurrentPage(1);
+    // Clear previous results immediately when search params change
+    setProperties([]);
+    setPromotedProperties([]);
+    setRegularProperties([]);
   }, [searchParams]);
 
   const fetchProperties = async () => {
     setIsLoading(true);
+    // Clear previous results immediately
+    setProperties([]);
+    setPromotedProperties([]);
+    setRegularProperties([]);
+    
     try {
       const q = searchParams?.get('q')?.toLowerCase();
       const listingType = searchParams?.get('type');
