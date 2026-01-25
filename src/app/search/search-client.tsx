@@ -114,7 +114,21 @@ function SearchContent() {
 
       if (error) throw error;
 
-      const landlordIds = [...new Set((data || []).map(p => p.landlordId))];
+      // Always fetch promoted properties separately to ensure they show
+      const { data: allPromotedProperties } = await supabase
+        .from('properties')
+        .select('*')
+        .in('status', ['Available', 'For Rent', 'For Sale'])
+        .eq('isPremium', true)
+        .or('featuredExpiresAt.is.null,featuredExpiresAt.gt.' + new Date().toISOString())
+        .order('createdAt', { ascending: false });
+
+      // Combine search results with promoted properties, removing duplicates
+      const searchResultIds = new Set((data || []).map(p => p.id));
+      const additionalPromoted = (allPromotedProperties || []).filter(p => !searchResultIds.has(p.id));
+      const combinedData = [...(allPromotedProperties || []), ...(data || []).filter(p => !p.isPremium)];
+
+      const landlordIds = [...new Set(combinedData.map(p => p.landlordId))];
       const { data: profiles } = await supabase
         .from('profiles')
         .select('*')
@@ -122,7 +136,7 @@ function SearchContent() {
       
       const profileMap = new Map(profiles?.map(p => [p.id, p]) || []);
       
-      const propertiesWithAgents = (data || []).map(p => {
+      const propertiesWithAgents = combinedData.map(p => {
         const profileData = profileMap.get(p.landlordId);
         return {
           ...p,
