@@ -22,8 +22,16 @@ export function CookieConsent() {
     if (typeof window !== 'undefined') {
       // Enable Google Analytics or other tracking
       (window as any).gtag?.('consent', 'update', {
-        analytics_storage: 'granted'
+        analytics_storage: 'granted',
+        ad_storage: 'granted',
+        functionality_storage: 'granted',
+        personalization_storage: 'granted',
+        security_storage: 'granted'
       });
+      
+      // Set first-party cookies instead of relying on third-party
+      document.cookie = 'analytics_consent=granted; path=/; max-age=31536000; SameSite=Lax';
+      document.cookie = 'marketing_consent=granted; path=/; max-age=31536000; SameSite=Lax';
     }
   };
 
