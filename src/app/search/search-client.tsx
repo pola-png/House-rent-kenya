@@ -38,9 +38,31 @@ function SearchContent() {
       setIsLoading(true);
     };
     
+    // Listen for page load completion
+    const handlePageLoad = () => {
+      if (isLoading && properties.length === 0) {
+        console.log('Page loaded but no results, retrying fetch...');
+        fetchProperties();
+      }
+    };
+    
+    // Listen for navigation completion
+    const handleRouteChange = () => {
+      if (document.readyState === 'complete') {
+        handlePageLoad();
+      }
+    };
+    
     window.addEventListener('clearSearch', handleClearSearch);
-    return () => window.removeEventListener('clearSearch', handleClearSearch);
-  }, []);
+    window.addEventListener('load', handlePageLoad);
+    document.addEventListener('readystatechange', handleRouteChange);
+    
+    return () => {
+      window.removeEventListener('clearSearch', handleClearSearch);
+      window.removeEventListener('load', handlePageLoad);
+      document.removeEventListener('readystatechange', handleRouteChange);
+    };
+  }, [isLoading, properties.length]);
 
   useEffect(() => {
     // Clear previous results and show loading immediately
@@ -59,8 +81,11 @@ function SearchContent() {
   }, [searchParams]);
 
   const fetchProperties = async () => {
+    console.log('Starting fetchProperties...');
     try {
       const q = searchParams?.get('q')?.toLowerCase();
+      console.log('Search query:', q);
+      
       const listingType = searchParams?.get('type');
       const propertyTypes = searchParams?.getAll('property_type') ?? [];
       const homePropertyType = searchParams?.get('property_type');
@@ -124,12 +149,15 @@ function SearchContent() {
         query = query.gte('bedrooms', bedroomCount);
       }
 
+      console.log('Executing query...');
       const { data, error } = await query.order('isPremium', { ascending: false, nullsFirst: false }).order('createdAt', { ascending: false });
 
       if (error) {
         console.error('Supabase query error:', error);
         throw error;
       }
+
+      console.log('Query results:', data?.length || 0, 'properties');
 
       // Always fetch promoted properties separately to ensure they show
       const { data: allPromotedProperties, error: promotedError } = await supabase
@@ -207,6 +235,7 @@ function SearchContent() {
       promoted.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
       regular.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
 
+      console.log('Setting properties:', promoted.length + regular.length, 'total');
       setPromotedProperties(promoted);
       setRegularProperties(regular);
       setProperties([...promoted, ...regular]);
@@ -216,6 +245,7 @@ function SearchContent() {
       setPromotedProperties([]);
       setRegularProperties([]);
     } finally {
+      console.log('Fetch completed, setting loading to false');
       setIsLoading(false);
     }
   };

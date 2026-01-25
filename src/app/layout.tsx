@@ -9,6 +9,7 @@ import { AuthProvider } from '@/hooks/use-auth-supabase';
 import { SessionMonitor } from '@/components/session-monitor';
 import { ConditionalLayout } from '@/components/conditional-layout';
 import { NavigationLoader } from '@/components/navigation-loader';
+import { CookieConsent } from '@/components/cookie-consent';
 
 export const metadata: Metadata = {
   metadataBase: new URL('https://houserentkenya.co.ke'),
@@ -183,6 +184,7 @@ export default function RootLayout({
           <NavigationLoader />
           <SessionMonitor />
           <ConditionalLayout>{children}</ConditionalLayout>
+          <CookieConsent />
           <Toaster />
         </AuthProvider>
       </body>
