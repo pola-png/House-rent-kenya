@@ -77,13 +77,17 @@ export function SearchFilters() {
   const handleSearch = () => {
     setIsSearching(true);
     
-    // Force clear all results immediately
-    const searchEvent = new CustomEvent('clearSearch');
-    window.dispatchEvent(searchEvent);
+    // Clear the search input field to show immediate feedback
+    const searchInput = document.querySelector('input[placeholder*="Search location"]') as HTMLInputElement;
+    if (searchInput) {
+      searchInput.blur();
+    }
     
     const newUrl = pathname + '?' + createQueryString({ q: keyword || null });
     router.push(newUrl, { scroll: false });
-    setTimeout(() => setIsSearching(false), 1000);
+    
+    // Reset searching state after navigation
+    setTimeout(() => setIsSearching(false), 500);
   };
 
   const handleKeyPress = (e: React.KeyboardEvent) => {
@@ -149,26 +153,26 @@ export function SearchFilters() {
       <CardContent className="space-y-6">
         {/* Show active filters from home page */}
         {(searchParams?.get('q') || searchParams?.get('beds') || searchParams?.get('min_price') || searchParams?.get('max_price') || selectedTypes.length > 0) && (
-          <div className="p-3 bg-blue-50 rounded-lg border border-blue-200">
+          <div className="p-3 bg-blue-50 rounded-lg border border-blue-200" key={searchParams?.toString()}>
             <div className="text-xs font-medium text-blue-800 mb-2">Active Filters:</div>
             <div className="flex flex-wrap gap-1">
               {searchParams?.get('q') && (
-                <span className="px-2 py-1 bg-blue-100 text-blue-800 text-xs rounded">
+                <span className="px-2 py-1 bg-blue-100 text-blue-800 text-xs rounded" key={`q-${searchParams?.get('q')}`}>
                   "{searchParams?.get('q')}"
                 </span>
               )}
               {selectedTypes.map(type => (
-                <span key={type} className="px-2 py-1 bg-blue-100 text-blue-800 text-xs rounded">
+                <span key={`type-${type}`} className="px-2 py-1 bg-blue-100 text-blue-800 text-xs rounded">
                   {type.charAt(0).toUpperCase() + type.slice(1)}
                 </span>
               ))}
               {searchParams?.get('beds') && (
-                <span className="px-2 py-1 bg-blue-100 text-blue-800 text-xs rounded">
+                <span className="px-2 py-1 bg-blue-100 text-blue-800 text-xs rounded" key={`beds-${searchParams?.get('beds')}`}>
                   {searchParams?.get('beds')}+ beds
                 </span>
               )}
               {(searchParams?.get('min_price') || searchParams?.get('max_price')) && (
-                <span className="px-2 py-1 bg-blue-100 text-blue-800 text-xs rounded">
+                <span className="px-2 py-1 bg-blue-100 text-blue-800 text-xs rounded" key={`price-${searchParams?.get('min_price')}-${searchParams?.get('max_price')}`}>
                   Ksh {searchParams?.get('min_price') || '0'} - {searchParams?.get('max_price') || '1M+'}
                 </span>
               )}

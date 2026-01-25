@@ -49,7 +49,13 @@ function SearchContent() {
     setRegularProperties([]);
     setIsLoading(true);
     setCurrentPage(1);
-    fetchProperties();
+    
+    // Add small delay to ensure UI updates before fetch
+    const timer = setTimeout(() => {
+      fetchProperties();
+    }, 100);
+    
+    return () => clearTimeout(timer);
   }, [searchParams]);
 
   const fetchProperties = async () => {
