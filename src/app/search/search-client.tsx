@@ -27,7 +27,7 @@ function SearchContent() {
   const [pageTitle, setPageTitle] = useState("Properties");
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 12;
-  const totalPages = Math.max(1, Math.ceil(regularProperties.length / itemsPerPage));
+  const totalPages = Math.max(1, Math.ceil(properties.length / itemsPerPage));
 
   useEffect(() => {
     fetchProperties();
@@ -182,7 +182,7 @@ function SearchContent() {
   // Ensure the current page never exceeds the available pages when the result count changes
   useEffect(() => {
     setCurrentPage((prev) => Math.min(prev, totalPages));
-  }, [regularProperties.length]);
+  }, [properties.length]);
 
   const getVisiblePages = () => {
     const windowSize = 5;
@@ -251,41 +251,14 @@ function SearchContent() {
              </div>
           ) : properties.length > 0 ? (
             <>
-              {/* Featured/Promoted Properties Section */}
-              {promotedProperties.length > 0 && (
-                <div className="mb-12">
-                  <div className="flex items-center gap-2 mb-6">
-                    <div className="bg-gradient-to-r from-green-500 to-emerald-600 text-white px-3 py-1 rounded-full text-sm font-semibold">
-                      ⭐ Featured Properties
-                    </div>
-                    <span className="text-sm text-muted-foreground">({promotedProperties.length})</span>
-                  </div>
-                  <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6 p-4 bg-gradient-to-r from-green-50 to-emerald-50 rounded-lg border-2 border-green-200">
-                    {promotedProperties.map((property) => (
-                      <PropertyCard key={`featured-${property.id}`} property={property} />
-                    ))}
-                  </div>
-                </div>
-              )}
+              {/* All Properties in Single Grid */}
+              <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+                {properties.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage).map((property) => (
+                  <PropertyCard key={property.id} property={property} />
+                ))}
+              </div>
               
-              {/* Regular Properties Section */}
-              {regularProperties.length > 0 && (
-                <div>
-                  {promotedProperties.length > 0 && (
-                    <div className="flex items-center gap-2 mb-6">
-                      <h3 className="text-lg font-semibold">All Properties</h3>
-                      <span className="text-sm text-muted-foreground">({regularProperties.length})</span>
-                    </div>
-                  )}
-                  <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
-                    {regularProperties.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage).map((property) => (
-                      <PropertyCard key={property.id} property={property} />
-                    ))}
-                  </div>
-                </div>
-              )}
-              
-              {regularProperties.length > itemsPerPage && (
+              {properties.length > itemsPerPage && (
                 <div className="mt-12">
                   <Pagination>
                     <PaginationContent className="flex-wrap justify-center gap-2">
