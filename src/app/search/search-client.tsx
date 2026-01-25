@@ -120,10 +120,13 @@ function SearchContent() {
 
       const { data, error } = await query.order('isPremium', { ascending: false, nullsFirst: false }).order('createdAt', { ascending: false });
 
-      if (error) throw error;
+      if (error) {
+        console.error('Supabase query error:', error);
+        throw error;
+      }
 
       // Always fetch promoted properties separately to ensure they show
-      const { data: allPromotedProperties } = await supabase
+      const { data: allPromotedProperties, error: promotedError } = await supabase
         .from('properties')
         .select('*')
         .in('status', ['Available', 'For Rent', 'For Sale'])
@@ -131,16 +134,24 @@ function SearchContent() {
         .or('featuredExpiresAt.is.null,featuredExpiresAt.gt.' + new Date().toISOString())
         .order('createdAt', { ascending: false });
 
+      if (promotedError) {
+        console.error('Promoted properties error:', promotedError);
+      }
+
       // Combine search results with promoted properties, removing duplicates
       const searchResultIds = new Set((data || []).map(p => p.id));
       const additionalPromoted = (allPromotedProperties || []).filter(p => !searchResultIds.has(p.id));
       const combinedData = [...(allPromotedProperties || []), ...(data || []).filter(p => !p.isPremium)];
 
       const landlordIds = [...new Set(combinedData.map(p => p.landlordId))];
-      const { data: profiles } = await supabase
+      const { data: profiles, error: profilesError } = await supabase
         .from('profiles')
         .select('*')
         .in('id', landlordIds);
+      
+      if (profilesError) {
+        console.error('Profiles error:', profilesError);
+      }
       
       const profileMap = new Map(profiles?.map(p => [p.id, p]) || []);
       
@@ -196,6 +207,8 @@ function SearchContent() {
     } catch (error) {
       console.error('Error fetching properties:', error);
       setProperties([]);
+      setPromotedProperties([]);
+      setRegularProperties([]);
     } finally {
       setIsLoading(false);
     }
