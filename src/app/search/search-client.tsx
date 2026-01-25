@@ -26,6 +26,7 @@ function SearchContent() {
   const [isLoading, setIsLoading] = useState(true);
   const [pageTitle, setPageTitle] = useState("Properties");
   const [currentPage, setCurrentPage] = useState(1);
+  const [fetchController, setFetchController] = useState<AbortController | null>(null);
   const itemsPerPage = 12;
   const totalPages = Math.max(1, Math.ceil(properties.length / itemsPerPage));
 
@@ -41,9 +42,11 @@ function SearchContent() {
     // Listen for page load completion
     const handlePageLoad = () => {
       console.log('Page load detected, isLoading:', isLoading, 'properties:', properties.length);
-      if (isLoading && properties.length === 0) {
+      if (isLoading && properties.length === 0 && !fetchController) {
         console.log('Page loaded but no results, retrying fetch...');
-        setTimeout(() => fetchProperties(), 500);
+        const controller = new AbortController();
+        setFetchController(controller);
+        setTimeout(() => fetchProperties(controller), 500);
       }
     };
     
@@ -80,6 +83,13 @@ function SearchContent() {
 
   useEffect(() => {
     console.log('URL changed, searchParams:', searchParams?.toString());
+    
+    // Cancel previous request if it exists
+    if (fetchController) {
+      console.log('Cancelling previous request');
+      fetchController.abort();
+    }
+    
     // Clear previous results and show loading immediately
     setProperties([]);
     setPromotedProperties([]);
@@ -87,12 +97,27 @@ function SearchContent() {
     setIsLoading(true);
     setCurrentPage(1);
     
-    // Force immediate fetch without delay
-    fetchProperties();
+    // Create new controller for this request
+    const controller = new AbortController();
+    setFetchController(controller);
+    
+    // Force immediate fetch
+    fetchProperties(controller);
+    
+    return () => {
+      controller.abort();
+    };
   }, [searchParams?.toString()]);
 
-  const fetchProperties = async () => {
+  const fetchProperties = async (controller?: AbortController) => {
     console.log('Starting fetchProperties...');
+    
+    // Prevent multiple simultaneous requests
+    if (isLoading && !controller) {
+      console.log('Request already in progress, skipping');
+      return;
+    }
+    
     try {
       const q = searchParams?.get('q')?.toLowerCase();
       console.log('Search query:', q);
@@ -247,17 +272,31 @@ function SearchContent() {
       regular.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
 
       console.log('Setting properties:', promoted.length + regular.length, 'total');
+      
+      // Check if request was cancelled
+      if (controller?.signal.aborted) {
+        console.log('Request was cancelled, not updating state');
+        return;
+      }
+      
       setPromotedProperties(promoted);
       setRegularProperties(regular);
       setProperties([...promoted, ...regular]);
     } catch (error) {
+      if (error.name === 'AbortError') {
+        console.log('Request was cancelled');
+        return;
+      }
       console.error('Error fetching properties:', error);
       setProperties([]);
       setPromotedProperties([]);
       setRegularProperties([]);
     } finally {
-      console.log('Fetch completed, setting loading to false');
-      setIsLoading(false);
+      if (!controller?.signal.aborted) {
+        console.log('Fetch completed, setting loading to false');
+        setIsLoading(false);
+        setFetchController(null);
+      }
     }
   };
 
