@@ -76,6 +76,11 @@ export function SearchFilters() {
 
   const handleSearch = () => {
     setIsSearching(true);
+    
+    // Force clear all results immediately
+    const searchEvent = new CustomEvent('clearSearch');
+    window.dispatchEvent(searchEvent);
+    
     const newUrl = pathname + '?' + createQueryString({ q: keyword || null });
     router.push(newUrl, { scroll: false });
     setTimeout(() => setIsSearching(false), 1000);

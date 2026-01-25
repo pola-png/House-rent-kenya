@@ -29,6 +29,19 @@ function SearchContent() {
   const itemsPerPage = 12;
   const totalPages = Math.max(1, Math.ceil(properties.length / itemsPerPage));
 
+  // Listen for force clear events
+  useEffect(() => {
+    const handleClearSearch = () => {
+      setProperties([]);
+      setPromotedProperties([]);
+      setRegularProperties([]);
+      setIsLoading(true);
+    };
+    
+    window.addEventListener('clearSearch', handleClearSearch);
+    return () => window.removeEventListener('clearSearch', handleClearSearch);
+  }, []);
+
   useEffect(() => {
     // Clear previous results and show loading immediately
     setProperties([]);
