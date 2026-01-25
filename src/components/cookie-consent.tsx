@@ -21,7 +21,7 @@ export function CookieConsent() {
     // Enable analytics and other cookies here
     if (typeof window !== 'undefined') {
       // Enable Google Analytics or other tracking
-      window.gtag?.('consent', 'update', {
+      (window as any).gtag?.('consent', 'update', {
         analytics_storage: 'granted'
       });
     }
