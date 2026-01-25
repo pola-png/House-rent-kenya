@@ -314,30 +314,6 @@ export default function ContactDeveloperPage() {
                 <li>• Payment and billing integration</li>
                 <li>• Customer review and rating systems</li>
               </ul>
-            </div>sName="text-sm text-muted-foreground space-y-1">
-                <li>• Customer relationship management (CRM)</li>
-                <li>• Project management and tracking</li>
-                <li>• Inventory and supply chain management</li>
-                <li>• Employee management systems</li>
-                <li>• Financial reporting and analytics</li>
-                <li>• Workflow automation tools</li>
-              </ul>
-            </div>
-
-            <div className="bg-gradient-to-r from-indigo-50 to-blue-50 p-6 rounded-lg">
-              <h3 className="font-semibold text-lg mb-2">🚗 Transportation & Logistics</h3>
-              <p className="text-muted-foreground mb-3">
-                Fleet management and logistics platforms with real-time tracking, 
-                route optimization, and delivery management.
-              </p>
-              <ul className="text-sm text-muted-foreground space-y-1">
-                <li>• Fleet tracking and management</li>
-                <li>• Route optimization systems</li>
-                <li>• Delivery scheduling and tracking</li>
-                <li>• Driver management portals</li>
-                <li>• Fuel and maintenance tracking</li>
-                <li>• Customer delivery notifications</li>
-              </ul>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mt-6">
