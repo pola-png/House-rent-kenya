@@ -77,23 +77,18 @@ export function SearchFilters() {
   const handleSearch = () => {
     setIsSearching(true);
     
-    // Clear the search input field to show immediate feedback
-    const searchInput = document.querySelector('input[placeholder*="Search location"]') as HTMLInputElement;
-    if (searchInput) {
-      searchInput.blur();
-    }
-    
     const newUrl = pathname + '?' + createQueryString({ q: keyword || null });
-    router.push(newUrl, { scroll: false });
     
-    // Reset searching state after navigation
-    setTimeout(() => setIsSearching(false), 500);
+    // Force page refresh for reliable search
+    window.location.href = newUrl;
   };
 
   const handleKeyPress = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter') {
       e.preventDefault();
-      handleSearch();
+      setIsSearching(true);
+      const newUrl = pathname + '?' + createQueryString({ q: keyword || null });
+      window.location.href = newUrl;
     }
   };
 
