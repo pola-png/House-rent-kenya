@@ -7,19 +7,18 @@ const footerLinks = {
   company: [
     { label: 'About Us', href: '/about' },
     { label: 'Contact Us', href: '/contact' },
-    { label: 'Careers', href: '/careers' },
     { label: 'Blog', href: '/blog' },
   ],
   explore: [
     { label: 'Rent', href: '/search?type=rent' },
     { label: 'Buy', href: '/search?type=buy' },
     { label: 'Agents', href: '/agents' },
-    { label: 'Neighborhoods', href: '#' },
   ],
   support: [
     { label: 'Help Center', href: '/contact' },
     { label: 'Terms of Service', href: '/terms' },
     { label: 'Privacy Policy', href: '/privacy' },
+    { label: 'Contact Web Developer', href: '/contact-web-developer' },
     { label: 'Sitemap', href: '/sitemap.xml' },
   ],
 };
