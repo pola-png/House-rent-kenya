@@ -46,29 +46,9 @@ export function AISEOSimple({ formData, onApply }: AISEOSimpleProps) {
       
       const keywordsPrompt = `Generate 10-15 SEO keywords for a ${formData.bedrooms}-bedroom ${formData.propertyType} in ${formData.location}, ${formData.city}. Return as comma-separated list only.`;
 
-      const callOpenAI = async (prompt: string) => {
-        const response = await fetch('https://api.openai.com/v1/chat/completions', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${process.env.NEXT_PUBLIC_OPENAI_API_KEY || 'sk-your-openai-key-here'}`,
-          },
-          body: JSON.stringify({
-            model: 'gpt-4o-mini',
-            messages: [{ role: 'user', content: prompt }],
-            max_tokens: 500,
-            temperature: 0.7,
-          }),
-        });
-        
-        if (!response.ok) throw new Error(`OpenAI error: ${response.status}`);
-        const data = await response.json();
-        return data.choices?.[0]?.message?.content?.trim() || '';
-      };
-
-      const callGemini = async (prompt: string) => {
+      const generateWithAI = async (prompt: string) => {
         const apiKey = process.env.NEXT_PUBLIC_GEMINI_API_KEY || 'AIzaSyBytiBEktDdWwh6tOF_GYZT_Ds7kCOvXvs';
-        const models = ['gemini-2.0-flash', 'gemini-2.0-flash-001', 'gemini-2.0-flash-exp'];
+        const models = ['gemini-3-flash-preview', 'gemini-2.5-flash'];
         
         for (const model of models) {
           try {
@@ -84,21 +64,16 @@ export function AISEOSimple({ formData, onApply }: AISEOSimpleProps) {
               const data = await response.json();
               const text = data.candidates?.[0]?.content?.parts?.[0]?.text;
               if (text) return text.trim();
+            } else if (response.status === 429) {
+              // Rate limited, wait before trying next model
+              await new Promise(resolve => setTimeout(resolve, 1000));
+              continue;
             }
           } catch (error) {
             continue;
           }
         }
         throw new Error('Gemini API error');
-      };
-
-      const generateWithAI = async (prompt: string) => {
-        try {
-          return await callOpenAI(prompt);
-        } catch (error) {
-          console.error('OpenAI failed, trying Gemini:', error);
-          return await callGemini(prompt);
-        }
       };
 
       const [title, description, keywords] = await Promise.all([
