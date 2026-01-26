@@ -48,15 +48,18 @@ export function AISEOSimple({ formData, onApply }: AISEOSimpleProps) {
 
       const generateWithAI = async (prompt: string) => {
         const apiKey = process.env.NEXT_PUBLIC_GEMINI_API_KEY || 'AIzaSyBytiBEktDdWwh6tOF_GYZT_Ds7kCOvXvs';
-        const models = ['gemma-3-27b-it', 'gemma-3-12b-it', 'gemma-3-4b-it', 'gemma-3-1b-it', 'gemma-3n-e4b-it', 'gemma-3n-e2b-it'];
+        const models = ['gemini-2.5-flash', 'gemini-2.5-flash-lite'];
         
         for (const model of models) {
           try {
             const response = await fetch(
-              `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`,
+              `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`,
               {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
+                headers: { 
+                  'Content-Type': 'application/json',
+                  'x-goog-api-key': apiKey
+                },
                 body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] })
               }
             );

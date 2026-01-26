@@ -3,15 +3,18 @@ const GEMINI_API_KEY = process.env.NEXT_PUBLIC_GEMINI_API_KEY || 'AIzaSyBytiBEkt
 const callGemini = async (prompt: string): Promise<string> => {
   if (!prompt.trim()) return '';
 
-  const models = ['gemma-3-27b-it', 'gemma-3-12b-it', 'gemma-3-4b-it', 'gemma-3-1b-it', 'gemma-3n-e4b-it', 'gemma-3n-e2b-it'];
+  const models = ['gemini-2.5-flash', 'gemini-2.5-flash-lite'];
   
   for (const model of models) {
     try {
       const response = await fetch(
-        `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${GEMINI_API_KEY}`,
+        `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`,
         {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers: { 
+            'Content-Type': 'application/json',
+            'x-goog-api-key': GEMINI_API_KEY
+          },
           body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] }),
         },
       );
