@@ -578,7 +578,7 @@ export function PropertyForm({ property }: PropertyFormProps) {
                           onClick={() => {
                             toast({
                               title: "AI Generation Required",
-                              description: "Please fill all property details below, then use the AI SEO Optimization section to generate title, description and keywords.",
+                              description: "Please fill in the Property Features section first, then use the AI SEO Optimization section to generate content.",
                             });
                           }}
                         />
@@ -602,7 +602,7 @@ export function PropertyForm({ property }: PropertyFormProps) {
                           onClick={() => {
                             toast({
                               title: "AI Generation Required",
-                              description: "Please fill all property details below, then use the AI SEO Optimization section to generate title, description and keywords.",
+                              description: "Please fill in the Property Features section first, then use the AI SEO Optimization section to generate content.",
                             });
                           }}
                         />
