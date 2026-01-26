@@ -69,7 +69,7 @@ export const generateWithAI = async (prompt: string): Promise<string> => {
     } catch (geminiError) {
       console.error('Both AI services failed:', { openaiError, geminiError });
       
-      if (openaiError?.message?.includes('401') || geminiError?.message?.includes('401')) {
+      if ((openaiError as any)?.message?.includes('401') || (geminiError as any)?.message?.includes('401')) {
         throw new Error('AI service not configured. Please check API keys.');
       }
       
