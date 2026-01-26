@@ -30,7 +30,7 @@ const callOpenAI = async (prompt: string): Promise<string> => {
 const callGemini = async (prompt: string): Promise<string> => {
   if (!prompt.trim()) return '';
 
-  const models = ['gemini-2.0-flash', 'gemini-2.0-flash-001'];
+  const models = ['gemini-2.0-flash', 'gemini-2.0-flash-001', 'gemini-2.0-flash-exp'];
   
   for (const model of models) {
     try {
