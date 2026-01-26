@@ -141,6 +141,34 @@ export function PropertyForm({ property }: PropertyFormProps) {
     return title?.trim() && description?.trim() && keywords?.trim() && hasImages;
   };
 
+  const validateAndSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    const title = form.watch('title');
+    const description = form.watch('description');
+    const keywords = form.watch('keywords');
+    const hasImages = imagePreviews.length > 0 || (property?.images && property.images.length > 0);
+    
+    const missingFields = [];
+    if (!title?.trim()) missingFields.push('Title');
+    if (!description?.trim()) missingFields.push('Description');
+    if (!keywords?.trim()) missingFields.push('Keywords');
+    if (!hasImages) missingFields.push('Property Images');
+    
+    if (missingFields.length > 0) {
+      // Trigger form validation to show red errors
+      form.trigger();
+      toast({
+        variant: "destructive",
+        title: "Required Fields Missing",
+        description: `Please fill all required fields: ${missingFields.join(', ')}`,
+      });
+      return;
+    }
+    
+    form.handleSubmit(onSubmit)(e);
+  };
+
 
   const defaultValues: Partial<PropertyFormValues> = property
     ? {
@@ -557,7 +585,7 @@ export function PropertyForm({ property }: PropertyFormProps) {
       
   return (
     <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
+      <form onSubmit={validateAndSubmit} className="space-y-8">
         {lastError && (
           <div className="rounded-md border border-red-300 bg-red-50 text-red-800 p-3 text-sm">
             {lastError}
@@ -955,8 +983,7 @@ export function PropertyForm({ property }: PropertyFormProps) {
         <Button 
           type="submit"
           size="lg" 
-          disabled={isSubmitting || isUploadingImages || !isFormValid()}
-          className={`${!isFormValid() ? 'bg-gray-400 hover:bg-gray-400 cursor-not-allowed' : ''}`}
+          disabled={isSubmitting || isUploadingImages}
         >
             {(isSubmitting || isUploadingImages) && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
             {isUploadingImages ? "Uploading Images..." : isSubmitting ? "Saving Property..." : property ? "Save Changes" : "Post My Property"}
