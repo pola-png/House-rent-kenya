@@ -40,22 +40,35 @@ export function AISEOSimple({ formData, onApply }: AISEOSimpleProps) {
     setIsGenerating(true);
     
     try {
-      const apiKey = process.env.NEXT_PUBLIC_GEMINI_API_KEY || 'AIzaSyBytiBEktDdWwh6tOF_GYZT_Ds7kCOvXvs';
-      
       const titlePrompt = `Generate a catchy, SEO-optimized property listing title for a ${formData.bedrooms}-bedroom ${formData.propertyType} in ${formData.location}, ${formData.city}. Keep it under 80 characters. Only return the title.`;
       
       const descPrompt = `Write a compelling property description for a ${formData.bedrooms}-bedroom, ${formData.bathrooms}-bathroom ${formData.propertyType} in ${formData.location}, ${formData.city}. Price: Ksh ${formData.price.toLocaleString()}. Amenities: ${formData.amenities || 'standard amenities'}. Make it engaging with paragraphs and bullet points.`;
       
       const keywordsPrompt = `Generate 10-15 SEO keywords for a ${formData.bedrooms}-bedroom ${formData.propertyType} in ${formData.location}, ${formData.city}. Return as comma-separated list only.`;
 
+      const callOpenAI = async (prompt: string) => {
+        const response = await fetch('https://api.openai.com/v1/chat/completions', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${process.env.NEXT_PUBLIC_OPENAI_API_KEY || 'sk-your-openai-key-here'}`,
+          },
+          body: JSON.stringify({
+            model: 'gpt-4o-mini',
+            messages: [{ role: 'user', content: prompt }],
+            max_tokens: 500,
+            temperature: 0.7,
+          }),
+        });
+        
+        if (!response.ok) throw new Error(`OpenAI error: ${response.status}`);
+        const data = await response.json();
+        return data.choices?.[0]?.message?.content?.trim() || '';
+      };
+
       const callGemini = async (prompt: string) => {
-        const models = [
-          'gemini-2.5-flash',
-          'gemini-1.5-flash',
-          'gemini-1.5-pro',
-          'gemini-pro'
-        ];
-        let lastError;
+        const apiKey = process.env.NEXT_PUBLIC_GEMINI_API_KEY || 'AIzaSyBytiBEktDdWwh6tOF_GYZT_Ds7kCOvXvs';
+        const models = ['gemini-2.0-flash', 'gemini-2.0-flash-001', 'gemini-2.0-flash-exp'];
         
         for (const model of models) {
           try {
@@ -69,21 +82,29 @@ export function AISEOSimple({ formData, onApply }: AISEOSimpleProps) {
             );
             if (response.ok) {
               const data = await response.json();
-              return data.candidates?.[0]?.content?.parts?.[0]?.text || '';
+              const text = data.candidates?.[0]?.content?.parts?.[0]?.text;
+              if (text) return text.trim();
             }
-            lastError = await response.json();
           } catch (error) {
-            lastError = error;
             continue;
           }
         }
-        throw new Error(lastError?.error?.message || 'All models failed');
+        throw new Error('Gemini API error');
+      };
+
+      const generateWithAI = async (prompt: string) => {
+        try {
+          return await callOpenAI(prompt);
+        } catch (error) {
+          console.error('OpenAI failed, trying Gemini:', error);
+          return await callGemini(prompt);
+        }
       };
 
       const [title, description, keywords] = await Promise.all([
-        callGemini(titlePrompt),
-        callGemini(descPrompt),
-        callGemini(keywordsPrompt)
+        generateWithAI(titlePrompt),
+        generateWithAI(descPrompt),
+        generateWithAI(keywordsPrompt)
       ]);
       
       const aiContent: AIGeneratedContent = {
