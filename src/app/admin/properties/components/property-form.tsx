@@ -568,9 +568,20 @@ export function PropertyForm({ property }: PropertyFormProps) {
                   name="title"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Title</FormLabel>
+                      <FormLabel>Title (AI Generated)</FormLabel>
                       <FormControl>
-                        <Input placeholder="e.g., Luxury 3-Bedroom Apartment in Kilimani" {...field} />
+                        <Input 
+                          placeholder="Fill property details below, then use AI to generate title" 
+                          {...field} 
+                          readOnly
+                          className="bg-muted cursor-not-allowed"
+                          onClick={() => {
+                            toast({
+                              title: "AI Generation Required",
+                              description: "Please fill all property details below, then use the AI SEO Optimization section to generate title, description and keywords.",
+                            });
+                          }}
+                        />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -581,12 +592,19 @@ export function PropertyForm({ property }: PropertyFormProps) {
                   name="description"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Description</FormLabel>
+                      <FormLabel>Description (AI Generated)</FormLabel>
                       <FormControl>
                         <Textarea
-                          placeholder="Tell us a little bit about the property"
-                          className="resize-y min-h-[150px]"
+                          placeholder="Fill property details below, then use AI to generate description"
+                          className="resize-y min-h-[150px] bg-muted cursor-not-allowed"
                           {...field}
+                          readOnly
+                          onClick={() => {
+                            toast({
+                              title: "AI Generation Required",
+                              description: "Please fill all property details below, then use the AI SEO Optimization section to generate title, description and keywords.",
+                            });
+                          }}
                         />
                       </FormControl>
                       <FormMessage />
@@ -900,9 +918,20 @@ export function PropertyForm({ property }: PropertyFormProps) {
                       name="keywords"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>Keywords</FormLabel>
+                          <FormLabel>Keywords (AI Generated)</FormLabel>
                           <FormControl>
-                            <Input placeholder="e.g., apartment for rent, Kilimani" {...field} />
+                            <Input 
+                              placeholder="Fill property details, then use AI to generate SEO keywords" 
+                              {...field} 
+                              readOnly
+                              className="bg-muted cursor-not-allowed"
+                              onClick={() => {
+                                toast({
+                                  title: "AI Generation Required",
+                                  description: "Please fill all property details below, then use the AI SEO Optimization section to generate title, description and keywords.",
+                                });
+                              }}
+                            />
                           </FormControl>
                           <FormMessage />
                         </FormItem>
