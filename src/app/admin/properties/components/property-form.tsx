@@ -131,6 +131,16 @@ export function PropertyForm({ property }: PropertyFormProps) {
   const [isGeneratingTitle, setIsGeneratingTitle] = React.useState(false);
   const [isGeneratingDesc, setIsGeneratingDesc] = React.useState(false);
 
+  // Form validation function
+  const isFormValid = () => {
+    const title = form.watch('title');
+    const description = form.watch('description');
+    const keywords = form.watch('keywords');
+    const hasImages = imagePreviews.length > 0 || (property?.images && property.images.length > 0);
+    
+    return title?.trim() && description?.trim() && keywords?.trim() && hasImages;
+  };
+
 
   const defaultValues: Partial<PropertyFormValues> = property
     ? {
@@ -577,8 +587,8 @@ export function PropertyForm({ property }: PropertyFormProps) {
                           className="bg-muted cursor-not-allowed"
                           onClick={() => {
                             toast({
-                              title: "AI Generation Required",
-                              description: "Please fill in the Property Features section first, then use the AI SEO Optimization section to generate content.",
+                              title: "How to Use AI Generation",
+                              description: "Step 1: Fill all Property Features (price, bedrooms, location, etc.) → Step 2: Upload at least one property image → Step 3: Click 'Generate AI Content' in AI SEO Optimization section",
                             });
                           }}
                         />
@@ -601,8 +611,8 @@ export function PropertyForm({ property }: PropertyFormProps) {
                           readOnly
                           onClick={() => {
                             toast({
-                              title: "AI Generation Required",
-                              description: "Please fill in the Property Features section first, then use the AI SEO Optimization section to generate content.",
+                              title: "How to Use AI Generation",
+                              description: "Step 1: Fill all Property Features (price, bedrooms, location, etc.) → Step 2: Upload at least one property image → Step 3: Click 'Generate AI Content' in AI SEO Optimization section",
                             });
                           }}
                         />
@@ -927,8 +937,8 @@ export function PropertyForm({ property }: PropertyFormProps) {
                               className="bg-muted cursor-not-allowed"
                               onClick={() => {
                                 toast({
-                                  title: "AI Generation Required",
-                                  description: "Please fill all property details below, then use the AI SEO Optimization section to generate title, description and keywords.",
+                                  title: "How to Use AI Generation",
+                                  description: "Step 1: Fill all Property Features (price, bedrooms, location, etc.) → Step 2: Upload at least one property image → Step 3: Click 'Generate AI Content' in AI SEO Optimization section",
                                 });
                               }}
                             />
@@ -945,7 +955,8 @@ export function PropertyForm({ property }: PropertyFormProps) {
         <Button 
           type="submit"
           size="lg" 
-          disabled={isSubmitting || isUploadingImages}
+          disabled={isSubmitting || isUploadingImages || !isFormValid()}
+          className={`${!isFormValid() ? 'bg-gray-400 hover:bg-gray-400 cursor-not-allowed' : ''}`}
         >
             {(isSubmitting || isUploadingImages) && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
             {isUploadingImages ? "Uploading Images..." : isSubmitting ? "Saving Property..." : property ? "Save Changes" : "Post My Property"}
