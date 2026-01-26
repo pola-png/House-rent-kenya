@@ -1,27 +1,41 @@
-const FALLBACK_API_KEY =
-  process.env.NEXT_PUBLIC_GEMINI_API_KEY ||
-  // Public browser key (already used in AI SEO component)
-  'AIzaSyBytiBEktDdWwh6tOF_GYZT_Ds7kCOvXvs';
+const OPENAI_API_KEY = process.env.NEXT_PUBLIC_OPENAI_API_KEY || 'sk-your-openai-key-here';
+const GEMINI_API_KEY = process.env.NEXT_PUBLIC_GEMINI_API_KEY || 'AIzaSyBytiBEktDdWwh6tOF_GYZT_Ds7kCOvXvs';
 
-const getApiKey = () => FALLBACK_API_KEY;
-
-const callGeminiREST = async (prompt: string): Promise<string> => {
+const callOpenAI = async (prompt: string): Promise<string> => {
   if (!prompt.trim()) return '';
 
-  const apiKey = getApiKey();
-  const models = [
-    'gemini-2.5-flash',
-    'gemini-1.5-flash',
-    'gemini-1.5-pro',
-    'gemini-pro',
-  ];
+  const response = await fetch('https://api.openai.com/v1/chat/completions', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${OPENAI_API_KEY}`,
+    },
+    body: JSON.stringify({
+      model: 'gpt-4o-mini',
+      messages: [{ role: 'user', content: prompt }],
+      max_tokens: 500,
+      temperature: 0.7,
+    }),
+  });
 
-  let lastError: any;
+  if (!response.ok) {
+    const error = await response.json().catch(() => ({ error: { message: `HTTP ${response.status}` } }));
+    throw new Error(error.error?.message || `OpenAI API error: ${response.status}`);
+  }
 
+  const data = await response.json();
+  return data.choices?.[0]?.message?.content?.trim() || '';
+};
+
+const callGemini = async (prompt: string): Promise<string> => {
+  if (!prompt.trim()) return '';
+
+  const models = ['gemini-2.0-flash', 'gemini-2.0-flash-001'];
+  
   for (const model of models) {
     try {
       const response = await fetch(
-        `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`,
+        `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${GEMINI_API_KEY}`,
         {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -31,54 +45,35 @@ const callGeminiREST = async (prompt: string): Promise<string> => {
 
       if (response.ok) {
         const data = await response.json();
-        const text =
-          data.candidates?.[0]?.content?.parts?.[0]?.text ||
-          data.candidates?.[0]?.output_text ||
-          '';
+        const text = data.candidates?.[0]?.content?.parts?.[0]?.text?.trim();
         if (text) return text;
-      } else {
-        try {
-          lastError = await response.json();
-        } catch {
-          lastError = { error: { message: `HTTP ${response.status}` } };
-        }
       }
-    } catch (err) {
-      lastError = err;
+    } catch (error) {
       continue;
     }
   }
-
-  throw new Error(lastError?.error?.message || lastError?.message || 'All models failed');
-};
-
-const generateLocalFallback = (prompt: string): string => {
-  // Very simple offline fallback so the AI buttons still feel useful
-  const base =
-    'Discover this well-presented property offering comfortable living in a great location. ' +
-    'Spacious rooms, modern finishes and convenient access to nearby amenities make it ideal for day-to-day living. ';
-
-  if (/title/i.test(prompt)) {
-    return 'Spacious Modern Home in Prime Location';
-  }
-
-  if (/description/i.test(prompt)) {
-    return (
-      base +
-      'Contact the agent today to schedule a viewing and learn more about this listing.'
-    );
-  }
-
-  return base;
+  
+  throw new Error('Gemini API error');
 };
 
 export const generateWithAI = async (prompt: string): Promise<string> => {
   try {
-    const text = await callGeminiREST(prompt);
-    return text.trim();
-  } catch (error) {
-    // Log for debugging, but fall back to a local template so UI still works
-    console.error('generateWithAI error, using fallback:', error);
-    return generateLocalFallback(prompt);
+    const text = await callOpenAI(prompt);
+    return text;
+  } catch (openaiError) {
+    console.error('OpenAI failed, trying Gemini:', openaiError);
+    
+    try {
+      const text = await callGemini(prompt);
+      return text;
+    } catch (geminiError) {
+      console.error('Both AI services failed:', { openaiError, geminiError });
+      
+      if (openaiError?.message?.includes('401') || geminiError?.message?.includes('401')) {
+        throw new Error('AI service not configured. Please check API keys.');
+      }
+      
+      throw new Error('AI services are currently unavailable. Please try again later.');
+    }
   }
 };
