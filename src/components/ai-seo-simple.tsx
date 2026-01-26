@@ -48,7 +48,7 @@ export function AISEOSimple({ formData, onApply }: AISEOSimpleProps) {
 
       const generateWithAI = async (prompt: string) => {
         const apiKey = process.env.NEXT_PUBLIC_GEMINI_API_KEY || 'AIzaSyBytiBEktDdWwh6tOF_GYZT_Ds7kCOvXvs';
-        const models = ['gemma-2-27b-it', 'gemma-2-9b-it'];
+        const models = ['gemma-3-27b-it', 'gemma-3-12b-it', 'gemma-3-4b-it', 'gemma-3-1b-it', 'gemma-3n-e4b-it', 'gemma-3n-e2b-it'];
         
         for (const model of models) {
           try {

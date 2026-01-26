@@ -3,7 +3,7 @@ const GEMINI_API_KEY = process.env.NEXT_PUBLIC_GEMINI_API_KEY || 'AIzaSyBytiBEkt
 const callGemini = async (prompt: string): Promise<string> => {
   if (!prompt.trim()) return '';
 
-  const models = ['gemma-2-27b-it', 'gemma-2-9b-it'];
+  const models = ['gemma-3-27b-it', 'gemma-3-12b-it', 'gemma-3-4b-it', 'gemma-3-1b-it', 'gemma-3n-e4b-it', 'gemma-3n-e2b-it'];
   
   for (const model of models) {
     try {
