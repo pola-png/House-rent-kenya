@@ -48,7 +48,7 @@ export function AISEOSimple({ formData, onApply }: AISEOSimpleProps) {
 
       const generateWithAI = async (prompt: string) => {
         const apiKey = process.env.NEXT_PUBLIC_GEMINI_API_KEY || 'AIzaSyBytiBEktDdWwh6tOF_GYZT_Ds7kCOvXvs';
-        const models = ['gemini-3-flash-preview', 'gemini-2.5-flash'];
+        const models = ['gemma-2-27b-it', 'gemma-2-9b-it'];
         
         for (const model of models) {
           try {
@@ -64,10 +64,6 @@ export function AISEOSimple({ formData, onApply }: AISEOSimpleProps) {
               const data = await response.json();
               const text = data.candidates?.[0]?.content?.parts?.[0]?.text;
               if (text) return text.trim();
-            } else if (response.status === 429) {
-              // Rate limited, wait before trying next model
-              await new Promise(resolve => setTimeout(resolve, 1000));
-              continue;
             }
           } catch (error) {
             continue;

@@ -3,7 +3,7 @@ const GEMINI_API_KEY = process.env.NEXT_PUBLIC_GEMINI_API_KEY || 'AIzaSyBytiBEkt
 const callGemini = async (prompt: string): Promise<string> => {
   if (!prompt.trim()) return '';
 
-  const models = ['gemini-3-flash-preview', 'gemini-2.5-flash'];
+  const models = ['gemma-2-27b-it', 'gemma-2-9b-it'];
   
   for (const model of models) {
     try {
@@ -20,10 +20,6 @@ const callGemini = async (prompt: string): Promise<string> => {
         const data = await response.json();
         const text = data.candidates?.[0]?.content?.parts?.[0]?.text?.trim();
         if (text) return text;
-      } else if (response.status === 429) {
-        // Rate limited, wait before trying next model
-        await new Promise(resolve => setTimeout(resolve, 1000));
-        continue;
       }
     } catch (error) {
       continue;
