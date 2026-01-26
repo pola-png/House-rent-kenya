@@ -47,32 +47,18 @@ export function AISEOSimple({ formData, onApply }: AISEOSimpleProps) {
       const keywordsPrompt = `Generate 10-15 SEO keywords for a ${formData.bedrooms}-bedroom ${formData.propertyType} in ${formData.location}, ${formData.city}. Return as comma-separated list only.`;
 
       const generateWithAI = async (prompt: string) => {
-        const apiKey = process.env.NEXT_PUBLIC_GEMINI_API_KEY || 'AIzaSyBytiBEktDdWwh6tOF_GYZT_Ds7kCOvXvs';
-        const models = ['gemini-2.5-flash', 'gemini-2.5-flash-lite'];
-        
-        for (const model of models) {
-          try {
-            const response = await fetch(
-              `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`,
-              {
-                method: 'POST',
-                headers: { 
-                  'Content-Type': 'application/json',
-                  'x-goog-api-key': apiKey
-                },
-                body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] })
-              }
-            );
-            if (response.ok) {
-              const data = await response.json();
-              const text = data.candidates?.[0]?.content?.parts?.[0]?.text;
-              if (text) return text.trim();
-            }
-          } catch (error) {
-            continue;
-          }
+        const response = await fetch('/api/ai/generate', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ prompt }),
+        });
+
+        if (response.ok) {
+          const data = await response.json();
+          return data.text || '';
         }
-        throw new Error('Gemini API error');
+        
+        throw new Error('AI generation failed');
       };
 
       const [title, description, keywords] = await Promise.all([

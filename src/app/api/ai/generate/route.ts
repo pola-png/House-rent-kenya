@@ -1,77 +1,51 @@
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 
-export async function POST(request: Request) {
+const GEMINI_API_KEY = process.env.GEMINI_API_KEY; // Server-side only, not NEXT_PUBLIC_
+
+export async function POST(request: NextRequest) {
+  if (!GEMINI_API_KEY) {
+    return NextResponse.json({ error: 'AI service not configured' }, { status: 500 });
+  }
+
   try {
-    const { prompt, type } = await request.json();
+    const { prompt } = await request.json();
     
-    const apiKey = process.env.GEMINI_API_KEY || process.env.NEXT_PUBLIC_GEMINI_API_KEY;
-    
-    if (!apiKey) {
-      console.error('Gemini API key not found in environment variables');
-      return NextResponse.json(
-        { error: 'Gemini API key not configured' },
-        { status: 500 }
-      );
+    if (!prompt?.trim()) {
+      return NextResponse.json({ error: 'Prompt is required' }, { status: 400 });
     }
 
-    const models = [
-      'gemini-2.5-flash',
-      'gemini-1.5-flash',
-      'gemini-1.5-pro',
-      'gemini-pro'
-    ];
-    let response;
-    let lastError;
+    const models = ['gemini-2.5-flash', 'gemini-2.5-flash-lite'];
     
     for (const model of models) {
       try {
-        response = await fetch(
-          `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`,
+        const response = await fetch(
+          `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`,
           {
             method: 'POST',
             headers: {
               'Content-Type': 'application/json',
+              'x-goog-api-key': GEMINI_API_KEY,
             },
             body: JSON.stringify({
-              contents: [{
-                parts: [{
-                  text: prompt
-                }]
-              }]
-            })
+              contents: [{ parts: [{ text: prompt }] }]
+            }),
           }
         );
-        
-        if (response.ok) break;
-        
-        const errorData = await response.json();
-        console.error(`Gemini API error for ${model}:`, errorData);
-        lastError = errorData;
+
+        if (response.ok) {
+          const data = await response.json();
+          const text = data.candidates?.[0]?.content?.parts?.[0]?.text?.trim();
+          if (text) {
+            return NextResponse.json({ text });
+          }
+        }
       } catch (error) {
-        console.error(`Network error for ${model}:`, error);
-        lastError = error;
         continue;
       }
     }
     
-    if (!response || !response.ok) {
-      throw new Error(`All Gemini models failed. Last error: ${lastError?.error?.message || 'Unknown error'}`);
-    }
-
-    const data = await response.json();
-    const generatedText = data.candidates?.[0]?.content?.parts?.[0]?.text || '';
-    
-    if (!generatedText) {
-      console.error('No text generated from Gemini API:', data);
-      throw new Error('No content generated');
-    }
-
-    return NextResponse.json({ text: generatedText, type });
-  } catch (error: any) {
-    console.error('AI generation error:', error);
-    return NextResponse.json(
-      { error: error.message || 'Failed to generate content' },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: 'AI generation failed' }, { status: 500 });
+  } catch (error) {
+    return NextResponse.json({ error: 'Invalid request' }, { status: 400 });
   }
 }
