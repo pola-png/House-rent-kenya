@@ -606,19 +606,11 @@ export function PropertyForm({ property }: PropertyFormProps) {
                   name="title"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Title (AI Generated)</FormLabel>
+                      <FormLabel>Title</FormLabel>
                       <FormControl>
                         <Input 
-                          placeholder="Fill property details below, then use AI to generate title" 
+                          placeholder="Enter property title or use AI to generate" 
                           {...field} 
-                          readOnly
-                          className="bg-muted cursor-not-allowed"
-                          onClick={() => {
-                            toast({
-                              title: "How to Use AI Generation",
-                              description: "Step 1: Fill all Property Features (price, bedrooms, location, etc.) → Step 2: Upload at least one property image → Step 3: Click 'Generate AI Content' in AI SEO Optimization section",
-                            });
-                          }}
                         />
                       </FormControl>
                       <FormMessage />
