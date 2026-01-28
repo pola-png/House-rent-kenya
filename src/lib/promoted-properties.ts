@@ -45,17 +45,26 @@ export async function getPropertiesWithPromotion(
     query = query.or(`propertyType.ilike.%${filters.propertyType}%,title.ilike.%${filters.propertyType}%`);
   }
 
-  // Get more properties for better filtering
-  const { data } = await query.limit(filters.limit ? filters.limit * 3 : 60);
+  // Limit to 6 regular properties for landing pages
+  const regularLimit = 6;
+  const { data } = await query.limit(regularLimit).order('createdAt', { ascending: false });
   if (!data) return { promoted: [], regular: [], all: [] };
 
+  // Get ALL promoted properties separately
+  const { data: promotedData } = await supabase
+    .from('properties')
+    .select('*')
+    .or('isPremium.eq.true,featuredExpiresAt.gt.' + new Date().toISOString())
+    .order('createdAt', { ascending: false });
+
   // Get agent profiles
-  const landlordIds = [...new Set(data.map(p => p.landlordId))];
+  const allProperties = [...(promotedData || []), ...data];
+  const landlordIds = [...new Set(allProperties.map(p => p.landlordId))];
   const { data: profiles } = await supabase.from('profiles').select('*').in('id', landlordIds);
   const profileMap = new Map(profiles?.map(p => [p.id, p]) || []);
 
   // Map properties with agent data
-  const propertiesWithAgents = data.map(p => ({
+  const propertiesWithAgents = allProperties.map(p => ({
     ...p,
     createdAt: new Date(p.createdAt),
     updatedAt: new Date(p.updatedAt),
@@ -116,8 +125,7 @@ export async function getPropertiesWithPromotion(
       
       // Finally by creation date
       return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
-    })
-    .slice(0, filters.limit || 20);
+    });
 
   // Separate promoted and regular properties
   const currentDate = new Date();
@@ -128,9 +136,9 @@ export async function getPropertiesWithPromotion(
   const regular = sortedProperties.filter(p => 
     !p.isPremium && 
     (!p.featuredExpiresAt || new Date(p.featuredExpiresAt) <= currentDate)
-  );
+  ).slice(0, regularLimit); // Limit regular properties to 6
 
-  return { promoted, regular, all: sortedProperties };
+  return { promoted, regular, all: [...promoted, ...regular] };
 }
 
 export function renderPromotedPropertiesSection(
