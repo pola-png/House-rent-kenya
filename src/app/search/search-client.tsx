@@ -133,12 +133,14 @@ function SearchContent() {
       const baths = searchParams?.get('baths');
       const amenities = searchParams?.getAll('amenities') ?? [];
 
+      // Enhanced filtering with relevance scoring
       let query = supabase.from('properties').select('*');
+      let relevanceFilters = [];
 
       if (listingType === 'rent') {
         query = query.in('status', ['Available', 'For Rent']);
         setPageTitle("Properties for Rent");
-      } else if (listingType === 'buy') {
+      } else if (listingType === 'buy' || listingType === 'sale') {
         query = query.eq('status', 'For Sale');
         setPageTitle("Properties for Sale");
       } else if (listingType === 'short-let') {
@@ -150,17 +152,20 @@ function SearchContent() {
       }
 
       if (q) {
-        query = query.or(`title.ilike.%${q}%,location.ilike.%${q}%,city.ilike.%${q}%,propertyType.ilike.%${q}%`);
+        // Enhanced search with title priority
+        query = query.or(`title.ilike.%${q}%,location.ilike.%${q}%,city.ilike.%${q}%,propertyType.ilike.%${q}%,description.ilike.%${q}%`);
+        relevanceFilters.push(q);
       }
 
       const uniquePropertyTypes = [...new Set(allPropertyTypes)].filter(Boolean);
       if (uniquePropertyTypes.length > 0) {
-        const typeConditions = uniquePropertyTypes.map(type => `propertyType.ilike.%${type}%`);
+        const typeConditions = uniquePropertyTypes.map(type => `propertyType.ilike.%${type}%,title.ilike.%${type}%`);
         if (typeConditions.length === 1) {
-          query = query.ilike('propertyType', `%${uniquePropertyTypes[0]}%`);
+          query = query.or(`propertyType.ilike.%${uniquePropertyTypes[0]}%,title.ilike.%${uniquePropertyTypes[0]}%`);
         } else {
           query = query.or(typeConditions.join(','));
         }
+        relevanceFilters.push(...uniquePropertyTypes);
       }
 
       if (baths) {
@@ -186,7 +191,7 @@ function SearchContent() {
       }
 
       console.log('Executing query...');
-      const { data, error } = await query.order('isPremium', { ascending: false, nullsFirst: false }).order('createdAt', { ascending: false });
+      const { data, error } = await query.limit(100).order('createdAt', { ascending: false });
 
       if (error) {
         console.error('Supabase query error:', error);
@@ -195,25 +200,66 @@ function SearchContent() {
 
       console.log('Query results:', data?.length || 0, 'properties');
 
-      // Always fetch promoted properties separately to ensure they show
-      const { data: allPromotedProperties, error: promotedError } = await supabase
+      // Get ALL promoted properties regardless of search criteria
+      const { data: allPromotedData, error: promotedError } = await supabase
         .from('properties')
         .select('*')
-        .in('status', ['Available', 'For Rent', 'For Sale'])
-        .eq('isPremium', true)
-        .or('featuredExpiresAt.is.null,featuredExpiresAt.gt.' + new Date().toISOString())
+        .or('isPremium.eq.true,featuredExpiresAt.gt.' + new Date().toISOString())
         .order('createdAt', { ascending: false });
 
       if (promotedError) {
         console.error('Promoted properties error:', promotedError);
       }
 
-      // Combine search results with promoted properties, removing duplicates
-      const searchResultIds = new Set((data || []).map(p => p.id));
-      const additionalPromoted = (allPromotedProperties || []).filter(p => !searchResultIds.has(p.id));
-      const combinedData = [...(allPromotedProperties || []), ...(data || []).filter(p => !p.isPremium)];
+      // Combine and score properties for relevance
+      const allProperties = [...(data || [])];
+      const promotedProperties = allPromotedData || [];
+      
+      // Remove duplicates and merge - promoted properties always included
+      const propertyMap = new Map();
+      
+      // Add ALL promoted properties first (they always show)
+      promotedProperties.forEach(p => {
+        propertyMap.set(p.id, { ...p, isPromoted: true });
+      });
+      
+      // Add regular properties that match search criteria
+      allProperties.forEach(p => {
+        if (!propertyMap.has(p.id)) {
+          propertyMap.set(p.id, { ...p, isPromoted: false });
+        }
+      });
+      
+      const combinedData = Array.from(propertyMap.values());
+      
+      // Score properties for relevance
+      const scoredProperties = combinedData.map(p => {
+        let score = 0;
+        const title = p.title?.toLowerCase() || '';
+        const location = p.location?.toLowerCase() || '';
+        const city = p.city?.toLowerCase() || '';
+        const description = p.description?.toLowerCase() || '';
+        
+        relevanceFilters.forEach(filter => {
+          const searchTerm = filter.toLowerCase();
+          if (title.includes(searchTerm)) score += 15; // Title matches get highest priority
+          if (location.includes(searchTerm)) score += 10;
+          if (city.includes(searchTerm)) score += 8;
+          if (p.propertyType?.toLowerCase().includes(searchTerm)) score += 10;
+          if (description.includes(searchTerm)) score += 2;
+        });
+        
+        return { ...p, relevanceScore: score };
+      });
+      
+      // Sort by promotion status first, then relevance, then date
+      scoredProperties.sort((a, b) => {
+        if (a.isPromoted !== b.isPromoted) return b.isPromoted ? 1 : -1;
+        if (a.relevanceScore !== b.relevanceScore) return b.relevanceScore - a.relevanceScore;
+        return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+      });
 
-      const landlordIds = [...new Set(combinedData.map(p => p.landlordId))];
+      const landlordIds = [...new Set(scoredProperties.map(p => p.landlordId))];
       const { data: profiles, error: profilesError } = await supabase
         .from('profiles')
         .select('*')
@@ -225,7 +271,7 @@ function SearchContent() {
       
       const profileMap = new Map(profiles?.map(p => [p.id, p]) || []);
       
-      const propertiesWithAgents = combinedData.map(p => {
+      const propertiesWithAgents = scoredProperties.map(p => {
         const profileData = profileMap.get(p.landlordId);
         return {
           ...p,
@@ -256,21 +302,18 @@ function SearchContent() {
         };
       });
 
-      // Separate promoted and regular properties
+      // Separate promoted and regular properties based on current promotion status
       const currentDate = new Date();
       const promoted = propertiesWithAgents.filter(p => 
-        p.isPremium && 
-        (!p.featuredExpiresAt || new Date(p.featuredExpiresAt) > currentDate)
+        p.isPremium || 
+        (p.featuredExpiresAt && new Date(p.featuredExpiresAt) > currentDate)
       );
       const regular = propertiesWithAgents.filter(p => 
-        !p.isPremium || 
-        (p.featuredExpiresAt && new Date(p.featuredExpiresAt) <= currentDate)
+        !p.isPremium && 
+        (!p.featuredExpiresAt || new Date(p.featuredExpiresAt) <= currentDate)
       );
 
-      // Sort both arrays by creation date
-      promoted.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
-      regular.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
-
+      // Properties are already sorted by relevance and promotion status
       console.log('Setting properties:', promoted.length + regular.length, 'total');
       
       // Check if request was cancelled
@@ -281,7 +324,7 @@ function SearchContent() {
       
       setPromotedProperties(promoted);
       setRegularProperties(regular);
-      setProperties([...promoted, ...regular]);
+      setProperties(propertiesWithAgents); // Use all properties in sorted order
     } catch (error) {
       if (error instanceof Error && error.name === 'AbortError') {
         console.log('Request was cancelled');

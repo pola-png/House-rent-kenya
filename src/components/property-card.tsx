@@ -56,7 +56,7 @@ export function PropertyCard({ property }: PropertyCardProps) {
     setImageError(true);
   };
 
-  const isPromoted = property.isPremium && (!property.featuredExpiresAt || new Date(property.featuredExpiresAt) > new Date());
+  const isPromoted = property.isPremium || (property.featuredExpiresAt && new Date(property.featuredExpiresAt) > new Date());
   
   return (
     <Card ref={impressionRef as any} className="overflow-hidden group hover:shadow-xl transition-shadow duration-300 flex flex-col">

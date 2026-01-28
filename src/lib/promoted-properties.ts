@@ -20,13 +20,13 @@ export async function getPropertiesWithPromotion(
 ): Promise<PropertyQueryResult> {
   let query = supabase.from('properties').select('*');
 
-  // Apply filters
+  // Apply filters with better matching
   if (filters.location) {
-    query = query.or(`location.ilike.%${filters.location}%,city.ilike.%${filters.location}%`);
+    query = query.or(`location.ilike.%${filters.location}%,city.ilike.%${filters.location}%,title.ilike.%${filters.location}%,description.ilike.%${filters.location}%`);
   }
   
   if (filters.city) {
-    query = query.ilike('city', `%${filters.city}%`);
+    query = query.or(`city.ilike.%${filters.city}%,location.ilike.%${filters.city}%,title.ilike.%${filters.city}%`);
   }
   
   if (filters.bedrooms !== undefined) {
@@ -42,19 +42,11 @@ export async function getPropertiesWithPromotion(
   }
   
   if (filters.propertyType) {
-    query = query.ilike('propertyType', `%${filters.propertyType}%`);
+    query = query.or(`propertyType.ilike.%${filters.propertyType}%,title.ilike.%${filters.propertyType}%`);
   }
 
-  // Order by promotion status first, then by creation date
-  query = query
-    .order('isPremium', { ascending: false, nullsFirst: false })
-    .order('createdAt', { ascending: false });
-    
-  if (filters.limit) {
-    query = query.limit(filters.limit);
-  }
-
-  const { data } = await query;
+  // Get more properties for better filtering
+  const { data } = await query.limit(filters.limit ? filters.limit * 3 : 60);
   if (!data) return { promoted: [], regular: [], all: [] };
 
   // Get agent profiles
@@ -81,18 +73,64 @@ export async function getPropertiesWithPromotion(
     } : undefined
   }));
 
+  // Score properties for relevance
+  const scoredProperties = propertiesWithAgents.map(p => {
+    let score = 0;
+    const title = p.title?.toLowerCase() || '';
+    const location = p.location?.toLowerCase() || '';
+    const city = p.city?.toLowerCase() || '';
+    const description = p.description?.toLowerCase() || '';
+    
+    // Title matches get highest score
+    if (filters.location) {
+      const searchTerm = filters.location.toLowerCase();
+      if (title.includes(searchTerm)) score += 15;
+      if (location.includes(searchTerm)) score += 10;
+      if (city.includes(searchTerm)) score += 8;
+      if (description.includes(searchTerm)) score += 2;
+    }
+    
+    if (filters.propertyType) {
+      const propType = filters.propertyType.toLowerCase();
+      if (title.includes(propType)) score += 15;
+      if (p.propertyType?.toLowerCase().includes(propType)) score += 10;
+    }
+    
+    // Bedroom match bonus
+    if (filters.bedrooms && p.bedrooms === filters.bedrooms) score += 5;
+    
+    return { ...p, relevanceScore: score };
+  });
+
+  // Sort by relevance, then by promotion status
+  const sortedProperties = scoredProperties
+    .filter(p => p.relevanceScore > 0 || (!filters.location && !filters.propertyType))
+    .sort((a, b) => {
+      // First by promotion status
+      const aPromoted = a.isPremium || (a.featuredExpiresAt && new Date(a.featuredExpiresAt) > new Date()) ? 1 : 0;
+      const bPromoted = b.isPremium || (b.featuredExpiresAt && new Date(b.featuredExpiresAt) > new Date()) ? 1 : 0;
+      if (aPromoted !== bPromoted) return bPromoted - aPromoted;
+      
+      // Then by relevance score
+      if (a.relevanceScore !== b.relevanceScore) return b.relevanceScore - a.relevanceScore;
+      
+      // Finally by creation date
+      return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+    })
+    .slice(0, filters.limit || 20);
+
   // Separate promoted and regular properties
   const currentDate = new Date();
-  const promoted = propertiesWithAgents.filter(p => 
-    p.isPremium && 
-    (!p.featuredExpiresAt || new Date(p.featuredExpiresAt) > currentDate)
+  const promoted = sortedProperties.filter(p => 
+    p.isPremium || 
+    (p.featuredExpiresAt && new Date(p.featuredExpiresAt) > currentDate)
   );
-  const regular = propertiesWithAgents.filter(p => 
-    !p.isPremium || 
-    (p.featuredExpiresAt && new Date(p.featuredExpiresAt) <= currentDate)
+  const regular = sortedProperties.filter(p => 
+    !p.isPremium && 
+    (!p.featuredExpiresAt || new Date(p.featuredExpiresAt) <= currentDate)
   );
 
-  return { promoted, regular, all: propertiesWithAgents };
+  return { promoted, regular, all: sortedProperties };
 }
 
 export function renderPromotedPropertiesSection(
