@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 
-const GEMINI_API_KEY = process.env.GEMINI_API_KEY; // Server-side only, not NEXT_PUBLIC_
+const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
 
 export async function POST(request: NextRequest) {
   if (!GEMINI_API_KEY) {
@@ -14,38 +14,43 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Prompt is required' }, { status: 400 });
     }
 
-    const models = ['gemini-2.5-flash', 'gemini-2.5-flash-lite'];
-    
-    for (const model of models) {
-      try {
-        const response = await fetch(
-          `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`,
-          {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-              'x-goog-api-key': GEMINI_API_KEY,
-            },
-            body: JSON.stringify({
-              contents: [{ parts: [{ text: prompt }] }]
-            }),
+    const response = await fetch(
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${GEMINI_API_KEY}`,
+      {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          contents: [{
+            parts: [{ text: prompt }]
+          }],
+          generationConfig: {
+            temperature: 0.7,
+            topK: 40,
+            topP: 0.95,
+            maxOutputTokens: 1024,
           }
-        );
-
-        if (response.ok) {
-          const data = await response.json();
-          const text = data.candidates?.[0]?.content?.parts?.[0]?.text?.trim();
-          if (text) {
-            return NextResponse.json({ text });
-          }
-        }
-      } catch (error) {
-        continue;
+        }),
       }
+    );
+
+    if (!response.ok) {
+      const errorData = await response.text();
+      console.error('Gemini API error:', errorData);
+      return NextResponse.json({ error: 'AI generation failed' }, { status: 500 });
     }
+
+    const data = await response.json();
+    const text = data.candidates?.[0]?.content?.parts?.[0]?.text?.trim();
     
-    return NextResponse.json({ error: 'AI generation failed' }, { status: 500 });
+    if (!text) {
+      return NextResponse.json({ error: 'No content generated' }, { status: 500 });
+    }
+
+    return NextResponse.json({ text });
   } catch (error) {
-    return NextResponse.json({ error: 'Invalid request' }, { status: 400 });
+    console.error('AI generation error:', error);
+    return NextResponse.json({ error: 'AI generation failed' }, { status: 500 });
   }
 }
