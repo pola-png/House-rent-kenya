@@ -1,5 +1,6 @@
 import { PromotedPropertiesLayout } from '@/components/promoted-properties-layout';
 import { getPropertiesWithPromotion } from '@/lib/promoted-properties';
+import { Metadata } from 'next';
 
 export const metadata: Metadata = {
   title: 'Properties for Rent in Nairobi - Apartments, Houses & Homes | House Rent Kenya',
