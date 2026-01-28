@@ -14,7 +14,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Prompt is required' }, { status: 400 });
     }
 
-    const models = ['gemini-2.5-flash', 'gemini-2.5-flash-lite'];
+    const models = ['gemini-2.5-flash', 'gemma-3-12b', 'gemma-3-1b', 'gemma-3-27b', 'gemma-3-2b', 'gemma-3-4b'];
     
     for (const model of models) {
       try {
