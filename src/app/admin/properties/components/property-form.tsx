@@ -34,7 +34,7 @@ import { Label } from "@/components/ui/label";
 import { useAuth } from "@/hooks/use-auth-supabase";
 import { supabase } from "@/lib/supabase";
 import { getAccessTokenSync } from "@/lib/token-cache";
-import { AISEOSimple } from "@/components/ai-seo-simple";
+
 import { generateWithAI } from "@/lib/ai-service";
 
 import { uploadToWasabi } from "@/lib/wasabi";
@@ -127,6 +127,52 @@ export function PropertyForm({ property }: PropertyFormProps) {
   const [imageFiles, setImageFiles] = React.useState<File[]>([]);
   const [lastError, setLastError] = React.useState<string | null>(null);
   const fileInputRef = React.useRef<HTMLInputElement>(null);
+  const [isGeneratingKeywords, setIsGeneratingKeywords] = React.useState(false);
+
+  const generateAIKeywords = async (onChange: (value: string) => void) => {
+    const currentData = {
+      propertyType: form.getValues('propertyType'),
+      bedrooms: form.getValues('bedrooms'),
+      location: form.getValues('location'),
+      city: form.getValues('city'),
+    };
+
+    const missingFields = [];
+    if (!currentData.propertyType) missingFields.push('Property Type');
+    if (!currentData.bedrooms || currentData.bedrooms < 1) missingFields.push('Bedrooms');
+    if (!currentData.location?.trim()) missingFields.push('Location');
+    if (!currentData.city?.trim()) missingFields.push('City');
+
+    if (missingFields.length > 0) {
+      toast({
+        variant: "destructive",
+        title: "Required Fields Missing",
+        description: `Please fill in: ${missingFields.join(', ')}`,
+      });
+      return;
+    }
+
+    setIsGeneratingKeywords(true);
+    try {
+      const prompt = `Generate 10-15 SEO keywords for a ${currentData.bedrooms}-bedroom ${currentData.propertyType} in ${currentData.location}, ${currentData.city}. Return as comma-separated list only.`;
+      const text = await generateWithAI(prompt);
+      onChange(text.trim());
+      
+      toast({
+        title: "Keywords Generated!",
+        description: "SEO keywords have been created successfully.",
+      });
+    } catch (error: any) {
+      toast({
+        variant: "destructive",
+        title: "Generation Failed",
+        description: error.message || 'Could not generate keywords.',
+      });
+    } finally {
+      setIsGeneratingKeywords(false);
+    }
+  };
+
   // Promotion section removed
   const [isGeneratingTitle, setIsGeneratingTitle] = React.useState(false);
   const [isGeneratingDesc, setIsGeneratingDesc] = React.useState(false);
@@ -609,10 +655,27 @@ export function PropertyForm({ property }: PropertyFormProps) {
                       <FormLabel>Title</FormLabel>
                       <FormControl>
                         <Input 
-                          placeholder="Enter property title or use AI to generate" 
+                          placeholder="Enter property title" 
                           {...field} 
                         />
                       </FormControl>
+                      <div className="mt-2">
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          onClick={() => generateAITitle(field.onChange)}
+                          disabled={isGeneratingTitle || !form.watch('propertyType') || !form.watch('location')}
+                          className="w-full"
+                        >
+                          {isGeneratingTitle ? (
+                            <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                          ) : (
+                            <Sparkles className="h-4 w-4 mr-2" />
+                          )}
+                          {isGeneratingTitle ? 'Generating Title...' : 'Generate AI Title'}
+                        </Button>
+                      </div>
                       <FormMessage />
                     </FormItem>
                   )}
@@ -622,21 +685,31 @@ export function PropertyForm({ property }: PropertyFormProps) {
                   name="description"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Description (AI Generated)</FormLabel>
+                      <FormLabel>Description</FormLabel>
                       <FormControl>
                         <Textarea
-                          placeholder="Fill property details below, then use AI to generate description"
-                          className="resize-y min-h-[150px] bg-muted cursor-not-allowed"
+                          placeholder="Enter property description"
+                          className="resize-y min-h-[150px]"
                           {...field}
-                          readOnly
-                          onClick={() => {
-                            toast({
-                              title: "How to Use AI Generation",
-                              description: "Step 1: Fill all Property Features (price, bedrooms, location, etc.) → Step 2: Upload at least one property image → Step 3: Click 'Generate AI Content' in AI SEO Optimization section",
-                            });
-                          }}
                         />
                       </FormControl>
+                      <div className="mt-2">
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          onClick={() => generateAIDescription(field.onChange)}
+                          disabled={isGeneratingDesc || !form.watch('propertyType') || !form.watch('location')}
+                          className="w-full"
+                        >
+                          {isGeneratingDesc ? (
+                            <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                          ) : (
+                            <Sparkles className="h-4 w-4 mr-2" />
+                          )}
+                          {isGeneratingDesc ? 'Generating Description...' : 'Generate AI Description'}
+                        </Button>
+                      </div>
                       <FormMessage />
                     </FormItem>
                   )}
@@ -921,46 +994,39 @@ export function PropertyForm({ property }: PropertyFormProps) {
 
             <Card>
                 <CardHeader>
-                    <CardTitle>AI SEO Optimization</CardTitle>
-                    <CardDescription>Generate SEO-optimized content with one click.</CardDescription>
+                    <CardTitle>SEO Keywords</CardTitle>
+                    <CardDescription>Keywords help your property appear in search results.</CardDescription>
                 </CardHeader>
-                <CardContent className="space-y-4">
-                    <AISEOSimple
-                      formData={{
-                        title: form.watch('title') || '',
-                        description: form.watch('description') || '',
-                        propertyType: form.watch('propertyType') || 'Apartment',
-                        bedrooms: form.watch('bedrooms') || 1,
-                        bathrooms: form.watch('bathrooms') || 1,
-                        location: form.watch('location') || '',
-                        city: form.watch('city') || 'Nairobi',
-                        amenities: form.watch('amenities') || '',
-                        price: form.watch('price') || 0,
-                      }}
-                      onApplyTitle={(title) => form.setValue('title', title)}
-                      onApplyDescription={(description) => form.setValue('description', description)}
-                      onApplyKeywords={(keywords) => form.setValue('keywords', keywords)}
-                    />
+                <CardContent>
                     <FormField
                       control={form.control}
                       name="keywords"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>Keywords (AI Generated)</FormLabel>
+                          <FormLabel>Keywords</FormLabel>
                           <FormControl>
                             <Input 
-                              placeholder="Fill property details, then use AI to generate SEO keywords" 
+                              placeholder="Enter SEO keywords" 
                               {...field} 
-                              readOnly
-                              className="bg-muted cursor-not-allowed"
-                              onClick={() => {
-                                toast({
-                                  title: "How to Use AI Generation",
-                                  description: "Step 1: Fill all Property Features (price, bedrooms, location, etc.) → Step 2: Upload at least one property image → Step 3: Click 'Generate AI Content' in AI SEO Optimization section",
-                                });
-                              }}
                             />
                           </FormControl>
+                          <div className="mt-2">
+                            <Button
+                              type="button"
+                              variant="outline"
+                              size="sm"
+                              onClick={() => generateAIKeywords(field.onChange)}
+                              disabled={isGeneratingKeywords || !form.watch('propertyType') || !form.watch('location')}
+                              className="w-full"
+                            >
+                              {isGeneratingKeywords ? (
+                                <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                              ) : (
+                                <Sparkles className="h-4 w-4 mr-2" />
+                              )}
+                              {isGeneratingKeywords ? 'Generating Keywords...' : 'Generate AI Keywords'}
+                            </Button>
+                          </div>
                           <FormMessage />
                         </FormItem>
                       )}
