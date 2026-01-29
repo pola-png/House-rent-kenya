@@ -27,10 +27,12 @@ interface AIGeneratedContent {
 
 interface AISEOSimpleProps {
   formData: FormData;
-  onApply: (content: AIGeneratedContent) => void;
+  onApplyTitle: (title: string) => void;
+  onApplyDescription: (description: string) => void;
+  onApplyKeywords: (keywords: string) => void;
 }
 
-export function AISEOSimple({ formData, onApply }: AISEOSimpleProps) {
+export function AISEOSimple({ formData, onApplyTitle, onApplyDescription, onApplyKeywords }: AISEOSimpleProps) {
   const [isGenerating, setIsGenerating] = useState(false);
   const [generatedContent, setGeneratedContent] = useState<AIGeneratedContent | null>(null);
   const [copied, setCopied] = useState<string | null>(null);
@@ -162,12 +164,32 @@ Don't miss this opportunity to secure a premium property in one of ${data.city}'
     }
   };
 
-  const applyAllContent = () => {
+  const applyTitle = () => {
     if (generatedContent) {
-      onApply(generatedContent);
+      onApplyTitle(generatedContent.title);
       toast({
-        title: "Content Applied!",
-        description: "AI-generated content has been applied to your form.",
+        title: "Title Applied!",
+        description: "AI-generated title has been applied to your form.",
+      });
+    }
+  };
+
+  const applyDescription = () => {
+    if (generatedContent) {
+      onApplyDescription(generatedContent.description);
+      toast({
+        title: "Description Applied!",
+        description: "AI-generated description has been applied to your form.",
+      });
+    }
+  };
+
+  const applyKeywords = () => {
+    if (generatedContent) {
+      onApplyKeywords(generatedContent.keywords);
+      toast({
+        title: "Keywords Applied!",
+        description: "AI-generated keywords have been applied to your form.",
       });
     }
   };
@@ -203,28 +225,32 @@ Don't miss this opportunity to secure a premium property in one of ${data.city}'
           <CardContent className="p-4 space-y-4">
             <div className="flex items-center justify-between">
               <h4 className="font-semibold text-purple-900">AI-Generated Content</h4>
-              <Button
-                type="button"
-                size="sm"
-                onClick={applyAllContent}
-                className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700"
-              >
-                Apply All
-              </Button>
             </div>
 
             <div className="space-y-3">
               <div className="space-y-2">
                 <div className="flex items-center justify-between">
                   <label className="text-sm font-medium text-purple-800">Title</label>
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => copyToClipboard(generatedContent.title, 'Title')}
-                  >
-                    {copied === 'Title' ? <Check className="h-3 w-3" /> : <Copy className="h-3 w-3" />}
-                  </Button>
+                  <div className="flex gap-1">
+                    <Button
+                      type="button"
+                      size="sm"
+                      variant="outline"
+                      onClick={applyTitle}
+                      className="text-xs px-2 py-1 h-7"
+                    >
+                      Apply
+                    </Button>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => copyToClipboard(generatedContent.title, 'Title')}
+                      className="h-7 w-7 p-0"
+                    >
+                      {copied === 'Title' ? <Check className="h-3 w-3" /> : <Copy className="h-3 w-3" />}
+                    </Button>
+                  </div>
                 </div>
                 <p className="text-sm bg-white p-2 rounded border">{generatedContent.title}</p>
               </div>
@@ -232,14 +258,26 @@ Don't miss this opportunity to secure a premium property in one of ${data.city}'
               <div className="space-y-2">
                 <div className="flex items-center justify-between">
                   <label className="text-sm font-medium text-purple-800">Description</label>
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => copyToClipboard(generatedContent.description, 'Description')}
-                  >
-                    {copied === 'Description' ? <Check className="h-3 w-3" /> : <Copy className="h-3 w-3" />}
-                  </Button>
+                  <div className="flex gap-1">
+                    <Button
+                      type="button"
+                      size="sm"
+                      variant="outline"
+                      onClick={applyDescription}
+                      className="text-xs px-2 py-1 h-7"
+                    >
+                      Apply
+                    </Button>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => copyToClipboard(generatedContent.description, 'Description')}
+                      className="h-7 w-7 p-0"
+                    >
+                      {copied === 'Description' ? <Check className="h-3 w-3" /> : <Copy className="h-3 w-3" />}
+                    </Button>
+                  </div>
                 </div>
                 <div className="text-sm bg-white p-2 rounded border max-h-32 overflow-y-auto">
                   {generatedContent.description.split('\n').map((line, index) => (
@@ -253,14 +291,26 @@ Don't miss this opportunity to secure a premium property in one of ${data.city}'
               <div className="space-y-2">
                 <div className="flex items-center justify-between">
                   <label className="text-sm font-medium text-purple-800">SEO Keywords</label>
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => copyToClipboard(generatedContent.keywords, 'Keywords')}
-                  >
-                    {copied === 'Keywords' ? <Check className="h-3 w-3" /> : <Copy className="h-3 w-3" />}
-                  </Button>
+                  <div className="flex gap-1">
+                    <Button
+                      type="button"
+                      size="sm"
+                      variant="outline"
+                      onClick={applyKeywords}
+                      className="text-xs px-2 py-1 h-7"
+                    >
+                      Apply
+                    </Button>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => copyToClipboard(generatedContent.keywords, 'Keywords')}
+                      className="h-7 w-7 p-0"
+                    >
+                      {copied === 'Keywords' ? <Check className="h-3 w-3" /> : <Copy className="h-3 w-3" />}
+                    </Button>
+                  </div>
                 </div>
                 <p className="text-sm bg-white p-2 rounded border">{generatedContent.keywords}</p>
               </div>
