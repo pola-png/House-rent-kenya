@@ -937,11 +937,9 @@ export function PropertyForm({ property }: PropertyFormProps) {
                         amenities: form.watch('amenities') || '',
                         price: form.watch('price') || 0,
                       }}
-                      onApply={(data) => {
-                        form.setValue('title', data.title);
-                        form.setValue('description', data.description);
-                        form.setValue('keywords', data.keywords);
-                      }}
+                      onApplyTitle={(title) => form.setValue('title', title)}
+                      onApplyDescription={(description) => form.setValue('description', description)}
+                      onApplyKeywords={(keywords) => form.setValue('keywords', keywords)}
                     />
                     <FormField
                       control={form.control}
