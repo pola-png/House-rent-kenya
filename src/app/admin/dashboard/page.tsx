@@ -120,8 +120,7 @@ export default function Dashboard() {
     const activeListings = properties.filter(p => 
       p.status === 'For Rent' || 
       p.status === 'For Sale' || 
-      p.status === 'Short Let' || 
-      p.status === 'Available'
+      p.status === 'Short Let'
     );
     const rentedProperties = properties.filter(p => p.status === 'Rented');
     const soldProperties = properties.filter(p => p.status === 'Sold');

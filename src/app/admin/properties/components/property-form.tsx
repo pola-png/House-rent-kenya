@@ -445,7 +445,7 @@ export function PropertyForm({ property }: PropertyFormProps) {
       let savedId: string | null = null;
       // Try server route first; if token missing/fails, fall back to client Supabase insert
       dlog('Retrieving session token...');
-      const tokenTimeoutMs = 8000;
+      const tokenTimeoutMs = 3000;
       const tokenTimeout = new Promise<null>((resolve) => setTimeout(() => resolve(null), tokenTimeoutMs));
       const maybeToken = await Promise.race<[string | null, null]>([
         (async () => await getAccessToken())() as any,
@@ -457,7 +457,7 @@ export function PropertyForm({ property }: PropertyFormProps) {
         // Server-side save using service role (no REST from browser)
         const controller = new AbortController();
         // Allow extra time on slower networks
-        const to = setTimeout(() => controller.abort(), 45000);
+        const to = setTimeout(() => controller.abort(), 15000);
         console.log('[PropertyForm] Calling /api/admin/properties/save');
         const saveRes = await fetch('/api/admin/properties/save', {
           method: 'POST',
@@ -497,7 +497,7 @@ export function PropertyForm({ property }: PropertyFormProps) {
         dlog('Token missing or timed out Ã¢â‚¬â€ falling back to client Supabase save');
         // Client-side save (requires properties RLS OFF or policy allowing anon insert)
         let saved: any = null;
-        const clientSaveTimeoutMs = 45000;
+        const clientSaveTimeoutMs = 15000;
         if (property?.id) {
           dlog('Client save: update path');
           const updatePromise = supabase
@@ -532,34 +532,33 @@ export function PropertyForm({ property }: PropertyFormProps) {
 
       // Promotion flow moved to Admin > Promotions page
 
-      try {
-        dlog('Triggering tag revalidation');
-        // Trigger CDN + tag revalidation so lists refresh instantly
-        await fetch('/api/revalidate', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            // Prefer authenticated revalidation to avoid exposing secrets
-            'Authorization': `Bearer ${accessToken}`,
-            // Keep optional public header if you set REVALIDATE_SECRET + expose a NEXT_PUBLIC value
-            ...(process.env.NEXT_PUBLIC_REVALIDATE_TOKEN
-              ? { 'x-revalidate-token': process.env.NEXT_PUBLIC_REVALIDATE_TOKEN }
-              : {}),
-          },
-          body: JSON.stringify({ tags: ['properties:list', savedId ? `property:${savedId}` : undefined].filter(Boolean) }),
-        }).catch(() => {});
-        dlog('Revalidation request sent');
-      } catch { dlog('Revalidation request failed (non-fatal)'); }
+      // Skip revalidation for faster posting
+      // Background revalidation will be handled after redirect
 
       toast({
         title: `Property ${property?.id ? 'Updated' : 'Created'}`,
-        description: `Your property has been successfully ${property?.id ? 'updated' : 'saved'}.`,
+        description: `Your property has been successfully ${property?.id ? 'updated' : 'saved'}. Redirecting to your listings...`,
       });
 
-      setTimeout(() => {
-        dlog('Navigating back to /admin/properties');
-        router.push(`/admin/properties`);
-      }, 800);
+      // Immediate redirect - let background processes handle the rest
+      router.push(`/admin/properties`);
+      
+      // Background revalidation (non-blocking)
+      setTimeout(async () => {
+        try {
+          await fetch('/api/revalidate', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${accessToken}`,
+              ...(process.env.NEXT_PUBLIC_REVALIDATE_TOKEN
+                ? { 'x-revalidate-token': process.env.NEXT_PUBLIC_REVALIDATE_TOKEN }
+                : {}),
+            },
+            body: JSON.stringify({ tags: ['properties:list', savedId ? `property:${savedId}` : undefined].filter(Boolean) }),
+          });
+        } catch {}
+      }, 100);
     } catch (error: any) {
       console.error('Error saving property:', error);
       dlog('Error (catch) saving property:', error?.message, error);
