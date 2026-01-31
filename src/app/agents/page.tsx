@@ -52,7 +52,7 @@ export default function AgentsPage() {
       
       // Fetch real stats for all agents in batch queries
       const agentIds = typedAgents.map(a => a.uid);
-      const stats: Record<string, { properties: number; rating: number; responseTime: string }> = {};
+      const stats: Record<string, { properties: number; rating: number; responseTime: string; isProAgent?: boolean }> = {};
       
       // Batch fetch all properties with promotion status
       const { data: allProperties } = await supabase
