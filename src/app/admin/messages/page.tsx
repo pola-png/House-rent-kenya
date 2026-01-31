@@ -79,7 +79,7 @@ export default function MessagesPage() {
           .from('messages')
           .select('*')
           .eq('ticket_id', selectedTicketId)
-          .order('timestamp', { ascending: true });
+          .order('created_at', { ascending: true });
         
         // If that fails, try with ticketId
         if (error) {
@@ -87,7 +87,7 @@ export default function MessagesPage() {
             .from('messages')
             .select('*')
             .eq('ticketId', selectedTicketId)
-            .order('timestamp', { ascending: true });
+            .order('created_at', { ascending: true });
           data = result.data;
           error = result.error;
         }
@@ -96,8 +96,8 @@ export default function MessagesPage() {
         const typed: Message[] = (data || []).map((m: any) => ({
           ...m,
           message: m.message || m.text,
-          sender_id: m.sender_id || m.senderId,
-          timestamp: m.timestamp ? new Date(m.timestamp) : undefined,
+          sender_id: m.user_id || m.userId,
+          timestamp: m.created_at ? new Date(m.created_at) : undefined,
         }));
         setMessages(typed);
       } catch (e) {
@@ -118,19 +118,19 @@ export default function MessagesPage() {
       // Try with ticket_id first
       let { error } = await supabase
         .from('messages')
-        .insert([{ ticket_id: selectedTicketId, message: newMessage, sender_id: user.uid, timestamp: now }]);
+        .insert([{ ticket_id: selectedTicketId, message: newMessage, user_id: user.uid, created_at: now }]);
       
       // If that fails, try with ticketId
       if (error) {
         const result = await supabase
           .from('messages')
-          .insert([{ ticketId: selectedTicketId, text: newMessage, senderId: user.uid, timestamp: now }]);
+          .insert([{ ticketId: selectedTicketId, message: newMessage, userId: user.uid, createdAt: now }]);
         error = result.error;
       }
       
       if (error) throw error;
       
-      setMessages(prev => [...prev, { id: String(Date.now()), message: newMessage, sender_id: user.uid, timestamp: new Date() } as Message]);
+      setMessages(prev => [...prev, { id: String(Date.now()), message: newMessage, sender_id: user.uid, timestamp: new Date(now) } as Message]);
       await supabase
         .from('support_tickets')
         .update({ lastMessage: newMessage, updatedAt: now })
