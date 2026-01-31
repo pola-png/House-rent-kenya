@@ -83,16 +83,22 @@ export default function SupportPage() {
       const now = new Date().toISOString();
       const { data: tInsert, error: tErr } = await supabase
         .from('support_tickets')
-        .insert([{ userId: user.uid, subject: values.subject, status: 'open', createdAt: now, updatedAt: now, lastMessage: values.message }])
+        .insert([{ user_id: user.uid, subject: values.subject, status: 'open', createdAt: now, updatedAt: now, lastMessage: values.message }])
         .select('id')
         .single();
-      if (tErr) throw tErr;
+      if (tErr) {
+        console.error('Ticket creation error:', tErr);
+        throw new Error('Support tickets table may not exist. Please contact administrator.');
+      }
 
       // Insert first message
       const { error: mErr } = await supabase
         .from('messages')
-        .insert([{ ticketId: tInsert.id, text: values.message, senderId: user.uid, timestamp: now }]);
-      if (mErr) throw mErr;
+        .insert([{ ticket_id: tInsert.id, message: values.message, sender_id: user.uid, timestamp: now }]);
+      if (mErr) {
+        console.error('Message creation error:', mErr);
+        throw new Error('Messages table may not exist. Please contact administrator.');
+      }
 
       toast({
         title: 'Message Sent!',

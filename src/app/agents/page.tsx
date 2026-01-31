@@ -13,6 +13,7 @@ import { supabase } from '@/lib/supabase';
 
 export default function AgentsPage() {
   const [agents, setAgents] = useState<UserProfile[]>([]);
+  const [agentStats, setAgentStats] = useState<Record<string, { properties: number; rating: number; responseTime: string }>>({});
   const [isLoading, setIsLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [locationFilter, setLocationFilter] = useState('all');
@@ -46,6 +47,50 @@ export default function AgentsPage() {
       }));
 
       setAgents(typedAgents);
+      
+      // Fetch real stats for each agent
+      const stats: Record<string, { properties: number; rating: number; responseTime: string }> = {};
+      
+      for (const agent of typedAgents) {
+        const { data: properties } = await supabase
+          .from('properties')
+          .select('id')
+          .eq('landlordId', agent.uid);
+          
+        const { data: ratings } = await supabase
+          .from('agent_ratings')
+          .select('rating')
+          .eq('agentId', agent.uid);
+          
+        const { data: responses } = await supabase
+          .from('callback_requests')
+          .select('createdAt, respondedAt')
+          .eq('agentId', agent.uid)
+          .not('respondedAt', 'is', null);
+          
+        const propertyCount = properties?.length || 0;
+        const avgRating = ratings?.length ? ratings.reduce((sum, r) => sum + r.rating, 0) / ratings.length : 0;
+        
+        let avgResponseTime = 'No data';
+        if (responses?.length) {
+          const totalTime = responses.reduce((sum, r) => {
+            const created = new Date(r.createdAt).getTime();
+            const responded = new Date(r.respondedAt).getTime();
+            return sum + (responded - created);
+          }, 0);
+          const avgMs = totalTime / responses.length;
+          const avgHours = Math.round(avgMs / (1000 * 60 * 60));
+          avgResponseTime = avgHours > 0 ? `${avgHours}h` : '<1h';
+        }
+        
+        stats[agent.uid] = {
+          properties: propertyCount,
+          rating: avgRating,
+          responseTime: avgResponseTime
+        };
+      }
+      
+      setAgentStats(stats);
     } catch (error) {
       console.error('Error fetching agents:', error);
     } finally {
@@ -175,6 +220,7 @@ export default function AgentsPage() {
             {filteredAndSortedAgents.map(agent => {
               const agentPhoneNumber = agent.phoneNumber || '+254704202939';
               const joinedDate = new Date(agent.createdAt).toLocaleDateString('en-US', { month: 'short', year: 'numeric' });
+              const stats = agentStats[agent.uid] || { properties: 0, rating: 0, responseTime: 'No data' };
               return (
               <Card key={agent.uid} className="group hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-2 bg-white/90 backdrop-blur-sm border-0">
                 <CardHeader className="items-center text-center pb-4">
@@ -204,11 +250,11 @@ export default function AgentsPage() {
                 <CardContent className="space-y-4">
                   <div className="grid grid-cols-2 gap-3 text-xs">
                     <div className="text-center p-2 bg-muted/30 rounded-lg">
-                      <div className="font-bold text-lg text-primary">4.8</div>
+                      <div className="font-bold text-lg text-primary">{stats.rating > 0 ? stats.rating.toFixed(1) : 'N/A'}</div>
                       <div className="text-muted-foreground">Rating</div>
                     </div>
                     <div className="text-center p-2 bg-muted/30 rounded-lg">
-                      <div className="font-bold text-lg text-primary">25+</div>
+                      <div className="font-bold text-lg text-primary">{stats.properties}</div>
                       <div className="text-muted-foreground">Properties</div>
                     </div>
                   </div>
@@ -234,7 +280,7 @@ export default function AgentsPage() {
                   <div className="pt-2 border-t border-muted/30">
                     <div className="flex items-center justify-between text-xs text-muted-foreground">
                       <span>Response time</span>
-                      <span className="text-green-600 font-medium">~2 hours</span>
+                      <span className="text-green-600 font-medium">{stats.responseTime}</span>
                     </div>
                   </div>
                 </CardContent>

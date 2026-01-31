@@ -601,6 +601,13 @@ export default function PropertyDetailClient({ id }: PropertyDetailClientProps) 
                   <div className="prose max-w-none">
                     <h3 className="text-xl font-bold mb-4">About This Property</h3>
                     <p className="text-muted-foreground leading-relaxed text-lg">{property.description}</p>
+                    <div className="text-center mt-6">
+                      <Button variant="outline" asChild>
+                        <Link href={`/search?q=${property.location}&type=${property.status.toLowerCase().includes('rent') ? 'rent' : 'sale'}`}>
+                          View More Properties in {property.location}
+                        </Link>
+                      </Button>
+                    </div>
                   </div>
                 </TabsContent>
                 
@@ -776,29 +783,11 @@ export default function PropertyDetailClient({ id }: PropertyDetailClientProps) 
           <Card className="shadow-lg">
             <CardContent className="p-8">
               <h2 className="text-2xl font-bold mb-6">Similar Properties</h2>
-              {relevantProperties.length > 0 ? (
+              {relevantProperties.length > 0 && (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                   {relevantProperties.map((relatedProperty) => (
                     <PropertyCard key={relatedProperty.id} property={relatedProperty} />
                   ))}
-                </div>
-              ) : (
-                <div className="text-center py-8">
-                  <p className="text-muted-foreground mb-4">No similar properties found</p>
-                  <Button variant="outline" asChild>
-                    <Link href="/search">
-                      Browse All Properties
-                    </Link>
-                  </Button>
-                </div>
-              )}
-              {relevantProperties.length > 0 && (
-                <div className="text-center mt-8">
-                  <Button variant="outline" asChild>
-                    <Link href={`/search?q=${property.location}&type=${property.status.toLowerCase().includes('rent') ? 'rent' : 'sale'}`}>
-                      View More Properties in {property.location}
-                    </Link>
-                  </Button>
                 </div>
               )}
             </CardContent>

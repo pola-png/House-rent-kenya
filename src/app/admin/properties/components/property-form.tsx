@@ -47,8 +47,8 @@ const formSchema = z.object({
   title: z.string().min(10, {
     message: "Title must be at least 10 characters.",
   }),
-  description: z.string().min(50, {
-    message: "Description must be at least 50 characters.",
+  description: z.string().min(140, {
+    message: "Description must be at least 140 characters.",
   }),
   price: z.coerce.number().positive(),
   location: z.string().min(2),

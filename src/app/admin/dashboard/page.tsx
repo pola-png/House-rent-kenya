@@ -117,7 +117,12 @@ export default function Dashboard() {
 
   const stats = useMemo(() => {
     if (!properties) return null;
-    const activeListings = properties.filter(p => p.status !== 'Rented' && p.status !== 'Sold');
+    const activeListings = properties.filter(p => 
+      p.status === 'For Rent' || 
+      p.status === 'For Sale' || 
+      p.status === 'Short Let' || 
+      p.status === 'Available'
+    );
     const rentedProperties = properties.filter(p => p.status === 'Rented');
     const soldProperties = properties.filter(p => p.status === 'Sold');
     const totalProperties = properties.length;

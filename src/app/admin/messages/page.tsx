@@ -40,7 +40,7 @@ export default function MessagesPage() {
       try {
         let q = supabase.from('support_tickets').select('*').order('updatedAt', { ascending: false });
         if (user.role !== 'admin') {
-          q = q.eq('userId', user.uid);
+          q = q.eq('user_id', user.uid);
         }
         const { data, error } = await q;
         if (error) throw error;

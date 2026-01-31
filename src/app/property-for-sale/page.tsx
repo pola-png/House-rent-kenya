@@ -30,7 +30,7 @@ export const metadata: Metadata = {
 };
 
 export default async function Page() {
-  const { promoted, regular, all } = await getPropertiesWithPromotion({
+  const { promoted } = await getPropertiesWithPromotion({
     status: 'For Sale',
     limit: 20
   });
@@ -58,12 +58,12 @@ export default async function Page() {
       
       <PromotedPropertiesLayout
         promoted={promoted}
-        regular={regular}
-        totalProperties={all.length}
-        title="Property for Sale in Kenya"
-        description={`Discover ${all.length}+ properties for sale. Apartments, houses, land & commercial real estate with verified listings and investment opportunities across Kenya.`}
+        regular={[]}
+        totalProperties={promoted.length}
+        title="Featured Properties for Sale in Kenya"
+        description={`Discover ${promoted.length} premium featured properties for sale. Verified apartments, houses, land & commercial real estate with investment opportunities across Kenya.`}
         featuredSectionTitle="Featured Properties for Sale"
-        regularSectionTitle="More Properties for Sale"
+        regularSectionTitle=""
         viewAllLink="/search?type=buy"
         viewAllText="View All Properties for Sale"
       />

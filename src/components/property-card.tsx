@@ -145,7 +145,14 @@ export function PropertyCard({ property }: PropertyCardProps) {
                     <AvatarFallback>{property.agent.displayName?.charAt(0).toUpperCase() || 'A'}</AvatarFallback>
                   </Avatar>
                   <div className="flex flex-col">
-                    <span className="text-xs font-medium">{property.agent.displayName}</span>
+                    <div className="flex items-center gap-1">
+                      <span className="text-xs font-medium">{property.agent.displayName}</span>
+                      {isPromoted && (
+                        <Badge className="bg-gradient-to-r from-amber-500 to-orange-500 text-white text-[10px] px-1 py-0 h-4 font-bold">
+                          PRO
+                        </Badge>
+                      )}
+                    </div>
                     {property.agent.agencyName && (
                       <span className="text-xs text-muted-foreground">{property.agent.agencyName}</span>
                     )}
