@@ -668,7 +668,19 @@ export default function PropertyDetailClient({ id }: PropertyDetailClientProps) 
                           {property.agent.displayName?.charAt(0).toUpperCase() || 'A'}
                         </AvatarFallback>
                       </Avatar>
-                      <div className="font-bold text-lg">{property.agent.displayName}</div>
+                      <div className="font-bold text-lg flex items-center justify-center gap-2">
+                        {property.agent.displayName}
+                        {(property.isPremium || (property.featuredExpiresAt && new Date(property.featuredExpiresAt) > new Date())) && (
+                          <>
+                            <Badge className="bg-gradient-to-r from-yellow-500 to-orange-500 text-white text-xs px-2 py-1">
+                              PRO
+                            </Badge>
+                            <span className="text-yellow-500" title="Premium Agent">
+                              👑
+                            </span>
+                          </>
+                        )}
+                      </div>
                       {property.agent.agencyName && (
                         <div className="text-sm text-muted-foreground mb-2">{property.agent.agencyName}</div>
                       )}

@@ -200,11 +200,24 @@ function SearchContent() {
 
       console.log('Query results:', data?.length || 0, 'properties');
 
-      // Get ALL promoted properties regardless of search criteria
-      const { data: allPromotedData, error: promotedError } = await supabase
+      // Get promoted properties with same filters as regular properties
+      let promotedQuery = supabase
         .from('properties')
         .select('*')
-        .or('isPremium.eq.true,featuredExpiresAt.gt.' + new Date().toISOString())
+        .or('isPremium.eq.true,featuredExpiresAt.gt.' + new Date().toISOString());
+
+      // Apply same listing type filter to promoted properties
+      if (listingType === 'rent') {
+        promotedQuery = promotedQuery.in('status', ['Available', 'For Rent']);
+      } else if (listingType === 'buy' || listingType === 'sale') {
+        promotedQuery = promotedQuery.eq('status', 'For Sale');
+      } else if (listingType === 'short-let') {
+        promotedQuery = promotedQuery.eq('status', 'Short Let');
+      } else if (listingType === 'land') {
+        promotedQuery = promotedQuery.eq('propertyType', 'Land');
+      }
+
+      const { data: allPromotedData, error: promotedError } = await promotedQuery
         .order('createdAt', { ascending: false });
 
       if (promotedError) {
