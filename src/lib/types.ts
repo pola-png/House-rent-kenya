@@ -63,8 +63,8 @@ export interface SupportTicket {
 export interface Message {
     id: string;
     ticketId?: string; // Add ticketId for easier filtering
-    text: string;
-    senderId: string;
+    message: string;
+    sender_id: string;
     timestamp: Date;
 }
 
