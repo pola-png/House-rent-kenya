@@ -314,12 +314,14 @@ export default function AgentsPage() {
                     </Button>
                     <div className="grid grid-cols-2 gap-2">
                       <Button variant="outline" size="sm" asChild className="border-primary/20 hover:bg-primary/5">
-                        <a href={`mailto:${agent.email}`}>
+                        <a href={`mailto:${agent.email}?subject=Property Inquiry&body=Hi ${agent.displayName}, I'm interested in your properties. Please contact me.`}>
                           <Mail className="h-3 w-3 mr-1" /> Email
                         </a>
                       </Button>
-                      <Button variant="outline" size="sm" className="border-primary/20 hover:bg-primary/5">
-                        <MessageSquare className="h-3 w-3 mr-1" /> Chat
+                      <Button variant="outline" size="sm" asChild className="border-primary/20 hover:bg-primary/5">
+                        <a href={`tel:${agentPhoneNumber}`}>
+                          <MessageSquare className="h-3 w-3 mr-1" /> Chat
+                        </a>
                       </Button>
                     </div>
                   </div>
