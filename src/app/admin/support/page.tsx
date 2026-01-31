@@ -97,7 +97,14 @@ export default function SupportPage() {
         .insert([{ ticket_id: tInsert.id, message: values.message, sender_id: user.uid, timestamp: now }]);
       if (mErr) {
         console.error('Message creation error:', mErr);
-        throw new Error('Messages table may not exist. Please contact administrator.');
+        // Try alternative column names if first attempt fails
+        const { error: mErr2 } = await supabase
+          .from('messages')
+          .insert([{ ticketId: tInsert.id, text: values.message, senderId: user.uid, timestamp: now }]);
+        if (mErr2) {
+          console.error('Alternative message creation error:', mErr2);
+          throw new Error('Failed to create message. Please contact administrator.');
+        }
       }
 
       toast({

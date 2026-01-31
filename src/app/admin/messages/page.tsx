@@ -74,14 +74,29 @@ export default function MessagesPage() {
       if (!selectedTicketId) { setMessages([]); return; }
       setIsLoadingMessages(true);
       try {
-        const { data, error } = await supabase
+        // Try with ticket_id first
+        let { data, error } = await supabase
           .from('messages')
           .select('*')
           .eq('ticket_id', selectedTicketId)
           .order('timestamp', { ascending: true });
+        
+        // If that fails, try with ticketId
+        if (error) {
+          const result = await supabase
+            .from('messages')
+            .select('*')
+            .eq('ticketId', selectedTicketId)
+            .order('timestamp', { ascending: true });
+          data = result.data;
+          error = result.error;
+        }
+        
         if (error) throw error;
         const typed: Message[] = (data || []).map((m: any) => ({
           ...m,
+          message: m.message || m.text,
+          sender_id: m.sender_id || m.senderId,
           timestamp: m.timestamp ? new Date(m.timestamp) : undefined,
         }));
         setMessages(typed);
@@ -99,10 +114,22 @@ export default function MessagesPage() {
     setIsSending(true);
     try {
       const now = new Date().toISOString();
-      const { error } = await supabase
+      
+      // Try with ticket_id first
+      let { error } = await supabase
         .from('messages')
         .insert([{ ticket_id: selectedTicketId, message: newMessage, sender_id: user.uid, timestamp: now }]);
+      
+      // If that fails, try with ticketId
+      if (error) {
+        const result = await supabase
+          .from('messages')
+          .insert([{ ticketId: selectedTicketId, text: newMessage, senderId: user.uid, timestamp: now }]);
+        error = result.error;
+      }
+      
       if (error) throw error;
+      
       setMessages(prev => [...prev, { id: String(Date.now()), message: newMessage, sender_id: user.uid, timestamp: new Date() } as Message]);
       await supabase
         .from('support_tickets')
@@ -111,7 +138,7 @@ export default function MessagesPage() {
       setTickets(prev => prev.map(t => t.id === selectedTicketId ? { ...t, lastMessage: newMessage, updatedAt: new Date() } : t).sort((a,b) => (b.updatedAt?.getTime() || 0) - (a.updatedAt?.getTime() || 0)));
       setNewMessage('');
     } catch (e) {
-      // ignore
+      console.error('Failed to send message:', e);
     } finally {
       setIsSending(false);
     }
