@@ -12,8 +12,7 @@ import { useAutoRetry } from '@/hooks/use-auto-retry';
 import { useSearchParams } from 'next/navigation'
 import { formatDistanceToNow } from 'date-fns';
 import { cn } from "@/lib/utils";
-import { Send, MessageSquare, Loader2, User as UserIcon } from "lucide-react";
-import placeholderImages from "@/lib/placeholder-images.json";
+import { Send, MessageSquare, Loader2 } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth-supabase";
 import { supabase } from "@/lib/supabase";
 
@@ -144,9 +143,6 @@ export default function MessagesPage() {
     }
   };
 
-  const adminAvatar = placeholderImages.placeholderImages.find(img => img.id === 'agent_1');
-  const userAvatar = placeholderImages.placeholderImages.find(img => img.id === 'agent_2'); // Use another as a generic user
-
   return (
     <div className="grid grid-cols-1 lg:grid-cols-4 gap-4 h-[calc(100vh-10rem)]">
         <Card className="lg:col-span-1 flex flex-col">
@@ -214,8 +210,8 @@ export default function MessagesPage() {
                                 <div key={message.id} className={cn("flex items-end gap-2", isMine ? "justify-end" : "justify-start")}>
                                     {!isMine && (
                                          <Avatar className="h-8 w-8">
-                                            <AvatarImage src={userAvatar?.imageUrl} />
-                                            <AvatarFallback>U</AvatarFallback>
+                                            <AvatarImage src={user?.photoURL} />
+                                            <AvatarFallback>A</AvatarFallback>
                                         </Avatar>
                                     )}
                                     <div className={cn("max-w-xs md:max-w-md lg:max-w-lg rounded-lg px-4 py-2", isMine ? "bg-primary text-primary-foreground" : "bg-muted")}>
@@ -226,8 +222,8 @@ export default function MessagesPage() {
                                     </div>
                                      {isMine && (
                                          <Avatar className="h-8 w-8">
-                                            <AvatarImage src={adminAvatar?.imageUrl} />
-                                            <AvatarFallback><UserIcon className="h-4 w-4"/></AvatarFallback>
+                                            <AvatarImage src={user?.photoURL} />
+                                            <AvatarFallback>{user?.displayName?.charAt(0) || 'U'}</AvatarFallback>
                                         </Avatar>
                                     )}
                                 </div>
