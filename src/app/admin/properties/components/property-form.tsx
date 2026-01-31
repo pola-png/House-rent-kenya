@@ -532,16 +532,13 @@ export function PropertyForm({ property }: PropertyFormProps) {
 
       // Promotion flow moved to Admin > Promotions page
 
-      // Skip revalidation for faster posting
-      // Background revalidation will be handled after redirect
-
-      toast({
-        title: `Property ${property?.id ? 'Updated' : 'Created'}`,
-        description: `Your property has been successfully ${property?.id ? 'updated' : 'saved'}. Redirecting to your listings...`,
-      });
-
       // Immediate redirect - let background processes handle the rest
       router.push(`/admin/properties`);
+      
+      toast({
+        title: `Property ${property?.id ? 'Updated' : 'Created'}`,
+        description: `Your property is being processed in the background. You can continue managing your listings.`,
+      });
       
       // Background revalidation (non-blocking)
       setTimeout(async () => {
