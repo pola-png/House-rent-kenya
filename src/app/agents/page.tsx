@@ -48,31 +48,40 @@ export default function AgentsPage() {
 
       setAgents(typedAgents);
       
-      // Fetch real stats for each agent
+      // Fetch real stats for all agents in batch queries
+      const agentIds = typedAgents.map(a => a.uid);
       const stats: Record<string, { properties: number; rating: number; responseTime: string }> = {};
       
+      // Batch fetch all properties
+      const { data: allProperties } = await supabase
+        .from('properties')
+        .select('id, landlordId')
+        .in('landlordId', agentIds);
+        
+      // Batch fetch all ratings
+      const { data: allRatings } = await supabase
+        .from('agent_ratings')
+        .select('rating, agentId')
+        .in('agentId', agentIds);
+        
+      // Batch fetch all responses
+      const { data: allResponses } = await supabase
+        .from('callback_requests')
+        .select('createdAt, respondedAt, agentId')
+        .in('agentId', agentIds)
+        .not('respondedAt', 'is', null);
+      
+      // Process stats for each agent
       for (const agent of typedAgents) {
-        const { data: properties } = await supabase
-          .from('properties')
-          .select('id')
-          .eq('landlordId', agent.uid);
-          
-        const { data: ratings } = await supabase
-          .from('agent_ratings')
-          .select('rating')
-          .eq('agentId', agent.uid);
-          
-        const { data: responses } = await supabase
-          .from('callback_requests')
-          .select('createdAt, respondedAt')
-          .eq('agentId', agent.uid)
-          .not('respondedAt', 'is', null);
-          
-        const propertyCount = properties?.length || 0;
-        const avgRating = ratings?.length ? ratings.reduce((sum, r) => sum + r.rating, 0) / ratings.length : 0;
+        const properties = allProperties?.filter(p => p.landlordId === agent.uid) || [];
+        const ratings = allRatings?.filter(r => r.agentId === agent.uid) || [];
+        const responses = allResponses?.filter(r => r.agentId === agent.uid) || [];
+        
+        const propertyCount = properties.length;
+        const avgRating = ratings.length ? ratings.reduce((sum, r) => sum + r.rating, 0) / ratings.length : 0;
         
         let avgResponseTime = 'No data';
-        if (responses?.length) {
+        if (responses.length) {
           const totalTime = responses.reduce((sum, r) => {
             const created = new Date(r.createdAt).getTime();
             const responded = new Date(r.respondedAt).getTime();
