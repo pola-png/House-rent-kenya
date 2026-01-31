@@ -50,12 +50,18 @@ export async function getPropertiesWithPromotion(
   const { data } = await query.limit(regularLimit).order('createdAt', { ascending: false });
   if (!data) return { promoted: [], regular: [], all: [] };
 
-  // Get ALL promoted properties separately
-  const { data: promotedData } = await supabase
+  // Get ALL promoted properties separately with same status filter
+  let promotedQuery = supabase
     .from('properties')
     .select('*')
-    .or('isPremium.eq.true,featuredExpiresAt.gt.' + new Date().toISOString())
-    .order('createdAt', { ascending: false });
+    .or('isPremium.eq.true,featuredExpiresAt.gt.' + new Date().toISOString());
+  
+  // Apply same status filter to promoted properties
+  if (filters.status) {
+    promotedQuery = promotedQuery.eq('status', filters.status);
+  }
+  
+  const { data: promotedData } = await promotedQuery.order('createdAt', { ascending: false });
 
   // Get agent profiles
   const allProperties = [...(promotedData || []), ...data];

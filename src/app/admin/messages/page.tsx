@@ -77,7 +77,7 @@ export default function MessagesPage() {
         const { data, error } = await supabase
           .from('messages')
           .select('*')
-          .eq('ticketId', selectedTicketId)
+          .eq('ticket_id', selectedTicketId)
           .order('timestamp', { ascending: true });
         if (error) throw error;
         const typed: Message[] = (data || []).map((m: any) => ({
@@ -101,9 +101,9 @@ export default function MessagesPage() {
       const now = new Date().toISOString();
       const { error } = await supabase
         .from('messages')
-        .insert([{ ticketId: selectedTicketId, text: newMessage, senderId: user.uid, timestamp: now }]);
+        .insert([{ ticket_id: selectedTicketId, message: newMessage, sender_id: user.uid, timestamp: now }]);
       if (error) throw error;
-      setMessages(prev => [...prev, { id: String(Date.now()), text: newMessage, senderId: user.uid, timestamp: new Date() } as Message]);
+      setMessages(prev => [...prev, { id: String(Date.now()), message: newMessage, sender_id: user.uid, timestamp: new Date() } as Message]);
       await supabase
         .from('support_tickets')
         .update({ lastMessage: newMessage, updatedAt: now })
@@ -182,7 +182,7 @@ export default function MessagesPage() {
                         ) : messages && messages.length > 0 ? (
                             <div className="space-y-4">
                             {messages.map(message => {
-                                const isMine = user && message.senderId === user.uid;
+                                const isMine = user && message.sender_id === user.uid;
                                 return (
                                 <div key={message.id} className={cn("flex items-end gap-2", isMine ? "justify-end" : "justify-start")}>
                                     {!isMine && (
@@ -192,7 +192,7 @@ export default function MessagesPage() {
                                         </Avatar>
                                     )}
                                     <div className={cn("max-w-xs md:max-w-md lg:max-w-lg rounded-lg px-4 py-2", isMine ? "bg-primary text-primary-foreground" : "bg-muted")}>
-                                        <p className="text-sm">{message.text}</p>
+                                        <p className="text-sm">{message.message}</p>
                                         <p className={cn("text-xs mt-1", isMine ? "text-primary-foreground/70" : "text-muted-foreground")}>
                                              {message.timestamp ? formatDistanceToNow(message.timestamp, { addSuffix: true }) : 'sending...'}
                                         </p>
