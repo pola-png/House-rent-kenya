@@ -29,6 +29,7 @@ export default function MessagesPage() {
   const [messages, setMessages] = React.useState<Message[]>([]);
   const [isLoadingTickets, setIsLoadingTickets] = React.useState(true);
   const [retryTick, retryNow] = useAutoRetry(isLoadingTickets || !user, [user]);
+  const hardReload = () => window.location.reload();
   const [isLoadingMessages, setIsLoadingMessages] = React.useState(false);
 
   React.useEffect(() => {
@@ -54,7 +55,7 @@ export default function MessagesPage() {
         setTickets([]);
       } finally {
         setIsLoadingTickets(false);
-        if (!rows || rows.length === 0) { /* best-effort retry on empty */ setTimeout(() => { retryNow(); }, 2000); }
+        if (!rows || rows.length === 0) { /* best-effort retry on empty */ setTimeout(() => { hardReload(); }, 2000); }
       }
     };
     loadTickets();

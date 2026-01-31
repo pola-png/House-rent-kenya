@@ -126,7 +126,7 @@ export default function AdminPropertiesPage() {
                     <Skeleton className="h-20 w-full" />
                     <Skeleton className="h-20 w-full" />
                     <div className="flex items-center gap-2">
-                      <Button size="sm" variant="outline" onClick={() => setRetryTick((x) => x + 1)}>Reload now</Button>
+                      <Button size="sm" variant="outline" onClick={() => window.location.reload()}>Reload now</Button>
                       <span className="text-xs text-muted-foreground">If this takes too long, click Reload.</span>
                     </div>
                 </div>
