@@ -27,9 +27,9 @@ export function PromotedPropertiesLayout({
   viewAllText
 }: PromotedPropertiesLayoutProps) {
   return (
-    <div className="container mx-auto px-4 py-8">
-      <h1 className="text-4xl font-bold mb-4">{title}</h1>
-      <p className="text-lg text-muted-foreground mb-8">
+    <div className="container mx-auto px-4 py-6 sm:py-8">
+      <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold mb-3 sm:mb-4">{title}</h1>
+      <p className="text-base sm:text-lg text-muted-foreground mb-6 sm:mb-8">
         {description}
         {promoted.length > 0 && ` Featuring ${promoted.length} premium listings.`}
       </p>
@@ -38,14 +38,14 @@ export function PromotedPropertiesLayout({
         <>
           {/* Featured/Promoted Properties Section */}
           {promoted.length > 0 && (
-            <div className="mb-12">
-              <div className="flex items-center gap-2 mb-6">
-                <div className="bg-gradient-to-r from-green-500 to-emerald-600 text-white px-3 py-1 rounded-full text-sm font-semibold">
+            <div className="mb-8 sm:mb-12">
+              <div className="flex items-center gap-2 mb-4 sm:mb-6">
+                <div className="bg-gradient-to-r from-green-500 to-emerald-600 text-white px-2 sm:px-3 py-1 rounded-full text-xs sm:text-sm font-semibold">
                   ⭐ {featuredSectionTitle}
                 </div>
-                <span className="text-sm text-muted-foreground">({promoted.length})</span>
+                <span className="text-xs sm:text-sm text-muted-foreground">({promoted.length})</span>
               </div>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
                 {promoted.map((property) => (
                   <PropertyCard key={`featured-${property.id}`} property={property} />
                 ))}
@@ -55,14 +55,14 @@ export function PromotedPropertiesLayout({
           
           {/* Regular Properties Section */}
           {regular.length > 0 && (
-            <div className="mb-8">
+            <div className="mb-6 sm:mb-8">
               {promoted.length > 0 && regularSectionTitle && (
-                <div className="flex items-center gap-2 mb-6">
-                  <h3 className="text-2xl font-semibold">{regularSectionTitle}</h3>
-                  <span className="text-sm text-muted-foreground">({regular.length})</span>
+                <div className="flex items-center gap-2 mb-4 sm:mb-6">
+                  <h3 className="text-xl sm:text-2xl font-semibold">{regularSectionTitle}</h3>
+                  <span className="text-xs sm:text-sm text-muted-foreground">({regular.length})</span>
                 </div>
               )}
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
                 {regular.map((property) => (
                   <PropertyCard key={property.id} property={property} />
                 ))}
@@ -71,15 +71,17 @@ export function PromotedPropertiesLayout({
           )}
           
           <div className="text-center">
-            <Button asChild size="lg">
+            <Button asChild size="lg" className="w-full sm:w-auto">
               <Link href={viewAllLink}>{viewAllText}</Link>
             </Button>
           </div>
         </>
       ) : (
-        <p className="text-center py-12">
-          No properties available. <Link href="/search" className="text-primary underline">Browse all properties</Link>
-        </p>
+        <div className="text-center py-8 sm:py-12">
+          <p className="text-sm sm:text-base">
+            No properties available. <Link href="/search" className="text-primary underline">Browse all properties</Link>
+          </p>
+        </div>
       )}
     </div>
   );

@@ -145,17 +145,17 @@ export default function MessagesPage() {
   };
 
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-4 gap-4 h-[calc(100vh-10rem)]">
-        <Card className="lg:col-span-1 flex flex-col">
-            <CardHeader>
-                <CardTitle>My Tickets</CardTitle>
-                <CardDescription>All your support conversations.</CardDescription>
+    <div className="grid grid-cols-1 lg:grid-cols-4 gap-4 h-[calc(100vh-10rem)] max-h-[800px]">
+        <Card className="lg:col-span-1 flex flex-col h-full max-h-[400px] lg:max-h-none">
+            <CardHeader className="pb-3">
+                <CardTitle className="text-lg">My Tickets</CardTitle>
+                <CardDescription className="text-sm">All your support conversations.</CardDescription>
             </CardHeader>
-            <CardContent className="p-0 flex-grow">
-                <ScrollArea className="h-full">
+            <CardContent className="p-0 flex-grow overflow-hidden">
+                <ScrollArea className="h-full px-2">
                 {isLoadingTickets ? (
                     <div className="p-4 space-y-2">
-                        {[...Array(5)].map((_, i) => <Skeleton key={i} className="h-16 w-full" />)}
+                        {[...Array(3)].map((_, i) => <Skeleton key={i} className="h-16 w-full" />)}
                     </div>
                 ) : tickets && tickets.length > 0 ? (
                     <div className="space-y-1 p-2">
@@ -168,9 +168,9 @@ export default function MessagesPage() {
                              selectedTicketId === String(ticket.id) ? "bg-muted" : "hover:bg-muted/50"
                         )}
                         >
-                        <div className="flex justify-between items-start">
-                             <p className="font-semibold truncate flex-1">{ticket.subject}</p>
-                             <span className={cn("text-xs px-2 py-0.5 rounded-full", ticket.status === 'open' ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800')}>{ticket.status}</span>
+                        <div className="flex justify-between items-start gap-2">
+                             <p className="font-semibold truncate flex-1 text-sm">{ticket.subject}</p>
+                             <span className={cn("text-xs px-2 py-0.5 rounded-full whitespace-nowrap", ticket.status === 'open' ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800')}>{ticket.status}</span>
                         </div>
                         <p className="text-sm text-muted-foreground truncate">{ticket.lastMessage}</p>
                         <p className="text-xs text-muted-foreground mt-1">
@@ -182,21 +182,21 @@ export default function MessagesPage() {
                 ) : (
                      <div className="p-4 text-center text-muted-foreground h-full flex flex-col justify-center">
                         <MessageSquare className="h-8 w-8 mx-auto mb-2"/>
-                        <p>No support tickets found.</p>
+                        <p className="text-sm">No support tickets found.</p>
                      </div>
                 )}
                 </ScrollArea>
             </CardContent>
         </Card>
         
-        <Card className="lg:col-span-3 flex flex-col">
+        <Card className="lg:col-span-3 flex flex-col h-full">
             {selectedTicketId ? (
                 <>
-                <CardHeader className="border-b">
-                    <CardTitle className="truncate">{tickets?.find(t => t.id === selectedTicketId)?.subject}</CardTitle>
+                <CardHeader className="border-b pb-3">
+                    <CardTitle className="truncate text-lg">{tickets?.find(t => t.id === selectedTicketId)?.subject}</CardTitle>
                 </CardHeader>
-                <CardContent className="flex-grow p-0">
-                    <ScrollArea className="h-[calc(100vh-20rem)] p-4">
+                <CardContent className="flex-grow p-0 overflow-hidden">
+                    <ScrollArea className="h-[300px] lg:h-[calc(100vh-20rem)] p-4">
                        {isLoadingMessages ? (
                             <div className="p-4 space-y-4">
                                 <Skeleton className="h-12 w-3/4" />
@@ -210,19 +210,19 @@ export default function MessagesPage() {
                                 return (
                                 <div key={message.id} className={cn("flex items-end gap-2", isMine ? "justify-end" : "justify-start")}>
                                     {!isMine && (
-                                         <Avatar className="h-8 w-8">
+                                         <Avatar className="h-8 w-8 flex-shrink-0">
                                             <AvatarImage src={user?.photoURL} />
                                             <AvatarFallback>A</AvatarFallback>
                                         </Avatar>
                                     )}
-                                    <div className={cn("max-w-xs md:max-w-md lg:max-w-lg rounded-lg px-4 py-2", isMine ? "bg-primary text-primary-foreground" : "bg-muted")}>
-                                        <p className="text-sm">{message.message}</p>
+                                    <div className={cn("max-w-[85%] sm:max-w-xs md:max-w-md lg:max-w-lg rounded-lg px-4 py-2", isMine ? "bg-primary text-primary-foreground" : "bg-muted")}>
+                                        <p className="text-sm break-words">{message.message}</p>
                                         <p className={cn("text-xs mt-1", isMine ? "text-primary-foreground/70" : "text-muted-foreground")}>
                                              {message.timestamp ? formatDistanceToNow(message.timestamp, { addSuffix: true }) : 'sending...'}
                                         </p>
                                     </div>
                                      {isMine && (
-                                         <Avatar className="h-8 w-8">
+                                         <Avatar className="h-8 w-8 flex-shrink-0">
                                             <AvatarImage src={user?.photoURL} />
                                             <AvatarFallback>{user?.displayName?.charAt(0) || 'U'}</AvatarFallback>
                                         </Avatar>
@@ -233,7 +233,7 @@ export default function MessagesPage() {
                             </div>
                         ) : (
                              <div className="p-4 text-center text-muted-foreground h-full flex flex-col justify-center">
-                                <p>No messages in this ticket yet. Start the conversation!</p>
+                                <p className="text-sm">No messages in this ticket yet. Start the conversation!</p>
                              </div>
                         )}
                     </ScrollArea>
@@ -246,8 +246,9 @@ export default function MessagesPage() {
                         onChange={(e) => setNewMessage(e.target.value)}
                         onKeyPress={(e) => e.key === 'Enter' && !isSending && handleSendMessage()}
                         disabled={isSending}
+                        className="flex-1"
                     />
-                    <Button onClick={handleSendMessage} disabled={isSending || !newMessage.trim()}>
+                    <Button onClick={handleSendMessage} disabled={isSending || !newMessage.trim()} size="sm">
                         {isSending ? <Loader2 className="h-4 w-4 animate-spin"/> : <Send className="h-4 w-4" />}
                         <span className="sr-only">Send</span>
                     </Button>
@@ -258,7 +259,7 @@ export default function MessagesPage() {
                 <div className="h-full flex flex-col items-center justify-center text-center text-muted-foreground p-8">
                     <MessageSquare className="h-16 w-16 mb-4" />
                     <h2 className="text-xl font-semibold">Select a Ticket</h2>
-                    <p>Choose a conversation from the list to see the messages.</p>
+                    <p className="text-sm">Choose a conversation from the list to see the messages.</p>
                 </div>
             )}
         </Card>

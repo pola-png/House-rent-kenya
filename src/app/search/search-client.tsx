@@ -374,37 +374,43 @@ function SearchContent() {
       <SEOSchema type="search" data={{ properties, totalResults: properties.length }} />
       <div className="container mx-auto px-4 py-8">
         <Tabs defaultValue="search" className="w-full">
-        <TabsList className="grid w-full grid-cols-2 sm:grid-cols-4">
-          <TabsTrigger value="search" className="flex items-center gap-1 text-xs sm:text-sm">
+        <TabsList className="grid w-full grid-cols-2 sm:grid-cols-4 mb-4">
+          <TabsTrigger value="search" className="flex items-center gap-1 text-xs sm:text-sm px-2">
             <Filter className="h-3 w-3 sm:h-4 sm:w-4" />
-            <span className="hidden sm:inline">Search</span>
-            <span className="sm:hidden">Find</span>
+            <span className="hidden xs:inline sm:hidden">Search</span>
+            <span className="xs:hidden sm:inline">Search</span>
+            <span className="xs:hidden">Find</span>
           </TabsTrigger>
-          <TabsTrigger value="advanced" className="flex items-center gap-1 text-xs sm:text-sm">
+          <TabsTrigger value="advanced" className="flex items-center gap-1 text-xs sm:text-sm px-2">
             <Sparkles className="h-3 w-3 sm:h-4 sm:w-4" />
-            <span className="hidden sm:inline">Advanced</span>
-            <span className="sm:hidden">AI</span>
+            <span className="hidden xs:inline sm:hidden">Advanced</span>
+            <span className="xs:hidden sm:inline">Advanced</span>
+            <span className="xs:hidden">AI</span>
           </TabsTrigger>
-          <TabsTrigger value="analytics" className="flex items-center gap-1 text-xs sm:text-sm">
+          <TabsTrigger value="analytics" className="flex items-center gap-1 text-xs sm:text-sm px-2">
             <BarChart3 className="h-3 w-3 sm:h-4 sm:w-4" />
-            <span className="hidden sm:inline">Analytics</span>
-            <span className="sm:hidden">Stats</span>
+            <span className="hidden xs:inline sm:hidden">Analytics</span>
+            <span className="xs:hidden sm:inline">Analytics</span>
+            <span className="xs:hidden">Stats</span>
           </TabsTrigger>
-          <TabsTrigger value="compare" className="flex items-center gap-1 text-xs sm:text-sm">
-            <span className="hidden sm:inline">Compare</span>
-            <span className="sm:hidden">Comp</span>
+          <TabsTrigger value="compare" className="flex items-center gap-1 text-xs sm:text-sm px-2">
+            <span className="hidden xs:inline sm:hidden">Compare</span>
+            <span className="xs:hidden sm:inline">Compare</span>
+            <span className="xs:hidden">Comp</span>
           </TabsTrigger>
         </TabsList>
 
-        <TabsContent value="search" className="mt-8">
-          <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
-            <aside className="lg:col-span-1">
-              <SearchFilters />
+        <TabsContent value="search" className="mt-6">
+          <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
+            <aside className="lg:col-span-1 order-2 lg:order-1">
+              <div className="lg:sticky lg:top-4">
+                <SearchFilters />
+              </div>
             </aside>
 
-            <main className="lg:col-span-3">
-          <h1 className="text-3xl font-headline font-bold mb-2">{pageTitle}</h1>
-          <div className="text-muted-foreground mb-6">
+            <main className="lg:col-span-3 order-1 lg:order-2">
+          <h1 className="text-2xl sm:text-3xl font-headline font-bold mb-2">{pageTitle}</h1>
+          <div className="text-muted-foreground mb-6 text-sm sm:text-base">
             {isLoading ? (
                 <div className="flex items-center gap-2">
                   <div className="animate-spin h-4 w-4 border-2 border-primary border-t-transparent rounded-full" />
@@ -429,7 +435,7 @@ function SearchContent() {
           ) : properties.length > 0 ? (
             <>
               {/* All Properties in Single Grid */}
-              <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+              <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4 sm:gap-6">
                 {properties.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage).map((property) => (
                   <PropertyCard key={property.id} property={property} />
                 ))}
