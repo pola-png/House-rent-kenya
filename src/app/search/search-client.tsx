@@ -217,6 +217,11 @@ function SearchContent() {
         promotedQuery = promotedQuery.eq('propertyType', 'Land');
       }
 
+      // Apply location filter to promoted properties if user searched for location
+      if (q) {
+        promotedQuery = promotedQuery.or(`title.ilike.%${q}%,location.ilike.%${q}%,city.ilike.%${q}%,propertyType.ilike.%${q}%,description.ilike.%${q}%`);
+      }
+
       const { data: allPromotedData, error: promotedError } = await promotedQuery
         .order('createdAt', { ascending: false });
 

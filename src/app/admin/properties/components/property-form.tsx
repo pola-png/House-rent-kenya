@@ -48,7 +48,9 @@ const formSchema = z.object({
     message: "Title must be at least 10 characters.",
   }),
   description: z.string().min(140, {
-    message: "Description must be at least 140 characters.",
+    message: "Description must be at least 140 words.",
+  }).refine((val) => val.trim().split(/\s+/).length >= 140, {
+    message: "Description must be at least 140 words.",
   }),
   price: z.coerce.number().positive(),
   location: z.string().min(2),
