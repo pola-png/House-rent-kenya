@@ -683,7 +683,7 @@ export function PropertyForm({ property }: PropertyFormProps) {
                   name="description"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Description</FormLabel>
+                      <FormLabel>Description (minimum 140 words)</FormLabel>
                       <FormControl>
                         <Textarea
                           placeholder="Enter property description"
@@ -691,6 +691,9 @@ export function PropertyForm({ property }: PropertyFormProps) {
                           {...field}
                         />
                       </FormControl>
+                      <FormDescription>
+                        Write at least 140 words to provide a detailed description.
+                      </FormDescription>
                       <div className="mt-2">
                         <Button
                           type="button"

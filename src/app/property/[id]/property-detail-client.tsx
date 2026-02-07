@@ -12,7 +12,7 @@ import { Separator } from '@/components/ui/separator';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { PropertyCard } from '@/components/property-card';
 import Link from 'next/link';
-import { MapPin, Bed, Bath, Maximize, Phone, Mail, Share2, Heart, MessageSquare, Eye, Calendar, Edit, Star, Copy, Trash2, ChevronLeft, ChevronRight, X, ZoomIn, Wifi, Car, Shield, Zap, Droplets, Wind } from 'lucide-react';
+import { MapPin, Bed, Bath, Maximize, Phone, Mail, Share2, Heart, MessageSquare, Eye, Calendar, Edit, Star, Copy, Trash2, ChevronLeft, ChevronRight, X, ZoomIn, Wifi, Car, Shield, Zap, Droplets, Wind, Loader2 } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -61,6 +61,8 @@ export default function PropertyDetailClient({ id }: PropertyDetailClientProps) 
   const [callbackPhone, setCallbackPhone] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [relevantProperties, setRelevantProperties] = useState<Property[]>([]);
+  const [showAllProperties, setShowAllProperties] = useState(false);
+  const [loadingMoreProperties, setLoadingMoreProperties] = useState(false);
   const { toast } = useToast();
   const { user } = useAuth();
   const router = useRouter();
@@ -167,7 +169,7 @@ export default function PropertyDetailClient({ id }: PropertyDetailClientProps) 
     }
   };
 
-  const fetchRelevantProperties = async (currentProperty: any) => {
+  const fetchRelevantProperties = async (currentProperty: any, limit: number = 6) => {
     try {
       console.log('Fetching properties for:', currentProperty.title);
       
@@ -184,7 +186,7 @@ export default function PropertyDetailClient({ id }: PropertyDetailClientProps) 
       query = query
         .order('isPremium', { ascending: false, nullsFirst: false })
         .order('createdAt', { ascending: false })
-        .limit(6);
+        .limit(limit);
 
       const { data } = await query;
       console.log('Properties found:', data?.length || 0);
@@ -196,7 +198,7 @@ export default function PropertyDetailClient({ id }: PropertyDetailClientProps) 
           .neq('id', currentProperty.id)
           .order('isPremium', { ascending: false, nullsFirst: false })
           .order('createdAt', { ascending: false })
-          .limit(6);
+          .limit(limit);
           
         const { data: fallbackData } = await fallbackQuery;
         if (fallbackData && fallbackData.length > 0) {
@@ -213,6 +215,14 @@ export default function PropertyDetailClient({ id }: PropertyDetailClientProps) 
     } catch (error) {
       console.error('Error fetching properties:', error);
     }
+  };
+
+  const loadMoreProperties = async () => {
+    if (!property) return;
+    setLoadingMoreProperties(true);
+    await fetchRelevantProperties(property, 18);
+    setShowAllProperties(true);
+    setLoadingMoreProperties(false);
   };
 
   const mapPropertiesWithAgents = async (properties: any[]) => {
@@ -601,13 +611,6 @@ export default function PropertyDetailClient({ id }: PropertyDetailClientProps) 
                   <div className="prose max-w-none">
                     <h3 className="text-xl font-bold mb-4">About This Property</h3>
                     <p className="text-muted-foreground leading-relaxed text-lg">{property.description}</p>
-                    <div className="text-center mt-6">
-                      <Button variant="outline" asChild>
-                        <Link href={`/search?q=${property.location}&type=${property.status.toLowerCase().includes('rent') ? 'rent' : 'sale'}`}>
-                          View More Properties in {property.location}
-                        </Link>
-                      </Button>
-                    </div>
                   </div>
                 </TabsContent>
                 
@@ -795,12 +798,33 @@ export default function PropertyDetailClient({ id }: PropertyDetailClientProps) 
           <Card className="shadow-lg">
             <CardContent className="p-8">
               <h2 className="text-2xl font-bold mb-6">Similar Properties</h2>
-              {relevantProperties.length > 0 && (
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                  {relevantProperties.map((relatedProperty) => (
-                    <PropertyCard key={relatedProperty.id} property={relatedProperty} />
-                  ))}
-                </div>
+              {relevantProperties.length > 0 ? (
+                <>
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    {relevantProperties.map((relatedProperty) => (
+                      <PropertyCard key={relatedProperty.id} property={relatedProperty} />
+                    ))}
+                  </div>
+                  <div className="text-center mt-8">
+                    <Button 
+                      variant="outline" 
+                      size="lg"
+                      onClick={loadMoreProperties}
+                      disabled={loadingMoreProperties}
+                    >
+                      {loadingMoreProperties ? (
+                        <>
+                          <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                          Loading...
+                        </>
+                      ) : (
+                        `View More Properties in ${property.location}`
+                      )}
+                    </Button>
+                  </div>
+                </>
+              ) : (
+                <p className="text-center text-muted-foreground">No similar properties found.</p>
               )}
             </CardContent>
           </Card>
