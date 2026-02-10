@@ -793,28 +793,30 @@ export default function PropertyDetailClient({ id }: PropertyDetailClientProps) 
           </div>
         </div>
 
+        {/* View More Properties Button */}
+        <div className="mt-12 text-center">
+          <Button 
+            variant="outline" 
+            size="lg"
+            onClick={loadMoreProperties}
+            disabled={loadingMoreProperties}
+          >
+            {loadingMoreProperties ? (
+              <>
+                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                Loading...
+              </>
+            ) : (
+              `View More Properties in ${property.location}`
+            )}
+          </Button>
+        </div>
+
         {/* Relevant Properties Section */}
-        <div className="mt-12">
+        <div className="mt-8">
           <Card className="shadow-lg">
             <CardContent className="p-8">
-              <div className="flex items-center justify-between mb-6">
-                <h2 className="text-2xl font-bold">Similar Properties</h2>
-                <Button 
-                  variant="outline" 
-                  size="lg"
-                  onClick={loadMoreProperties}
-                  disabled={loadingMoreProperties}
-                >
-                  {loadingMoreProperties ? (
-                    <>
-                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                      Loading...
-                    </>
-                  ) : (
-                    `View More Properties in ${property.location}`
-                  )}
-                </Button>
-              </div>
+              <h2 className="text-2xl font-bold mb-6">Similar Properties</h2>
               {relevantProperties.length > 0 ? (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                   {relevantProperties.map((relatedProperty) => (
