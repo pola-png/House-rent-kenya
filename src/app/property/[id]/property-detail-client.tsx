@@ -612,23 +612,6 @@ export default function PropertyDetailClient({ id }: PropertyDetailClientProps) 
                     <h3 className="text-xl font-bold mb-4">About This Property</h3>
                     <p className="text-muted-foreground leading-relaxed text-lg">{property.description}</p>
                   </div>
-                  <div className="text-center mt-8">
-                    <Button 
-                      variant="outline" 
-                      size="lg"
-                      onClick={loadMoreProperties}
-                      disabled={loadingMoreProperties}
-                    >
-                      {loadingMoreProperties ? (
-                        <>
-                          <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                          Loading...
-                        </>
-                      ) : (
-                        `View More Properties in ${property.location}`
-                      )}
-                    </Button>
-                  </div>
                 </TabsContent>
                 
                 <TabsContent value="amenities" className="p-6">
@@ -814,7 +797,24 @@ export default function PropertyDetailClient({ id }: PropertyDetailClientProps) 
         <div className="mt-12">
           <Card className="shadow-lg">
             <CardContent className="p-8">
-              <h2 className="text-2xl font-bold mb-6">Similar Properties</h2>
+              <div className="flex items-center justify-between mb-6">
+                <h2 className="text-2xl font-bold">Similar Properties</h2>
+                <Button 
+                  variant="outline" 
+                  size="lg"
+                  onClick={loadMoreProperties}
+                  disabled={loadingMoreProperties}
+                >
+                  {loadingMoreProperties ? (
+                    <>
+                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                      Loading...
+                    </>
+                  ) : (
+                    `View More Properties in ${property.location}`
+                  )}
+                </Button>
+              </div>
               {relevantProperties.length > 0 ? (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                   {relevantProperties.map((relatedProperty) => (
