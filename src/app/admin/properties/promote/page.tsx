@@ -12,6 +12,7 @@ import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Loader2, ArrowLeft, MessageCircle } from 'lucide-react';
 import Link from 'next/link';
+import { BRAND } from '@/lib/brand';
 
 export default function PromotePage() {
   const searchParams = useSearchParams();
@@ -91,7 +92,7 @@ export default function PromotePage() {
 
       if (error) throw error;
 
-      const adminPhone = "+254706060684";
+      const adminPhone = BRAND.phone.replace('+', '');
       const message = `🏠 *PROPERTY PROMOTION REQUEST*\n\n` +
         `📋 *Property Details:*\n` +
         `• Title: ${finalPropertyTitle}\n` +
@@ -191,8 +192,8 @@ export default function PromotePage() {
             <h4 className="font-semibold">Payment Instructions</h4>
             <div className="space-y-2 text-sm">
               <p><span className="font-medium">Payment via M-Pesa</span></p>
-              <p><span className="font-medium">Send Money to:</span> +254706060684</p>
-              <p><span className="font-medium">Name:</span> House Rent Kenya</p>
+              <p><span className="font-medium">Send Money to:</span> {BRAND.phoneDisplay}</p>
+              <p><span className="font-medium">Name:</span> {BRAND.name}</p>
               <p><span className="font-medium">Amount:</span> ${(promotionWeeks * weeklyRate).toLocaleString()}</p>
             </div>
           </div>

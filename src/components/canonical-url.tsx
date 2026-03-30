@@ -2,6 +2,7 @@
 
 import { useSearchParams, usePathname } from 'next/navigation';
 import { useEffect } from 'react';
+import { BRAND } from '@/lib/brand';
 
 export function CanonicalUrl() {
   const searchParams = useSearchParams();
@@ -35,7 +36,7 @@ export function CanonicalUrl() {
     });
 
     // Build canonical URL
-    const baseUrl = 'https://houserentkenya.co.ke';
+    const baseUrl = BRAND.siteUrl;
     const canonicalUrl = canonicalParams.toString() 
       ? `${baseUrl}${pathname}?${canonicalParams.toString()}`
       : `${baseUrl}${pathname}`;

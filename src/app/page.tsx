@@ -22,14 +22,14 @@ import { useAuth } from '@/hooks/use-auth-supabase';
 
 
 const popularSearches = [
-  'Apartments for rent in Kilimani',
-  '4 bedroom houses for rent in Karen',
-  'Apartments for rent in Westlands',
-  'Townhouses for rent in Lavington',
-  '3 bedroom apartments in Kileleshwa',
-  'Houses for rent in Runda',
-  'Penthouses for rent in Nairobi',
-  'Beachfront villas in Diani'
+  'Apartments for rent in Dubai',
+  '4 bedroom houses for rent in London',
+  'Apartments for rent in Toronto',
+  'Townhouses for rent in Johannesburg',
+  '3 bedroom apartments in New York',
+  'Houses for rent in Lagos',
+  'Penthouses for rent in Singapore',
+  'Beachfront villas in Bali'
 ];
 
 
@@ -198,10 +198,10 @@ export default function Home() {
           <div className="absolute inset-0 bg-black/60" />
           <div className="relative z-10 px-4 w-full max-w-4xl">
             <h1 className="text-2xl sm:text-3xl md:text-5xl lg:text-6xl font-headline font-bold mb-3 md:mb-4 drop-shadow-md px-2" itemProp="name">
-              Find Your Perfect Home in Kenya
+              Find Your Perfect Home Anywhere
             </h1>
             <p className="text-sm sm:text-base md:text-lg lg:text-xl max-w-2xl mx-auto mb-6 md:mb-8 drop-shadow px-4" itemProp="description">
-              Kenya's #1 property rental platform. Discover verified apartments & homes in Nairobi, Westlands, Kilimani.
+              Discover verified apartments, houses, and investment opportunities across cities and countries.
             </p>
             <Tabs value={searchForm.listingType} onValueChange={(value) => setSearchForm(prev => ({...prev, listingType: value}))} className="max-w-3xl mx-auto">
                 <TabsList className="grid w-full grid-cols-4 bg-black/50 backdrop-blur-sm border border-white/20">
@@ -217,7 +217,7 @@ export default function Home() {
                               <MapPin className="absolute left-2 sm:left-3 top-1/2 -translate-y-1/2 h-4 sm:h-5 w-4 sm:w-5 text-muted-foreground" />
                               <Input
                                   type="text"
-                                  placeholder="Location (e.g., Nairobi)"
+                                  placeholder="Location (e.g., Lagos, London, Dubai)"
                                   className="w-full pl-8 sm:pl-10 text-foreground h-10 sm:h-12 text-sm sm:text-base"
                                   value={searchForm.location}
                                   onChange={(e) => setSearchForm(prev => ({...prev, location: e.target.value}))}
@@ -286,7 +286,7 @@ export default function Home() {
         <section className="py-12 md:py-20 bg-background" itemScope itemType="https://schema.org/ItemList">
           <div className="container mx-auto px-4">
             <h2 className="text-2xl sm:text-3xl md:text-4xl font-headline font-bold text-center mb-2 px-4" itemProp="name">Sponsored Premium Properties</h2>
-            <p className="text-center text-sm sm:text-base text-muted-foreground mb-8 sm:mb-10 max-w-2xl mx-auto px-4" itemProp="description">Verified premium listings featuring the best apartments & homes in Nairobi & across Kenya.</p>
+            <p className="text-center text-sm sm:text-base text-muted-foreground mb-8 sm:mb-10 max-w-2xl mx-auto px-4" itemProp="description">Verified premium listings featuring standout apartments, houses, and investment properties from multiple markets.</p>
             {isLoading ? (
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 md:gap-8">
                     {[...Array(3)].map((_, i) => (
@@ -327,16 +327,16 @@ export default function Home() {
                 <h3 className="font-semibold text-lg">Rental Properties</h3>
                 <div className="flex flex-col gap-2">
                   <Button variant="outline" asChild className="justify-start h-auto p-3">
-                    <Link href="/house-rent-in-kenya">House Rent in Kenya</Link>
+                    <Link href="/rentals-worldwide">Global Rentals</Link>
                   </Button>
                   <Button variant="outline" asChild className="justify-start h-auto p-3">
-                    <Link href="/houses-for-rent-in-kenya">Houses for Rent in Kenya</Link>
+                    <Link href="/family-homes-for-rent">Family Homes for Rent</Link>
                   </Button>
                   <Button variant="outline" asChild className="justify-start h-auto p-3">
-                    <Link href="/house-rent-in-nairobi">House Rent in Nairobi</Link>
+                    <Link href="/city-properties">City Living</Link>
                   </Button>
                   <Button variant="outline" asChild className="justify-start h-auto p-3">
-                    <Link href="/bedsitter-for-rent-in-kasarani">Bedsitter for Rent in Kasarani</Link>
+                    <Link href="/budget-rentals">Compact & Budget Rentals</Link>
                   </Button>
                 </div>
               </div>
@@ -344,16 +344,16 @@ export default function Home() {
                 <h3 className="font-semibold text-lg">By Bedroom Count</h3>
                 <div className="flex flex-col gap-2">
                   <Button variant="outline" asChild className="justify-start h-auto p-3">
-                    <Link href="/2-bedroom-rent-in-kenya">2 Bedroom Rent in Kenya</Link>
+                    <Link href="/2-bedroom-homes">2 Bedroom Homes</Link>
                   </Button>
                   <Button variant="outline" asChild className="justify-start h-auto p-3">
-                    <Link href="/3-bedroom-rent-in-kenya">3 Bedroom Rent in Kenya</Link>
+                    <Link href="/3-bedroom-homes">3 Bedroom Homes</Link>
                   </Button>
                   <Button variant="outline" asChild className="justify-start h-auto p-3">
-                    <Link href="/1-bedroom-house-for-rent-in-kisumu">1 Bedroom in Kisumu</Link>
+                    <Link href="/1-bedroom-homes">1 Bedroom Picks</Link>
                   </Button>
                   <Button variant="outline" asChild className="justify-start h-auto p-3">
-                    <Link href="/2-bedroom-house-for-rent-in-mombasa">2 Bedroom in Mombasa</Link>
+                    <Link href="/countries">Property by Country</Link>
                   </Button>
                 </div>
               </div>
@@ -433,110 +433,110 @@ export default function Home() {
         <section className="py-12 md:py-20 bg-secondary/50" itemScope itemType="https://schema.org/Service">
           <div className="container mx-auto px-4">
              <div className="text-center max-w-3xl mx-auto">
-              <Badge variant="outline" className="mb-4">Why House Rent Kenya</Badge>
-              <h2 className="text-2xl sm:text-3xl md:text-4xl font-headline font-bold mb-4 px-4" itemProp="name">Kenya's Most Trusted Platform</h2>
+              <Badge variant="outline" className="mb-4">Why {`House Rent & Buy`}</Badge>
+              <h2 className="text-2xl sm:text-3xl md:text-4xl font-headline font-bold mb-4 px-4" itemProp="name">A Smarter Property Platform for Global Search</h2>
               <p className="text-muted-foreground text-lg mb-12" itemProp="description">
-                Join thousands of satisfied tenants and landlords who trust House Rent Kenya for verified properties, instant booking, virtual tours & expert support across Nairobi, Westlands, Kilimani & all Kenya.
+                Join renters, buyers, landlords, and agents using one platform to discover verified listings, compare options, and move faster with expert support.
               </p>
             </div>
             
             {/* Additional Why Choose Sections */}
             <div className="space-y-12">
               <div className="text-center max-w-3xl mx-auto">
-                <h3 className="text-2xl sm:text-3xl md:text-4xl font-headline font-bold mb-4 px-4">Get Rental Properties in Kenya</h3>
+                <h3 className="text-2xl sm:text-3xl md:text-4xl font-headline font-bold mb-4 px-4">Explore Rental Properties Worldwide</h3>
                 <p className="text-muted-foreground text-lg">
-                  Rental properties in Kenya are now easier to access than ever, with verified listings across Nairobi, Mombasa, Kisumu, and more. Whether you're looking for a city apartment or a quiet suburban home, find your ideal rental with trusted agents and secure bookings.
+                  Rental properties are easier to access than ever, with verified listings across major cities, suburbs, and emerging markets. Whether you want a city apartment or a quiet family home, you can search confidently with trusted agents and clear listing details.
                 </p>
               </div>
               
               <div className="text-center max-w-3xl mx-auto">
-                <h3 className="text-2xl sm:text-3xl md:text-4xl font-headline font-bold mb-4 px-4">Get House Rent in Kenya</h3>
+                <h3 className="text-2xl sm:text-3xl md:text-4xl font-headline font-bold mb-4 px-4">Find Houses for Rent Across Regions</h3>
                 <p className="text-muted-foreground text-lg">
-                  House rent in Kenya offers flexible living options for all lifestyles and budgets. From single-room units to spacious family homes, explore a wide range of rental listings in top neighborhoods nationwide—all verified and ready to move in.
+                  House rentals come in flexible options for different lifestyles and budgets. From compact units to spacious family homes, explore a wide range of verified listings in prime neighborhoods and fast-growing communities.
                 </p>
               </div>
               
               <div className="text-center max-w-3xl mx-auto">
-                <h3 className="text-2xl sm:text-3xl md:text-4xl font-headline font-bold mb-4 px-4">Get Houses for Rent in Kenya</h3>
+                <h3 className="text-2xl sm:text-3xl md:text-4xl font-headline font-bold mb-4 px-4">Compare Homes by Size and Style</h3>
                 <p className="text-muted-foreground text-lg">
-                  Houses for rent in Kenya come in various styles and sizes—from modern townhouses to standalone homes. Find secure, affordable, and well-located houses in Nairobi, Eldoret, Nakuru, and more with easy search and expert support.
+                  Homes for rent come in many styles and sizes, from modern townhouses to standalone houses. Compare amenities, location, and pricing with an easy search experience designed for fast decision-making.
                 </p>
               </div>
               
               <div className="text-center max-w-3xl mx-auto">
-                <h3 className="text-2xl sm:text-3xl md:text-4xl font-headline font-bold mb-4 px-4">Get House Rent in Nairobi</h3>
+                <h3 className="text-2xl sm:text-3xl md:text-4xl font-headline font-bold mb-4 px-4">Search Prime City Locations</h3>
                 <p className="text-muted-foreground text-lg">
-                  House rent in Nairobi puts you in the center of everything—schools, work, shopping, and entertainment. Discover apartments and homes in Westlands, Kilimani, Kileleshwa, and other prime areas with verified landlords and flexible terms.
+                  City living puts you close to work, schools, entertainment, and transport links. Discover apartments and homes in high-demand urban neighborhoods with verified landlords and flexible options.
                 </p>
               </div>
               
               <div className="text-center max-w-3xl mx-auto">
-                <h3 className="text-2xl sm:text-3xl md:text-4xl font-headline font-bold mb-4 px-4">Get a Bedsitter for Rent in Kasarani</h3>
+                <h3 className="text-2xl sm:text-3xl md:text-4xl font-headline font-bold mb-4 px-4">Discover Budget-Friendly Options</h3>
                 <p className="text-muted-foreground text-lg">
-                  Bedsitter for rent in Kasarani listings are ideal for students, young professionals, or solo renters. Enjoy affordable, clean, and well-maintained units with access to transport, markets, and essential services in this fast-growing Nairobi suburb.
+                  Budget-friendly listings are ideal for students, young professionals, or solo renters. Find affordable, clean, and practical spaces with access to transport, shopping, and essential services.
                 </p>
               </div>
               
               <div className="text-center max-w-3xl mx-auto">
-                <h3 className="text-2xl sm:text-3xl md:text-4xl font-headline font-bold mb-4 px-4">Get 2 Bedroom Rent in Kenya</h3>
+                <h3 className="text-2xl sm:text-3xl md:text-4xl font-headline font-bold mb-4 px-4">Find 2 Bedroom Homes</h3>
                 <p className="text-muted-foreground text-lg">
-                  2 bedroom rent in Kenya is perfect for small families, couples, or roommates. Discover spacious and affordable homes in cities like Nairobi, Mombasa, Kisumu, and more—with great amenities and safe neighborhoods.
+                  Two-bedroom homes are ideal for couples, roommates, and small families. Discover practical layouts, strong value, and neighborhoods that match your budget and lifestyle.
                 </p>
               </div>
               
               <div className="text-center max-w-3xl mx-auto">
-                <h3 className="text-2xl sm:text-3xl md:text-4xl font-headline font-bold mb-4 px-4">Get 3 Bedroom Rent in Kenya</h3>
+                <h3 className="text-2xl sm:text-3xl md:text-4xl font-headline font-bold mb-4 px-4">Find 3 Bedroom Homes</h3>
                 <p className="text-muted-foreground text-lg">
-                  3 bedroom rent in Kenya provides comfort and space for larger families or groups. Explore well-designed homes in secure communities with easy access to schools, hospitals, and shopping centers across the country.
+                  Three-bedroom homes provide comfort and flexibility for larger families or shared living. Explore well-designed homes in secure communities with access to schools, healthcare, and shopping.
                 </p>
               </div>
               
               <div className="text-center max-w-3xl mx-auto">
-                <h3 className="text-2xl sm:text-3xl md:text-4xl font-headline font-bold mb-4 px-4">Get a 1 Bedroom in Kisumu</h3>
+                <h3 className="text-2xl sm:text-3xl md:text-4xl font-headline font-bold mb-4 px-4">Browse 1 Bedroom Picks</h3>
                 <p className="text-muted-foreground text-lg">
-                  1 bedroom in Kisumu is ideal for those seeking a compact and cozy home with lake city charm. Find modern units in secure neighborhoods, perfect for professionals or couples wanting convenience and affordability.
+                  One-bedroom homes are ideal for professionals, couples, and anyone seeking a compact, efficient space. Browse modern units in secure neighborhoods with easy access to daily essentials.
                 </p>
               </div>
               
               <div className="text-center max-w-3xl mx-auto">
-                <h3 className="text-2xl sm:text-3xl md:text-4xl font-headline font-bold mb-4 px-4">Get a 2 Bedroom in Mombasa</h3>
+                <h3 className="text-2xl sm:text-3xl md:text-4xl font-headline font-bold mb-4 px-4">Browse Lifestyle-Focused Homes</h3>
                 <p className="text-muted-foreground text-lg">
-                  2 bedroom in Mombasa offers the best of coastal living with spacious rentals near beaches, business hubs, and tourist attractions. Live in comfort while enjoying the serene beauty of Kenya's coast.
+                  Lifestyle-focused homes give you the right balance of space, convenience, and surroundings. Search properties near business hubs, waterfronts, transit corridors, and leisure districts.
                 </p>
               </div>
               
               <div className="text-center max-w-3xl mx-auto">
-                <h3 className="text-2xl sm:text-3xl md:text-4xl font-headline font-bold mb-4 px-4">Get Properties for Sale in Kenya</h3>
+                <h3 className="text-2xl sm:text-3xl md:text-4xl font-headline font-bold mb-4 px-4">Find Properties for Sale Worldwide</h3>
                 <p className="text-muted-foreground text-lg">
-                  Properties for sale in Kenya offer unbeatable investment opportunities—from residential plots to commercial buildings. Browse verified listings with clean titles in Nairobi, Mombasa, and emerging towns across the country.
+                  Properties for sale offer strong opportunities across residential, commercial, and mixed-use markets. Browse verified listings with better visibility into price, location, and potential value.
                 </p>
               </div>
               
               <div className="text-center max-w-3xl mx-auto">
-                <h3 className="text-2xl sm:text-3xl md:text-4xl font-headline font-bold mb-4 px-4">Get Real Estate for Sale in Kenya</h3>
+                <h3 className="text-2xl sm:text-3xl md:text-4xl font-headline font-bold mb-4 px-4">Explore Real Estate Opportunities</h3>
                 <p className="text-muted-foreground text-lg">
-                  Real estate for sale in Kenya is booming with high-return opportunities for investors and dream homes for families. Explore properties in gated communities, town centers, or up-and-coming suburbs—secure and vetted.
+                  Real estate opportunities include homes for families, rental-yield investments, and long-term portfolio assets. Explore listings in gated communities, business districts, and fast-growing suburbs.
                 </p>
               </div>
               
               <div className="text-center max-w-3xl mx-auto">
-                <h3 className="text-2xl sm:text-3xl md:text-4xl font-headline font-bold mb-4 px-4">Get Homes for Sale in Kenya</h3>
+                <h3 className="text-2xl sm:text-3xl md:text-4xl font-headline font-bold mb-4 px-4">Browse Homes for Sale</h3>
                 <p className="text-muted-foreground text-lg">
-                  Homes for sale in Kenya cater to every lifestyle—from affordable starter homes to luxury residences. Find your ideal property with trusted agents, flexible payment plans, and verified documentation.
+                  Homes for sale cater to every lifestyle, from starter properties to premium residences. Find your ideal property with trusted agents, flexible payment paths, and verified documentation.
                 </p>
               </div>
               
               <div className="text-center max-w-3xl mx-auto">
-                <h3 className="text-2xl sm:text-3xl md:text-4xl font-headline font-bold mb-4 px-4">Get Houses for Sale in Kenya</h3>
+                <h3 className="text-2xl sm:text-3xl md:text-4xl font-headline font-bold mb-4 px-4">Search Houses for Sale</h3>
                 <p className="text-muted-foreground text-lg">
-                  Houses for sale in Kenya are available in prime locations nationwide. Whether upgrading or investing, discover secure, move-in-ready homes with modern finishes and strong resale value.
+                  Houses for sale are available in prime locations across multiple markets. Whether upgrading or investing, discover secure, move-in-ready homes with modern finishes and strong resale potential.
                 </p>
               </div>
               
               <div className="text-center max-w-3xl mx-auto">
-                <h3 className="text-2xl sm:text-3xl md:text-4xl font-headline font-bold mb-4 px-4">Get Property for Sale in Kenya</h3>
+                <h3 className="text-2xl sm:text-3xl md:text-4xl font-headline font-bold mb-4 px-4">Search Property by Market</h3>
                 <p className="text-muted-foreground text-lg">
-                  Property for sale in Kenya includes land, apartments, and houses in growing urban and rural areas. Secure your future with verified listings, ready titles, and expert support every step of the way.
+                  Search land, apartments, and houses across growing urban and suburban markets. Move with confidence using verified listings and expert support through every stage of the process.
                 </p>
               </div>
             </div>

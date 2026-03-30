@@ -1,3 +1,5 @@
+import { BRAND } from './brand';
+
 export interface SystemSettings {
   payment: {
     enablePromotion: boolean;
@@ -51,9 +53,9 @@ export interface SystemSettings {
 const defaultSettings: SystemSettings = {
   payment: {
     enablePromotion: true,
-    currency: 'KES',
-    mpesaNumber: '+254706060684',
-    accountName: 'House Rent Kenya',
+    currency: 'NGN',
+    mpesaNumber: BRAND.phone,
+    accountName: BRAND.name,
     paybill: undefined,
     bankName: undefined,
     bankAccount: undefined,

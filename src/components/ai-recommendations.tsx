@@ -9,6 +9,7 @@ import { PropertyCard } from "./property-card";
 import type { Property } from "@/lib/types";
 import { supabase } from "@/lib/supabase";
 import { useAuth } from "@/hooks/use-auth-supabase";
+import { BRAND } from "@/lib/brand";
 
 interface AIRecommendationsProps {
   userPreferences?: {
@@ -146,10 +147,10 @@ export function AIRecommendations({ userPreferences, viewedProperties = [] }: AI
                 firstName: 'Property',
                 lastName: 'Agent',
                 displayName: 'Property Agent',
-                email: 'agent@houserent.co.ke',
+                email: BRAND.email,
                 role: 'agent',
-                agencyName: 'House Rent Kenya',
-                phoneNumber: '+254704202939',
+                agencyName: BRAND.name,
+                phoneNumber: BRAND.phone,
                 createdAt: new Date()
               }
             };

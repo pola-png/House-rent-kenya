@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect } from 'react';
+import { BRAND } from '@/lib/brand';
 
 interface SEOSchemaProps {
   type: 'property' | 'search' | 'homepage' | 'organization';
@@ -16,24 +17,24 @@ export function SEOSchema({ type, data }: SEOSchemaProps) {
         schema = {
           "@context": "https://schema.org",
           "@type": "WebSite",
-          "name": "House Rent Kenya",
-          "alternateName": "HouseRentKenya.co.ke",
-          "url": "https://houserentkenya.co.ke",
-          "description": "Kenya's leading property rental platform with 10,000+ verified properties",
+          "name": BRAND.name,
+          "alternateName": BRAND.shortName,
+          "url": BRAND.siteUrl,
+          "description": `${BRAND.name} helps users find homes to rent or buy.`,
           "potentialAction": {
             "@type": "SearchAction",
             "target": {
               "@type": "EntryPoint",
-              "urlTemplate": "https://houserentkenya.co.ke/search?q={search_term_string}"
+              "urlTemplate": `${BRAND.siteUrl}/search?q={search_term_string}`
             },
             "query-input": "required name=search_term_string"
           },
           "publisher": {
             "@type": "Organization",
-            "name": "House Rent Kenya",
+            "name": BRAND.name,
             "logo": {
               "@type": "ImageObject",
-              "url": "https://houserentkenya.co.ke/logo.png"
+              "url": `${BRAND.siteUrl}${BRAND.logoPath}`
             }
           }
         };
@@ -85,9 +86,9 @@ export function SEOSchema({ type, data }: SEOSchemaProps) {
         schema = {
           "@context": "https://schema.org",
           "@type": "CollectionPage",
-          "name": "Property Search Results - House Rent Kenya",
-          "description": "Search results for rental properties in Kenya",
-          "url": "https://houserentkenya.co.ke/search",
+          "name": `Property Search Results - ${BRAND.name}`,
+          "description": "Search results for rental and sale properties across global markets",
+          "url": `${BRAND.siteUrl}/search`,
           "mainEntity": {
             "@type": "ItemList",
             "numberOfItems": data?.totalResults || 0,
@@ -97,7 +98,7 @@ export function SEOSchema({ type, data }: SEOSchemaProps) {
               "item": {
                 "@type": "Accommodation",
                 "name": property.title,
-                "url": `https://houserentkenya.co.ke/property/${property.id}`
+                "url": `${BRAND.siteUrl}/property/${property.id}`
               }
             })) || []
           }
@@ -108,28 +109,22 @@ export function SEOSchema({ type, data }: SEOSchemaProps) {
         schema = {
           "@context": "https://schema.org",
           "@type": "Organization",
-          "name": "House Rent Kenya",
-          "alternateName": "HouseRentKenya.co.ke",
-          "url": "https://houserentkenya.co.ke",
-          "logo": "https://houserentkenya.co.ke/logo.png",
-          "description": "Kenya's leading property rental platform",
+          "name": BRAND.name,
+          "alternateName": BRAND.shortName,
+          "url": BRAND.siteUrl,
+          "logo": `${BRAND.siteUrl}${BRAND.logoPath}`,
+          "description": `${BRAND.name} helps people find homes to rent or buy.`,
           "contactPoint": {
             "@type": "ContactPoint",
-            "telephone": "+254706060684",
+            "telephone": BRAND.phone,
             "contactType": "customer service",
-            "areaServed": "KE",
-            "availableLanguage": ["English", "Swahili"]
+            "areaServed": "Worldwide",
+            "availableLanguage": ["English"]
           },
           "address": {
             "@type": "PostalAddress",
-            "addressCountry": "KE",
-            "addressLocality": "Nairobi"
-          },
-          "sameAs": [
-            "https://facebook.com/houserentkenya",
-            "https://twitter.com/houserentkenya",
-            "https://instagram.com/houserentkenya"
-          ]
+            "addressCountry": "Worldwide"
+          }
         };
         break;
     }

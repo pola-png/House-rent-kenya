@@ -2,8 +2,9 @@ import { MetadataRoute } from 'next';
 import propertiesData from '@/lib/docs/properties.json';
 import articlesData from '@/lib/docs/articles.json';
 import developmentsData from '@/lib/docs/developments.json';
+import { BRAND } from '@/lib/brand';
 
-const BASE_URL = process.env.NEXT_PUBLIC_BASE_URL || 'https://houserent.co.ke';
+const BASE_URL = process.env.NEXT_PUBLIC_BASE_URL || BRAND.siteUrl;
 
 export default function sitemap(): MetadataRoute.Sitemap {
   const staticRoutes: MetadataRoute.Sitemap = [

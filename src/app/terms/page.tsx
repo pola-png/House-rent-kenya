@@ -1,9 +1,10 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { FileText } from "lucide-react";
 import { Metadata } from 'next';
+import { BRAND } from "@/lib/brand";
 
 export const metadata: Metadata = {
-  title: 'Terms of Service | House Rent Kenya',
+  title: `Terms of Service | ${BRAND.name}`,
   description: 'Read our comprehensive terms of service covering user responsibilities, platform usage, and legal agreements.',
 };
 
@@ -26,12 +27,12 @@ export default function TermsPage() {
             <CardContent className="prose max-w-none text-muted-foreground space-y-6">
                 <section>
                     <h2 className="text-xl font-semibold text-foreground mb-3">1. Acceptance of Terms</h2>
-                    <p>By accessing and using House Rent Kenya ("the Platform"), you accept and agree to be bound by the terms and provision of this agreement. If you do not agree to abide by the above, please do not use this service.</p>
+                    <p>By accessing and using {BRAND.name} ("the Platform"), you accept and agree to be bound by the terms and provision of this agreement. If you do not agree to abide by the above, please do not use this service.</p>
                 </section>
 
                 <section>
                     <h2 className="text-xl font-semibold text-foreground mb-3">2. Description of Service</h2>
-                    <p>House Rent Kenya is an online platform that connects property seekers with property owners, landlords, and real estate agents in Kenya. We provide a marketplace for property listings, search functionality, and communication tools.</p>
+                    <p>{BRAND.name} is an online platform that connects property seekers with property owners, landlords, and real estate agents. We provide a marketplace for property listings, search functionality, and communication tools.</p>
                 </section>
 
                 <section>
@@ -62,7 +63,7 @@ export default function TermsPage() {
 
                 <section>
                     <h2 className="text-xl font-semibold text-foreground mb-3">5. Intellectual Property Rights</h2>
-                    <p>The Platform and its original content, features, and functionality are owned by House Rent Kenya and are protected by international copyright, trademark, patent, trade secret, and other intellectual property laws.</p>
+                    <p>The Platform and its original content, features, and functionality are owned by {BRAND.name} and are protected by international copyright, trademark, patent, trade secret, and other intellectual property laws.</p>
                     <p>Users retain ownership of content they post but grant us a license to use, display, and distribute such content on the Platform.</p>
                 </section>
 
@@ -96,9 +97,8 @@ export default function TermsPage() {
                     <h2 className="text-xl font-semibold text-foreground mb-3">11. Contact Information</h2>
                     <p>If you have any questions about these Terms, please contact us:</p>
                     <div className="bg-muted p-4 rounded-lg mt-3">
-                        <p><strong>Email:</strong> legal@houserent.co.ke</p>
-                        <p><strong>Phone:</strong> +254 706 060 684</p>
-                        <p><strong>Address:</strong> 123 Riverside Drive, Nairobi, Kenya</p>
+                        <p><strong>Email:</strong> {BRAND.email}</p>
+                        <p><strong>Phone:</strong> {BRAND.phoneDisplay}</p>
                     </div>
                 </section>
             </CardContent>

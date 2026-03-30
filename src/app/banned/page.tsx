@@ -4,6 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Ban, Mail, MessageCircle } from 'lucide-react';
 import Link from 'next/link';
+import { BRAND } from '@/lib/brand';
 
 export default function BannedPage() {
   return (
@@ -24,7 +25,7 @@ export default function BannedPage() {
           </p>
           <div className="space-y-3 pt-4">
             <Button asChild className="w-full">
-              <Link href="mailto:support@houserentkenya.com">
+              <Link href={`mailto:${BRAND.email}`}>
                 <Mail className="h-4 w-4 mr-2" />
                 Email Support
               </Link>

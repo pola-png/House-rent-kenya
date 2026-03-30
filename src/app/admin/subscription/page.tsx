@@ -3,7 +3,7 @@
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
-import { Check, Package, Star, Zap, Loader2, Upload } from "lucide-react";
+import { Check, Star, Zap, Loader2, Upload } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -17,7 +17,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import React from "react";
 import { useToast } from "@/hooks/use-toast";
-import { Separator } from "@/components/ui/separator";
+import { BRAND } from "@/lib/brand";
 
 
 const plans = [
@@ -156,8 +156,8 @@ export default function SubscriptionPage() {
                                 <div className="grid gap-4 py-4">
                                      <div className="text-sm text-center bg-muted p-4 rounded-md">
                                         <p className="font-semibold mb-2">1. Complete Payment via M-Pesa</p>
-                                        <p>Send Money to: <span className="font-bold">+254704202939</span></p>
-                                        <p>Name: <span className="font-bold">Edwin</span></p>
+                                        <p>Send Money to: <span className="font-bold">{BRAND.phoneDisplay}</span></p>
+                                        <p>Name: <span className="font-bold">{BRAND.name}</span></p>
                                         <p>Amount: <span className="font-bold">{plan.price}</span></p>
                                     </div>
 

@@ -2,7 +2,7 @@
 "use client";
 
 import Link from 'next/link';
-import { Building, Menu, User, X, ChevronDown, ChevronUp, Briefcase, UserCircle, LogOut, Home, Settings, Search, ChevronRight } from 'lucide-react';
+import { Menu, User, X, ChevronDown, ChevronUp, Briefcase, UserCircle, LogOut, Home, Settings, Search, ChevronRight } from 'lucide-react';
 import React, { useState } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
 
@@ -22,6 +22,7 @@ import { useToast } from '@/hooks/use-toast';
 import { Skeleton } from './ui/skeleton';
 import { Separator } from './ui/separator';
 import { useAuth } from '@/hooks/use-auth-supabase';
+import { BrandMark } from './brand-mark';
 
 const navLinks = [
   { href: '/search?type=rent', label: 'To Rent' },
@@ -34,20 +35,19 @@ const navLinks = [
 ];
 
 const seoPages = [
-  { href: '/house-rent-in-kenya', label: 'House Rent in Kenya' },
-  { href: '/houses-for-rent-in-kenya', label: 'Houses for Rent in Kenya' },
-  { href: '/house-rent-in-nairobi', label: 'House Rent in Nairobi' },
-  { href: '/2-bedroom-rent-in-kenya', label: '2 Bedroom Rent in Kenya' },
-  { href: '/3-bedroom-rent-in-kenya', label: '3 Bedroom Rent in Kenya' },
-  { href: '/bedsitter-for-rent-in-kasarani', label: 'Bedsitter for Rent in Kasarani' },
-  { href: '/1-bedroom-house-for-rent-in-kisumu', label: '1 Bedroom in Kisumu' },
-  { href: '/2-bedroom-house-for-rent-in-mombasa', label: '2 Bedroom in Mombasa' },
-  { href: '/3-bedroom-house-for-rent-in-meru', label: '3 Bedroom in Meru' },
+  { href: '/rentals-worldwide', label: 'Rentals Worldwide' },
+  { href: '/family-homes-for-rent', label: 'Family Homes for Rent' },
+  { href: '/city-properties', label: 'City Properties' },
+  { href: '/1-bedroom-homes', label: '1 Bedroom Homes' },
+  { href: '/2-bedroom-homes', label: '2 Bedroom Homes' },
+  { href: '/3-bedroom-homes', label: '3 Bedroom Homes' },
+  { href: '/budget-rentals', label: 'Budget Rentals' },
+  { href: '/countries', label: 'Property by Country' },
   { href: '/real-estate-for-sale', label: 'Real Estate for Sale' },
   { href: '/homes-for-sale', label: 'Homes for Sale' },
   { href: '/houses-for-sale', label: 'Houses for Sale' },
   { href: '/property-for-sale', label: 'Property for Sale' },
-  { href: '/real-estate-agents-near-me', label: 'Real Estate Agents Near Me' },
+  { href: '/real-estate-agents-near-me', label: 'Real Estate Agents Worldwide' },
 ];
 
 export function Header() {
@@ -274,12 +274,7 @@ export function Header() {
       <div className="container mx-auto px-4">
         <div className="flex h-20 items-center justify-between">
           <Link href="/" className="flex items-center gap-2">
-            <div className={`p-2 rounded-md transition-colors bg-primary`}>
-                <Building className={`h-6 w-6 transition-colors text-primary-foreground`} />
-            </div>
-            <span className={logoTextClasses}>
-              House Rent Kenya
-            </span>
+            <BrandMark textClassName={logoTextClasses} />
           </Link>
 
           <div className="hidden lg:flex items-center gap-6">
@@ -346,10 +341,7 @@ export function Header() {
                 </div>
                 <div className="flex justify-between items-center p-4 border-b flex-shrink-0">
                    <Link href="/" className="flex items-center gap-2">
-                      <div className="p-2 rounded-md bg-primary">
-                          <Building className="h-6 w-6 text-primary-foreground" />
-                      </div>
-                      <span className="text-xl font-bold font-headline">House Rent Kenya</span>
+                      <BrandMark />
                   </Link>
                   <SheetClose asChild>
                      <Button variant="ghost" size="icon">

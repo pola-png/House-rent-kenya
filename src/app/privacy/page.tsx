@@ -2,10 +2,11 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Shield } from "lucide-react";
 import { Metadata } from 'next';
+import { BRAND } from "@/lib/brand";
 
 export const metadata: Metadata = {
-  title: 'Privacy Policy | House Rent Kenya',
-  description: 'Learn how House Rent Kenya collects, uses, and protects your personal information. Our comprehensive privacy policy covers data collection, cookies, and your rights.',
+  title: `Privacy Policy | ${BRAND.name}`,
+  description: `Learn how ${BRAND.name} collects, uses, and protects your personal information.`,
 };
 
 export default function PrivacyPage() {
@@ -27,7 +28,7 @@ export default function PrivacyPage() {
             <CardContent className="prose max-w-none text-muted-foreground space-y-6">
                 <section>
                     <h2 className="text-xl font-semibold text-foreground mb-3">1. Introduction</h2>
-                    <p>Welcome to House Rent Kenya ("we," "our," or "us"). We are committed to protecting your personal information and your right to privacy. This Privacy Policy explains how we collect, use, disclose, and safeguard your information when you visit our website houserent.co.ke and use our services.</p>
+                    <p>Welcome to {BRAND.name} ("we," "our," or "us"). We are committed to protecting your personal information and your right to privacy. This Privacy Policy explains how we collect, use, disclose, and safeguard your information when you visit our website and use our services.</p>
                 </section>
                 
                 <section>
@@ -120,7 +121,7 @@ export default function PrivacyPage() {
                         <li>Restrict or object to certain data processing</li>
                         <li>Data portability (where applicable)</li>
                     </ul>
-                    <p>To exercise these rights, please contact us at privacy@houserent.co.ke.</p>
+                    <p>To exercise these rights, please contact us at {BRAND.email}.</p>
                 </section>
 
                 <section>
@@ -147,9 +148,8 @@ export default function PrivacyPage() {
                     <h2 className="text-xl font-semibold text-foreground mb-3">13. Contact Us</h2>
                     <p>If you have any questions about this Privacy Policy or our data practices, please contact us at:</p>
                     <div className="bg-muted p-4 rounded-lg mt-3">
-                        <p><strong>Email:</strong> privacy@houserent.co.ke</p>
-                        <p><strong>Phone:</strong> +254 706 060 684</p>
-                        <p><strong>Address:</strong> 123 Riverside Drive, Nairobi, Kenya</p>
+                        <p><strong>Email:</strong> {BRAND.email}</p>
+                        <p><strong>Phone:</strong> {BRAND.phoneDisplay}</p>
                     </div>
                 </section>
             </CardContent>

@@ -10,6 +10,7 @@ import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useState, useEffect, useMemo } from 'react';
 import { supabase } from '@/lib/supabase';
+import { BRAND } from '@/lib/brand';
 
 export default function AgentsPage() {
   const [agents, setAgents] = useState<UserProfile[]>([]);
@@ -253,7 +254,7 @@ export default function AgentsPage() {
           <>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {filteredAndSortedAgents.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage).map(agent => {
-              const agentPhoneNumber = agent.phoneNumber || '+254704202939';
+              const agentPhoneNumber = agent.phoneNumber || BRAND.phone;
               const joinedDate = new Date(agent.createdAt).toLocaleDateString('en-US', { month: 'short', year: 'numeric' });
               const stats = agentStats[agent.uid] || { properties: 0, rating: 0, responseTime: 'No data', isProAgent: false };
               return (

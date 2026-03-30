@@ -7,9 +7,9 @@ export default function AboutPage() {
       <div className="container mx-auto px-4 py-12 md:py-20">
         <div className="text-center max-w-3xl mx-auto mb-16">
             <Info className="h-12 w-12 mx-auto text-primary mb-4" />
-            <h1 className="text-4xl md:text-5xl font-bold font-headline">About House Rent Kenya</h1>
+            <h1 className="text-4xl md:text-5xl font-bold font-headline">About House Rent & Buy</h1>
             <p className="text-lg text-muted-foreground mt-4">
-                We are dedicated to revolutionizing the property market in Kenya by simplifying the process of finding and renting homes.
+                We are building a modern property platform that makes it easier to search, compare, rent, and buy homes across global markets.
             </p>
         </div>
 
@@ -17,7 +17,7 @@ export default function AboutPage() {
             <div>
                 <h2 className="text-3xl font-bold font-headline mb-4">Our Mission</h2>
                 <p className="text-muted-foreground text-lg mb-4">
-                    Our mission is to create a seamless and transparent property rental experience for tenants, landlords, and agents across Kenya. We leverage technology to connect people with their ideal homes, providing a comprehensive and user-friendly platform that empowers our users with the information they need to make confident decisions.
+                    Our mission is to create a seamless and transparent property experience for renters, buyers, landlords, agents, and investors everywhere. We use technology to connect people with the right homes and opportunities through a platform that is clear, practical, and easy to trust.
                 </p>
                  <p className="text-muted-foreground text-lg">
                     We believe that finding a home should be an exciting and stress-free journey. That's why we're committed to building a trusted community, offering verified listings, and providing exceptional support every step of the way.
@@ -65,10 +65,10 @@ export default function AboutPage() {
                 <div className="space-y-12">
                     <div className="flex justify-center items-center relative">
                         <div className="w-full md:w-5/12 lg:w-4/12 p-4">
-                             <Card className="ml-auto">
+                                <Card className="ml-auto">
                                 <CardHeader>
                                     <CardTitle>2023 - The Idea</CardTitle>
-                                    <CardDescription>House Rent Kenya was born from a desire to solve the challenges of navigating the Kenyan rental market.</CardDescription>
+                                    <CardDescription>House Rent & Buy started with a simple goal: make property search more transparent, faster, and easier to trust.</CardDescription>
                                 </CardHeader>
                             </Card>
                         </div>
@@ -83,20 +83,20 @@ export default function AboutPage() {
                             <Milestone className="h-6 w-6 text-primary"/>
                         </div>
                         <div className="w-full md:w-5/12 lg:w-4/12 p-4">
-                             <Card>
+                                <Card>
                                 <CardHeader>
                                     <CardTitle>2024 - Official Launch</CardTitle>
-                                    <CardDescription>We launched our platform, connecting the first tenants with their new homes and partnering with leading agents.</CardDescription>
+                                    <CardDescription>We launched the platform, connected our first users with new homes, and started building partnerships with agents and property professionals.</CardDescription>
                                 </CardHeader>
                             </Card>
                         </div>
                     </div>
                      <div className="flex justify-center items-center relative">
                         <div className="w-full md:w-5/12 lg:w-4/12 p-4">
-                             <Card className="ml-auto">
+                                <Card className="ml-auto">
                                 <CardHeader>
                                     <CardTitle>The Future</CardTitle>
-                                    <CardDescription>We are continuously expanding our features, growing to remain Kenya's #1 property portal.</CardDescription>
+                                    <CardDescription>We are expanding our features and reach to support property discovery, renting, and buying across more cities and countries.</CardDescription>
                                 </CardHeader>
                             </Card>
                         </div>

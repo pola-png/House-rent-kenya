@@ -1,4 +1,5 @@
 import type { Property } from '@/lib/types';
+import { BRAND } from '@/lib/brand';
 
 /**
  * Generate SEO-friendly URL slug for a property
@@ -221,10 +222,10 @@ export function generatePropertySchema(property: Property, agent?: any) {
     "image": property.images || [],
     "provider": {
       "@type": "RealEstateAgent",
-      "name": agent?.displayName || "House Rent Kenya",
+      "name": agent?.displayName || BRAND.name,
       "telephone": agent?.phoneNumber,
       "email": agent?.email,
-      "url": "https://houserentkenya.co.ke"
+      "url": BRAND.siteUrl
     }
   };
 }

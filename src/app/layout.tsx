@@ -10,54 +10,52 @@ import { SessionMonitor } from '@/components/session-monitor';
 import { ConditionalLayout } from '@/components/conditional-layout';
 import { NavigationLoader } from '@/components/navigation-loader';
 import { CookieConsent } from '@/components/cookie-consent';
+import { BRAND } from '@/lib/brand';
 
 export const metadata: Metadata = {
-  metadataBase: new URL('https://houserentkenya.co.ke'),
+  metadataBase: new URL(BRAND.siteUrl),
   title: {
-    default: 'House Rent Kenya - #1 Property Rental Platform | Find Apartments, Houses & Homes',
-    template: '%s | House Rent Kenya - Premium Property Rentals',
+    default: `${BRAND.name} | Find Homes to Rent or Buy`,
+    template: `%s | ${BRAND.name}`,
   },
-  description: 'Kenya\'s leading property rental platform. Find verified apartments, houses, studios & luxury homes in Nairobi, Westlands, Kilimani & across Kenya. 10,000+ properties, instant booking, virtual tours.',
+  description: `${BRAND.name} helps people discover properties to rent or buy with simple search and direct support.`,
   keywords: [
-    'house rent kenya', 'property rental kenya', 'apartments nairobi', 'houses for rent kenya',
-    'rental homes nairobi', 'real estate kenya', 'property search kenya', 'westlands apartments',
-    'kilimani houses', 'karen homes', 'lavington properties', 'kileleshwa rentals',
-    'nairobi property rental', 'kenya real estate', 'furnished apartments kenya',
-    'studio apartments nairobi', 'bedsitter nairobi', 'mansion rental kenya',
-    'townhouse kenya', 'property management kenya', 'landlord kenya', 'tenant kenya'
+    'house rent and buy', 'global property search', 'homes for rent worldwide', 'houses for sale worldwide',
+    'rental homes', 'real estate marketplace', 'property search platform', 'apartments for rent',
+    'homes for sale', 'verified property listings', 'property agents', 'rental marketplace',
+    'buy property online', 'find apartments', 'find houses', 'property management',
+    'landlords', 'tenants', 'real estate agents', 'global homes'
   ],
-  authors: [{ name: 'House Rent Kenya Team' }],
-  creator: 'House Rent Kenya',
-  publisher: 'House Rent Kenya',
+  authors: [{ name: BRAND.supportName }],
+  creator: BRAND.name,
+  publisher: BRAND.name,
   formatDetection: {
     email: false,
     address: false,
     telephone: false,
   },
   openGraph: {
-    title: 'House Rent Kenya - #1 Property Rental Platform | 10,000+ Verified Properties',
-    description: 'Discover your perfect home in Kenya. Browse verified apartments, houses & luxury properties in Nairobi, Westlands, Kilimani. Instant booking, virtual tours, trusted agents.',
-    url: 'https://houserentkenya.co.ke',
-    siteName: 'House Rent Kenya',
+    title: `${BRAND.name} | Find Homes to Rent or Buy`,
+    description: `${BRAND.name} is a property platform for renting and buying homes with direct support.`,
+    url: BRAND.siteUrl,
+    siteName: BRAND.name,
     images: [
       {
-        url: '/og-image.jpg',
+        url: BRAND.logoPath,
         width: 1200,
         height: 630,
-        alt: 'House Rent Kenya - Premium Property Rentals',
+        alt: `${BRAND.name} logo`,
       },
     ],
-    locale: 'en_KE',
+    locale: 'en_US',
     type: 'website',
-    countryName: 'Kenya',
+    countryName: 'Worldwide',
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'House Rent Kenya - #1 Property Rental Platform',
-    description: 'Find your perfect home in Kenya. 10,000+ verified properties, instant booking, virtual tours.',
-    images: ['/twitter-image.jpg'],
-    creator: '@HouseRentKenya',
-    site: '@HouseRentKenya',
+    title: `${BRAND.name} | Find Homes to Rent or Buy`,
+    description: `${BRAND.name} helps users browse homes for rent and sale.`,
+    images: [BRAND.logoPath],
   },
   robots: {
     index: true,
@@ -73,16 +71,15 @@ export const metadata: Metadata = {
     },
   },
   icons: {
-    icon: '/favicon.ico',
-    shortcut: '/favicon-16x16.png',
-    apple: '/apple-touch-icon.png',
+    icon: '/favicon.svg',
+    shortcut: '/favicon.svg',
+    apple: '/logo.svg',
   },
   manifest: '/site.webmanifest',
   alternates: {
-    canonical: 'https://houserentkenya.co.ke',
+    canonical: BRAND.siteUrl,
     languages: {
-      'en-KE': 'https://houserentkenya.co.ke',
-      'sw-KE': 'https://houserentkenya.co.ke/sw',
+      en: BRAND.siteUrl,
     },
   },
   category: 'Real Estate',
@@ -95,7 +92,7 @@ export const metadata: Metadata = {
     yahoo: 'your-yahoo-verification-code',
   },
   appleWebApp: {
-    title: 'House Rent Kenya',
+    title: BRAND.name,
     statusBarStyle: 'default',
     capable: true,
   },
@@ -112,20 +109,15 @@ export default function RootLayout({
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
         <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700&family=PT+Sans:wght@400;700&display=swap" rel="stylesheet" />
-        <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png"/>
-        <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png"/>
-        <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png"/>
+        <link rel="apple-touch-icon" sizes="180x180" href="/logo.svg"/>
+        <link rel="icon" type="image/svg+xml" href="/favicon.svg"/>
         <link rel="mask-icon" href="/safari-pinned-tab.svg" color="#e67e22"/>
         <link rel="dns-prefetch" href="//images.unsplash.com" />
         <link rel="preconnect" href="https://api.supabase.co" />
-        <link rel="canonical" href="https://houserentkenya.co.ke" />
+        <link rel="canonical" href={BRAND.siteUrl} />
         <meta name="msapplication-TileColor" content="#e67e22" />
         <meta name="msapplication-config" content="/browserconfig.xml" />
         <meta name="theme-color" content="#ffffff" />
-        <meta name="geo.region" content="KE" />
-        <meta name="geo.placename" content="Kenya" />
-        <meta name="geo.position" content="-1.286389;36.817223" />
-        <meta name="ICBM" content="-1.286389, 36.817223" />
         <meta name="language" content="English" />
         <meta name="distribution" content="global" />
         <meta name="rating" content="general" />
@@ -141,39 +133,19 @@ export default function RootLayout({
             __html: JSON.stringify({
               "@context": "https://schema.org",
               "@type": "RealEstateAgent",
-              "name": "House Rent Kenya",
-              "description": "Kenya's leading property rental platform with 10,000+ verified properties",
-              "url": "https://houserentkenya.co.ke",
-              "logo": "https://houserentkenya.co.ke/logo.png",
-              "image": "https://houserentkenya.co.ke/og-image.jpg",
-              "telephone": "+254706060684",
-              "email": "info@houserentkenya.co.ke",
+              "name": BRAND.name,
+              "description": `${BRAND.name} helps people discover properties for rent and sale.`,
+              "url": BRAND.siteUrl,
+              "logo": `${BRAND.siteUrl}${BRAND.logoPath}`,
+              "image": `${BRAND.siteUrl}${BRAND.logoPath}`,
+              "telephone": BRAND.phone,
+              "email": BRAND.email,
               "address": {
                 "@type": "PostalAddress",
-                "addressCountry": "KE",
-                "addressLocality": "Nairobi",
-                "addressRegion": "Nairobi County"
+                "addressCountry": "Worldwide"
               },
-              "areaServed": {
-                "@type": "Country",
-                "name": "Kenya"
-              },
-              "serviceType": "Property Rental",
-              "priceRange": "KSh 10,000 - KSh 500,000",
-              "sameAs": [
-                "https://www.facebook.com/houserentkenya",
-                "https://twitter.com/houserentkenya",
-                "https://www.instagram.com/houserentkenya",
-                "https://www.linkedin.com/company/houserentkenya",
-                "https://www.youtube.com/@houserentkenya"
-              ],
-              "aggregateRating": {
-                "@type": "AggregateRating",
-                "ratingValue": "4.8",
-                "reviewCount": "2847",
-                "bestRating": "5",
-                "worstRating": "1"
-              }
+              "areaServed": "Worldwide",
+              "serviceType": "Property Rental and Sales"
             })
           }}
         />

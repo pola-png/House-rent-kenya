@@ -1,31 +1,32 @@
 import { PromotedPropertiesLayout } from '@/components/promoted-properties-layout';
 import { getPropertiesWithPromotion } from '@/lib/promoted-properties';
 import { Metadata } from 'next';
+import { BRAND } from '@/lib/brand';
 
 export const revalidate = 3600;
 
 export const metadata: Metadata = {
-  title: 'Homes for Sale in Kenya | Buy Houses & Apartments | Real Estate',
-  description: 'Buy homes in Kenya - houses, apartments, condos & luxury properties. 1000+ verified listings in Nairobi, Mombasa, Kisumu. Best prices & financing options.',
+  title: `Homes for Sale Worldwide | ${BRAND.name}`,
+  description: 'Browse houses, apartments, condos, and luxury homes for sale across global markets.',
   keywords: [
-    'homes for sale Kenya',
-    'houses for sale Kenya',
-    'buy house Kenya',
-    'real estate for sale Kenya',
-    'property for sale Kenya',
-    'apartments for sale Nairobi',
-    'luxury homes Kenya',
-    'residential property Kenya',
-    'buy home Kenya'
+    'homes for sale',
+    'houses for sale',
+    'buy house',
+    'real estate for sale',
+    'property for sale',
+    'apartments for sale',
+    'luxury homes',
+    'residential property',
+    'buy home'
   ],
   openGraph: {
-    title: 'Homes for Sale in Kenya | Premium Real Estate Properties',
-    description: 'Discover premium homes for sale across Kenya. Verified listings with financing options and legal support.',
-    url: 'https://houserentkenya.co.ke/homes-for-sale',
+    title: `Homes for Sale Worldwide | ${BRAND.name}`,
+    description: 'Discover premium homes for sale with financing options and verified listings across global markets.',
+    url: `${BRAND.siteUrl}/homes-for-sale`,
     type: 'website'
   },
   alternates: {
-    canonical: 'https://houserentkenya.co.ke/homes-for-sale'
+    canonical: `${BRAND.siteUrl}/homes-for-sale`
   }
 };
 
@@ -43,13 +44,13 @@ export default async function Page() {
           __html: JSON.stringify({
             "@context": "https://schema.org",
             "@type": "WebPage",
-            "name": "Homes for Sale in Kenya",
-            "description": "Buy premium homes in Kenya - houses, apartments and luxury properties with verified listings and financing options.",
-            "url": "https://houserentkenya.co.ke/homes-for-sale",
+            "name": "Homes for Sale Worldwide",
+            "description": "Buy premium homes, apartments, and luxury properties with verified listings across global markets.",
+            "url": `${BRAND.siteUrl}/homes-for-sale`,
             "mainEntity": {
               "@type": "RealEstateAgent",
-              "name": "House Rent Kenya",
-              "areaServed": "Kenya",
+              "name": BRAND.name,
+              "areaServed": "Worldwide",
               "serviceType": "Home Sales and Real Estate"
             }
           })
@@ -60,8 +61,8 @@ export default async function Page() {
         promoted={promoted}
         regular={regular}
         totalProperties={all.length}
-        title="Homes for Sale in Kenya - Real Estate Properties"
-        description={`Find ${all.length}+ homes for sale in Kenya. Houses, apartments, condos & luxury properties available nationwide with verified listings and financing support.`}
+        title="Homes for Sale Worldwide"
+        description={`Find ${all.length}+ homes for sale across multiple markets. Browse houses, apartments, condos, and premium properties with verified listings.`}
         featuredSectionTitle="Featured Homes for Sale"
         regularSectionTitle="More Homes for Sale"
         viewAllLink="/search?type=sale"

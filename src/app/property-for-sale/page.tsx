@@ -1,31 +1,32 @@
 import { PromotedPropertiesLayout } from '@/components/promoted-properties-layout';
 import { getPropertiesWithPromotion } from '@/lib/promoted-properties';
 import { Metadata } from 'next';
+import { BRAND } from '@/lib/brand';
 
 export const revalidate = 3600;
 
 export const metadata: Metadata = {
-  title: 'Property for Sale in Kenya | Land, Houses & Commercial Real Estate',
-  description: 'Buy property in Kenya - residential, commercial & land. 1000+ verified listings with clean title deeds. Investment opportunities in Nairobi, Mombasa, Kisumu.',
+  title: `Property for Sale Worldwide | ${BRAND.name}`,
+  description: 'Browse land, houses, apartments, and commercial property for sale across global markets.',
   keywords: [
-    'property for sale Kenya',
-    'real estate for sale Kenya',
-    'land for sale Kenya',
-    'commercial property Kenya',
-    'investment property Kenya',
-    'buy property Kenya',
-    'property investment Kenya',
-    'real estate investment Kenya',
-    'property deals Kenya'
+    'property for sale',
+    'real estate for sale',
+    'land for sale',
+    'commercial property',
+    'investment property',
+    'buy property',
+    'property investment',
+    'real estate investment',
+    'property deals'
   ],
   openGraph: {
-    title: 'Property for Sale in Kenya | Real Estate Investment Opportunities',
-    description: 'Discover premium property investment opportunities in Kenya with verified listings and clean titles.',
-    url: 'https://houserentkenya.co.ke/property-for-sale',
+    title: `Property for Sale Worldwide | ${BRAND.name}`,
+    description: 'Discover premium property investment opportunities with verified listings across global markets.',
+    url: `${BRAND.siteUrl}/property-for-sale`,
     type: 'website'
   },
   alternates: {
-    canonical: 'https://houserentkenya.co.ke/property-for-sale'
+    canonical: `${BRAND.siteUrl}/property-for-sale`
   }
 };
 
@@ -43,13 +44,13 @@ export default async function Page() {
           __html: JSON.stringify({
             "@context": "https://schema.org",
             "@type": "WebPage",
-            "name": "Property for Sale in Kenya",
-            "description": "Buy property in Kenya - residential, commercial and land with verified listings and investment opportunities.",
-            "url": "https://houserentkenya.co.ke/property-for-sale",
+            "name": "Property for Sale Worldwide",
+            "description": "Buy property, land, and commercial real estate with verified listings across global markets.",
+            "url": `${BRAND.siteUrl}/property-for-sale`,
             "mainEntity": {
               "@type": "RealEstateAgent",
-              "name": "House Rent Kenya",
-              "areaServed": "Kenya",
+              "name": BRAND.name,
+              "areaServed": "Worldwide",
               "serviceType": "Property Sales and Real Estate Investment"
             }
           })
@@ -60,8 +61,8 @@ export default async function Page() {
         promoted={promoted}
         regular={regular}
         totalProperties={promoted.length + regular.length}
-        title="Featured Properties for Sale in Kenya"
-        description={`Discover ${promoted.length + regular.length} premium properties for sale. Verified apartments, houses, land & commercial real estate with investment opportunities across Kenya.`}
+        title="Featured Properties for Sale Worldwide"
+        description={`Discover ${promoted.length + regular.length} properties for sale across global markets. Browse apartments, houses, land, and commercial real estate with verified listings.`}
         featuredSectionTitle="Featured Properties for Sale"
         regularSectionTitle="Properties for Sale"
         viewAllLink="/search?type=buy"

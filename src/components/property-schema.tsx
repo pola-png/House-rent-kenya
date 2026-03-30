@@ -1,4 +1,5 @@
 import { Property } from '@/lib/types';
+import { BRAND } from '@/lib/brand';
 import { toWasabiProxyAbsolute } from '@/lib/wasabi';
 
 interface PropertySchemaProps {
@@ -26,7 +27,7 @@ export function PropertySchema({ property }: PropertySchemaProps) {
       "seller": {
         "@type": "Person",
         "name": property.agent?.displayName || "Property Agent",
-        "telephone": "+254706060684"
+        "telephone": BRAND.phone
       }
     },
     "address": {
@@ -54,9 +55,9 @@ export function PropertySchema({ property }: PropertySchemaProps) {
     })) || [],
     "landlord": {
       "@type": "RealEstateAgent",
-      "name": property.agent?.displayName || "House Rent Kenya Agent",
-      "telephone": "+254706060684",
-      "email": "info@houserentkenya.co.ke"
+      "name": property.agent?.displayName || `${BRAND.name} Agent`,
+      "telephone": BRAND.phone,
+      "email": BRAND.email
     }
   };
 

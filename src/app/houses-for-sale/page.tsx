@@ -1,31 +1,32 @@
 import { PromotedPropertiesLayout } from '@/components/promoted-properties-layout';
 import { getPropertiesWithPromotion } from '@/lib/promoted-properties';
 import { Metadata } from 'next';
+import { BRAND } from '@/lib/brand';
 
 export const revalidate = 3600;
 
 export const metadata: Metadata = {
-  title: 'Houses for Sale in Kenya | Buy Standalone Houses & Villas',
-  description: 'Buy houses in Kenya - standalone houses, townhouses, villas & luxury homes. 1000+ verified listings in Nairobi, Karen, Runda. Ready title deeds.',
+  title: `Houses for Sale Worldwide | ${BRAND.name}`,
+  description: 'Browse standalone houses, townhouses, villas, and luxury homes for sale across global markets.',
   keywords: [
-    'houses for sale Kenya',
-    'standalone houses Kenya',
-    'buy house Kenya',
-    'townhouses for sale Kenya',
-    'villas for sale Kenya',
-    'luxury houses Kenya',
-    'family homes for sale Kenya',
-    'residential houses Kenya',
-    'houses for sale Nairobi'
+    'houses for sale',
+    'standalone houses',
+    'buy house',
+    'townhouses for sale',
+    'villas for sale',
+    'luxury houses',
+    'family homes for sale',
+    'residential houses',
+    'buy family home'
   ],
   openGraph: {
-    title: 'Houses for Sale in Kenya | Premium Standalone Homes',
-    description: 'Discover premium standalone houses and villas for sale across Kenya with ready title deeds.',
-    url: 'https://houserentkenya.co.ke/houses-for-sale',
+    title: `Houses for Sale Worldwide | ${BRAND.name}`,
+    description: 'Discover premium standalone houses and villas for sale across global markets.',
+    url: `${BRAND.siteUrl}/houses-for-sale`,
     type: 'website'
   },
   alternates: {
-    canonical: 'https://houserentkenya.co.ke/houses-for-sale'
+    canonical: `${BRAND.siteUrl}/houses-for-sale`
   }
 };
 
@@ -44,13 +45,13 @@ export default async function Page() {
           __html: JSON.stringify({
             "@context": "https://schema.org",
             "@type": "WebPage",
-            "name": "Houses for Sale in Kenya",
-            "description": "Buy standalone houses, townhouses and villas in Kenya with verified listings and ready title deeds.",
-            "url": "https://houserentkenya.co.ke/houses-for-sale",
+            "name": "Houses for Sale Worldwide",
+            "description": "Buy standalone houses, townhouses, and villas with verified listings across global markets.",
+            "url": `${BRAND.siteUrl}/houses-for-sale`,
             "mainEntity": {
               "@type": "RealEstateAgent",
-              "name": "House Rent Kenya",
-              "areaServed": "Kenya",
+              "name": BRAND.name,
+              "areaServed": "Worldwide",
               "serviceType": "House Sales and Property Investment"
             }
           })
@@ -61,8 +62,8 @@ export default async function Page() {
         promoted={promoted}
         regular={regular}
         totalProperties={all.length}
-        title="Houses for Sale in Kenya - Buy Your Dream Home"
-        description={`Discover ${all.length}+ houses for sale in Kenya. Standalone houses, townhouses, villas & luxury homes available for purchase with ready title deeds and financing options.`}
+        title="Houses for Sale Worldwide"
+        description={`Discover ${all.length}+ houses for sale across global markets. Browse standalone houses, townhouses, villas, and premium family homes.`}
         featuredSectionTitle="Featured Houses for Sale"
         regularSectionTitle="More Houses for Sale"
         viewAllLink="/search?property_type=house&type=sale"

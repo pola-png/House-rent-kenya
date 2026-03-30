@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import Image from 'next/image';
-import { Building, UserPlus, Loader2 } from 'lucide-react';
+import { UserPlus, Loader2 } from 'lucide-react';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
 import * as z from 'zod';
@@ -16,6 +16,8 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '
 import placeholderImages from '@/lib/placeholder-images.json';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/hooks/use-auth-supabase';
+import { BRAND } from '@/lib/brand';
+import { BrandMark } from '@/components/brand-mark';
 
 const formSchema = z.object({
   firstName: z.string().min(1, { message: 'First name is required.' }),
@@ -118,7 +120,7 @@ export default function SignupPage() {
                     <FormItem className="grid gap-2">
                       <FormLabel className="text-sm font-medium">Phone Number</FormLabel>
                       <FormControl>
-                        <Input placeholder="+254 712 345 678" className="h-11" {...field} disabled={isSubmitting}/>
+                        <Input placeholder={BRAND.phoneDisplay} className="h-11" {...field} disabled={isSubmitting}/>
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -183,10 +185,7 @@ export default function SignupPage() {
         <div className="absolute inset-0 bg-gradient-to-br from-blue-500/90 via-indigo-600/90 to-purple-700/90 flex flex-col justify-between p-12 text-white">
           <div>
             <Link href="/" className="flex items-center gap-3 group">
-              <div className="p-3 rounded-xl bg-white/20 backdrop-blur-sm group-hover:bg-white/30 transition-colors">
-                <Building className="h-7 w-7 text-white" />
-              </div>
-              <span className="text-2xl font-bold font-headline">House Rent Kenya</span>
+              <BrandMark textClassName="text-2xl font-bold font-headline" />
             </Link>
           </div>
           <div className="max-w-lg">

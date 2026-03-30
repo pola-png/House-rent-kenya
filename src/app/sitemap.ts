@@ -1,8 +1,10 @@
 import type { MetadataRoute } from 'next';
 import { supabase } from '@/lib/supabase';
+import { COUNTRIES, slugifyCountry } from '@/lib/countries';
+import { BRAND } from '@/lib/brand';
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
-  const baseUrl = 'https://houserentkenya.co.ke';
+  const baseUrl = BRAND.siteUrl;
   
   // Static pages
   const staticPages = [
@@ -59,121 +61,49 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   // SEO-focused landing pages
   const seoPages = [
     {
-      url: `${baseUrl}/nairobi-properties`,
+      url: `${baseUrl}/rentals-worldwide`,
       lastModified: new Date(),
       changeFrequency: 'daily' as const,
       priority: 0.9,
     },
     {
-      url: `${baseUrl}/house-rent-in-nairobi`,
+      url: `${baseUrl}/family-homes-for-rent`,
       lastModified: new Date(),
       changeFrequency: 'daily' as const,
       priority: 0.9,
     },
     {
-      url: `${baseUrl}/house-rent-in-kenya`,
+      url: `${baseUrl}/city-properties`,
       lastModified: new Date(),
       changeFrequency: 'daily' as const,
       priority: 0.9,
     },
     {
-      url: `${baseUrl}/house-rent-in-muthaiga`,
+      url: `${baseUrl}/budget-rentals`,
       lastModified: new Date(),
       changeFrequency: 'daily' as const,
       priority: 0.9,
     },
     {
-      url: `${baseUrl}/house-rent-in-westlands`,
+      url: `${baseUrl}/1-bedroom-homes`,
       lastModified: new Date(),
-      changeFrequency: 'daily' as const,
-      priority: 0.9,
-    },
-    {
-      url: `${baseUrl}/house-rent-in-kilimani`,
-      lastModified: new Date(),
-      changeFrequency: 'daily' as const,
-      priority: 0.9,
-    },
-    {
-      url: `${baseUrl}/house-rent-in-karen`,
-      lastModified: new Date(),
-      changeFrequency: 'daily' as const,
-      priority: 0.9,
-    },
-    {
-      url: `${baseUrl}/house-rent-in-lavington`,
-      lastModified: new Date(),
-      changeFrequency: 'daily' as const,
-      priority: 0.9,
-    },
-    {
-      url: `${baseUrl}/house-rent-in-kileleshwa`,
-      lastModified: new Date(),
-      changeFrequency: 'daily' as const,
-      priority: 0.9,
-    },
-    {
-      url: `${baseUrl}/house-rent-in-runda`,
-      lastModified: new Date(),
-      changeFrequency: 'daily' as const,
-      priority: 0.9,
-    },
-    {
-      url: `${baseUrl}/house-rent-in-parklands`,
-      lastModified: new Date(),
-      changeFrequency: 'daily' as const,
-      priority: 0.9,
-    },
-    {
-      url: `${baseUrl}/bedsitter-for-rent-in-muthaiga`,
-      lastModified: new Date(),
-      changeFrequency: 'daily' as const,
-      priority: 0.9,
-    },
-    {
-      url: `${baseUrl}/apartments-for-rent-in-westlands`,
-      lastModified: new Date(),
-      changeFrequency: 'daily' as const,
-      priority: 0.9,
-    },
-    {
-      url: `${baseUrl}/2-bedroom-rent-in-kenya`,
-      lastModified: new Date(),
-      changeFrequency: 'daily' as const,
+      changeFrequency: 'weekly' as const,
       priority: 0.8,
     },
     {
-      url: `${baseUrl}/3-bedroom-rent-in-kenya`,
+      url: `${baseUrl}/2-bedroom-homes`,
       lastModified: new Date(),
-      changeFrequency: 'daily' as const,
+      changeFrequency: 'weekly' as const,
       priority: 0.8,
     },
     {
-      url: `${baseUrl}/bedsitter-for-rent-in-kasarani`,
+      url: `${baseUrl}/3-bedroom-homes`,
       lastModified: new Date(),
-      changeFrequency: 'daily' as const,
+      changeFrequency: 'weekly' as const,
       priority: 0.8,
     },
     {
-      url: `${baseUrl}/1-bedroom-house-for-rent-in-kisumu`,
-      lastModified: new Date(),
-      changeFrequency: 'daily' as const,
-      priority: 0.8,
-    },
-    {
-      url: `${baseUrl}/2-bedroom-house-for-rent-in-mombasa`,
-      lastModified: new Date(),
-      changeFrequency: 'daily' as const,
-      priority: 0.8,
-    },
-    {
-      url: `${baseUrl}/3-bedroom-house-for-rent-in-meru`,
-      lastModified: new Date(),
-      changeFrequency: 'daily' as const,
-      priority: 0.8,
-    },
-    {
-      url: `${baseUrl}/houses-for-rent-in-kenya`,
+      url: `${baseUrl}/countries`,
       lastModified: new Date(),
       changeFrequency: 'daily' as const,
       priority: 0.9,
@@ -206,42 +136,6 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       url: `${baseUrl}/real-estate-agents-near-me`,
       lastModified: new Date(),
       changeFrequency: 'weekly' as const,
-      priority: 0.8,
-    },
-    {
-      url: `${baseUrl}/buy-a-house`,
-      lastModified: new Date(),
-      changeFrequency: 'daily' as const,
-      priority: 0.9,
-    },
-    {
-      url: `${baseUrl}/new-homes-for-sale`,
-      lastModified: new Date(),
-      changeFrequency: 'daily' as const,
-      priority: 0.9,
-    },
-    {
-      url: `${baseUrl}/real-estate-listings`,
-      lastModified: new Date(),
-      changeFrequency: 'daily' as const,
-      priority: 0.9,
-    },
-    {
-      url: `${baseUrl}/realtor-near-me`,
-      lastModified: new Date(),
-      changeFrequency: 'weekly' as const,
-      priority: 0.8,
-    },
-    {
-      url: `${baseUrl}/1-bedroom-in-kenya`,
-      lastModified: new Date(),
-      changeFrequency: 'daily' as const,
-      priority: 0.8,
-    },
-    {
-      url: `${baseUrl}/1-bedroom-for-rent-in-kenya`,
-      lastModified: new Date(),
-      changeFrequency: 'daily' as const,
       priority: 0.8,
     },
   ];
@@ -278,11 +172,10 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
 
   // Location-based pages
   const locations = [
-    'nairobi', 'westlands', 'kilimani', 'karen', 'lavington', 'kileleshwa',
-    'parklands', 'upperhill', 'south-b', 'south-c', 'langata', 'kasarani',
-    'thika', 'kiambu', 'ruiru', 'kikuyu', 'limuru', 'juja', 'runda', 'muthaiga',
-    'nyari', 'spring-valley', 'gigiri', 'ridgeways', 'rosslyn', 'mombasa',
-    'diani', 'nyali', 'bamburi', 'kisumu', 'nakuru', 'eldoret'
+    'lagos', 'abuja', 'london', 'manchester', 'dubai', 'abu dhabi', 'new york',
+    'toronto', 'vancouver', 'singapore', 'sydney', 'melbourne', 'johannesburg',
+    'cape town', 'paris', 'berlin', 'madrid', 'rome', 'tokyo', 'bangkok',
+    'mumbai', 'delhi', 'istanbul', 'doha', 'riyadh', 'nairobi', 'accra', 'bali'
   ];
 
   const locationPages = locations.map(location => ({
@@ -302,5 +195,12 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     priority: 0.8,
   }));
 
-  return [...staticPages, ...seoPages, ...propertyPages, ...locationPages, ...typePages];
+  const countryPages = COUNTRIES.map((country) => ({
+    url: `${baseUrl}/countries/${slugifyCountry(country)}`,
+    lastModified: new Date(),
+    changeFrequency: 'weekly' as const,
+    priority: 0.7,
+  }));
+
+  return [...staticPages, ...seoPages, ...countryPages, ...propertyPages, ...locationPages, ...typePages];
 }

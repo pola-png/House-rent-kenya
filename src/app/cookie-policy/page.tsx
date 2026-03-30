@@ -1,10 +1,11 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Cookie } from "lucide-react";
 import { Metadata } from 'next';
+import { BRAND } from "@/lib/brand";
 
 export const metadata: Metadata = {
-  title: 'Cookie Policy | House Rent Kenya',
-  description: 'Learn about how House Rent Kenya uses cookies and similar technologies to improve your browsing experience.',
+  title: `Cookie Policy | ${BRAND.name}`,
+  description: `Learn about how ${BRAND.name} uses cookies and similar technologies to improve your browsing experience.`,
 };
 
 export default function CookiePolicyPage() {
@@ -89,9 +90,8 @@ export default function CookiePolicyPage() {
                     <h2 className="text-xl font-semibold text-foreground mb-3">6. Contact Us</h2>
                     <p>If you have any questions about our use of cookies, please contact us:</p>
                     <div className="bg-muted p-4 rounded-lg mt-3">
-                        <p><strong>Email:</strong> privacy@houserent.co.ke</p>
-                        <p><strong>Phone:</strong> +254 706 060 684</p>
-                        <p><strong>Address:</strong> 123 Riverside Drive, Nairobi, Kenya</p>
+                        <p><strong>Email:</strong> {BRAND.email}</p>
+                        <p><strong>Phone:</strong> {BRAND.phoneDisplay}</p>
                     </div>
                 </section>
             </CardContent>

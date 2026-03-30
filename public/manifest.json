@@ -1,7 +1,7 @@
 {
-  "name": "House Rent Kenya - Premium Property Rentals",
-  "short_name": "HouseRentKE",
-  "description": "Kenya's #1 property rental platform. Find apartments, houses & homes in Nairobi, Westlands, Kilimani. 10,000+ verified properties.",
+  "name": "House Rent & Buy - Find Homes to Rent or Buy",
+  "short_name": "Rent & Buy",
+  "description": "House Rent & Buy helps people search for properties to rent or buy with simple support and discovery tools.",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#ffffff",
@@ -9,15 +9,9 @@
   "orientation": "portrait-primary",
   "icons": [
     {
-      "src": "/android-chrome-192x192.png",
-      "sizes": "192x192",
-      "type": "image/png",
-      "purpose": "any maskable"
-    },
-    {
-      "src": "/android-chrome-512x512.png",
-      "sizes": "512x512",
-      "type": "image/png",
+      "src": "/logo.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
       "purpose": "any maskable"
     }
   ],
@@ -27,15 +21,15 @@
   "scope": "/",
   "screenshots": [
     {
-      "src": "/screenshot-wide.png",
-      "sizes": "1280x720",
-      "type": "image/png",
+      "src": "/logo.svg",
+      "sizes": "256x256",
+      "type": "image/svg+xml",
       "form_factor": "wide"
     },
     {
-      "src": "/screenshot-narrow.png",
-      "sizes": "750x1334",
-      "type": "image/png",
+      "src": "/logo.svg",
+      "sizes": "256x256",
+      "type": "image/svg+xml",
       "form_factor": "narrow"
     }
   ]

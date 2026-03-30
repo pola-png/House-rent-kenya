@@ -10,6 +10,7 @@ import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
 import { Mail, Phone, MapPin, Building, Send, Clock, CheckCircle, Loader2, MessageSquare, Users, Headphones } from "lucide-react";
 import { useState } from "react";
+import { BRAND } from "@/lib/brand";
 
 export default function ContactPage() {
   const [formData, setFormData] = useState({ firstName: '', lastName: '', email: '', message: '' });
@@ -47,7 +48,7 @@ export default function ContactPage() {
             Get In Touch
           </h1>
           <p className="text-xl text-muted-foreground mt-4 max-w-3xl mx-auto">
-            Have questions about properties or need support? Our team is here to help you find your perfect home.
+            Have questions about properties or need support? {BRAND.supportName} is here to help.
           </p>
           <div className="flex flex-wrap justify-center gap-2 mt-6">
             <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">
@@ -159,9 +160,9 @@ export default function ContactPage() {
                     <MapPin className="h-5 w-5" />
                   </div>
                   <div>
-                    <h3 className="font-semibold text-lg mb-1">Our Office</h3>
-                    <p className="text-muted-foreground">123 Riverside Drive</p>
-                    <p className="text-muted-foreground">Nairobi, Kenya</p>
+                    <h3 className="font-semibold text-lg mb-1">Support</h3>
+                    <p className="text-muted-foreground">{BRAND.name}</p>
+                    <p className="text-muted-foreground">Available online and by phone</p>
                   </div>
                 </div>
                 
@@ -172,8 +173,8 @@ export default function ContactPage() {
                   <div>
                     <h3 className="font-semibold text-lg mb-1">Email Us</h3>
                     <p className="text-sm text-muted-foreground mb-1">General inquiries:</p>
-                    <a href="mailto:propertynyumba254@gmail.com" className="text-primary hover:underline font-medium">
-                      propertynyumba254@gmail.com
+                    <a href={`mailto:${BRAND.email}`} className="text-primary hover:underline font-medium">
+                      {BRAND.email}
                     </a>
                   </div>
                 </div>
@@ -185,8 +186,8 @@ export default function ContactPage() {
                   <div>
                     <h3 className="font-semibold text-lg mb-1">Call Us</h3>
                     <p className="text-sm text-muted-foreground mb-1">Mon - Fri, 9am - 5pm</p>
-                    <a href="tel:+254706060684" className="text-primary hover:underline font-medium text-lg">
-                      +254 706 060 684
+                    <a href={`tel:${BRAND.phone}`} className="text-primary hover:underline font-medium text-lg">
+                      {BRAND.phoneDisplay}
                     </a>
                   </div>
                 </div>

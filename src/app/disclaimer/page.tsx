@@ -1,10 +1,11 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { AlertTriangle } from "lucide-react";
 import { Metadata } from 'next';
+import { BRAND } from "@/lib/brand";
 
 export const metadata: Metadata = {
-  title: 'Disclaimer | House Rent Kenya',
-  description: 'Important disclaimers and limitations regarding the use of House Rent Kenya platform and services.',
+  title: `Disclaimer | ${BRAND.name}`,
+  description: `Important disclaimers and limitations regarding the use of ${BRAND.name}.`,
 };
 
 export default function DisclaimerPage() {
@@ -26,7 +27,7 @@ export default function DisclaimerPage() {
             <CardContent className="prose max-w-none text-muted-foreground space-y-6">
                 <section>
                     <h2 className="text-xl font-semibold text-foreground mb-3">1. General Information</h2>
-                    <p>The information on this website is provided on an "as is" basis. To the fullest extent permitted by law, House Rent Kenya excludes all representations, warranties, obligations, and liabilities arising out of or in connection with the information provided on this website.</p>
+                    <p>The information on this website is provided on an "as is" basis. To the fullest extent permitted by law, {BRAND.name} excludes all representations, warranties, obligations, and liabilities arising out of or in connection with the information provided on this website.</p>
                 </section>
 
                 <section>
@@ -53,7 +54,7 @@ export default function DisclaimerPage() {
 
                 <section>
                     <h2 className="text-xl font-semibold text-foreground mb-3">5. Limitation of Liability</h2>
-                    <p>To the maximum extent permitted by law, House Rent Kenya shall not be liable for any direct, indirect, incidental, consequential, or punitive damages arising from:</p>
+                    <p>To the maximum extent permitted by law, {BRAND.name} shall not be liable for any direct, indirect, incidental, consequential, or punitive damages arising from:</p>
                     <ul className="list-disc pl-6 space-y-1">
                         <li>Use or inability to use our website or services</li>
                         <li>Reliance on information provided on the platform</li>
@@ -72,9 +73,8 @@ export default function DisclaimerPage() {
                     <h2 className="text-xl font-semibold text-foreground mb-3">7. Contact Information</h2>
                     <p>If you have any questions about this disclaimer, please contact us:</p>
                     <div className="bg-muted p-4 rounded-lg mt-3">
-                        <p><strong>Email:</strong> legal@houserent.co.ke</p>
-                        <p><strong>Phone:</strong> +254 706 060 684</p>
-                        <p><strong>Address:</strong> 123 Riverside Drive, Nairobi, Kenya</p>
+                        <p><strong>Email:</strong> {BRAND.email}</p>
+                        <p><strong>Phone:</strong> {BRAND.phoneDisplay}</p>
                     </div>
                 </section>
             </CardContent>

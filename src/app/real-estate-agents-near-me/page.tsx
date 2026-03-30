@@ -6,38 +6,36 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Phone, Mail, MapPin, Building, Star } from 'lucide-react';
 import { Metadata } from 'next';
+import { BRAND } from '@/lib/brand';
 
 export const revalidate = 3600;
 
 export const metadata: Metadata = {
-  title: 'Real Estate Agents Near Me in Kenya | Find Top Property Agents',
-  description: 'Find verified real estate agents near you in Kenya. Connect with top property agents in Nairobi, Mombasa, Kisumu. Licensed professionals for buying, selling & renting properties.',
+  title: `Real Estate Agents Worldwide | ${BRAND.name}`,
+  description: 'Find verified real estate agents across global markets for buying, selling, and renting properties.',
   keywords: [
-    'real estate agents Kenya',
+    'real estate agents worldwide',
     'property agents near me',
-    'real estate agents Nairobi',
-    'property agents Mombasa',
-    'real estate agents Kisumu',
-    'licensed property agents Kenya',
+    'licensed property agents',
     'top real estate agents',
-    'property consultants Kenya',
-    'real estate brokers Kenya',
-    'property dealers Kenya'
+    'property consultants',
+    'real estate brokers',
+    'property dealers'
   ],
   openGraph: {
-    title: 'Real Estate Agents Near Me in Kenya | Find Top Property Agents',
-    description: 'Connect with verified real estate agents in Kenya. Licensed professionals for all your property needs.',
-    url: 'https://houserentkenya.co.ke/real-estate-agents-near-me',
+    title: `Real Estate Agents Worldwide | ${BRAND.name}`,
+    description: 'Connect with verified real estate agents across global markets.',
+    url: `${BRAND.siteUrl}/real-estate-agents-near-me`,
     type: 'website',
     images: ['/real-estate-agents-og.jpg']
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'Real Estate Agents Near Me in Kenya',
-    description: 'Find verified real estate agents in Kenya. Licensed professionals for buying, selling & renting.',
+    title: `Real Estate Agents Worldwide | ${BRAND.name}`,
+    description: 'Find verified real estate agents for buying, selling, and renting properties.',
   },
   alternates: {
-    canonical: 'https://houserentkenya.co.ke/real-estate-agents-near-me'
+    canonical: `${BRAND.siteUrl}/real-estate-agents-near-me`
   },
   robots: {
     index: true,
@@ -94,27 +92,27 @@ export default async function Page() {
           __html: JSON.stringify({
             "@context": "https://schema.org",
             "@type": "WebPage",
-            "name": "Real Estate Agents Near Me in Kenya",
-            "description": "Find verified real estate agents in Kenya. Licensed professionals for buying, selling & renting properties.",
-            "url": "https://houserentkenya.co.ke/real-estate-agents-near-me",
+            "name": "Real Estate Agents Worldwide",
+            "description": "Find verified real estate agents across global markets for buying, selling, and renting properties.",
+            "url": `${BRAND.siteUrl}/real-estate-agents-near-me`,
             "mainEntity": {
               "@type": "ItemList",
-              "name": "Real Estate Agents in Kenya",
+              "name": "Real Estate Agents Worldwide",
               "numberOfItems": agents.length,
               "itemListElement": agents.slice(0, 10).map((agent, index) => ({
                 "@type": "Person",
-                "@id": `https://houserentkenya.co.ke/agents/${agent.id}`,
+                "@id": `${BRAND.siteUrl}/agents/${agent.id}`,
                 "name": agent.displayName || `${agent.firstName || ''} ${agent.lastName || ''}`.trim(),
                 "jobTitle": "Real Estate Agent",
                 "telephone": agent.phoneNumber,
                 "email": agent.email,
                 "worksFor": {
                   "@type": "Organization",
-                  "name": agent.agencyName || "House Rent Kenya"
+                  "name": agent.agencyName || BRAND.name
                 },
                 "address": {
                   "@type": "PostalAddress",
-                  "addressCountry": "Kenya"
+                  "addressCountry": "Worldwide"
                 }
               }))
             },
@@ -125,13 +123,13 @@ export default async function Page() {
                   "@type": "ListItem",
                   "position": 1,
                   "name": "Home",
-                  "item": "https://houserentkenya.co.ke"
+                  "item": BRAND.siteUrl
                 },
                 {
                   "@type": "ListItem",
                   "position": 2,
                   "name": "Real Estate Agents",
-                  "item": "https://houserentkenya.co.ke/real-estate-agents-near-me"
+                  "item": `${BRAND.siteUrl}/real-estate-agents-near-me`
                 }
               ]
             }
@@ -142,10 +140,10 @@ export default async function Page() {
       <div className="container mx-auto px-4 py-8" itemScope itemType="https://schema.org/WebPage">
         <header className="mb-12">
           <h1 className="text-4xl font-bold mb-4" itemProp="name">
-            Real Estate Agents Near Me - Kenya
+            Real Estate Agents Worldwide
           </h1>
           <p className="text-lg text-muted-foreground mb-6" itemProp="description">
-            Connect with {agents.length}+ verified real estate agents in Kenya. Find trusted property experts near you in Nairobi, Mombasa, Kisumu and across the country.
+            Connect with {agents.length}+ verified real estate agents across global markets. Find trusted property experts for renting, buying, and selling.
           </p>
           
           {/* SEO Content Section */}
@@ -156,20 +154,19 @@ export default async function Page() {
                 <h3 className="font-semibold mb-2">Licensed & Verified Professionals</h3>
                 <p className="text-muted-foreground mb-4">
                   All our real estate agents are licensed professionals with verified credentials. 
-                  They have extensive knowledge of the Kenyan property market and local regulations.
+                  They have extensive knowledge of their local property markets and practical transaction processes.
                 </p>
                 
                 <h3 className="font-semibold mb-2">Local Market Expertise</h3>
                 <p className="text-muted-foreground">
-                  Our agents specialize in different regions across Kenya including Nairobi, Mombasa, 
-                  Kisumu, Nakuru, and Eldoret with deep understanding of local property values.
+                  Our agents specialize in cities, regions, and countries across multiple markets with strong understanding of local property values.
                 </p>
               </div>
               <div>
                 <h3 className="font-semibold mb-2">Full-Service Support</h3>
                 <p className="text-muted-foreground mb-4">
                   From property search to closing deals, our agents provide comprehensive support 
-                  for buying, selling, and renting properties in Kenya.
+                  for buying, selling, and renting properties across different markets.
                 </p>
                 
                 <h3 className="font-semibold mb-2">Transparent Process</h3>
@@ -258,59 +255,55 @@ export default async function Page() {
           
           {/* Additional SEO Content */}
           <section className="mt-16">
-            <h2 className="text-3xl font-bold mb-6">Find Real Estate Agents by Location</h2>
+            <h2 className="text-3xl font-bold mb-6">Find Real Estate Agents by Market</h2>
             <div className="grid md:grid-cols-3 gap-6 mb-8">
               <div>
-                <h3 className="text-xl font-semibold mb-3">Nairobi Real Estate Agents</h3>
+                <h3 className="text-xl font-semibold mb-3">Agents in Major Cities</h3>
                 <p className="text-muted-foreground text-sm mb-4">
-                  Find top real estate agents in Nairobi specializing in Westlands, Kilimani, Karen, 
-                  Lavington, and other prime areas. Expert knowledge of Nairobi property market.
+                  Find top real estate agents in leading cities and business hubs. Browse professionals who understand local pricing, inventory, and transaction flow.
                 </p>
                 <Button variant="outline" size="sm" asChild>
-                  <Link href="/search?q=nairobi&agent=true">Nairobi Agents</Link>
+                  <Link href="/search?agent=true">City Agents</Link>
                 </Button>
               </div>
               
               <div>
-                <h3 className="text-xl font-semibold mb-3">Mombasa Property Agents</h3>
+                <h3 className="text-xl font-semibold mb-3">Agents for Coastal and Lifestyle Markets</h3>
                 <p className="text-muted-foreground text-sm mb-4">
-                  Connect with licensed real estate agents in Mombasa for coastal properties, 
-                  beachfront homes, and commercial real estate along the Kenyan coast.
+                  Connect with licensed agents covering coastal homes, resort destinations, waterfront property, and lifestyle-focused real estate.
                 </p>
                 <Button variant="outline" size="sm" asChild>
-                  <Link href="/search?q=mombasa&agent=true">Mombasa Agents</Link>
+                  <Link href="/search?type=buy&agent=true">Lifestyle Market Agents</Link>
                 </Button>
               </div>
               
               <div>
-                <h3 className="text-xl font-semibold mb-3">Kisumu Real Estate Experts</h3>
+                <h3 className="text-xl font-semibold mb-3">Agents for Growth Markets</h3>
                 <p className="text-muted-foreground text-sm mb-4">
-                  Professional real estate agents in Kisumu with expertise in lakeside properties, 
-                  residential homes, and investment opportunities in Western Kenya.
+                  Work with professionals focused on emerging cities, investment zones, and residential expansion areas with strong long-term upside.
                 </p>
                 <Button variant="outline" size="sm" asChild>
-                  <Link href="/search?q=kisumu&agent=true">Kisumu Agents</Link>
+                  <Link href="/search?type=rent&agent=true">Growth Market Agents</Link>
                 </Button>
               </div>
             </div>
             
-            <h2 className="text-3xl font-bold mb-6">Real Estate Services in Kenya</h2>
+            <h2 className="text-3xl font-bold mb-6">Real Estate Services Worldwide</h2>
             <div className="prose max-w-none text-muted-foreground">
               <p className="mb-4">
-                Our network of real estate agents in Kenya provides comprehensive property services including 
+                Our network of real estate agents provides comprehensive property services including 
                 residential sales, commercial leasing, property management, and investment consulting. Whether 
                 you're a first-time buyer, seasoned investor, or looking to rent, our agents have the expertise 
-                to guide you through the Kenyan real estate market.
+                to guide you through local and international real estate markets.
               </p>
               
               <p className="mb-4">
-                From luxury homes in Karen and Runda to affordable housing in Kasarani and Githurai, 
-                our agents cover all price ranges and property types across Kenya. They understand local 
+                From luxury homes to budget-friendly rentals, our agents cover a wide range of price points and property types across different countries and cities. They understand local 
                 market conditions, legal requirements, and can help navigate the property buying or renting process.
               </p>
               
               <p>
-                Contact our real estate agents today to start your property journey in Kenya. 
+                Contact our real estate agents today to start your property journey anywhere. 
                 All agents are verified, licensed, and committed to providing exceptional service 
                 to help you find your perfect property.
               </p>

@@ -12,6 +12,7 @@ import { useToast } from "@/hooks/use-toast";
 import { SystemSettings, getSystemSettings, saveSystemSettings } from "@/lib/system-settings";
 import { useAuth } from "@/hooks/use-auth-supabase";
 import { useRouter } from "next/navigation";
+import { BRAND } from "@/lib/brand";
 
 export default function SystemSettingsPage() {
   const { toast } = useToast();
@@ -226,13 +227,13 @@ export default function SystemSettingsPage() {
                   <Label>M-Pesa Number</Label>
                   <Input value={settings.payment.mpesaNumber}
                          onChange={(e) => setSettings(prev => ({ ...prev, payment: { ...prev.payment, mpesaNumber: e.target.value } }))}
-                         placeholder="+2547..." />
+                         placeholder={BRAND.phone} />
                 </div>
                 <div>
                   <Label>Account/Name</Label>
                   <Input value={settings.payment.accountName}
                          onChange={(e) => setSettings(prev => ({ ...prev, payment: { ...prev.payment, accountName: e.target.value } }))}
-                         placeholder="House Rent Kenya" />
+                         placeholder={BRAND.name} />
                 </div>
                 <div>
                   <Label>Paybill (optional)</Label>
