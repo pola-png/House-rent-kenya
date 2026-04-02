@@ -164,6 +164,13 @@ export function Header() {
         breadcrumbTitle
       ) {
         label = breadcrumbTitle;
+      } else if (
+        pathname?.startsWith('/property/') &&
+        index === segments.length - 1 &&
+        !breadcrumbTitle
+      ) {
+        // Avoid flashing raw slug/UUID before the real title is available.
+        return;
       }
       
       breadcrumbs.push({ label, href: currentPath });
