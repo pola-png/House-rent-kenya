@@ -7,7 +7,6 @@ import React, { useEffect, useState } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
 
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 import { Sheet, SheetContent, SheetTrigger, SheetClose, SheetTitle, SheetDescription } from '@/components/ui/sheet';
 import {
   DropdownMenu,
@@ -22,7 +21,6 @@ import { useToast } from '@/hooks/use-toast';
 import { Skeleton } from './ui/skeleton';
 import { Separator } from './ui/separator';
 import { useAuth } from '@/hooks/use-auth-supabase';
-import { BrandMark } from './brand-mark';
 import { SEO_NAV_LINKS } from '@/lib/seo-pages';
 
 const navLinks = [
@@ -291,7 +289,12 @@ export function Header() {
       <div className="container mx-auto px-4">
         <div className="flex h-20 items-center justify-between">
           <Link href="/" className="flex items-center gap-2">
-            <BrandMark textClassName={logoTextClasses} />
+            <div className="p-2 rounded-md transition-colors bg-primary">
+              <Building className="h-6 w-6 transition-colors text-primary-foreground" />
+            </div>
+            <span className={logoTextClasses}>
+              House Rent Kenya
+            </span>
           </Link>
 
           <div className="hidden lg:flex items-center gap-6">
@@ -358,7 +361,10 @@ export function Header() {
                 </div>
                 <div className="flex justify-between items-center p-4 border-b flex-shrink-0">
                    <Link href="/" className="flex items-center gap-2">
-                      <BrandMark />
+                      <div className="p-2 rounded-md bg-primary">
+                          <Building className="h-6 w-6 text-primary-foreground" />
+                      </div>
+                      <span className="text-xl font-bold font-headline">House Rent Kenya</span>
                   </Link>
                   <SheetClose asChild>
                      <Button variant="ghost" size="icon">

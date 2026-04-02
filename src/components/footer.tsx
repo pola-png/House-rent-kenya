@@ -1,8 +1,6 @@
 import Link from 'next/link';
-import { Facebook, Twitter, Instagram, Linkedin, Mail, Phone } from 'lucide-react';
+import { Building, Facebook, Twitter, Instagram, Linkedin } from 'lucide-react';
 import { Button } from './ui/button';
-import { BrandMark } from './brand-mark';
-import { BRAND } from '@/lib/brand';
 import { SEO_FOOTER_LINKS } from '@/lib/seo-pages';
 
 const footerLinks = {
@@ -36,22 +34,15 @@ export function Footer() {
       <div className="container mx-auto px-4 pt-16 pb-8">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 mb-12">
           <div className="md:col-span-2 lg:col-span-1">
-            <Link href="/" className="inline-flex mb-4">
-              <BrandMark />
+            <Link href="/" className="flex items-center gap-2 mb-4">
+              <div className="p-2 rounded-md bg-primary">
+                <Building className="h-6 w-6 text-primary-foreground" />
+              </div>
+              <span className="text-xl font-bold font-headline">House Rent Kenya</span>
             </Link>
             <p className="text-muted-foreground mb-6">
-              {BRAND.footerDescription}
+              Your one-stop platform for finding rental properties across Kenya. We simplify the search for your next home.
             </p>
-            <div className="space-y-2 text-sm text-muted-foreground mb-6">
-              <a href={`mailto:${BRAND.email}`} className="flex items-center gap-2 hover:text-primary transition-colors">
-                <Mail className="h-4 w-4" />
-                {BRAND.email}
-              </a>
-              <a href={`tel:${BRAND.phone}`} className="flex items-center gap-2 hover:text-primary transition-colors">
-                <Phone className="h-4 w-4" />
-                {BRAND.phoneDisplay}
-              </a>
-            </div>
             <div className="flex space-x-3">
               {socialLinks.map((social) => (
                 <Button key={social.name} variant="outline" size="icon" asChild className="bg-background hover:bg-primary hover:text-primary-foreground">
@@ -104,7 +95,7 @@ export function Footer() {
         </div>
 
         <div className="border-t pt-6">
-          <p className="text-sm text-muted-foreground text-center">&copy; {new Date().getFullYear()} {BRAND.name}. All rights reserved.</p>
+          <p className="text-sm text-muted-foreground text-center">&copy; {new Date().getFullYear()} House Rent Kenya. All rights reserved.</p>
         </div>
       </div>
     </footer>
