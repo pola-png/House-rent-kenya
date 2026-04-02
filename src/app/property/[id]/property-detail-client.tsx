@@ -49,9 +49,12 @@ const amenityIcons: Record<string, any> = {
 
 interface PropertyDetailClientProps {
   id: string;
+  breadcrumbTitle?: string | null;
 }
 
-export default function PropertyDetailClient({ id }: PropertyDetailClientProps) {
+const BREADCRUMB_TITLE_KEY = 'propertyBreadcrumbTitle';
+
+export default function PropertyDetailClient({ id, breadcrumbTitle }: PropertyDetailClientProps) {
   const [property, setProperty] = useState<Property | null>(null);
   const [loading, setLoading] = useState(true);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
@@ -61,8 +64,6 @@ export default function PropertyDetailClient({ id }: PropertyDetailClientProps) 
   const [callbackPhone, setCallbackPhone] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [relevantProperties, setRelevantProperties] = useState<Property[]>([]);
-  const [showAllProperties, setShowAllProperties] = useState(false);
-  const [loadingMoreProperties, setLoadingMoreProperties] = useState(false);
   const { toast } = useToast();
   const { user } = useAuth();
   const router = useRouter();
@@ -97,6 +98,22 @@ export default function PropertyDetailClient({ id }: PropertyDetailClientProps) 
       fetchRelevantProperties(property);
     }
   }, [property]);
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+
+    if (breadcrumbTitle) {
+      window.localStorage.setItem(BREADCRUMB_TITLE_KEY, breadcrumbTitle);
+      window.dispatchEvent(new Event('breadcrumb-title-change'));
+    }
+
+    return () => {
+      if (window.localStorage.getItem(BREADCRUMB_TITLE_KEY) === breadcrumbTitle) {
+        window.localStorage.removeItem(BREADCRUMB_TITLE_KEY);
+        window.dispatchEvent(new Event('breadcrumb-title-change'));
+      }
+    };
+  }, [breadcrumbTitle]);
 
   const fetchProperty = async () => {
     try {
@@ -172,39 +189,21 @@ export default function PropertyDetailClient({ id }: PropertyDetailClientProps) 
   const fetchRelevantProperties = async (currentProperty: any, limit: number = 6) => {
     try {
       console.log('Fetching properties for:', currentProperty.title);
-      
-      // Use the same approach as landing pages
-      let query = supabase.from('properties').select('*');
-      
-      // Exclude current property
-      query = query.neq('id', currentProperty.id);
-      
-      // Filter by location OR property type OR bedrooms (similar properties)
-      query = query.or(`location.ilike.%${currentProperty.location}%,propertyType.ilike.%${currentProperty.propertyType}%,bedrooms.eq.${currentProperty.bedrooms}`);
-      
-      // Order by promotion status first, then by creation date (same as landing pages)
-      query = query
+
+      // Only show properties from the same location as the opened listing.
+      const { data } = await supabase
+        .from('properties')
+        .select('*')
+        .neq('id', currentProperty.id)
+        .ilike('location', currentProperty.location)
         .order('isPremium', { ascending: false, nullsFirst: false })
         .order('createdAt', { ascending: false })
         .limit(limit);
 
-      const { data } = await query;
       console.log('Properties found:', data?.length || 0);
-      
+
       if (!data || data.length === 0) {
-        // Fallback: get any properties if no similar ones found
-        const fallbackQuery = supabase.from('properties')
-          .select('*')
-          .neq('id', currentProperty.id)
-          .order('isPremium', { ascending: false, nullsFirst: false })
-          .order('createdAt', { ascending: false })
-          .limit(limit);
-          
-        const { data: fallbackData } = await fallbackQuery;
-        if (fallbackData && fallbackData.length > 0) {
-          const mapped = await mapPropertiesWithAgents(fallbackData);
-          setRelevantProperties(mapped);
-        }
+        setRelevantProperties([]);
         return;
       }
 
@@ -215,14 +214,6 @@ export default function PropertyDetailClient({ id }: PropertyDetailClientProps) 
     } catch (error) {
       console.error('Error fetching properties:', error);
     }
-  };
-
-  const loadMoreProperties = async () => {
-    if (!property) return;
-    setLoadingMoreProperties(true);
-    await fetchRelevantProperties(property, 18);
-    setShowAllProperties(true);
-    setLoadingMoreProperties(false);
   };
 
   const mapPropertiesWithAgents = async (properties: any[]) => {
@@ -324,6 +315,23 @@ export default function PropertyDetailClient({ id }: PropertyDetailClientProps) 
       </div>
     );
   }
+
+  const viewMoreSearchHref = (() => {
+    const params = new URLSearchParams();
+    params.set('q', property.location);
+
+    if (property.status === 'For Sale') {
+      params.set('type', 'buy');
+    } else if (property.status === 'Short Let') {
+      params.set('type', 'short-let');
+    } else if (property.status === 'Land') {
+      params.set('type', 'land');
+    } else {
+      params.set('type', 'rent');
+    }
+
+    return `/search?${params.toString()}`;
+  })();
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-background to-muted/20">
@@ -795,20 +803,10 @@ export default function PropertyDetailClient({ id }: PropertyDetailClientProps) 
 
         {/* View More Properties Button */}
         <div className="mt-12 text-center">
-          <Button 
-            variant="outline" 
-            size="lg"
-            onClick={loadMoreProperties}
-            disabled={loadingMoreProperties}
-          >
-            {loadingMoreProperties ? (
-              <>
-                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                Loading...
-              </>
-            ) : (
-              `View More Properties in ${property.location}`
-            )}
+          <Button variant="outline" size="lg" asChild>
+            <Link href={viewMoreSearchHref}>
+              View More Properties in {property.location}
+            </Link>
           </Button>
         </div>
 

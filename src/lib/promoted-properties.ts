@@ -14,6 +14,7 @@ export async function getPropertiesWithPromotion(
     bedrooms?: number;
     maxBedrooms?: number;
     status?: string;
+    statuses?: string[];
     propertyType?: string;
     limit?: number;
   }
@@ -37,7 +38,9 @@ export async function getPropertiesWithPromotion(
     }
   }
   
-  if (filters.status) {
+  if (filters.statuses && filters.statuses.length > 0) {
+    query = query.in('status', filters.statuses);
+  } else if (filters.status) {
     query = query.eq('status', filters.status);
   }
   
@@ -45,8 +48,8 @@ export async function getPropertiesWithPromotion(
     query = query.or(`propertyType.ilike.%${filters.propertyType}%,title.ilike.%${filters.propertyType}%`);
   }
 
-  // Limit to 6 regular properties for landing pages
-  const regularLimit = 6;
+  // Allow callers to control how many regular properties are returned.
+  const regularLimit = filters.limit ?? 6;
   const { data } = await query.limit(regularLimit).order('createdAt', { ascending: false });
   if (!data) return { promoted: [], regular: [], all: [] };
 
@@ -57,7 +60,9 @@ export async function getPropertiesWithPromotion(
     .or('isPremium.eq.true,featuredExpiresAt.gt.' + new Date().toISOString());
   
   // Apply same status filter to promoted properties
-  if (filters.status) {
+  if (filters.statuses && filters.statuses.length > 0) {
+    promotedQuery = promotedQuery.in('status', filters.statuses);
+  } else if (filters.status) {
     promotedQuery = promotedQuery.eq('status', filters.status);
   }
   

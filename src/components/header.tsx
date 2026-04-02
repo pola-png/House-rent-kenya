@@ -2,8 +2,8 @@
 "use client";
 
 import Link from 'next/link';
-import { Menu, User, X, ChevronDown, ChevronUp, Briefcase, UserCircle, LogOut, Home, Settings, Search, ChevronRight } from 'lucide-react';
-import React, { useState } from 'react';
+import { Building, Menu, User, X, ChevronDown, ChevronUp, Briefcase, UserCircle, LogOut, Home, Settings, Search, ChevronRight } from 'lucide-react';
+import React, { useEffect, useState } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
 
 import { Button } from '@/components/ui/button';
@@ -23,6 +23,7 @@ import { Skeleton } from './ui/skeleton';
 import { Separator } from './ui/separator';
 import { useAuth } from '@/hooks/use-auth-supabase';
 import { BrandMark } from './brand-mark';
+import { SEO_NAV_LINKS } from '@/lib/seo-pages';
 
 const navLinks = [
   { href: '/search?type=rent', label: 'To Rent' },
@@ -34,21 +35,7 @@ const navLinks = [
   { href: '/support', label: 'Support' },
 ];
 
-const seoPages = [
-  { href: '/rentals-worldwide', label: 'Rentals Worldwide' },
-  { href: '/family-homes-for-rent', label: 'Family Homes for Rent' },
-  { href: '/city-properties', label: 'City Properties' },
-  { href: '/1-bedroom-homes', label: '1 Bedroom Homes' },
-  { href: '/2-bedroom-homes', label: '2 Bedroom Homes' },
-  { href: '/3-bedroom-homes', label: '3 Bedroom Homes' },
-  { href: '/budget-rentals', label: 'Budget Rentals' },
-  { href: '/countries', label: 'Property by Country' },
-  { href: '/real-estate-for-sale', label: 'Real Estate for Sale' },
-  { href: '/homes-for-sale', label: 'Homes for Sale' },
-  { href: '/houses-for-sale', label: 'Houses for Sale' },
-  { href: '/property-for-sale', label: 'Property for Sale' },
-  { href: '/real-estate-agents-near-me', label: 'Real Estate Agents Worldwide' },
-];
+const BREADCRUMB_TITLE_KEY = 'propertyBreadcrumbTitle';
 
 export function Header() {
   const { user, logout, loading: isUserLoading } = useAuth();
@@ -57,8 +44,25 @@ export function Header() {
   const pathname = usePathname();
   const [searchQuery, setSearchQuery] = useState('');
   const [isBrowseOpen, setIsBrowseOpen] = useState(false);
+  const [breadcrumbTitle, setBreadcrumbTitle] = useState<string | null>(null);
   const isHomepage = pathname === '/';
   const isAdminPage = pathname?.startsWith('/admin');
+
+  useEffect(() => {
+    const syncBreadcrumbTitle = () => {
+      if (typeof window === 'undefined') return;
+      setBreadcrumbTitle(window.localStorage.getItem(BREADCRUMB_TITLE_KEY));
+    };
+
+    syncBreadcrumbTitle();
+    window.addEventListener('breadcrumb-title-change', syncBreadcrumbTitle);
+    window.addEventListener('storage', syncBreadcrumbTitle);
+
+    return () => {
+      window.removeEventListener('breadcrumb-title-change', syncBreadcrumbTitle);
+      window.removeEventListener('storage', syncBreadcrumbTitle);
+    };
+  }, []);
   
   // Check if we're in admin mode by looking at localStorage and pathname
   const getIsAdminMode = () => {
@@ -120,7 +124,7 @@ export function Header() {
   };
 
   const getBreadcrumbs = () => {
-    const segments = pathname.split('/').filter(Boolean);
+    const segments = pathname?.split('/').filter(Boolean) ?? [];
     const breadcrumbs = [{ label: 'Home', href: '/' }];
     
     let currentPath = '';
@@ -154,6 +158,12 @@ export function Header() {
         label = 'Add New';
       } else if (segment === 'edit') {
         label = 'Edit';
+      } else if (
+        pathname?.startsWith('/property/') &&
+        index === segments.length - 1 &&
+        breadcrumbTitle
+      ) {
+        label = breadcrumbTitle;
       }
       
       breadcrumbs.push({ label, href: currentPath });
@@ -295,7 +305,7 @@ export function Header() {
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="start" className="w-64">
-                  {seoPages.map((page) => (
+                  {SEO_NAV_LINKS.map((page) => (
                     <DropdownMenuItem key={page.href} asChild>
                       <Link href={page.href} className="text-sm">
                         {page.label}
@@ -384,7 +394,7 @@ export function Header() {
                     </button>
                     {isBrowseOpen && (
                       <div className="ml-2 border-l border-muted pl-2 space-y-1">
-                        {seoPages.map((page) => (
+                        {SEO_NAV_LINKS.map((page) => (
                           <SheetClose asChild key={page.href}>
                             <Link
                               href={page.href}

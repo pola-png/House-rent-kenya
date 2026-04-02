@@ -322,7 +322,7 @@ export default function Home() {
         <section className="py-12 md:py-20 bg-secondary/50">
           <div className="container mx-auto px-4">
             <h2 className="text-2xl sm:text-3xl md:text-4xl font-headline font-bold text-center mb-6 sm:mb-10 px-4">Browse by Category</h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-8">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
               <div className="space-y-3">
                 <h3 className="font-semibold text-lg">Rental Properties</h3>
                 <div className="flex flex-col gap-2">
@@ -371,6 +371,17 @@ export default function Home() {
                   </Button>
                   <Button variant="outline" asChild className="justify-start h-auto p-3">
                     <Link href="/property-for-sale">Property for Sale</Link>
+                  </Button>
+                </div>
+              </div>
+              <div className="space-y-3">
+                <h3 className="font-semibold text-lg">Rent & Buy</h3>
+                <div className="flex flex-col gap-2">
+                  <Button variant="outline" asChild className="justify-start h-auto p-3">
+                    <Link href="/property-for-rent-and-sale-in-kenya">Property for Rent and Sale in Kenya</Link>
+                  </Button>
+                  <Button variant="outline" asChild className="justify-start h-auto p-3">
+                    <Link href="/house-rent-and-buy-in-kenya">House Rent and Buy in Kenya</Link>
                   </Button>
                 </div>
               </div>

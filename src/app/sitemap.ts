@@ -2,6 +2,7 @@ import type { MetadataRoute } from 'next';
 import { supabase } from '@/lib/supabase';
 import { COUNTRIES, slugifyCountry } from '@/lib/countries';
 import { BRAND } from '@/lib/brand';
+import { SEO_SITEMAP_LINKS } from '@/lib/seo-pages';
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const baseUrl = BRAND.siteUrl;
@@ -59,86 +60,12 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   ];
 
   // SEO-focused landing pages
-  const seoPages = [
-    {
-      url: `${baseUrl}/rentals-worldwide`,
-      lastModified: new Date(),
-      changeFrequency: 'daily' as const,
-      priority: 0.9,
-    },
-    {
-      url: `${baseUrl}/family-homes-for-rent`,
-      lastModified: new Date(),
-      changeFrequency: 'daily' as const,
-      priority: 0.9,
-    },
-    {
-      url: `${baseUrl}/city-properties`,
-      lastModified: new Date(),
-      changeFrequency: 'daily' as const,
-      priority: 0.9,
-    },
-    {
-      url: `${baseUrl}/budget-rentals`,
-      lastModified: new Date(),
-      changeFrequency: 'daily' as const,
-      priority: 0.9,
-    },
-    {
-      url: `${baseUrl}/1-bedroom-homes`,
-      lastModified: new Date(),
-      changeFrequency: 'weekly' as const,
-      priority: 0.8,
-    },
-    {
-      url: `${baseUrl}/2-bedroom-homes`,
-      lastModified: new Date(),
-      changeFrequency: 'weekly' as const,
-      priority: 0.8,
-    },
-    {
-      url: `${baseUrl}/3-bedroom-homes`,
-      lastModified: new Date(),
-      changeFrequency: 'weekly' as const,
-      priority: 0.8,
-    },
-    {
-      url: `${baseUrl}/countries`,
-      lastModified: new Date(),
-      changeFrequency: 'daily' as const,
-      priority: 0.9,
-    },
-    {
-      url: `${baseUrl}/houses-for-sale`,
-      lastModified: new Date(),
-      changeFrequency: 'daily' as const,
-      priority: 0.9,
-    },
-    {
-      url: `${baseUrl}/homes-for-sale`,
-      lastModified: new Date(),
-      changeFrequency: 'daily' as const,
-      priority: 0.9,
-    },
-    {
-      url: `${baseUrl}/property-for-sale`,
-      lastModified: new Date(),
-      changeFrequency: 'daily' as const,
-      priority: 0.9,
-    },
-    {
-      url: `${baseUrl}/real-estate-for-sale`,
-      lastModified: new Date(),
-      changeFrequency: 'daily' as const,
-      priority: 0.9,
-    },
-    {
-      url: `${baseUrl}/real-estate-agents-near-me`,
-      lastModified: new Date(),
-      changeFrequency: 'weekly' as const,
-      priority: 0.8,
-    },
-  ];
+  const seoPages = SEO_SITEMAP_LINKS.map((page) => ({
+    url: `${baseUrl}${page.href}`,
+    lastModified: new Date(),
+    changeFrequency: 'daily' as const,
+    priority: page.href.includes('/agents') ? 0.8 : 0.9,
+  }));
 
   // Dynamic property pages with images
   let propertyPages: MetadataRoute.Sitemap = [];

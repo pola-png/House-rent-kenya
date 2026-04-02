@@ -299,7 +299,7 @@ export default async function PropertyPage({ params }: Props) {
       />
       
       {property && <PropertySchema property={property} />}
-      <PropertyDetailClient id={actualId} />
+      <PropertyDetailClient id={actualId} breadcrumbTitle={property?.title || null} />
     </>
   );
 }

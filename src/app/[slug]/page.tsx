@@ -46,7 +46,7 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
           description,
         },
         alternates: {
-          canonical: `https://houserentkenya.com/${slug}`,
+          canonical: `https://houserentkenya.co.ke/${slug}`,
         },
       };
     }
