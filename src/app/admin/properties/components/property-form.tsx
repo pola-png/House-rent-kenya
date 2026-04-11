@@ -427,7 +427,7 @@ export function PropertyForm({ property }: PropertyFormProps) {
       // Upload any newly added images (keep existing on edit)
       const uploadedImageUrls = await withTimeout(
         uploadImages(imageFiles),
-        25000,
+        60000,
         "Image upload"
       );
       dlog('Uploaded image URLs:', uploadedImageUrls);
@@ -615,13 +615,21 @@ export function PropertyForm({ property }: PropertyFormProps) {
     const uploadPromises = files.map(async (file, index) => {
       const sanitizedName = file.name.replace(/[^a-zA-Z0-9.-]/g, '-');
       const fileName = `properties/${user?.uid}/${Date.now()}-${sanitizedName}`;
-      try {
-        console.log(`Uploading image ${index + 1}:`, fileName);
-        const publicUrl = await withTimeout(
+      const doUpload = async () =>
+        withTimeout(
           uploadMediaFile(file, fileName, mediaBucket),
-          20000,
+          60000,
           `Image ${index + 1} upload`
         );
+      try {
+        console.log(`Uploading image ${index + 1}:`, fileName);
+        let publicUrl: string;
+        try {
+          publicUrl = await doUpload();
+        } catch (error) {
+          console.warn(`Retrying image ${index + 1} upload...`);
+          publicUrl = await doUpload();
+        }
         console.log(`Image ${index + 1} uploaded:`, publicUrl);
         return publicUrl;
       } catch (error: any) {

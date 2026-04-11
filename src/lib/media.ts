@@ -2,6 +2,8 @@ import { supabase } from './supabase';
 
 const PROPERTY_MEDIA_BUCKET =
   process.env.NEXT_PUBLIC_SUPABASE_PROPERTY_BUCKET || 'property-images';
+const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
+const SUPABASE_ANON_KEY = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '';
 
 export function getPropertyMediaBucket(): string {
   return PROPERTY_MEDIA_BUCKET;
@@ -24,14 +26,31 @@ export function normalizeImageArray(images: unknown): string[] {
 }
 
 export async function uploadMediaFile(file: File, path: string, bucket = PROPERTY_MEDIA_BUCKET): Promise<string> {
-  const { error } = await supabase.storage.from(bucket).upload(path, file, {
-    cacheControl: '3600',
-    upsert: false,
-    contentType: file.type || undefined,
+  if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
+    throw new Error('Missing Supabase URL or anon key');
+  }
+
+  const { data: { session } } = await supabase.auth.getSession();
+  if (!session?.access_token) {
+    throw new Error('No active Supabase session');
+  }
+
+  const uploadUrl = `${SUPABASE_URL.replace(/\/+$/, '')}/storage/v1/object/${bucket}/${encodeURIComponent(path).replace(/%2F/g, '/')}`;
+  const res = await fetch(uploadUrl, {
+    method: 'POST',
+    headers: {
+      'Authorization': `Bearer ${session.access_token}`,
+      'apikey': SUPABASE_ANON_KEY,
+      'Content-Type': file.type || 'application/octet-stream',
+      'x-upsert': 'false',
+      'Cache-Control': '3600',
+    },
+    body: file,
   });
 
-  if (error) {
-    throw error;
+  if (!res.ok) {
+    const text = await res.text().catch(() => '');
+    throw new Error(`Upload failed (${res.status}): ${text || res.statusText}`);
   }
 
   const { data } = supabase.storage.from(bucket).getPublicUrl(path);
