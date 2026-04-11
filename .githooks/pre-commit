@@ -1,0 +1,7 @@
+#!/bin/sh
+set -e
+
+if git diff --cached --name-only | grep -q "^src/app/favicon\.ico$"; then
+  echo "ERROR: src/app/favicon.ico is locked. Do not modify the favicon."
+  exit 1
+fi
