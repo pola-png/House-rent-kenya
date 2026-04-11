@@ -36,7 +36,7 @@ import { supabase } from "@/lib/supabase";
 import { getAccessTokenSync } from "@/lib/token-cache";
 
 import { generateWithAI } from "@/lib/ai-service";
-import { getPropertyMediaBucket, uploadMediaFile } from "@/lib/media";
+import { getPropertyMediaBucket, normalizeImageArray, uploadMediaFile } from "@/lib/media";
 
 
 const DEBUG_FORM = true;
@@ -126,9 +126,30 @@ export function PropertyForm({ property }: PropertyFormProps) {
   const router = useRouter();
   const [imagePreviews, setImagePreviews] = React.useState<string[]>([]);
   const [imageFiles, setImageFiles] = React.useState<File[]>([]);
+  const [existingImages, setExistingImages] = React.useState<string[]>([]);
   const [lastError, setLastError] = React.useState<string | null>(null);
   const fileInputRef = React.useRef<HTMLInputElement>(null);
   const [isGeneratingKeywords, setIsGeneratingKeywords] = React.useState(false);
+  const mediaBucket = getPropertyMediaBucket();
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || "";
+
+  const withTimeout = async <T,>(p: Promise<T>, ms: number, label: string) => {
+    let to: any;
+    const timeout = new Promise<never>((_, reject) => {
+      to = setTimeout(() => reject(new Error(`${label} timed out`)), ms);
+    });
+    try {
+      return await Promise.race([p, timeout]);
+    } finally {
+      clearTimeout(to);
+    }
+  };
+
+  React.useEffect(() => {
+    if (property?.images) {
+      setExistingImages(normalizeImageArray(property.images));
+    }
+  }, [property?.images]);
 
   const generateAIKeywords = async (onChange: (value: string) => void) => {
     const currentData = {
@@ -183,7 +204,7 @@ export function PropertyForm({ property }: PropertyFormProps) {
     const title = form.watch('title');
     const description = form.watch('description');
     const keywords = form.watch('keywords');
-    const hasImages = imagePreviews.length > 0 || (property?.images && property.images.length > 0);
+    const hasImages = imagePreviews.length > 0 || existingImages.length > 0;
     
     return title?.trim() && description?.trim() && keywords?.trim() && hasImages;
   };
@@ -194,7 +215,7 @@ export function PropertyForm({ property }: PropertyFormProps) {
     const title = form.watch('title');
     const description = form.watch('description');
     const keywords = form.watch('keywords');
-    const hasImages = imagePreviews.length > 0 || (property?.images && property.images.length > 0);
+    const hasImages = imagePreviews.length > 0 || existingImages.length > 0;
     
     const missingFields = [];
     if (!title?.trim()) missingFields.push('Title');
@@ -404,9 +425,13 @@ export function PropertyForm({ property }: PropertyFormProps) {
       }
 
       // Upload any newly added images (keep existing on edit)
-      const uploadedImageUrls = await uploadImages(imageFiles);
+      const uploadedImageUrls = await withTimeout(
+        uploadImages(imageFiles),
+        25000,
+        "Image upload"
+      );
       dlog('Uploaded image URLs:', uploadedImageUrls);
-      const existingImageUrls = Array.isArray(property?.images) ? (property!.images as string[]) : [];
+      const existingImageUrls = existingImages;
       // De-duplicate while preserving order
       const allImageUrls = Array.from(new Set([...(existingImageUrls || []), ...uploadedImageUrls]));
       setIsUploadingImages(false);
@@ -592,7 +617,11 @@ export function PropertyForm({ property }: PropertyFormProps) {
       const fileName = `properties/${user?.uid}/${Date.now()}-${sanitizedName}`;
       try {
         console.log(`Uploading image ${index + 1}:`, fileName);
-        const publicUrl = await uploadMediaFile(file, fileName, getPropertyMediaBucket());
+        const publicUrl = await withTimeout(
+          uploadMediaFile(file, fileName, mediaBucket),
+          20000,
+          `Image ${index + 1} upload`
+        );
         console.log(`Image ${index + 1} uploaded:`, publicUrl);
         return publicUrl;
       } catch (error: any) {
@@ -622,6 +651,30 @@ export function PropertyForm({ property }: PropertyFormProps) {
     setImagePreviews(prev => prev.filter((_, index) => index !== indexToRemove));
     setImageFiles(prev => prev.filter((_, index) => index !== indexToRemove));
     URL.revokeObjectURL(imagePreviews[indexToRemove]);
+  };
+
+  const getStoragePathFromPublicUrl = (url: string): string | null => {
+    if (!url || !supabaseUrl) return null;
+    const prefix = `${supabaseUrl.replace(/\/+$/, '')}/storage/v1/object/public/${mediaBucket}/`;
+    if (url.startsWith(prefix)) {
+      return url.slice(prefix.length);
+    }
+    return null;
+  };
+
+  const handleRemoveExistingImage = async (indexToRemove: number) => {
+    const url = existingImages[indexToRemove];
+    setExistingImages(prev => prev.filter((_, index) => index !== indexToRemove));
+    const path = url ? getStoragePathFromPublicUrl(url) : null;
+    if (!path) return;
+    try {
+      const { error } = await supabase.storage.from(mediaBucket).remove([path]);
+      if (error) {
+        console.error('Failed to delete storage file:', error);
+      }
+    } catch (error) {
+      console.error('Failed to delete storage file:', error);
+    }
   };
   
 
@@ -948,6 +1001,26 @@ export function PropertyForm({ property }: PropertyFormProps) {
               </CardHeader>
               <CardContent>
                 <div className="grid grid-cols-3 gap-2">
+                  {existingImages.map((src, index) => (
+                    <div key={`existing-${index}`} className="relative aspect-square">
+                      <Image
+                        src={src}
+                        alt={`Existing image ${index + 1}`}
+                        fill
+                        className="rounded-md object-cover"
+                      />
+                      <Button
+                        type="button"
+                        variant="destructive"
+                        size="icon"
+                        className="absolute top-1 right-1 h-6 w-6"
+                        onClick={() => handleRemoveExistingImage(index)}
+                      >
+                        <X className="h-4 w-4" />
+                        <span className="sr-only">Remove image</span>
+                      </Button>
+                    </div>
+                  ))}
                   {imagePreviews.map((src, index) => (
                     <div key={index} className="relative aspect-square">
                       <Image
