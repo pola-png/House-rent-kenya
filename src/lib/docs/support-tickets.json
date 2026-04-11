@@ -1,0 +1,29 @@
+[
+  {
+    "id": "ticket_1759499277",
+    "userId": "agent2",
+    "subject": "Issue with Property Promotion",
+    "status": "open",
+    "createdAt": "2024-07-30T10:00:00Z",
+    "updatedAt": "2024-07-30T10:05:00Z",
+    "lastMessage": "Hi there. Thanks for reaching out. Could you please..."
+  },
+  {
+    "id": "ticket_1759499278",
+    "userId": "agent1",
+    "subject": "Question about Subscription Plans",
+    "status": "open",
+    "createdAt": "2024-07-29T09:30:00Z",
+    "updatedAt": "2024-07-29T09:30:00Z",
+    "lastMessage": "Good morning, I have a question about the Pro..."
+  },
+  {
+    "id": "ticket_1759499279",
+    "userId": "user1",
+    "subject": "Cannot Edit My Profile",
+    "status": "closed",
+    "createdAt": "2024-07-28T15:00:00Z",
+    "updatedAt": "2024-07-28T16:00:00Z",
+    "lastMessage": "Resolved. Thank you for your help!"
+  }
+]

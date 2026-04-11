@@ -1,0 +1,45 @@
+
+[
+  {
+    "id": "1",
+    "title": "The Ultimate Guide to Renting Your First Apartment",
+    "excerpt": "Everything you need to know, from budgeting and searching to signing the lease and moving in. A must-read for first-time renters.",
+    "imageId": "property_1_2",
+    "category": "Renting"
+  },
+  {
+    "id": "2",
+    "title": "5 Red Flags to Watch Out for When Viewing a Rental Property",
+    "excerpt": "Don't get caught in a bad deal. Learn to spot the warning signs during a property viewing to ensure you find a safe and suitable home.",
+    "imageId": "property_2_2",
+    "category": "Renting"
+  },
+  {
+    "id": "3",
+    "title": "How to Negotiate Rent with Your Landlord",
+    "excerpt": "Yes, you can negotiate your rent! Discover effective strategies and tips for getting a better deal on your monthly payments.",
+    "imageId": "property_3_1",
+    "category": "Finance"
+  },
+  {
+    "id": "4",
+    "title": "A Landlord's Guide to Finding the Perfect Tenant",
+    "excerpt": "Screening tenants can be daunting. Follow our guide to find reliable, long-term tenants for your rental property.",
+    "imageId": "property_4_1",
+    "category": "For Landlords"
+  },
+  {
+    "id": "5",
+    "title": "Kenya's Property Hotspots: Where to Invest in 2024",
+    "excerpt": "An in-depth look at the most promising areas for real estate investment in Kenya this year, from bustling city suburbs to serene coastal towns.",
+    "imageId": "city_nairobi",
+    "category": "Investing"
+  },
+  {
+    "id": "6",
+    "title": "Decorating Your Rental on a Budget",
+    "excerpt": "Make your rental feel like home without breaking the bank. Discover affordable and renter-friendly decor ideas.",
+    "imageId": "property_1_1",
+    "category": "Lifestyle"
+  }
+]

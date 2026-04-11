@@ -1,0 +1,51 @@
+{
+  "name": "House Rent & Buy - Find Homes to Rent or Buy",
+  "short_name": "Rent & Buy",
+  "description": "House Rent & Buy helps people search for properties to rent or buy with simple support and discovery tools.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#e67e22",
+  "orientation": "portrait-primary",
+  "categories": ["business", "lifestyle", "utilities"],
+  "lang": "en-KE",
+  "scope": "/",
+  "icons": [
+    {
+      "src": "/logo.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "maskable any"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Search Properties",
+      "short_name": "Search",
+      "description": "Search for rental properties",
+      "url": "/search",
+      "icons": [{ "src": "/favicon.svg", "sizes": "any" }]
+    },
+    {
+      "name": "Post Property",
+      "short_name": "Post",
+      "description": "List your property for rent",
+      "url": "/admin/properties/new",
+      "icons": [{ "src": "/favicon.svg", "sizes": "any" }]
+    }
+  ],
+  "screenshots": [
+    {
+      "src": "/logo.svg",
+      "sizes": "256x256",
+      "type": "image/svg+xml",
+      "form_factor": "wide"
+    },
+    {
+      "src": "/logo.svg",
+      "sizes": "256x256",
+      "type": "image/svg+xml",
+      "form_factor": "narrow"
+    }
+  ]
+}

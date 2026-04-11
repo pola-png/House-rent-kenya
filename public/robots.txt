@@ -1,0 +1,29 @@
+# Allow all crawlers
+User-agent: *
+Allow: /
+
+# Disallow admin pages and low-value URLs
+Disallow: /admin/
+Disallow: /api/
+Disallow: /_next/
+Disallow: /private/
+Disallow: /search?*page=*
+Disallow: /search?*sort=*
+Disallow: /search?*view=*
+Disallow: /search?*limit=*
+
+# Allow high-value search URLs
+Allow: /search?q=*
+Allow: /search?type=*
+Allow: /search?property_type=*
+Allow: /search?beds=*
+
+# Sitemap location
+Sitemap: https://gotperfect.online/sitemap.xml
+
+# Crawl-delay for specific bots
+User-agent: Googlebot
+Crawl-delay: 1
+
+User-agent: Bingbot
+Crawl-delay: 2

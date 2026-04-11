@@ -1,0 +1,23 @@
+[
+  {
+    "id": "msg1",
+    "ticketId": "ticket_1759499277",
+    "text": "Hello, I am having trouble promoting my new listing. The payment seems to go through, but it does not reflect on the site.",
+    "senderId": "user1",
+    "timestamp": "2024-07-30T10:00:00Z"
+  },
+  {
+    "id": "msg2",
+    "ticketId": "ticket_1759499277",
+    "text": "Hi there. Thanks for reaching out. Could you please provide the listing ID and the payment confirmation code? We'll look into it right away.",
+    "senderId": "agent1",
+    "timestamp": "2024-07-30T10:05:00Z"
+  },
+  {
+    "id": "msg3",
+    "ticketId": "ticket_1759499278",
+    "text": "Good morning, I have a question about the Pro subscription plan. Does it include performance analytics?",
+    "senderId": "user1",
+    "timestamp": "2024-07-29T09:30:00Z"
+  }
+]

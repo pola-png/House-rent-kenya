@@ -1,0 +1,192 @@
+
+{
+  "entities": {
+    "Property": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Property",
+      "type": "object",
+      "description": "Represents a property listing for rent.",
+      "properties": {
+        "id": { "type": "string", "description": "Unique identifier for the property." },
+        "title": { "type": "string", "description": "Title of the property listing." },
+        "description": { "type": "string", "description": "Detailed description of the property." },
+        "propertyType": { "type": "string", "description": "Type of property (e.g., apartment, house, condo).", "enum": ["Apartment", "House", "Condo", "Townhouse", "Villa"] },
+        "location": { "type": "string", "description": "Location of the property (e.g., address, neighborhood)." },
+        "city": { "type": "string", "description": "City where the property is located." },
+        "price": { "type": "number", "description": "Rental price of the property." },
+        "bedrooms": { "type": "number", "description": "Number of bedrooms in the property." },
+        "bathrooms": { "type": "number", "description": "Number of bathrooms in the property." },
+        "area": { "type": "number", "description": "Area of the property in sqft." },
+        "amenities": { "type": "array", "items": { "type": "string" }, "description": "List of amenities." },
+        "images": { "type": "array", "items": { "type": "string" }, "description": "List of image IDs." },
+        "landlordId": { "type": "string", "description": "The UID of the user who owns this property." },
+        "agent": { "$ref": "#/backend/entities/UserProfile" },
+        "featured": { "type": "boolean" },
+        "latitude": { "type": "number" },
+        "longitude": { "type": "number" },
+        "status": { "type": "string", "enum": ["For Rent", "For Sale", "Short Let", "Land", "Rented"] },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" },
+        "keywords": { "type": "string" }
+      },
+      "required": ["title", "description", "price", "location", "city", "bedrooms", "bathrooms", "area", "type", "landlordId"]
+    },
+    "UserProfile": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "UserProfile",
+      "type": "object",
+      "description": "Represents a user of the House Rent Kenya platform.",
+      "properties": {
+        "uid": { "type": "string", "description": "Firebase Authentication UID." },
+        "firstName": { "type": "string" },
+        "lastName": { "type": "string" },
+        "displayName": { "type": "string" },
+        "email": { "type": "string", "format": "email" },
+        "phoneNumber": { "type": "string" },
+        "role": { "type": "string", "enum": ["user", "agent"] },
+        "agencyName": { "type": "string", "description": "Agency name if the user is an agent." },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["uid", "firstName", "lastName", "displayName", "email", "role"]
+    },
+    "CallbackRequest": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "CallbackRequest",
+      "type": "object",
+      "description": "Represents a user's request for a callback from an agent.",
+      "properties": {
+        "propertyId": { "type": "string", "description": "ID of the property of interest." },
+        "propertyTitle": { "type": "string", "description": "Title of the property of interest." },
+        "userName": { "type": "string", "description": "Name of the user requesting the callback." },
+        "userPhone": { "type": "string", "description": "Phone number of the user." },
+        "agentId": { "type": "string", "description": "UID of the agent who should make the callback." },
+        "status": { "type": "string", "enum": ["pending", "contacted"], "description": "Status of the callback request." },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["propertyId", "propertyTitle", "userName", "userPhone", "agentId", "status", "createdAt"]
+    },
+    "SupportTicket": {
+      "title": "SupportTicket",
+      "type": "object",
+      "description": "Represents a support ticket submitted by a user.",
+      "properties": {
+        "userId": { "type": "string" },
+        "subject": { "type": "string" },
+        "status": { "type": "string", "enum": ["open", "closed"] },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["userId", "subject", "status", "createdAt"]
+    },
+    "Message": {
+      "title": "Message",
+      "type": "object",
+      "description": "Represents a single message within a support ticket.",
+      "properties": {
+        "text": { "type": "string" },
+        "senderId": { "type": "string" },
+        "timestamp": { "type": "string", "format": "date-time" }
+      },
+      "required": ["text", "senderId", "timestamp"]
+    },
+    "Development": {
+      "title": "Development",
+      "type": "object",
+      "description": "Represents a new property development.",
+      "properties": {
+        "title": { "type": "string" },
+        "location": { "type": "string" },
+        "priceRange": { "type": "string" },
+        "description": { "type": "string" },
+        "imageId": { "type": "string" },
+        "status": { "type": "string" }
+      },
+      "required": ["title", "location", "priceRange", "description", "imageId", "status"]
+    },
+    "Article": {
+      "title": "Article",
+      "type": "object",
+      "description": "Represents a property advice article.",
+      "properties": {
+        "title": { "type": "string" },
+        "excerpt": { "type": "string" },
+        "imageId": { "type": "string" },
+        "category": { "type": "string" }
+      },
+      "required": ["title", "excerpt", "imageId", "category"]
+    }
+  },
+  "auth": {
+    "providers": ["password", "google.com"]
+  },
+  "firestore": {
+    "structure": [
+      {
+        "path": "/users/{userId}",
+        "definition": {
+          "entityName": "UserProfile",
+          "schema": { "$ref": "#/backend/entities/UserProfile" },
+          "description": "Stores user profile information. This is private data, owned by the user.",
+          "params": [{ "name": "userId", "description": "The unique identifier of the user." }]
+        }
+      },
+      {
+        "path": "/properties/{propertyId}",
+        "definition": {
+          "entityName": "Property",
+          "schema": { "$ref": "#/backend/entities/Property" },
+          "description": "Stores all property listings.",
+          "params": [{ "name": "propertyId", "description": "The unique identifier of the property." }]
+        }
+      },
+      {
+        "path": "/callback-requests/{callbackId}",
+        "definition": {
+            "entityName": "CallbackRequest",
+            "schema": { "$ref": "#/backend/entities/CallbackRequest" },
+            "description": "Stores callback requests from potential clients.",
+            "params": [{ "name": "callbackId", "description": "The unique identifier of the callback request." }]
+        }
+      },
+      {
+        "path": "/support-tickets/{ticketId}",
+        "definition": {
+          "entityName": "SupportTicket",
+          "schema": { "$ref": "#/backend/entities/SupportTicket" },
+          "description": "Stores support tickets.",
+          "params": [{ "name": "ticketId", "description": "The unique identifier for the support ticket." }]
+        }
+      },
+      {
+        "path": "/support-tickets/{ticketId}/messages/{messageId}",
+        "definition": {
+          "entityName": "Message",
+          "schema": { "$ref": "#/backend/entities/Message" },
+          "description": "Stores messages within a support ticket.",
+          "params": [
+            { "name": "ticketId", "description": "The ID of the support ticket." },
+            { "name": "messageId", "description": "The unique ID for the message." }
+          ]
+        }
+      },
+      {
+        "path": "/developments/{developmentId}",
+        "definition": {
+          "entityName": "Development",
+          "schema": { "$ref": "#/backend/entities/Development" },
+          "description": "Stores new property developments.",
+          "params": [{ "name": "developmentId", "description": "The unique identifier for the development." }]
+        }
+      },
+      {
+        "path": "/articles/{articleId}",
+        "definition": {
+          "entityName": "Article",
+          "schema": { "$ref": "#/backend/entities/Article" },
+          "description": "Stores property advice articles.",
+          "params": [{ "name": "articleId", "description": "The unique identifier for the article." }]
+        }
+      }
+    ]
+  }
+}
