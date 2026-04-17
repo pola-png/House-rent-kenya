@@ -2,6 +2,8 @@ import { NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 
+export const runtime = 'nodejs';
+
 const DEFAULT_BUCKET = process.env.NEXT_PUBLIC_SUPABASE_PROPERTY_BUCKET || 'property-images';
 
 export async function POST(req: Request) {
@@ -34,7 +36,10 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: 'Missing path' }, { status: 400 });
     }
 
-    const { error } = await supabaseAdmin.storage.from(bucket).upload(path, file, {
+    const arrayBuffer = await file.arrayBuffer();
+    const buffer = Buffer.from(arrayBuffer);
+
+    const { error } = await supabaseAdmin.storage.from(bucket).upload(path, buffer, {
       cacheControl: '3600',
       contentType: file.type || undefined,
       upsert: false,
