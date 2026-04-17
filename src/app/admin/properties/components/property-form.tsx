@@ -458,11 +458,20 @@ export function PropertyForm({ property }: PropertyFormProps) {
         throw new Error("Please add your phone number to your profile before creating a property.");
       }
 
+      dlog('Retrieving session token...');
+      const tokenTimeoutMs = 3000;
+      const tokenTimeout = new Promise<null>((resolve) => setTimeout(() => resolve(null), tokenTimeoutMs));
+      const maybeToken = await Promise.race<[string | null, null]>([
+        (async () => await getAccessToken())() as any,
+        tokenTimeout as any,
+      ]);
+      const accessToken = (maybeToken as any) || null;
+
       // Upload any newly added images (keep existing on edit)
       let uploadedImageUrls: string[] = [];
       try {
         uploadedImageUrls = await withTimeout(
-          uploadImages(imageFiles),
+          uploadImages(imageFiles, accessToken),
           60000,
           "Image upload"
         );
@@ -514,14 +523,6 @@ export function PropertyForm({ property }: PropertyFormProps) {
 
       let savedId: string | null = null;
       // Try server route first; if token missing/fails, fall back to client Supabase insert
-      dlog('Retrieving session token...');
-      const tokenTimeoutMs = 3000;
-      const tokenTimeout = new Promise<null>((resolve) => setTimeout(() => resolve(null), tokenTimeoutMs));
-      const maybeToken = await Promise.race<[string | null, null]>([
-        (async () => await getAccessToken())() as any,
-        tokenTimeout as any,
-      ]);
-      const accessToken = (maybeToken as any) || null;
       if (accessToken) {
         try { console.log('[PropertyForm] Access token present (len):', String(accessToken).length); } catch {}
         try {
@@ -622,7 +623,7 @@ export function PropertyForm({ property }: PropertyFormProps) {
 
 
 
-  const uploadImages = async (files: File[]) => {
+  const uploadImages = async (files: File[], accessToken?: string | null) => {
     if (files.length === 0) return [];
 
     console.log(`Uploading ${files.length} images...`);
@@ -632,7 +633,7 @@ export function PropertyForm({ property }: PropertyFormProps) {
       const fileName = `properties/${user?.uid}/${Date.now()}-${sanitizedName}`;
       const doUpload = async () =>
         withTimeout(
-          uploadMediaFile(file, fileName, mediaBucket),
+          uploadMediaFile(file, fileName, mediaBucket, accessToken),
           60000,
           `Image ${index + 1} upload`
         );

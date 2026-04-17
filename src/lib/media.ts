@@ -1,5 +1,3 @@
-import { supabase } from './supabase';
-
 const PROPERTY_MEDIA_BUCKET =
   process.env.NEXT_PUBLIC_SUPABASE_PROPERTY_BUCKET || 'property-images';
 export function getPropertyMediaBucket(): string {
@@ -22,9 +20,13 @@ export function normalizeImageArray(images: unknown): string[] {
   return [];
 }
 
-export async function uploadMediaFile(file: File, path: string, bucket = PROPERTY_MEDIA_BUCKET): Promise<string> {
-  const { data: { session } } = await supabase.auth.getSession();
-  if (!session?.access_token) {
+export async function uploadMediaFile(
+  file: File,
+  path: string,
+  bucket = PROPERTY_MEDIA_BUCKET,
+  accessToken?: string | null
+): Promise<string> {
+  if (!accessToken) {
     throw new Error('No active Supabase session');
   }
 
@@ -36,7 +38,7 @@ export async function uploadMediaFile(file: File, path: string, bucket = PROPERT
   const res = await fetch('/api/admin/storage/upload', {
     method: 'POST',
     headers: {
-      'Authorization': `Bearer ${session.access_token}`,
+      'Authorization': `Bearer ${accessToken}`,
     },
     body: form,
   });
