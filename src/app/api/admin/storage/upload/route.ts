@@ -42,7 +42,7 @@ export async function POST(req: Request) {
 
     if (error) {
       return NextResponse.json(
-        { error: error.message, details: error.details, hint: error.hint, code: error.code },
+        { error: error.message, code: error.name },
         { status: 400 }
       );
     }
