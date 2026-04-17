@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
+import { supabaseAdmin } from '@/lib/supabase-admin';
 
 const DEFAULT_BUCKET = process.env.NEXT_PUBLIC_SUPABASE_PROPERTY_BUCKET || 'property-images';
 
@@ -7,8 +8,7 @@ export async function POST(req: Request) {
   try {
     const anonUrl = process.env.NEXT_PUBLIC_SUPABASE_URL as string;
     const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY as string;
-    const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY as string;
-    if (!anonUrl || !anonKey || !serviceKey) {
+    if (!anonUrl || !anonKey) {
       return NextResponse.json({ error: 'Server misconfigured: missing Supabase envs' }, { status: 500 });
     }
 
@@ -34,28 +34,21 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: 'Missing path' }, { status: 400 });
     }
 
-    const uploadUrl = `${anonUrl.replace(/\/+$/, '')}/storage/v1/object/${bucket}/${encodeURIComponent(path).replace(/%2F/g, '/')}`;
-    const uploadRes = await fetch(uploadUrl, {
-      method: 'POST',
-      headers: {
-        apikey: serviceKey,
-        Authorization: `Bearer ${serviceKey}`,
-        'Content-Type': file.type || 'application/octet-stream',
-        'x-upsert': 'false',
-        'Cache-Control': '3600',
-      },
-      body: file,
+    const { error } = await supabaseAdmin.storage.from(bucket).upload(path, file, {
+      cacheControl: '3600',
+      contentType: file.type || undefined,
+      upsert: false,
     });
 
-    if (!uploadRes.ok) {
-      const text = await uploadRes.text().catch(() => '');
+    if (error) {
       return NextResponse.json(
-        { error: text || `Upload failed (${uploadRes.status})`, code: 'StorageApiError' },
+        { error: error.message, code: error.name || 'StorageApiError' },
         { status: 400 }
       );
     }
 
-    const publicUrl = `${anonUrl.replace(/\/+$/, '')}/storage/v1/object/public/${bucket}/${path.replace(/^\/+/, '')}`;
+    const { data: publicData } = supabaseAdmin.storage.from(bucket).getPublicUrl(path);
+    const publicUrl = publicData.publicUrl;
     return NextResponse.json({ publicUrl });
   } catch (e: any) {
     return NextResponse.json({ error: e?.message || 'Upload error' }, { status: 500 });
