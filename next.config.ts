@@ -1,4 +1,15 @@
 /** @type {import('next').NextConfig} */
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
+const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY || '';
+
+console.log('[build-env] NEXT_PUBLIC_SUPABASE_URL:', supabaseUrl || '(missing)');
+console.log('[build-env] SUPABASE_SERVICE_ROLE_KEY_EXISTS:', Boolean(serviceRoleKey));
+console.log('[build-env] SUPABASE_SERVICE_ROLE_KEY_LENGTH:', serviceRoleKey.length);
+console.log(
+  '[build-env] SUPABASE_SERVICE_ROLE_KEY_PREFIX:',
+  serviceRoleKey ? serviceRoleKey.slice(0, 12) : '(missing)'
+);
+
 const nextConfig = {
   images: {
     unoptimized: true,
