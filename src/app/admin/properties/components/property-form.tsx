@@ -404,6 +404,40 @@ export function PropertyForm({ property }: PropertyFormProps) {
   const [isSubmitting, setIsSubmitting] = React.useState(false);
   const [isUploadingImages, setIsUploadingImages] = React.useState(false);
 
+  const savePropertyClientSide = async (propertyPayload: any) => {
+    let saved: any = null;
+    const clientSaveTimeoutMs = 15000;
+    if (property?.id) {
+      dlog('Client save: update path');
+      const updatePromise = supabase
+        .from('properties')
+        .update({ ...propertyPayload, updatedAt: new Date().toISOString() })
+        .eq('id', property.id)
+        .select('*')
+        .single();
+      const { data, error } = await Promise.race([
+        updatePromise,
+        new Promise<any>((_, reject) => setTimeout(() => reject(new Error('Client save timed out')), clientSaveTimeoutMs)),
+      ]);
+      if (error) throw new Error(error.message);
+      saved = data;
+    } else {
+      dlog('Client save: insert path');
+      const insertPromise = supabase
+        .from('properties')
+        .insert([{ ...propertyPayload, createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() }])
+        .select('*')
+        .single();
+      const { data, error } = await Promise.race([
+        insertPromise,
+        new Promise<any>((_, reject) => setTimeout(() => reject(new Error('Client save timed out')), clientSaveTimeoutMs)),
+      ]);
+      if (error) throw new Error(error.message);
+      saved = data;
+    }
+    console.log('[PropertyForm] Client save response', saved);
+    return saved?.id || null;
+  };
 
 
   async function onSubmit(data: PropertyFormValues) {
@@ -425,11 +459,21 @@ export function PropertyForm({ property }: PropertyFormProps) {
       }
 
       // Upload any newly added images (keep existing on edit)
-      const uploadedImageUrls = await withTimeout(
-        uploadImages(imageFiles),
-        60000,
-        "Image upload"
-      );
+      let uploadedImageUrls: string[] = [];
+      try {
+        uploadedImageUrls = await withTimeout(
+          uploadImages(imageFiles),
+          60000,
+          "Image upload"
+        );
+      } catch (uploadError: any) {
+        console.error('[PropertyForm] Upload failed, continuing without new images:', uploadError);
+        toast({
+          variant: 'destructive',
+          title: 'Image Upload Failed',
+          description: 'The property will be saved without the new image. You can add it later.',
+        });
+      }
       dlog('Uploaded image URLs:', uploadedImageUrls);
       const existingImageUrls = existingImages;
       // De-duplicate while preserving order
@@ -480,80 +524,51 @@ export function PropertyForm({ property }: PropertyFormProps) {
       const accessToken = (maybeToken as any) || null;
       if (accessToken) {
         try { console.log('[PropertyForm] Access token present (len):', String(accessToken).length); } catch {}
-        // Server-side save using service role (no REST from browser)
-        const controller = new AbortController();
-        // Allow extra time on slower networks
-        const to = setTimeout(() => controller.abort(), 15000);
-        console.log('[PropertyForm] Calling /api/admin/properties/save');
-        const saveRes = await fetch('/api/admin/properties/save', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${accessToken}`,
-            'Accept': 'application/json',
-          },
-          body: JSON.stringify({ ...(property?.id ? { id: property.id } : {}), ...propertyPayload }),
-          signal: controller.signal,
-        }).catch((e) => {
-          console.error('[PropertyForm] Save request error:', e);
-          if ((e as any)?.name === 'AbortError') {
-            throw new Error('Save timed out. Please check your connection and try again.');
+        try {
+          const controller = new AbortController();
+          const to = setTimeout(() => controller.abort(), 15000);
+          console.log('[PropertyForm] Calling /api/admin/properties/save');
+          const saveRes = await fetch('/api/admin/properties/save', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${accessToken}`,
+              'Accept': 'application/json',
+            },
+            body: JSON.stringify({ ...(property?.id ? { id: property.id } : {}), ...propertyPayload }),
+            signal: controller.signal,
+          }).catch((e) => {
+            console.error('[PropertyForm] Save request error:', e);
+            if ((e as any)?.name === 'AbortError') {
+              throw new Error('Save timed out. Please check your connection and try again.');
+            }
+            throw e;
+          });
+          clearTimeout(to);
+          try { console.log('[PropertyForm] Save status:', saveRes.status); } catch {}
+          const parseError = async () => {
+            try {
+              const json = await saveRes.clone().json();
+              return json?.error || json?.message || JSON.stringify(json);
+            } catch {
+              const txt = await saveRes.text();
+              return txt;
+            }
+          };
+          if (!saveRes.ok) {
+            const msg = await parseError();
+            throw new Error(msg || `Save failed (${saveRes.status})`);
           }
-          throw e;
-        });
-        clearTimeout(to);
-        try { console.log('[PropertyForm] Save status:', saveRes.status); } catch {}
-        const parseError = async () => {
-          try {
-            const json = await saveRes.clone().json();
-            return json?.error || json?.message || JSON.stringify(json);
-          } catch {
-            const txt = await saveRes.text();
-            return txt;
-          }
-        };
-        if (!saveRes.ok) {
-          const msg = await parseError();
-          throw new Error(msg || `Save failed (${saveRes.status})`);
+          const saved = await saveRes.json().catch(() => ({}));
+          console.log('[PropertyForm] Save response', saved);
+          savedId = saved?.id || saved?.data?.id || null;
+        } catch (serverSaveError) {
+          console.warn('[PropertyForm] Server save failed, falling back to client save:', serverSaveError);
+          savedId = await savePropertyClientSide(propertyPayload);
         }
-        const saved = await saveRes.json().catch(() => ({}));
-        console.log('[PropertyForm] Save response', saved);
-        savedId = saved?.id || saved?.data?.id || null;
       } else {
-        dlog('Token missing or timed out Ã¢â‚¬â€ falling back to client Supabase save');
-        // Client-side save (requires properties RLS OFF or policy allowing anon insert)
-        let saved: any = null;
-        const clientSaveTimeoutMs = 15000;
-        if (property?.id) {
-          dlog('Client save: update path');
-          const updatePromise = supabase
-            .from('properties')
-            .update({ ...propertyPayload, updatedAt: new Date().toISOString() })
-            .eq('id', property.id)
-            .select('*')
-            .single();
-          const { data, error } = await Promise.race([
-            updatePromise,
-            new Promise<any>((_, reject) => setTimeout(() => reject(new Error('Client save timed out')), clientSaveTimeoutMs)),
-          ]);
-          if (error) throw new Error(error.message);
-          saved = data;
-        } else {
-          dlog('Client save: insert path');
-          const insertPromise = supabase
-            .from('properties')
-            .insert([{ ...propertyPayload, createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() }])
-            .select('*')
-            .single();
-          const { data, error } = await Promise.race([
-            insertPromise,
-            new Promise<any>((_, reject) => setTimeout(() => reject(new Error('Client save timed out')), clientSaveTimeoutMs)),
-          ]);
-          if (error) throw new Error(error.message);
-          saved = data;
-        }
-        console.log('[PropertyForm] Client save response', saved);
-        savedId = saved?.id || null;
+        dlog('Token missing or timed out, falling back to client Supabase save');
+        savedId = await savePropertyClientSide(propertyPayload);
       }
 
       // Promotion flow moved to Admin > Promotions page
