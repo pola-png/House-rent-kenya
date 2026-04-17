@@ -1,3 +1,6 @@
+import { supabase } from '@/lib/supabase';
+import { getAccessTokenSync } from '@/lib/token-cache';
+
 const PROPERTY_MEDIA_BUCKET =
   process.env.NEXT_PUBLIC_SUPABASE_PROPERTY_BUCKET || 'property-images';
 export function getPropertyMediaBucket(): string {
@@ -26,7 +29,19 @@ export async function uploadMediaFile(
   bucket = PROPERTY_MEDIA_BUCKET,
   accessToken?: string | null
 ): Promise<string> {
-  if (!accessToken) {
+  let token = accessToken || null;
+  if (!token) {
+    token = getAccessTokenSync();
+  }
+  if (!token) {
+    const { data, error } = await supabase.auth.getSession();
+    if (error) {
+      throw new Error(`Could not read Supabase session: ${error.message}`);
+    }
+    token = data.session?.access_token || null;
+  }
+
+  if (!token) {
     throw new Error('No active Supabase session');
   }
 
@@ -38,7 +53,7 @@ export async function uploadMediaFile(
   const res = await fetch('/api/admin/storage/upload', {
     method: 'POST',
     headers: {
-      'Authorization': `Bearer ${accessToken}`,
+      'Authorization': `Bearer ${token}`,
     },
     body: form,
   });

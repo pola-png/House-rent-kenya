@@ -9,7 +9,6 @@ const DEFAULT_BUCKET = process.env.NEXT_PUBLIC_SUPABASE_PROPERTY_BUCKET || 'prop
 export async function POST(req: Request) {
   try {
     const supabaseAdmin = getSupabaseAdmin();
-    console.log('[storage-upload] SERVICE ROLE KEY LENGTH:', process.env.SUPABASE_SERVICE_ROLE_KEY?.length ?? 0);
     const anonUrl = process.env.NEXT_PUBLIC_SUPABASE_URL as string;
     const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY as string;
     if (!anonUrl || !anonKey) {
@@ -26,9 +25,6 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: 'Invalid session' }, { status: 401 });
     }
 
-    const { data: adminAuthData, error: adminAuthError } = await supabaseAdmin.auth.getUser();
-    console.log('[storage-upload] ADMIN USER:', adminAuthData, adminAuthError);
-
     const form = await req.formData();
     const file = form.get('file');
     const path = String(form.get('path') || '');
@@ -43,6 +39,7 @@ export async function POST(req: Request) {
 
     const arrayBuffer = await file.arrayBuffer();
 
+    // Service-role storage operations bypass storage RLS entirely.
     const { error } = await supabaseAdmin.storage.from(bucket).upload(path, arrayBuffer, {
       cacheControl: '3600',
       contentType: file.type || undefined,
