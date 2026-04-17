@@ -37,9 +37,8 @@ export async function POST(req: Request) {
     }
 
     const arrayBuffer = await file.arrayBuffer();
-    const buffer = Buffer.from(arrayBuffer);
 
-    const { error } = await supabaseAdmin.storage.from(bucket).upload(path, buffer, {
+    const { error } = await supabaseAdmin.storage.from(bucket).upload(path, arrayBuffer, {
       cacheControl: '3600',
       contentType: file.type || undefined,
       upsert: false,
