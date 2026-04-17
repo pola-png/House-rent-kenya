@@ -468,21 +468,11 @@ export function PropertyForm({ property }: PropertyFormProps) {
       const accessToken = (maybeToken as any) || null;
 
       // Upload any newly added images (keep existing on edit)
-      let uploadedImageUrls: string[] = [];
-      try {
-        uploadedImageUrls = await withTimeout(
-          uploadImages(imageFiles, accessToken),
-          60000,
-          "Image upload"
-        );
-      } catch (uploadError: any) {
-        console.error('[PropertyForm] Upload failed, continuing without new images:', uploadError);
-        toast({
-          variant: 'destructive',
-          title: 'Image Upload Failed',
-          description: 'The property will be saved without the new image. You can add it later.',
-        });
-      }
+      const uploadedImageUrls = await withTimeout(
+        uploadImages(imageFiles, accessToken),
+        60000,
+        "Image upload"
+      );
       dlog('Uploaded image URLs:', uploadedImageUrls);
       const existingImageUrls = existingImages;
       // De-duplicate while preserving order
@@ -639,13 +629,7 @@ export function PropertyForm({ property }: PropertyFormProps) {
         );
       try {
         console.log(`Uploading image ${index + 1}:`, fileName);
-        let publicUrl: string;
-        try {
-          publicUrl = await doUpload();
-        } catch (error) {
-          console.warn(`Retrying image ${index + 1} upload...`);
-          publicUrl = await doUpload();
-        }
+        const publicUrl = await doUpload();
         console.log(`Image ${index + 1} uploaded:`, publicUrl);
         return publicUrl;
       } catch (error: any) {

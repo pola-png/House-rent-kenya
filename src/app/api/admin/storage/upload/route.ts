@@ -8,6 +8,18 @@ const DEFAULT_BUCKET = process.env.NEXT_PUBLIC_SUPABASE_PROPERTY_BUCKET || 'prop
 
 export async function POST(req: Request) {
   try {
+    const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY || '';
+    console.log('[storage-upload] SERVICE ROLE KEY EXISTS:', Boolean(serviceRoleKey));
+    console.log('[storage-upload] SERVICE ROLE KEY LENGTH:', serviceRoleKey.length);
+    console.log('[storage-upload] SERVICE ROLE KEY PREFIX:', serviceRoleKey ? serviceRoleKey.slice(0, 8) : '(missing)');
+
+    if (!serviceRoleKey) {
+      return NextResponse.json(
+        { error: 'Server misconfigured: missing SUPABASE_SERVICE_ROLE_KEY' },
+        { status: 500 }
+      );
+    }
+
     const supabaseAdmin = getSupabaseAdmin();
     const anonUrl = process.env.NEXT_PUBLIC_SUPABASE_URL as string;
     const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY as string;
@@ -37,6 +49,15 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: 'Missing path' }, { status: 400 });
     }
 
+    console.log('[storage-upload] REQUEST:', {
+      bucket,
+      path,
+      fileName: file.name,
+      fileType: file.type,
+      fileSize: file.size,
+      userId: userRes.user.id,
+    });
+
     const arrayBuffer = await file.arrayBuffer();
 
     // Service-role storage operations bypass storage RLS entirely.
@@ -47,6 +68,12 @@ export async function POST(req: Request) {
     });
 
     if (error) {
+      console.error('[storage-upload] STORAGE ERROR:', {
+        message: error.message,
+        name: error.name,
+        bucket,
+        path,
+      });
       return NextResponse.json(
         { error: error.message, code: error.name || 'StorageApiError' },
         { status: 400 }
