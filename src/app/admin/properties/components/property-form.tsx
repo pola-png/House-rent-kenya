@@ -623,7 +623,7 @@ export function PropertyForm({ property }: PropertyFormProps) {
       const fileName = `properties/${user?.uid}/${Date.now()}-${sanitizedName}`;
       const doUpload = async () =>
         withTimeout(
-          uploadMediaFile(file, fileName, mediaBucket, accessToken),
+          uploadMediaFile(file, fileName, mediaBucket),
           60000,
           `Image ${index + 1} upload`
         );

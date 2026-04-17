@@ -1,5 +1,4 @@
 import { NextResponse } from 'next/server';
-import { createClient } from '@supabase/supabase-js';
 import { getSupabaseAdmin } from '@/lib/supabase-admin';
 
 export const runtime = 'nodejs';
@@ -21,22 +20,6 @@ export async function POST(req: Request) {
     }
 
     const supabaseAdmin = getSupabaseAdmin();
-    const anonUrl = process.env.NEXT_PUBLIC_SUPABASE_URL as string;
-    const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY as string;
-    if (!anonUrl || !anonKey) {
-      return NextResponse.json({ error: 'Server misconfigured: missing Supabase envs' }, { status: 500 });
-    }
-
-    const authz = req.headers.get('authorization') || '';
-    const token = authz.startsWith('Bearer ') ? authz.slice(7) : '';
-    if (!token) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-
-    const supabase = createClient(anonUrl, anonKey, { auth: { persistSession: false, autoRefreshToken: false } });
-    const { data: userRes, error: userErr } = await supabase.auth.getUser(token);
-    if (userErr || !userRes?.user) {
-      return NextResponse.json({ error: 'Invalid session' }, { status: 401 });
-    }
-
     const form = await req.formData();
     const file = form.get('file');
     const path = String(form.get('path') || '');
@@ -55,7 +38,7 @@ export async function POST(req: Request) {
       fileName: file.name,
       fileType: file.type,
       fileSize: file.size,
-      userId: userRes.user.id,
+      authMode: 'service-role-only',
     });
 
     const arrayBuffer = await file.arrayBuffer();
