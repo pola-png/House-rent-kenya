@@ -12,6 +12,7 @@ import { useState, useRef, useEffect } from "react";
 import { supabase } from "@/lib/supabase";
 import { useToast } from "@/hooks/use-toast";
 import { Skeleton } from "@/components/ui/skeleton";
+import { uploadMediaFile } from "@/lib/media";
 
 export default function ProfilePage() {
   const { user, loading } = useAuth();
@@ -52,21 +53,7 @@ export default function ProfilePage() {
       const fileExt = file.name.split('.').pop();
       const fileName = `${user.uid}.${fileExt}`;
       const filePath = `avatars/${fileName}`;
-
-      const { error: uploadError } = await supabase.storage
-        .from('user-uploads')
-        .upload(filePath, file, { upsert: true });
-
-      if (uploadError) {
-        if (uploadError.message.includes('not found')) {
-          throw new Error('Storage bucket not configured. Please contact admin.');
-        }
-        throw uploadError;
-      }
-
-      const { data: { publicUrl } } = supabase.storage
-        .from('user-uploads')
-        .getPublicUrl(filePath);
+      const publicUrl = await uploadMediaFile(file, filePath, 'user-uploads');
 
       const newPhotoURL = `${publicUrl}?t=${Date.now()}`;
 
