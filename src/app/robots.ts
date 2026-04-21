@@ -6,38 +6,6 @@ export default function robots(): MetadataRoute.Robots {
       {
         userAgent: '*',
         allow: '/',
-        disallow: [
-          '/admin/',
-          '/api/',
-          '/_next/',
-          '/private/',
-          '/search?*page=*',
-          '/search?*sort=*',
-          '/search?*view=*',
-          '/search?*limit=*',
-        ],
-      },
-      {
-        userAgent: 'Googlebot',
-        allow: '/',
-        disallow: [
-          '/admin/',
-          '/api/',
-          '/_next/',
-          '/private/',
-        ],
-        crawlDelay: 1,
-      },
-      {
-        userAgent: 'Bingbot',
-        allow: '/',
-        disallow: [
-          '/admin/',
-          '/api/',
-          '/_next/',
-          '/private/',
-        ],
-        crawlDelay: 2,
       },
     ],
     sitemap: 'https://houserentkenya.co.ke/sitemap.xml',
