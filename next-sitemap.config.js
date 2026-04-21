@@ -1,6 +1,6 @@
 /** @type {import('next-sitemap').IConfig} */
 module.exports = {
-  siteUrl: 'https://gotperfect.online',
+  siteUrl: 'https://houserentkenya.co.ke',
   generateRobotsTxt: false, // We have custom robots.txt
   generateIndexSitemap: true,
   changefreq: 'daily',

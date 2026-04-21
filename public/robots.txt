@@ -19,7 +19,7 @@ Allow: /search?property_type=*
 Allow: /search?beds=*
 
 # Sitemap location
-Sitemap: https://gotperfect.online/sitemap.xml
+Sitemap: https://houserentkenya.co.ke/sitemap.xml
 
 # Crawl-delay for specific bots
 User-agent: Googlebot
