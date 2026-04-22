@@ -18,6 +18,7 @@ import {
   AdminPageHeaderSkeleton,
   AdminTableSkeleton,
 } from "@/components/admin/admin-page-skeleton";
+import { getAdminPageCache, setAdminPageCache } from "@/lib/admin-page-cache";
 
 interface PaymentRequest {
   id: string;
@@ -32,6 +33,8 @@ interface PaymentRequest {
   promotionType: "featured" | "premium";
   createdAt: string;
 }
+
+const PAYMENT_APPROVALS_CACHE_KEY = "payment-approvals";
 
 export default function PaymentApprovalsPage() {
   const { user, loading } = useAuth();
@@ -53,8 +56,17 @@ export default function PaymentApprovalsPage() {
       return;
     }
 
-    setIsLoading(true);
-    fetchPaymentRequests();
+    const cached = getAdminPageCache<PaymentRequest[]>(PAYMENT_APPROVALS_CACHE_KEY);
+    if (cached.data) {
+      setRequests(cached.data);
+      setIsLoading(false);
+    } else {
+      setIsLoading(true);
+    }
+
+    if (!cached.data || !cached.isFresh) {
+      fetchPaymentRequests();
+    }
     
     // Real-time updates every 30 seconds
     const interval = setInterval(fetchPaymentRequests, 30000);
@@ -78,6 +90,7 @@ export default function PaymentApprovalsPage() {
 
       if (error) throw error;
       setRequests(data || []);
+      setAdminPageCache(PAYMENT_APPROVALS_CACHE_KEY, data || []);
     } catch (error) {
       console.error("Error fetching payment requests:", error);
     } finally {

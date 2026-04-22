@@ -20,6 +20,7 @@ import {
   AdminPageHeaderSkeleton,
 } from '@/components/admin/admin-page-skeleton';
 import { formatCompactNumber } from '@/lib/format-number';
+import { getAdminPageCache, setAdminPageCache } from '@/lib/admin-page-cache';
 
 interface AdminStats {
   totalUsers: number;
@@ -52,6 +53,7 @@ const EMPTY_ADMIN_STATS: AdminStats = {
   recentActivity: [],
   platformHealth: { uptime: 99.9, responseTime: 245, errorRate: 0.1 },
 };
+const ADMIN_DASHBOARD_CACHE_KEY = 'admin-dashboard';
 
 export default function AdminDashboard() {
   const { user, loading } = useAuth();
@@ -70,8 +72,17 @@ export default function AdminDashboard() {
       return;
     }
 
-    setIsLoading(true);
-    fetchAdminStats();
+    const cached = getAdminPageCache<AdminStats>(ADMIN_DASHBOARD_CACHE_KEY);
+    if (cached.data) {
+      setStats(cached.data);
+      setIsLoading(false);
+    } else {
+      setIsLoading(true);
+    }
+
+    if (!cached.data || !cached.isFresh) {
+      fetchAdminStats();
+    }
     
     // Real-time updates every 30 seconds
     const interval = setInterval(fetchAdminStats, 30000);
@@ -118,13 +129,17 @@ export default function AdminDashboard() {
         .sort((a, b) => b.count - a.count)
         .slice(0, 5);
 
-      setStats((prev) => ({
-        ...prev,
-        totalProperties: properties.length,
-        totalViews,
-        activeListings: properties.filter((p) => p.status === 'For Rent' || p.status === 'For Sale').length,
-        topCities,
-      }));
+      setStats((prev) => {
+        const next = {
+          ...prev,
+          totalProperties: properties.length,
+          totalViews,
+          activeListings: properties.filter((p) => p.status === 'For Rent' || p.status === 'For Sale').length,
+          topCities,
+        };
+        setAdminPageCache(ADMIN_DASHBOARD_CACHE_KEY, next);
+        return next;
+      });
       reveal();
 
       const usersRes = await usersPromise;
@@ -133,18 +148,22 @@ export default function AdminDashboard() {
       today.setHours(0, 0, 0, 0);
       const todaySignups = users.filter((u) => new Date(u.createdAt) >= today).length;
 
-      setStats((prev) => ({
-        ...prev,
-        totalUsers: users.length,
-        totalAgents: users.filter((u) => u.role === 'agent').length,
-        todaySignups,
-        recentActivity: [
+      setStats((prev) => {
+        const next = {
+          ...prev,
+          totalUsers: users.length,
+          totalAgents: users.filter((u) => u.role === 'agent').length,
+          todaySignups,
+          recentActivity: [
           { type: 'user', description: 'New agent registered', time: '2 min ago', user: 'John Doe' },
           { type: 'property', description: 'Property promoted to featured', time: '5 min ago', user: 'Jane Smith' },
-          { type: 'payment', description: 'Payment approved', time: '8 min ago', user: 'Admin' },
-          { type: 'user', description: 'User upgraded to Pro', time: '12 min ago', user: 'Mike Johnson' },
-        ],
-      }));
+            { type: 'payment', description: 'Payment approved', time: '8 min ago', user: 'Admin' },
+            { type: 'user', description: 'User upgraded to Pro', time: '12 min ago', user: 'Mike Johnson' },
+          ],
+        };
+        setAdminPageCache(ADMIN_DASHBOARD_CACHE_KEY, next);
+        return next;
+      });
       reveal();
 
       const paymentsRes = await paymentsPromise;
@@ -153,12 +172,16 @@ export default function AdminDashboard() {
         .filter((p) => p.status === 'approved')
         .reduce((sum, p) => sum + (p.amount || 0), 0);
 
-      setStats((prev) => ({
-        ...prev,
-        totalRevenue,
-        pendingApprovals: payments.filter((p) => p.status === 'pending').length,
-        conversionRate: prev.totalProperties > 0 ? Number(((payments.length / prev.totalProperties) * 100).toFixed(1)) : 0,
-      }));
+      setStats((prev) => {
+        const next = {
+          ...prev,
+          totalRevenue,
+          pendingApprovals: payments.filter((p) => p.status === 'pending').length,
+          conversionRate: prev.totalProperties > 0 ? Number(((payments.length / prev.totalProperties) * 100).toFixed(1)) : 0,
+        };
+        setAdminPageCache(ADMIN_DASHBOARD_CACHE_KEY, next);
+        return next;
+      });
       reveal();
     } catch (error) {
       console.error('Error fetching admin stats:', error);

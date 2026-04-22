@@ -15,6 +15,7 @@ import {
   AdminPageHeaderSkeleton,
 } from "@/components/admin/admin-page-skeleton";
 import { formatCompactNumber } from "@/lib/format-number";
+import { getAdminPageCache, setAdminPageCache } from "@/lib/admin-page-cache";
 
 interface Analytics {
   totalUsers: number;
@@ -31,20 +32,50 @@ interface Analytics {
   monthlyGrowth: { month: string; users: number; properties: number; revenue: number }[];
 }
 
+const ANALYTICS_CACHE_KEY = "admin-analytics";
+
 export default function AnalyticsPage() {
-  const { user } = useAuth();
+  const { user, loading } = useAuth();
   const router = useRouter();
   const [analytics, setAnalytics] = useState<Analytics | null>(null);
   const [isLoading, setIsLoading] = useState(true);
-  const [retryTick, retryNow] = useAutoRetry(isLoading || !user, [user]);
+  const [retryTick, retryNow] = useAutoRetry(loading || isLoading || !user, [user, loading]);
 
   useEffect(() => {
-    if (user?.role !== "admin") {
+    if (loading) {
+      return;
+    }
+
+    if (!user || user.role !== "admin") {
       router.push("/admin/dashboard");
       return;
     }
-    fetchAnalytics();
-  }, [user, router, retryTick]);
+
+    const cached = getAdminPageCache<Analytics>(ANALYTICS_CACHE_KEY);
+    if (cached.data) {
+      setAnalytics(cached.data);
+      setIsLoading(false);
+    } else {
+      setIsLoading(true);
+    }
+
+    if (!cached.data || !cached.isFresh) {
+      fetchAnalytics();
+    }
+
+    const interval = setInterval(fetchAnalytics, 30000);
+    const channel = supabase
+      .channel("admin-analytics-live")
+      .on("postgres_changes", { event: "*", schema: "public", table: "profiles" }, fetchAnalytics)
+      .on("postgres_changes", { event: "*", schema: "public", table: "properties" }, fetchAnalytics)
+      .on("postgres_changes", { event: "*", schema: "public", table: "payment_requests" }, fetchAnalytics)
+      .subscribe();
+
+    return () => {
+      clearInterval(interval);
+      supabase.removeChannel(channel);
+    };
+  }, [user, loading, router, retryTick]);
 
   const fetchAnalytics = async () => {
     try {
@@ -88,7 +119,7 @@ export default function AnalyticsPage() {
         .sort((a: any, b: any) => b.listings - a.listings)
         .slice(0, 5);
 
-      setAnalytics({
+      const nextAnalytics = {
         totalUsers: users.length,
         totalAgents: users.filter((u) => u.role === "agent").length,
         totalProperties: properties.length,
@@ -101,7 +132,10 @@ export default function AnalyticsPage() {
         topAgents: topAgents as any,
         recentActivity: [],
         monthlyGrowth: [],
-      });
+      };
+
+      setAnalytics(nextAnalytics);
+      setAdminPageCache(ANALYTICS_CACHE_KEY, nextAnalytics);
     } catch (error) {
       console.error("Error fetching analytics:", error);
     } finally {
@@ -109,9 +143,7 @@ export default function AnalyticsPage() {
     }
   };
 
-  if (user?.role !== "admin") return null;
-
-  if (isLoading || !analytics) {
+  if (loading || isLoading || !analytics || !user || user.role !== "admin") {
     return (
       <div className="space-y-6">
         <AdminPageHeaderSkeleton />

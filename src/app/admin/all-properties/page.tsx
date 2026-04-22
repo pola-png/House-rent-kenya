@@ -22,6 +22,7 @@ import {
   AdminTableSkeleton,
 } from '@/components/admin/admin-page-skeleton';
 import { formatCompactNumber } from '@/lib/format-number';
+import { getAdminPageCache, setAdminPageCache } from '@/lib/admin-page-cache';
 
 interface Property {
   id: string;
@@ -43,6 +44,8 @@ interface Property {
   landlordName: string;
   landlordEmail: string;
 }
+
+const ALL_PROPERTIES_CACHE_KEY = 'all-properties';
 
 export default function AllPropertiesPage() {
   const { user, loading } = useAuth();
@@ -69,8 +72,17 @@ export default function AllPropertiesPage() {
       return;
     }
 
-    setIsLoading(true);
-    fetchAllProperties();
+    const cached = getAdminPageCache<Property[]>(ALL_PROPERTIES_CACHE_KEY);
+    if (cached.data) {
+      setProperties(cached.data);
+      setIsLoading(false);
+    } else {
+      setIsLoading(true);
+    }
+
+    if (!cached.data || !cached.isFresh) {
+      fetchAllProperties();
+    }
     const interval = setInterval(fetchAllProperties, 30000);
     const channel = supabase
       .channel('admin-all-properties-live')
@@ -153,6 +165,7 @@ export default function AllPropertiesPage() {
       }));
 
       setProperties(baseProperties);
+      setAdminPageCache(ALL_PROPERTIES_CACHE_KEY, baseProperties);
       setIsLoading(false);
 
       // Enrich owner info after the first property batch is already on screen
@@ -181,6 +194,7 @@ export default function AllPropertiesPage() {
       });
 
       setProperties(formattedProperties);
+      setAdminPageCache(ALL_PROPERTIES_CACHE_KEY, formattedProperties);
     } catch (error) {
       console.error('Error fetching properties:', error);
     } finally {

@@ -17,6 +17,7 @@ import {
   AdminPageHeaderSkeleton,
   AdminTableSkeleton,
 } from '@/components/admin/admin-page-skeleton';
+import { getAdminPageCache, setAdminPageCache } from '@/lib/admin-page-cache';
 
 interface User {
   id: string;
@@ -33,6 +34,8 @@ interface User {
   isBanned?: boolean;
   propertyCount?: number;
 }
+
+const ADMIN_USERS_CACHE_KEY = 'admin-users';
 
 export default function AdminUsersPage() {
   const { user, loading } = useAuth();
@@ -55,8 +58,17 @@ export default function AdminUsersPage() {
       return;
     }
 
-    setIsLoading(true);
-    fetchUsers();
+    const cached = getAdminPageCache<User[]>(ADMIN_USERS_CACHE_KEY);
+    if (cached.data) {
+      setUsers(cached.data);
+      setIsLoading(false);
+    } else {
+      setIsLoading(true);
+    }
+
+    if (!cached.data || !cached.isFresh) {
+      fetchUsers();
+    }
     
     // Real-time updates every 30 seconds
     const interval = setInterval(fetchUsers, 30000);
@@ -89,6 +101,10 @@ export default function AdminUsersPage() {
         ...entry,
         propertyCount: entry.propertyCount || 0,
       })));
+      setAdminPageCache(ADMIN_USERS_CACHE_KEY, (data || []).map((entry) => ({
+        ...entry,
+        propertyCount: entry.propertyCount || 0,
+      })));
       setIsLoading(false);
 
       // Get property counts for agents
@@ -108,6 +124,7 @@ export default function AdminUsersPage() {
       }));
 
       setUsers(usersWithCounts);
+      setAdminPageCache(ADMIN_USERS_CACHE_KEY, usersWithCounts);
     } catch (error) {
       console.error('Error fetching users:', error);
     } finally {
