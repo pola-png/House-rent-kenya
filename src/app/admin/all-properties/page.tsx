@@ -45,7 +45,7 @@ interface Property {
 }
 
 export default function AllPropertiesPage() {
-  const { user } = useAuth();
+  const { user, loading } = useAuth();
   const router = useRouter();
   const { toast } = useToast();
   const [properties, setProperties] = useState<Property[]>([]);
@@ -60,16 +60,26 @@ export default function AllPropertiesPage() {
   const itemsPerPage = 20;
 
   useEffect(() => {
-    if (user?.role !== 'admin') {
+    if (loading) {
+      return;
+    }
+
+    if (!user || user.role !== 'admin') {
       router.push('/admin/dashboard');
       return;
     }
+
+    setIsLoading(true);
     fetchAllProperties();
-  }, [user, router]);
+  }, [user, loading, router]);
 
   useEffect(() => {
     filterProperties();
   }, [properties, searchTerm, statusFilter, cityFilter, featuredFilter, promotedFilter]);
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchTerm, statusFilter, cityFilter, featuredFilter, promotedFilter]);
 
   const normalize = (value: unknown) => String(value ?? '').trim().toLowerCase();
 
@@ -283,9 +293,7 @@ export default function AllPropertiesPage() {
     }
   };
 
-  if (user?.role !== 'admin') return null;
-
-  if (isLoading) {
+  if (loading || isLoading || !user || user.role !== 'admin') {
     return (
       <div className="space-y-6">
         <AdminPageHeaderSkeleton />
@@ -340,13 +348,6 @@ export default function AllPropertiesPage() {
   const goToPage = (page: number) => {
     setCurrentPage(page);
   };
-
-  // Reset to first page when filters change
-  useEffect(() => {
-    setCurrentPage(1);
-  }, [searchTerm, statusFilter, cityFilter, featuredFilter, promotedFilter]);
-
-  if (user?.role !== 'admin') return null;
 
   return (
     <div className="space-y-6">

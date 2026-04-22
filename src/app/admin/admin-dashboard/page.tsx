@@ -38,23 +38,29 @@ interface AdminStats {
 }
 
 export default function AdminDashboard() {
-  const { user } = useAuth();
+  const { user, loading } = useAuth();
   const router = useRouter();
   const [stats, setStats] = useState<AdminStats | null>(null);
   const [isLoading, setIsLoading] = useState(true);
-  const [retryTick, retryNow] = useAutoRetry(isLoading || !user, [user]);
+  const [retryTick, retryNow] = useAutoRetry(loading || isLoading || !user, [user, loading]);
 
   useEffect(() => {
-    if (user?.role !== 'admin') {
+    if (loading) {
+      return;
+    }
+
+    if (!user || user.role !== 'admin') {
       router.push('/admin/dashboard');
       return;
     }
+
+    setIsLoading(true);
     fetchAdminStats();
     
     // Real-time updates every 30 seconds
     const interval = setInterval(fetchAdminStats, 30000);
     return () => clearInterval(interval);
-  }, [user, router, retryTick]);
+  }, [user, loading, router, retryTick]);
 
   const fetchAdminStats = async () => {
     try {
@@ -121,9 +127,7 @@ export default function AdminDashboard() {
     }
   };
 
-  if (user?.role !== 'admin') return null;
-
-  if (isLoading || !stats) {
+  if (loading || isLoading || !stats || !user || user.role !== 'admin') {
     return (
       <div className="space-y-6">
         <AdminPageHeaderSkeleton />
