@@ -22,6 +22,7 @@ import { Skeleton } from './ui/skeleton';
 import { Separator } from './ui/separator';
 import { useAuth } from '@/hooks/use-auth-supabase';
 import { SEO_NAV_LINKS } from '@/lib/seo-pages';
+import { getDashboardUrlForPath, isAdminModePath } from '@/lib/admin-navigation';
 
 const navLinks = [
   { href: '/search?type=rent', label: 'To Rent' },
@@ -62,38 +63,8 @@ export function Header() {
     };
   }, []);
   
-  // Check if we're in admin mode by looking at localStorage and pathname
-  const getIsAdminMode = () => {
-    if (typeof window === 'undefined') return false;
-    const viewMode = window.localStorage.getItem('adminViewMode');
-    const adminRoots = ['/admin/admin-dashboard', '/admin/users', '/admin/analytics', '/admin/bulk-actions', '/admin/settings', '/admin/blog', '/admin/all-properties', '/admin/promotions', '/admin/payment-approvals', '/admin/system-settings', '/admin/leads', '/admin/my-team'];
-    return viewMode === 'admin' && adminRoots.some(r => pathname?.startsWith(r));
-  };
-  
-  const isAdminMode = getIsAdminMode();
-  
-  // Get the appropriate dashboard URL based on current context and history
-  const getDashboardUrl = () => {
-    if (typeof window === 'undefined') return '/admin/dashboard';
-    
-    // If user is admin, check their last visited dashboard or current context
-    if (user?.role === 'admin') {
-      // If currently on admin dashboard or admin pages, go to admin dashboard
-      if (pathname?.startsWith('/admin/admin-dashboard') || isAdminMode) {
-        return '/admin/admin-dashboard';
-      }
-      // If currently on agent dashboard or agent pages, go to agent dashboard
-      if (pathname?.startsWith('/admin/dashboard') || pathname?.startsWith('/admin/properties') || pathname?.startsWith('/admin/profile')) {
-        return '/admin/dashboard';
-      }
-      // Check localStorage for last visited dashboard
-      const lastDashboard = window.localStorage.getItem('lastDashboard');
-      return lastDashboard || '/admin/admin-dashboard'; // Default to admin dashboard for admins
-    }
-    
-    // For agents, always go to agent dashboard
-    return '/admin/dashboard';
-  };
+  const isAdminMode = isAdminModePath(pathname);
+  const dashboardUrl = getDashboardUrlForPath(pathname, user?.role);
   
   const linkClasses = `text-sm font-medium transition-colors hover:text-primary ${isAdminMode ? 'dark:text-white text-white' : 'text-black'}`;
   const buttonBorderClasses = 'border-primary text-primary hover:bg-primary hover:text-primary-foreground';
@@ -133,17 +104,8 @@ export function Header() {
       // Handle admin paths properly - only show one Dashboard
       if (segment === 'admin') {
         // For /admin path, show Dashboard and link to appropriate dashboard based on context
-        const dashboardPath = getDashboardUrl();
+        const dashboardPath = dashboardUrl;
         breadcrumbs.push({ label: 'Dashboard', href: dashboardPath });
-        
-        // Store the current dashboard in localStorage for future reference
-        if (typeof window !== 'undefined') {
-          if (pathname?.includes('/admin/admin-dashboard')) {
-            window.localStorage.setItem('lastDashboard', '/admin/admin-dashboard');
-          } else if (pathname?.includes('/admin/dashboard')) {
-            window.localStorage.setItem('lastDashboard', '/admin/dashboard');
-          }
-        }
         return;
       } else if (segment === 'dashboard' || segment === 'admin-dashboard') {
         // Skip these segments as we already handled them above
@@ -189,7 +151,7 @@ export function Header() {
               <p className="text-sm font-medium text-muted-foreground px-4">My Account</p>
               {(user.role === 'agent' || user.role === 'admin') && (
                 <SheetClose asChild>
-                    <Link href={getDashboardUrl()} className="flex items-center gap-2 p-4 text-lg font-medium transition-colors hover:text-primary"><Home className="h-5 w-5"/> Dashboard</Link>
+                    <Link href={dashboardUrl} className="flex items-center gap-2 p-4 text-lg font-medium transition-colors hover:text-primary"><Home className="h-5 w-5"/> Dashboard</Link>
                 </SheetClose>
               )}
               <SheetClose asChild>
@@ -224,7 +186,7 @@ export function Header() {
             <DropdownMenuSeparator />
             {(user.role === 'agent' || user.role === 'admin') && (
               <DropdownMenuItem asChild>
-                <Link href={getDashboardUrl()}>Dashboard</Link>
+                <Link href={dashboardUrl}>Dashboard</Link>
               </DropdownMenuItem>
             )}
             <DropdownMenuItem asChild>

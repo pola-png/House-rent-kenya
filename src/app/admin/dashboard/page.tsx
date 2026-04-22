@@ -27,9 +27,11 @@ import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/use-auth-supabase";
 import { supabase } from "@/lib/supabase";
 import { normalizeImageArray } from "@/lib/media";
+import { useRouter } from "next/navigation";
 
 export default function Dashboard() {
   const { user } = useAuth();
+  const router = useRouter();
   const [properties, setProperties] = useState<Property[]>([]);
   const [recentProperties, setRecentProperties] = useState<Property[]>([]);
   const [leads, setLeads] = useState<CallbackRequest[]>([]);
@@ -153,14 +155,7 @@ export default function Dashboard() {
           {user?.role === 'admin' && (
             <button
               type="button"
-              onClick={() => {
-                try {
-                  // Open the reauth overlay in admin layout
-                  // @ts-ignore
-                  try { window.localStorage.setItem('adminViewMode', 'admin'); } catch {}
-                window.location.href = '/admin/admin-dashboard';
-                } catch {}
-              }}
+              onClick={() => router.push('/admin/admin-dashboard')}
               className="text-sm font-bold underline text-primary mr-2"
               aria-label="Switch to Admin Dashboard"
             >

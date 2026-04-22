@@ -3,18 +3,14 @@
 import { useState } from "react";
 import Link from "next/link";
 import {
-  Bell,
   Building,
   Home,
   LineChart,
   Package,
   PlusCircle,
   Users,
-  PanelLeft,
-  Search,
   MessageSquare,
   User,
-  Heart,
   PhoneCall,
   Star,
   AreaChart,
@@ -49,8 +45,6 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Input } from "@/components/ui/input";
-import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Header } from "@/components/header";
 import { NavigationLoader } from "@/components/navigation-loader";
@@ -58,9 +52,9 @@ import { useAuth } from "@/hooks/use-auth-supabase";
 import { useRouter } from "next/navigation";
 import { usePathname } from "next/navigation";
 import { useEffect } from "react";
-import { Skeleton } from "@/components/ui/skeleton";
-import { Shield, ChevronRight } from "lucide-react";
+import { Shield } from "lucide-react";
 import React from "react";
+import { getDashboardUrlForPath, isAdminModePath } from "@/lib/admin-navigation";
 
 export default function AdminLayout({
   children,
@@ -72,13 +66,6 @@ export default function AdminLayout({
   const [open, setOpen] = useState(false);
   
   const pathname = usePathname();
-  const [viewMode, setViewMode] = useState<'agent' | 'admin'>(() => {
-    if (typeof window !== 'undefined') {
-      const persisted = window.localStorage.getItem('adminViewMode');
-      if (persisted === 'admin' || persisted === 'agent') return persisted as 'agent' | 'admin';
-    }
-    return 'agent';
-  });
 
   useEffect(() => {
     if (!loading && !user) {
@@ -86,41 +73,16 @@ export default function AdminLayout({
     }
   }, [user, loading, router]);
 
-  useEffect(() => {}, []);
-
-  useEffect(() => {
-    if (!user || user.role !== 'admin') {
-      setViewMode('agent');
-      return;
-    }
-    const adminRoots = [
-      '/admin/admin-dashboard',
-      '/admin/users',
-      '/admin/analytics',
-      '/admin/bulk-actions',
-      '/admin/settings',
-      '/admin/blog',
-      '/admin/blog/new',
-      '/admin/all-properties',
-      '/admin/promotions',
-      '/admin/payment-approvals',
-      '/admin/system-settings',
-      '/admin/leads',
-      '/admin/my-team',
-    ];
-    const isAdminPath = adminRoots.some((r) => pathname?.startsWith(r));
-    const mode = isAdminPath ? 'admin' : 'agent';
-    setViewMode(mode);
-    try { window.localStorage.setItem('adminViewMode', mode); } catch {}
-  }, [pathname, user]);
-
   const handleLogout = async () => {
     await logout();
     router.push("/");
   };
 
   const isAdmin = user?.role === 'admin';
-  const isAdminMode = isAdmin && (typeof viewMode !== 'undefined' ? viewMode === 'admin' : false);
+  const isAdminMode = isAdmin && isAdminModePath(pathname);
+  const viewMode: 'agent' | 'admin' = isAdminMode ? 'admin' : 'agent';
+  const nextDashboardPath = getDashboardUrlForPath(pathname, user?.role);
+  const switchModePath = isAdminMode ? '/admin/dashboard' : '/admin/admin-dashboard';
 
   if (loading) {
     return (
@@ -144,7 +106,7 @@ export default function AdminLayout({
       <Sidebar collapsible="icon" className="mt-28 h-[calc(100vh-8rem)] flex flex-col">
         <SidebarContent className="flex flex-col">
           <SidebarHeader className="p-4">
-            <Link href="/admin/dashboard" className="flex items-center gap-2 font-semibold min-w-0">
+            <Link href={nextDashboardPath} className="flex items-center gap-2 font-semibold min-w-0">
               <Building className="h-6 w-6 text-primary shrink-0" />
               <span className="font-headline text-lg whitespace-nowrap truncate" title={viewMode === 'admin' ? 'Admin Panel' : 'Agent Panel'}>
                 {viewMode === 'admin' ? 'Admin Panel' : 'Agent Panel'}
@@ -209,7 +171,7 @@ export default function AdminLayout({
             {isAdmin && viewMode === 'admin' && (
               <>
                 <SidebarMenuItem>
-                  <SidebarMenuButton tooltip="Overview" onClick={() => { try { window.localStorage.setItem('adminViewMode', 'admin'); } catch {}; router.push('/admin/admin-dashboard'); }}>
+                  <SidebarMenuButton tooltip="Overview" onClick={() => router.push('/admin/admin-dashboard')}>
                     <Home className="h-5 w-5" />
                     <span>Overview</span>
                   </SidebarMenuButton>
@@ -369,15 +331,7 @@ export default function AdminLayout({
               <Button
                 variant="outline"
                 size="sm"
-                onClick={() => {
-                  if (viewMode === 'admin') {
-                    try { window.localStorage.setItem('adminViewMode', 'agent'); } catch {}
-                    router.push('/admin/dashboard');
-                  } else {
-                    try { window.localStorage.setItem('adminViewMode', 'admin'); } catch {}
-                    router.push('/admin/admin-dashboard');
-                  }
-                }}
+                onClick={() => router.push(switchModePath)}
                 className="hidden sm:flex items-center gap-2 bg-zinc-900 border-zinc-700 text-white hover:bg-zinc-800 transition-all duration-200"
               >
                 <Shield className="h-4 w-4" />
@@ -387,15 +341,7 @@ export default function AdminLayout({
               <Button
                 variant="outline"
                 size="icon"
-                onClick={() => {
-                  if (viewMode === 'admin') {
-                    try { window.localStorage.setItem('adminViewMode', 'agent'); } catch {}
-                    router.push('/admin/dashboard');
-                  } else {
-                    try { window.localStorage.setItem('adminViewMode', 'admin'); } catch {}
-                    router.push('/admin/admin-dashboard');
-                  }
-                }}
+                onClick={() => router.push(switchModePath)}
                 className="sm:hidden bg-zinc-900 border-zinc-700 text-white hover:bg-zinc-800"
               >
                 <Shield className="h-4 w-4" />
