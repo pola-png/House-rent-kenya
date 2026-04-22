@@ -6,6 +6,7 @@ import { Eye, TrendingUp, TrendingDown, BarChart3 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { supabase } from "@/lib/supabase";
 import { useAuth } from "@/hooks/use-auth-supabase";
+import { formatCompactNumber } from "@/lib/format-number";
 
 export function ViewAnalytics() {
   const { user } = useAuth();
@@ -88,14 +89,14 @@ export function ViewAnalytics() {
         <div className="grid grid-cols-2 gap-4">
           <div className="text-center p-3 bg-blue-50 rounded-lg">
             <div className="text-2xl font-bold text-blue-600">
-              {analytics.totalViews.toLocaleString()}
+              {formatCompactNumber(analytics.totalViews)}
             </div>
             <div className="text-xs text-blue-700">Total Views</div>
           </div>
           
           <div className="text-center p-3 bg-green-50 rounded-lg">
             <div className="text-2xl font-bold text-green-600">
-              {analytics.todayViews}
+              {formatCompactNumber(analytics.todayViews)}
             </div>
             <div className="text-xs text-green-700">Today</div>
           </div>
@@ -127,7 +128,7 @@ export function ViewAnalytics() {
               <p className="font-medium text-sm truncate">{analytics.topProperty.title}</p>
               <div className="flex items-center justify-between mt-1">
                 <span className="text-xs text-muted-foreground">
-                  {analytics.topProperty.views || 0} views
+                  {formatCompactNumber(analytics.topProperty.views || 0)} views
                 </span>
                 <Badge variant="secondary" className="text-xs">
                   Top Performer

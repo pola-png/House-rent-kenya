@@ -14,6 +14,12 @@ import {
 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { Progress } from '@/components/ui/progress';
+import {
+  AdminContentGridSkeleton,
+  AdminMetricCardsSkeleton,
+  AdminPageHeaderSkeleton,
+} from '@/components/admin/admin-page-skeleton';
+import { formatCompactNumber } from '@/lib/format-number';
 
 interface AdminStats {
   totalUsers: number;
@@ -115,7 +121,22 @@ export default function AdminDashboard() {
     }
   };
 
-  if (user?.role !== 'admin' || !stats) return null;
+  if (user?.role !== 'admin') return null;
+
+  if (isLoading || !stats) {
+    return (
+      <div className="space-y-6">
+        <AdminPageHeaderSkeleton />
+        <AdminMetricCardsSkeleton />
+        <div className="grid gap-4 grid-cols-1 md:grid-cols-3">
+          <Card className="p-6"><div className="space-y-3"><div className="h-4 w-24 animate-pulse rounded bg-muted" /><div className="h-8 w-20 animate-pulse rounded bg-muted" /><div className="h-2 w-full animate-pulse rounded bg-muted" /></div></Card>
+          <Card className="p-6"><div className="space-y-3"><div className="h-4 w-24 animate-pulse rounded bg-muted" /><div className="h-8 w-20 animate-pulse rounded bg-muted" /><div className="h-3 w-28 animate-pulse rounded bg-muted" /></div></Card>
+          <Card className="p-6"><div className="space-y-3"><div className="h-4 w-24 animate-pulse rounded bg-muted" /><div className="h-8 w-20 animate-pulse rounded bg-muted" /><div className="h-3 w-28 animate-pulse rounded bg-muted" /></div></Card>
+        </div>
+        <AdminContentGridSkeleton />
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
@@ -163,10 +184,10 @@ export default function AdminDashboard() {
             <Users className="h-4 w-4 text-green-600" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{stats.totalUsers}</div>
+            <div className="text-2xl font-bold">{formatCompactNumber(stats.totalUsers)}</div>
             <div className="flex items-center text-xs text-blue-600 mt-1">
               <Users className="h-3 w-3 mr-1" />
-              {stats.todaySignups} new today
+              {formatCompactNumber(stats.todaySignups)} new today
             </div>
           </CardContent>
         </Card>
@@ -178,10 +199,10 @@ export default function AdminDashboard() {
             <Building className="h-4 w-4 text-purple-600" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{stats.totalProperties}</div>
+            <div className="text-2xl font-bold">{formatCompactNumber(stats.totalProperties)}</div>
             <div className="flex items-center text-xs text-green-600 mt-1">
               <CheckCircle className="h-3 w-3 mr-1" />
-              {stats.activeListings} active
+              {formatCompactNumber(stats.activeListings)} active
             </div>
           </CardContent>
         </Card>
@@ -193,7 +214,7 @@ export default function AdminDashboard() {
             <Eye className="h-4 w-4 text-orange-600" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{stats.totalViews.toLocaleString()}</div>
+            <div className="text-2xl font-bold">{formatCompactNumber(stats.totalViews)}</div>
             <div className="flex items-center text-xs text-purple-600 mt-1">
               <BarChart3 className="h-3 w-3 mr-1" />
               {stats.conversionRate}% conversion

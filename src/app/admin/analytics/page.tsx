@@ -9,6 +9,12 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { TrendingUp, Users, Building, DollarSign, Eye, MapPin, Calendar, Activity } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { Badge } from "@/components/ui/badge";
+import {
+  AdminContentGridSkeleton,
+  AdminMetricCardsSkeleton,
+  AdminPageHeaderSkeleton,
+} from "@/components/admin/admin-page-skeleton";
+import { formatCompactNumber } from "@/lib/format-number";
 
 interface Analytics {
   totalUsers: number;
@@ -103,7 +109,17 @@ export default function AnalyticsPage() {
     }
   };
 
-  if (user?.role !== "admin" || !analytics) return null;
+  if (user?.role !== "admin") return null;
+
+  if (isLoading || !analytics) {
+    return (
+      <div className="space-y-6">
+        <AdminPageHeaderSkeleton />
+        <AdminMetricCardsSkeleton />
+        <AdminContentGridSkeleton />
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
@@ -130,8 +146,8 @@ export default function AnalyticsPage() {
             <Users className="h-4 w-4 text-blue-500" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{analytics.totalUsers}</div>
-            <p className="text-xs text-muted-foreground">{analytics.totalAgents} agents</p>
+            <div className="text-2xl font-bold">{formatCompactNumber(analytics.totalUsers)}</div>
+            <p className="text-xs text-muted-foreground">{formatCompactNumber(analytics.totalAgents)} agents</p>
           </CardContent>
         </Card>
 
@@ -141,8 +157,8 @@ export default function AnalyticsPage() {
             <Building className="h-4 w-4 text-purple-500" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{analytics.totalProperties}</div>
-            <p className="text-xs text-muted-foreground">{analytics.activeListings} active</p>
+            <div className="text-2xl font-bold">{formatCompactNumber(analytics.totalProperties)}</div>
+            <p className="text-xs text-muted-foreground">{formatCompactNumber(analytics.activeListings)} active</p>
           </CardContent>
         </Card>
 
@@ -152,8 +168,8 @@ export default function AnalyticsPage() {
             <Eye className="h-4 w-4 text-orange-500" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{analytics.totalViews.toLocaleString()}</div>
-            <p className="text-xs text-muted-foreground">{analytics.featuredListings} featured</p>
+            <div className="text-2xl font-bold">{formatCompactNumber(analytics.totalViews)}</div>
+            <p className="text-xs text-muted-foreground">{formatCompactNumber(analytics.featuredListings)} featured</p>
           </CardContent>
         </Card>
       </div>

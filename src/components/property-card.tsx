@@ -11,6 +11,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { createPropertyUrl } from '@/lib/utils-seo';
 import { OptimizedImage } from '@/components/optimized-image';
 import { useImpressionTracking } from '@/hooks/use-impression-tracking';
+import { formatCompactNumber } from '@/lib/format-number';
 
 type PropertyCardProps = {
   property: Property;
@@ -160,7 +161,7 @@ export function PropertyCard({ property }: PropertyCardProps) {
             </div>
             <div className="flex items-center gap-1 text-xs text-muted-foreground">
               <Eye className="h-3 w-3" />
-              <span>{property.views || 0}</span>
+              <span>{formatCompactNumber(property.views || 0)}</span>
             </div>
           </div>
         </CardContent>

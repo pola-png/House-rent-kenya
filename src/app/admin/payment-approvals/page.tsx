@@ -13,6 +13,11 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { useToast } from "@/hooks/use-toast";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
+import {
+  AdminMetricCardsSkeleton,
+  AdminPageHeaderSkeleton,
+  AdminTableSkeleton,
+} from "@/components/admin/admin-page-skeleton";
 
 interface PaymentRequest {
   id: string;
@@ -142,6 +147,16 @@ export default function PaymentApprovalsPage() {
   const rejectedRequests = requests.filter((r) => r.status === "rejected");
 
   if (user?.role !== "admin") return null;
+
+  if (isLoading) {
+    return (
+      <div className="space-y-6">
+        <AdminPageHeaderSkeleton />
+        <AdminMetricCardsSkeleton />
+        <AdminTableSkeleton rows={6} columns={5} />
+      </div>
+    );
+  }
 
   const filteredRequests = requests.filter(request => {
     const matchesSearch = searchTerm === '' || 

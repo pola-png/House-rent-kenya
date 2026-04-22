@@ -19,7 +19,6 @@ import {
   Settings,
   LifeBuoy,
   LogOut,
-  Loader2,
   CheckCircle,
   Zap
 } from "lucide-react";
@@ -55,6 +54,7 @@ import { useEffect } from "react";
 import { Shield } from "lucide-react";
 import React from "react";
 import { getDashboardUrlForPath, isAdminModePath } from "@/lib/admin-navigation";
+import { Skeleton } from "@/components/ui/skeleton";
 
 export default function AdminLayout({
   children,
@@ -73,6 +73,19 @@ export default function AdminLayout({
     }
   }, [user, loading, router]);
 
+  useEffect(() => {
+    if (!user) return;
+
+    router.prefetch("/admin/dashboard");
+    if (user.role === "admin") {
+      router.prefetch("/admin/admin-dashboard");
+      router.prefetch("/admin/users");
+      router.prefetch("/admin/all-properties");
+      router.prefetch("/admin/payment-approvals");
+      router.prefetch("/admin/analytics");
+    }
+  }, [router, user]);
+
   const handleLogout = async () => {
     await logout();
     router.push("/");
@@ -86,8 +99,74 @@ export default function AdminLayout({
 
   if (loading) {
     return (
-      <div className="flex h-screen items-center justify-center">
-        <Loader2 className="h-8 w-8 animate-spin" />
+      <div className="min-h-screen bg-background text-foreground">
+        <NavigationLoader />
+        <Header />
+        <div className="mx-auto flex max-w-7xl gap-6 px-3 pt-28 sm:px-6">
+          <aside className="hidden w-64 shrink-0 lg:block">
+            <div className="rounded-xl border bg-card p-4">
+              <div className="space-y-4">
+                <Skeleton className="h-7 w-32" />
+                <div className="space-y-3">
+                  {Array.from({ length: 7 }).map((_, index) => (
+                    <div key={index} className="flex items-center gap-3">
+                      <Skeleton className="h-9 w-9 rounded-md" />
+                      <Skeleton className="h-4 w-28" />
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </aside>
+          <div className="min-w-0 flex-1 space-y-6">
+            <div className="sticky top-0 z-30 rounded-xl border bg-background/80 px-4 py-3 backdrop-blur sm:px-6">
+              <div className="flex items-center justify-between gap-4">
+                <Skeleton className="h-10 w-10 rounded-md lg:hidden" />
+                <div className="ml-auto flex items-center gap-3">
+                  <Skeleton className="hidden h-9 w-36 sm:block" />
+                  <Skeleton className="h-10 w-10 rounded-full" />
+                </div>
+              </div>
+            </div>
+            <div className="space-y-6 pb-10">
+              <div className="space-y-2">
+                <Skeleton className="h-9 w-56" />
+                <Skeleton className="h-4 w-80 max-w-full" />
+              </div>
+              <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
+                {Array.from({ length: 4 }).map((_, index) => (
+                  <div key={index} className="rounded-xl border bg-card p-6">
+                    <Skeleton className="h-4 w-24" />
+                    <Skeleton className="mt-4 h-8 w-28" />
+                    <Skeleton className="mt-3 h-3 w-20" />
+                  </div>
+                ))}
+              </div>
+              <div className="grid gap-4 grid-cols-1 lg:grid-cols-2">
+                {Array.from({ length: 2 }).map((_, index) => (
+                  <div key={index} className="rounded-xl border bg-card p-6">
+                    <Skeleton className="h-5 w-40" />
+                    <Skeleton className="mt-2 h-4 w-52" />
+                    <div className="mt-6 space-y-4">
+                      {Array.from({ length: 4 }).map((__, rowIndex) => (
+                        <div key={rowIndex} className="flex items-center justify-between gap-4">
+                          <div className="flex items-center gap-3">
+                            <Skeleton className="h-8 w-8 rounded-full" />
+                            <div className="space-y-2">
+                              <Skeleton className="h-4 w-24" />
+                              <Skeleton className="h-3 w-16" />
+                            </div>
+                          </div>
+                          <Skeleton className="h-6 w-14 rounded-full" />
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
     );
   }

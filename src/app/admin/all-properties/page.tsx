@@ -16,6 +16,12 @@ import {
 import { useRouter } from 'next/navigation';
 import { useToast } from '@/hooks/use-toast';
 import Image from 'next/image';
+import {
+  AdminMetricCardsSkeleton,
+  AdminPageHeaderSkeleton,
+  AdminTableSkeleton,
+} from '@/components/admin/admin-page-skeleton';
+import { formatCompactNumber } from '@/lib/format-number';
 
 interface Property {
   id: string;
@@ -277,6 +283,18 @@ export default function AllPropertiesPage() {
     }
   };
 
+  if (user?.role !== 'admin') return null;
+
+  if (isLoading) {
+    return (
+      <div className="space-y-6">
+        <AdminPageHeaderSkeleton />
+        <AdminMetricCardsSkeleton />
+        <AdminTableSkeleton rows={8} columns={6} />
+      </div>
+    );
+  }
+
   const updatePropertyStatus = async (propertyId: string, newStatus: string) => {
     try {
       const updatedProperty = await runPropertyAction(propertyId, {
@@ -309,7 +327,8 @@ export default function AllPropertiesPage() {
     total: properties.length,
     active: properties.filter(p => p.status === 'For Rent' || p.status === 'For Sale').length,
     featured: properties.filter(p => p.featured).length,
-    premium: properties.filter(p => p.isPremium).length
+    premium: properties.filter(p => p.isPremium).length,
+    totalViews: properties.reduce((sum, p) => sum + (p.views || 0), 0),
   };
 
   // Pagination logic
@@ -346,7 +365,7 @@ export default function AllPropertiesPage() {
             <Building className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{stats.total}</div>
+            <div className="text-2xl font-bold">{formatCompactNumber(stats.total)}</div>
           </CardContent>
         </Card>
         <Card>
@@ -355,7 +374,7 @@ export default function AllPropertiesPage() {
             <CheckCircle className="h-4 w-4 text-green-500" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{stats.active}</div>
+            <div className="text-2xl font-bold">{formatCompactNumber(stats.active)}</div>
           </CardContent>
         </Card>
         <Card>
@@ -364,7 +383,7 @@ export default function AllPropertiesPage() {
             <Star className="h-4 w-4 text-yellow-500" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{stats.featured}</div>
+            <div className="text-2xl font-bold">{formatCompactNumber(stats.featured)}</div>
           </CardContent>
         </Card>
         <Card>
@@ -373,7 +392,8 @@ export default function AllPropertiesPage() {
             <Star className="h-4 w-4 text-purple-500" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{stats.premium}</div>
+            <div className="text-2xl font-bold">{formatCompactNumber(stats.premium)}</div>
+            <p className="text-xs text-muted-foreground mt-1">{formatCompactNumber(stats.totalViews)} views</p>
           </CardContent>
         </Card>
       </div>
@@ -440,9 +460,9 @@ export default function AllPropertiesPage() {
 
       {/* Properties List */}
       <Card>
-        <CardHeader>
-          <CardTitle>Properties ({filteredProperties.length})</CardTitle>
-        </CardHeader>
+          <CardHeader>
+            <CardTitle>Properties ({formatCompactNumber(filteredProperties.length)})</CardTitle>
+          </CardHeader>
         <CardContent>
           <div className="space-y-4">
             {currentProperties.map((property) => (
@@ -475,7 +495,7 @@ export default function AllPropertiesPage() {
                         <span>•</span>
                         <span>{property.bedrooms}BR</span>
                         <span>•</span>
-                        <span>{property.views || 0} views</span>
+                        <span>{formatCompactNumber(property.views || 0)} views</span>
                       </div>
                     </div>
                     <div className="text-right">

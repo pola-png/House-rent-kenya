@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { Eye, TrendingUp } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { supabase } from "@/lib/supabase";
+import { formatCompactNumber } from "@/lib/format-number";
 
 interface ViewTrackerProps {
   propertyId: string;
@@ -47,7 +48,7 @@ export function ViewTracker({ propertyId, initialViews = 0 }: ViewTrackerProps) 
       <div className="flex items-center gap-1 text-sm text-muted-foreground">
         <Eye className={`h-4 w-4 ${isLive ? 'text-green-600' : ''}`} />
         <span className={isLive ? 'text-green-600 font-medium' : ''}>
-          {views.toLocaleString()} views
+          {formatCompactNumber(views)} views
         </span>
       </div>
       {isLive && (

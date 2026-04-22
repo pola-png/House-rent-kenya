@@ -28,6 +28,7 @@ import { useAuth } from "@/hooks/use-auth-supabase";
 import { supabase } from "@/lib/supabase";
 import { normalizeImageArray } from "@/lib/media";
 import { useRouter } from "next/navigation";
+import { formatCompactNumber } from "@/lib/format-number";
 
 export default function Dashboard() {
   const { user } = useAuth();
@@ -243,11 +244,11 @@ export default function Dashboard() {
               <CardContent>
                 {isLoading ? (<div className="flex flex-col sm:flex-row items-start sm:items-center gap-2"><Skeleton className="h-8 w-16" /><button className="text-xs underline whitespace-nowrap" onClick={hardReload}>Reload now</button></div>) : (
                   <div className="space-y-1">
-                    <div className="text-2xl font-bold">{realTimeStats.totalViews.toLocaleString()}</div>
+                    <div className="text-2xl font-bold">{formatCompactNumber(realTimeStats.totalViews)}</div>
                     {realTimeStats.todayViews > 0 && (
                       <div className="flex items-center text-xs text-blue-600">
                         <Eye className="h-3 w-3 mr-1" />
-                        {realTimeStats.todayViews} today
+                        {formatCompactNumber(realTimeStats.todayViews)} today
                       </div>
                     )}
                   </div>
@@ -428,7 +429,7 @@ export default function Dashboard() {
                     <div key={property.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
                       <div>
                         <p className="font-medium truncate">{property.title}</p>
-                        <p className="text-sm text-muted-foreground">{property.views || 0} views</p>
+                        <p className="text-sm text-muted-foreground">{formatCompactNumber(property.views || 0)} views</p>
                       </div>
                       <Badge variant={property.views && property.views > 50 ? "default" : "secondary"}>
                         {property.views && property.views > 50 ? "High" : "Low"} Traffic
@@ -452,7 +453,7 @@ export default function Dashboard() {
                     </div>
                     <div className="flex items-center gap-3">
                       <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
-                      <span className="text-sm">Total views: {realTimeStats.totalViews}</span>
+                      <span className="text-sm">Total views: {formatCompactNumber(realTimeStats.totalViews)}</span>
                     </div>
                     <div className="flex items-center gap-3">
                       <div className="w-2 h-2 bg-purple-500 rounded-full"></div>

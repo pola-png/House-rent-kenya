@@ -12,6 +12,11 @@ import { Users, Shield, UserCog, Ban, CheckCircle, Crown, Activity, Search, Tras
 import { Input } from '@/components/ui/input';
 import { useRouter } from 'next/navigation';
 import { useToast } from '@/hooks/use-toast';
+import {
+  AdminMetricCardsSkeleton,
+  AdminPageHeaderSkeleton,
+  AdminTableSkeleton,
+} from '@/components/admin/admin-page-skeleton';
 
 interface User {
   id: string;
@@ -207,6 +212,16 @@ export default function AdminUsersPage() {
   };
 
   if (user?.role !== 'admin') return null;
+
+  if (isLoading) {
+    return (
+      <div className="space-y-6">
+        <AdminPageHeaderSkeleton />
+        <AdminMetricCardsSkeleton />
+        <AdminTableSkeleton rows={7} columns={5} />
+      </div>
+    );
+  }
 
   const banUser = async (userId: string, currentStatus: boolean) => {
     const newBanStatus = !currentStatus;

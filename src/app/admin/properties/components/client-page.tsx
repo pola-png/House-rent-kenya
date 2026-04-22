@@ -30,6 +30,7 @@ import { Input } from "@/components/ui/input";
 import { supabase } from "@/lib/supabase";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/use-auth-supabase";
+import { formatCompactNumber } from "@/lib/format-number";
 import {
   Table,
   TableBody,
@@ -194,7 +195,7 @@ export function PropertiesClient({ data: initialData }: PropertiesClientProps) {
     header: () => <div className="text-right">Views</div>,
     cell: ({ row }) => {
       const views = row.getValue("views") as number || 0;
-      return <div className="text-right font-medium">{views.toLocaleString()}</div>;
+      return <div className="text-right font-medium">{formatCompactNumber(views)}</div>;
     },
   },
   {
@@ -445,7 +446,7 @@ export function PropertiesClient({ data: initialData }: PropertiesClientProps) {
                     </div>
                     <div className="text-right">
                       <div className="font-semibold">Ksh {property.price.toLocaleString()}</div>
-                      <div className="text-xs text-muted-foreground">{property.views || 0} views</div>
+                      <div className="text-xs text-muted-foreground">{formatCompactNumber(property.views || 0)} views</div>
                     </div>
                   </div>
                 </CardContent>

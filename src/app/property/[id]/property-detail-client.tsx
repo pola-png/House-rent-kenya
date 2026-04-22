@@ -22,6 +22,7 @@ import { useAuth } from '@/hooks/use-auth-supabase';
 import { useRouter } from 'next/navigation';
 import { trackPropertyView } from '@/lib/view-tracking';
 import { normalizeImageArray } from '@/lib/media';
+import { formatCompactNumber } from '@/lib/format-number';
 
 const Image = ((props: any) => <OptimizedImage fit="contain" sizes="100vw" fallbackSrc={null} {...props} />) as any;
 
@@ -552,7 +553,7 @@ export default function PropertyDetailClient({ id, breadcrumbTitle }: PropertyDe
                           <Eye className="h-5 w-5 text-primary" />
                         </div>
                         <div>
-                          <div className="font-semibold">{property.views || 0}</div>
+                          <div className="font-semibold">{formatCompactNumber(property.views || 0)}</div>
                           <div className="text-sm text-muted-foreground">Views</div>
                         </div>
                       </div>
@@ -771,7 +772,7 @@ export default function PropertyDetailClient({ id, breadcrumbTitle }: PropertyDe
                   <h4 className="font-semibold">Property Stats</h4>
                   <div className="grid grid-cols-2 gap-3 text-sm">
                     <div className="text-center p-3 bg-muted/30 rounded-lg">
-                      <div className="font-bold text-lg">{property.views || 0}</div>
+                      <div className="font-bold text-lg">{formatCompactNumber(property.views || 0)}</div>
                       <div className="text-muted-foreground">Total Views</div>
                     </div>
                     <div className="text-center p-3 bg-muted/30 rounded-lg">
