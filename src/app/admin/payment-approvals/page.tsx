@@ -34,7 +34,7 @@ interface PaymentRequest {
 }
 
 export default function PaymentApprovalsPage() {
-  const { user } = useAuth();
+  const { user, loading } = useAuth();
   const router = useRouter();
   const { toast } = useToast();
   const [requests, setRequests] = useState<PaymentRequest[]>([]);
@@ -44,16 +44,30 @@ export default function PaymentApprovalsPage() {
   const [statusFilter, setStatusFilter] = useState('all');
 
   useEffect(() => {
-    if (user?.role !== "admin") {
+    if (loading) {
+      return;
+    }
+
+    if (!user || user.role !== "admin") {
       router.push("/admin/dashboard");
       return;
     }
+
+    setIsLoading(true);
     fetchPaymentRequests();
     
     // Real-time updates every 30 seconds
     const interval = setInterval(fetchPaymentRequests, 30000);
-    return () => clearInterval(interval);
-  }, [user, router]);
+    const channel = supabase
+      .channel('admin-payment-approvals-live')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'payment_requests' }, fetchPaymentRequests)
+      .subscribe();
+
+    return () => {
+      clearInterval(interval);
+      supabase.removeChannel(channel);
+    };
+  }, [user, loading, router]);
 
   const fetchPaymentRequests = async () => {
     try {
@@ -146,9 +160,7 @@ export default function PaymentApprovalsPage() {
   const approvedRequests = requests.filter((r) => r.status === "approved");
   const rejectedRequests = requests.filter((r) => r.status === "rejected");
 
-  if (user?.role !== "admin") return null;
-
-  if (isLoading) {
+  if (loading || isLoading || !user || user.role !== "admin") {
     return (
       <div className="space-y-6">
         <AdminPageHeaderSkeleton />
@@ -168,8 +180,6 @@ export default function PaymentApprovalsPage() {
     
     return matchesSearch && matchesStatus;
   });
-
-  if (user?.role !== "admin") return null;
 
   return (
     <div className="space-y-6">

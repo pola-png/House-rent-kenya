@@ -35,7 +35,7 @@ interface User {
 }
 
 export default function AdminUsersPage() {
-  const { user } = useAuth();
+  const { user, loading } = useAuth();
   const router = useRouter();
   const { toast } = useToast();
   const [users, setUsers] = useState<User[]>([]);
@@ -46,16 +46,31 @@ export default function AdminUsersPage() {
   const [statusFilter, setStatusFilter] = useState('all');
 
   useEffect(() => {
-    if (user?.role !== 'admin') {
+    if (loading) {
+      return;
+    }
+
+    if (!user || user.role !== 'admin') {
       router.push('/');
       return;
     }
+
+    setIsLoading(true);
     fetchUsers();
     
     // Real-time updates every 30 seconds
     const interval = setInterval(fetchUsers, 30000);
-    return () => clearInterval(interval);
-  }, [user]);
+    const channel = supabase
+      .channel('admin-users-live')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'profiles' }, fetchUsers)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'properties' }, fetchUsers)
+      .subscribe();
+
+    return () => {
+      clearInterval(interval);
+      supabase.removeChannel(channel);
+    };
+  }, [user, loading, router]);
 
   useEffect(() => {
     filterUsers();
@@ -67,6 +82,14 @@ export default function AdminUsersPage() {
         .from('profiles')
         .select('*')
         .order('createdAt', { ascending: false });
+
+      if (error) throw error;
+
+      setUsers((data || []).map((entry) => ({
+        ...entry,
+        propertyCount: entry.propertyCount || 0,
+      })));
+      setIsLoading(false);
 
       // Get property counts for agents
       const { data: propertyCounts } = await supabase
@@ -84,7 +107,6 @@ export default function AdminUsersPage() {
         propertyCount: propertyCountMap[user.id] || 0
       }));
 
-      if (error) throw error;
       setUsers(usersWithCounts);
     } catch (error) {
       console.error('Error fetching users:', error);
@@ -211,9 +233,7 @@ export default function AdminUsersPage() {
     }
   };
 
-  if (user?.role !== 'admin') return null;
-
-  if (isLoading) {
+  if (loading || isLoading || !user || user.role !== 'admin') {
     return (
       <div className="space-y-6">
         <AdminPageHeaderSkeleton />

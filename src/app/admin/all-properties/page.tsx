@@ -71,6 +71,17 @@ export default function AllPropertiesPage() {
 
     setIsLoading(true);
     fetchAllProperties();
+    const interval = setInterval(fetchAllProperties, 30000);
+    const channel = supabase
+      .channel('admin-all-properties-live')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'properties' }, fetchAllProperties)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'profiles' }, fetchAllProperties)
+      .subscribe();
+
+    return () => {
+      clearInterval(interval);
+      supabase.removeChannel(channel);
+    };
   }, [user, loading, router]);
 
   useEffect(() => {
@@ -135,8 +146,21 @@ export default function AllPropertiesPage() {
 
       if (propsError) throw propsError;
 
-      // Get landlord info separately
+      const baseProperties: Property[] = (propertiesData || []).map((p) => ({
+        ...p,
+        landlordName: 'Loading owner...',
+        landlordEmail: '',
+      }));
+
+      setProperties(baseProperties);
+      setIsLoading(false);
+
+      // Enrich owner info after the first property batch is already on screen
       const landlordIds = [...new Set(propertiesData?.map(p => p.landlordId).filter(Boolean))];
+      if (landlordIds.length === 0) {
+        return;
+      }
+
       const { data: landlordsData } = await supabase
         .from('profiles')
         .select('id, displayName, email, firstName, lastName')

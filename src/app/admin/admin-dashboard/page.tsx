@@ -37,10 +37,26 @@ interface AdminStats {
   platformHealth: { uptime: number; responseTime: number; errorRate: number };
 }
 
+const EMPTY_ADMIN_STATS: AdminStats = {
+  totalUsers: 0,
+  totalAgents: 0,
+  totalProperties: 0,
+  totalRevenue: 0,
+  totalViews: 0,
+  activeListings: 0,
+  pendingApprovals: 0,
+  todaySignups: 0,
+  monthlyGrowth: 12.5,
+  conversionRate: 0,
+  topCities: [],
+  recentActivity: [],
+  platformHealth: { uptime: 99.9, responseTime: 245, errorRate: 0.1 },
+};
+
 export default function AdminDashboard() {
   const { user, loading } = useAuth();
   const router = useRouter();
-  const [stats, setStats] = useState<AdminStats | null>(null);
+  const [stats, setStats] = useState<AdminStats>(EMPTY_ADMIN_STATS);
   const [isLoading, setIsLoading] = useState(true);
   const [retryTick, retryNow] = useAutoRetry(loading || isLoading || !user, [user, loading]);
 
@@ -59,67 +75,91 @@ export default function AdminDashboard() {
     
     // Real-time updates every 30 seconds
     const interval = setInterval(fetchAdminStats, 30000);
-    return () => clearInterval(interval);
+    const channel = supabase
+      .channel('admin-dashboard-live')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'profiles' }, fetchAdminStats)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'properties' }, fetchAdminStats)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'payment_requests' }, fetchAdminStats)
+      .subscribe();
+
+    return () => {
+      clearInterval(interval);
+      supabase.removeChannel(channel);
+    };
   }, [user, loading, router, retryTick]);
 
   const fetchAdminStats = async () => {
+    let revealed = false;
+    const reveal = () => {
+      if (!revealed) {
+        revealed = true;
+        setIsLoading(false);
+      }
+    };
+
     try {
-      const [usersRes, propertiesRes, paymentsRes] = await Promise.all([
-        supabase.from('profiles').select('*'),
-        supabase.from('properties').select('*'),
-        supabase.from('payment_requests').select('*')
-      ]);
+      const propertiesPromise = supabase.from('properties').select('*');
+      const usersPromise = supabase.from('profiles').select('*');
+      const paymentsPromise = supabase.from('payment_requests').select('*');
 
-      const users = usersRes.data || [];
+      const propertiesRes = await propertiesPromise;
       const properties = propertiesRes.data || [];
-      const payments = paymentsRes.data || [];
-
-      const totalRevenue = payments
-        .filter(p => p.status === 'approved')
-        .reduce((sum, p) => sum + (p.amount || 0), 0);
-
       const totalViews = properties.reduce((sum, p) => sum + (p.views || 0), 0);
-      
-      const today = new Date();
-      today.setHours(0, 0, 0, 0);
-      const todaySignups = users.filter(u => new Date(u.createdAt) >= today).length;
-
       const cityCounts = properties.reduce((acc: any, p) => {
         acc[p.city] = (acc[p.city] || 0) + 1;
         return acc;
       }, {});
-
       const topCities = Object.entries(cityCounts)
-        .map(([city, count]) => ({ 
-          city, 
-          count: count as number, 
-          growth: Math.floor(Math.random() * 20) + 5 
+        .map(([city, count]) => ({
+          city,
+          count: count as number,
+          growth: Math.floor(Math.random() * 20) + 5,
         }))
         .sort((a, b) => b.count - a.count)
         .slice(0, 5);
 
-      const recentActivity = [
-        { type: 'user', description: 'New agent registered', time: '2 min ago', user: 'John Doe' },
-        { type: 'property', description: 'Property promoted to featured', time: '5 min ago', user: 'Jane Smith' },
-        { type: 'payment', description: 'Payment approved', time: '8 min ago', user: 'Admin' },
-        { type: 'user', description: 'User upgraded to Pro', time: '12 min ago', user: 'Mike Johnson' },
-      ];
-
-      setStats({
-        totalUsers: users.length,
-        totalAgents: users.filter(u => u.role === 'agent').length,
+      setStats((prev) => ({
+        ...prev,
         totalProperties: properties.length,
-        totalRevenue,
         totalViews,
-        activeListings: properties.filter(p => p.status === 'For Rent' || p.status === 'For Sale').length,
-        pendingApprovals: payments.filter(p => p.status === 'pending').length,
-        todaySignups,
-        monthlyGrowth: 12.5,
-        conversionRate: 8.3,
+        activeListings: properties.filter((p) => p.status === 'For Rent' || p.status === 'For Sale').length,
         topCities,
-        recentActivity,
-        platformHealth: { uptime: 99.9, responseTime: 245, errorRate: 0.1 }
-      });
+      }));
+      reveal();
+
+      const usersRes = await usersPromise;
+      const users = usersRes.data || [];
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      const todaySignups = users.filter((u) => new Date(u.createdAt) >= today).length;
+
+      setStats((prev) => ({
+        ...prev,
+        totalUsers: users.length,
+        totalAgents: users.filter((u) => u.role === 'agent').length,
+        todaySignups,
+        recentActivity: [
+          { type: 'user', description: 'New agent registered', time: '2 min ago', user: 'John Doe' },
+          { type: 'property', description: 'Property promoted to featured', time: '5 min ago', user: 'Jane Smith' },
+          { type: 'payment', description: 'Payment approved', time: '8 min ago', user: 'Admin' },
+          { type: 'user', description: 'User upgraded to Pro', time: '12 min ago', user: 'Mike Johnson' },
+        ],
+      }));
+      reveal();
+
+      const paymentsRes = await paymentsPromise;
+      const payments = paymentsRes.data || [];
+      const totalRevenue = payments
+        .filter((p) => p.status === 'approved')
+        .reduce((sum, p) => sum + (p.amount || 0), 0);
+
+      setStats((prev) => ({
+        ...prev,
+        totalRevenue,
+        pendingApprovals: payments.filter((p) => p.status === 'pending').length,
+        conversionRate: prev.totalProperties > 0 ? Number(((payments.length / prev.totalProperties) * 100).toFixed(1)) : 0,
+      }));
+      reveal();
     } catch (error) {
       console.error('Error fetching admin stats:', error);
     } finally {
@@ -127,7 +167,7 @@ export default function AdminDashboard() {
     }
   };
 
-  if (loading || isLoading || !stats || !user || user.role !== 'admin') {
+  if (loading || isLoading || !user || user.role !== 'admin') {
     return (
       <div className="space-y-6">
         <AdminPageHeaderSkeleton />
