@@ -11,7 +11,6 @@ const footerLinks = {
   ],
   explore: SEO_FOOTER_LINKS,
   support: [
-    { label: 'Help Center', href: '/contact' },
     { label: 'Terms of Service', href: '/terms' },
     { label: 'Privacy Policy', href: '/privacy' },
     { label: 'Cookie Policy', href: '/cookie-policy' },

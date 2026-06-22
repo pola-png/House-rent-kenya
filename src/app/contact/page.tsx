@@ -8,7 +8,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
-import { Mail, Phone, MapPin, Building, Send, Clock, CheckCircle, Loader2, MessageSquare, Users, Headphones } from "lucide-react";
+import { Mail, MapPin, Building, Send, Clock, CheckCircle, Loader2, MessageSquare, Users, Headphones } from "lucide-react";
 import { useState } from "react";
 import { BRAND } from "@/lib/brand";
 
@@ -48,7 +48,7 @@ export default function ContactPage() {
             Get In Touch
           </h1>
           <p className="text-xl text-muted-foreground mt-4 max-w-3xl mx-auto">
-            Have questions about properties or need support? {BRAND.supportName} is here to help.
+            Have questions about properties or need support? Our team is here to help.
           </p>
           <div className="flex flex-wrap justify-center gap-2 mt-6">
             <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">
@@ -179,18 +179,7 @@ export default function ContactPage() {
                   </div>
                 </div>
                 
-                <div className="flex items-start gap-4 p-4 bg-white rounded-lg shadow-sm">
-                  <div className="p-3 bg-gradient-to-r from-blue-500 to-indigo-600 rounded-full text-white">
-                    <Phone className="h-5 w-5" />
-                  </div>
-                  <div>
-                    <h3 className="font-semibold text-lg mb-1">Call Us</h3>
-                    <p className="text-sm text-muted-foreground mb-1">Mon - Fri, 9am - 5pm</p>
-                    <a href={`tel:${BRAND.phone}`} className="text-primary hover:underline font-medium text-lg">
-                      {BRAND.phoneDisplay}
-                    </a>
-                  </div>
-                </div>
+
               </CardContent>
             </Card>
             
