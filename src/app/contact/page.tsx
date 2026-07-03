@@ -166,19 +166,6 @@ export default function ContactPage() {
                   </div>
                 </div>
                 
-                <div className="flex items-start gap-4 p-4 bg-white rounded-lg shadow-sm">
-                  <div className="p-3 bg-gradient-to-r from-green-500 to-emerald-600 rounded-full text-white">
-                    <Mail className="h-5 w-5" />
-                  </div>
-                  <div>
-                    <h3 className="font-semibold text-lg mb-1">Email Us</h3>
-                    <p className="text-sm text-muted-foreground mb-1">General inquiries:</p>
-                    <a href={`mailto:${BRAND.email}`} className="text-primary hover:underline font-medium">
-                      {BRAND.email}
-                    </a>
-                  </div>
-                </div>
-                
 
               </CardContent>
             </Card>
