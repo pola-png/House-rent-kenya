@@ -127,6 +127,13 @@ export default function RootLayout({
         <meta name="apple-mobile-web-app-capable" content="yes" />
         <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
         <meta name="google-site-verification" content="3eBr75nEzb0M1zIdIR6QOnu8n9ebWQr4aFrGvETzbuc" />
+        
+        {/* Google AdSense Verification */}
+        <script
+          async
+          src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-2815487870437579"
+          crossOrigin="anonymous"
+        />
 
         <script
           type="application/ld+json"

@@ -4,6 +4,9 @@ import { COUNTRIES, slugifyCountry } from '@/lib/countries';
 import { BRAND } from '@/lib/brand';
 import { SEO_SITEMAP_LINKS } from '@/lib/seo-pages';
 
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
+
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const baseUrl = BRAND.siteUrl;
   
@@ -71,21 +74,44 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   let propertyPages: MetadataRoute.Sitemap = [];
   
   try {
-    const { data: properties } = await supabase
-      .from('properties')
-      .select('id, title, updatedAt, status, images, location, city, bedrooms, propertyType')
-      .in('status', ['Available', 'For Rent', 'For Sale'])
-      .order('updatedAt', { ascending: false })
-      .limit(1000);
+    let allProperties: any[] = [];
+    let hasMore = true;
+    let page = 0;
+    const pageSize = 1000;
 
-    if (properties) {
+    while (hasMore) {
+      const { data: properties, error } = await supabase
+        .from('properties')
+        .select('id, title, updatedAt, status, images, location, city, bedrooms, propertyType')
+        .in('status', ['Available', 'For Rent', 'For Sale'])
+        .order('updatedAt', { ascending: false })
+        .range(page * pageSize, (page + 1) * pageSize - 1);
+
+      if (error) {
+        console.error('Error fetching property batch in sitemap:', error);
+        break;
+      }
+
+      if (!properties || properties.length === 0) {
+        hasMore = false;
+      } else {
+        allProperties = [...allProperties, ...properties];
+        if (properties.length < pageSize) {
+          hasMore = false;
+        } else {
+          page++;
+        }
+      }
+    }
+
+    if (allProperties.length > 0) {
       const slug = (title: string) => title
         .toLowerCase()
         .replace(/[^a-z0-9]+/g, '-')
         .replace(/^-+|-+$/g, '')
         .substring(0, 60);
       
-      propertyPages = properties.map((property) => ({
+      propertyPages = allProperties.map((property) => ({
         url: `${baseUrl}/property/${slug(property.title)}-${property.id}`,
         lastModified: new Date(property.updatedAt),
         changeFrequency: 'weekly' as const,
