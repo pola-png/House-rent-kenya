@@ -131,7 +131,7 @@ export default function RootLayout({
         {/* Google AdSense Verification */}
         <script
           async
-          src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-2815487870437579"
+          src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-3088816615654692"
           crossOrigin="anonymous"
         />
 
