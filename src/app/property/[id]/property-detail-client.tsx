@@ -36,6 +36,27 @@ const amenityIcons: Record<string, any> = {
   'Air Conditioning': Wind,
 };
 
+function GoogleAd() {
+  useEffect(() => {
+    try {
+      // @ts-ignore
+      (window.adsbygoogle = window.adsbygoogle || []).push({});
+    } catch (err) {
+      console.error('AdSense initialization error:', err);
+    }
+  }, []);
+
+  return (
+    <ins
+      className="adsbygoogle"
+      style={{ display: 'block' }}
+      data-ad-client="ca-pub-3088816615654692"
+      data-ad-slot="6421846807"
+      data-ad-format="auto"
+    />
+  );
+}
+
 interface PropertyDetailClientProps {
   id: string;
   breadcrumbTitle?: string | null;
@@ -651,8 +672,8 @@ export default function PropertyDetailClient({ id, breadcrumbTitle }: PropertyDe
           </div>
 
           {/* Sidebar - Agent Contact */}
-          <div className="xl:col-span-1">
-            <Card className="sticky top-24 shadow-xl">
+          <div className="xl:col-span-1 space-y-6 lg:sticky lg:top-24">
+            <Card className="shadow-xl">
               <CardContent className="p-6">
                 <h3 className="text-xl font-bold mb-6 text-center">Contact Agent</h3>
                 
@@ -784,6 +805,14 @@ export default function PropertyDetailClient({ id, breadcrumbTitle }: PropertyDe
                   </div>
                 </div>
               </CardContent>
+            </Card>
+
+            {/* Google AdSense Vertical Unit */}
+            <Card className="p-4 shadow-lg flex flex-col items-center">
+              <div className="text-xs text-muted-foreground mb-2 text-center uppercase tracking-wider">Advertisement</div>
+              <div className="w-full overflow-hidden min-h-[250px]">
+                <GoogleAd />
+              </div>
             </Card>
           </div>
         </div>
