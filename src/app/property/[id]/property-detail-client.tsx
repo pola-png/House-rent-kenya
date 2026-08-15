@@ -37,8 +37,18 @@ const amenityIcons: Record<string, any> = {
 };
 
 function GoogleAd() {
+  const [isDev, setIsDev] = useState(false);
+  const [adKey, setAdKey] = useState(0);
+
   useEffect(() => {
+    if (process.env.NODE_ENV !== 'production') {
+      setIsDev(true);
+      return;
+    }
+
     try {
+      // Reset the key to force re-render of the ins tag on mount/remount
+      setAdKey(prev => prev + 1);
       // @ts-ignore
       (window.adsbygoogle = window.adsbygoogle || []).push({});
     } catch (err) {
@@ -46,13 +56,29 @@ function GoogleAd() {
     }
   }, []);
 
+  if (isDev) {
+    return (
+      <div className="w-full min-h-[250px] bg-muted/40 border border-dashed border-muted-foreground/30 rounded-lg flex flex-col items-center justify-center p-6 text-center shadow-inner">
+        <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center mb-3">
+          <span className="text-lg font-bold text-primary">Ad</span>
+        </div>
+        <p className="font-semibold text-sm text-foreground mb-1">Google AdSense</p>
+        <p className="text-xs text-muted-foreground max-w-[220px] leading-relaxed">
+          Ads are paused on localhost. This placeholder will display as a live vertical ad unit in production.
+        </p>
+      </div>
+    );
+  }
+
   return (
     <ins
+      key={adKey}
       className="adsbygoogle"
       style={{ display: 'block' }}
       data-ad-client="ca-pub-3088816615654692"
       data-ad-slot="6421846807"
       data-ad-format="auto"
+      data-full-width-responsive="true"
     />
   );
 }

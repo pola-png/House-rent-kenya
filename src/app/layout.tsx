@@ -1,5 +1,6 @@
 
 import type { Metadata } from 'next';
+import Script from 'next/script';
 import './globals.css';
 import { cn } from '@/lib/utils';
 import { Header } from '@/components/header';
@@ -129,10 +130,11 @@ export default function RootLayout({
         <meta name="google-site-verification" content="3eBr75nEzb0M1zIdIR6QOnu8n9ebWQr4aFrGvETzbuc" />
         
         {/* Google AdSense Verification */}
-        <script
+        <Script
           async
           src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-3088816615654692"
           crossOrigin="anonymous"
+          strategy="afterInteractive"
         />
 
         <script
